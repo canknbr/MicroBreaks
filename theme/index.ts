@@ -18,21 +18,11 @@ export * from './shadows';
 export * from './animations';
 
 // Re-export commonly used types
-export type {
-  ThemeMode,
-  ColorScheme,
-  TypographyPreset,
-  SpacingValue,
-  BorderRadiusValue,
-  IconSizeValue,
-  ShadowLevel,
-  ComponentShadowType,
-  DurationValue,
-  EasingValue,
-  TransitionType,
-} from './colors';
-
-export type { ShadowStyle } from './shadows';
+export type { ThemeMode, ColorScheme } from './colors';
+export type { TypographyPreset } from './typography';
+export type { SpacingValue, BorderRadiusValue, IconSizeValue } from './spacing';
+export type { ShadowLevel, ComponentShadowType, ShadowStyle } from './shadows';
+export type { DurationValue, EasingValue, TransitionType } from './animations';
 
 // Theme configuration
 import { Colors, ColorPalette } from './colors';

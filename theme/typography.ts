@@ -54,7 +54,7 @@ export const FontFamily = Platform.select({
     systemSemiBold: 'system-ui, sans-serif',
     systemBold: 'system-ui, sans-serif',
   },
-}) as const;
+});
 
 // Font Weights
 export const FontWeight = {
