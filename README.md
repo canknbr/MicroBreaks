@@ -1,50 +1,314 @@
-# Welcome to your Expo app 👋
+# MicroBreaks
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<div align="center">
 
-## Get started
+**Your personal desk wellness companion**
 
-1. Install dependencies
+A science-backed mobile wellness application that transforms desk workers' health and productivity through intelligent micro-break management.
 
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-~54.0-000020.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+[Features](#features) • [Tech Stack](#tech-stack) • [Getting Started](#getting-started) • [Documentation](#documentation)
+
+</div>
+
+---
+
+## 📖 Overview
+
+MicroBreaks is a mobile-first wellness application that monitors work patterns and delivers timely, context-aware micro-breaks to prevent physical strain and mental fatigue. By combining ergonomic expertise, behavioral psychology, and adaptive technology, we create a personalized break coach that helps you build sustainable work habits.
+
+### 🎯 Core Philosophy
+
+**"Small breaks, big impact"** – We believe that consistent micro-interventions (1-3 minutes) are more sustainable and effective than longer, disruptive breaks.
+
+### 💡 Why MicroBreaks?
+
+- **Evidence-based**: Exercises developed with physiotherapists and ergonomics experts
+- **Intelligent**: Adaptive recommendations based on your usage patterns
+- **Non-intrusive**: Respects your workflow and context
+- **Measurable**: Track your health improvements with tangible metrics
+- **Delightful**: Makes wellness enjoyable, not a chore
+
+---
+
+## ✨ Features
+
+### Core Functionality
+
+- **🎯 Smart Timer System**
+  - Multiple presets: Pomodoro (25/5), Deep Work (50/10), Custom intervals
+  - Automatic pause detection
+  - Focus mode with Do Not Disturb integration
+  - Session history tracking
+
+- **🧘 Comprehensive Exercise Library**
+  - **Eye Care**: 20-20-20 rule, eye movements, palming techniques
+  - **Neck & Shoulders**: Rotations, rolls, stretches, mobilization
+  - **Back & Posture**: Spinal twists, posture resets, relief exercises
+  - **Wrists & Hands**: Circles, stretches, carpal tunnel prevention
+  - **Breathing & Mindfulness**: Box breathing, 4-7-8 technique, meditation
+
+- **🔔 Context-Aware Notifications**
+  - Smart scheduling that avoids interruptions
+  - Customizable frequency
+  - Motivational messages
+  - Quick actions from notifications
+
+- **📊 Progress Tracking**
+  - Daily break streaks
+  - Weekly consistency scores
+  - Focus time trends
+  - Exercise preferences
+  - Health improvement indicators
+
+### Premium Features (Planned)
+
+- 🤖 AI-powered personalization engine
+- 📈 Advanced analytics and detailed health reports
+- 🎨 Customization options and themes
+- 👥 Team features and social challenges
+- 🔗 Calendar and productivity tool integrations
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+- **Framework**: React Native 0.81.5 with Expo ~54.0
+- **Language**: TypeScript 5.9.2
+- **Navigation**: Expo Router (file-based routing)
+- **UI Components**: Custom themed components
+- **Animations**: React Native Reanimated 4.1.1
+- **Icons**: Expo Vector Icons & Expo Symbols
+- **Gestures**: React Native Gesture Handler
+
+### Development Tools
+- **Linting**: ESLint with Expo config
+- **Package Manager**: npm
+- **Build System**: Expo Application Services (EAS)
+
+### Platform Support
+- ✅ iOS 13.0+
+- ✅ Android (API 21+ / 5.0 Lollipop)
+- ✅ Web (React Native Web)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Expo CLI
+- iOS Simulator (macOS) or Android Emulator
+- Expo Go app (for physical device testing)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/canknbr/MicroBreaks.git
+   cd MicroBreaks
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. **Start the development server**
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+4. **Run on your preferred platform**
+   ```bash
+   # iOS Simulator
+   npm run ios
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   # Android Emulator
+   npm run android
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   # Web Browser
+   npm run web
+   ```
 
-## Get a fresh project
-
-When you're ready, run:
+### Development Scripts
 
 ```bash
-npm run reset-project
+npm start          # Start Expo development server
+npm run android    # Run on Android emulator/device
+npm run ios        # Run on iOS simulator/device
+npm run web        # Run in web browser
+npm run lint       # Run ESLint
+npm run reset-project  # Reset to blank project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 📁 Project Structure
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+MicroBreaks/
+├── app/                      # Expo Router screens
+│   ├── (tabs)/              # Tab-based navigation
+│   │   ├── index.tsx        # Home screen
+│   │   ├── explore.tsx      # Explore screen
+│   │   └── _layout.tsx      # Tabs layout
+│   ├── _layout.tsx          # Root layout
+│   └── modal.tsx            # Modal screens
+├── components/              # Reusable components
+│   ├── ui/                  # UI components
+│   ├── themed-view.tsx      # Themed view wrapper
+│   ├── themed-text.tsx      # Themed text component
+│   └── ...
+├── constants/               # App constants
+│   └── theme.ts             # Theme configuration
+├── hooks/                   # Custom React hooks
+│   ├── use-theme-color.ts
+│   └── use-color-scheme.ts
+├── documentations/          # Project documentation
+│   ├── PRD_MicroBreaks_Enhanced_v2.md
+│   └── Onboarding_Flow_MicroBreaks_v3.md
+├── assets/                  # Images, fonts, etc.
+├── scripts/                 # Utility scripts
+└── ...config files
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 🎨 Design Principles
 
-Join our community of developers creating universal apps.
+1. **Calm Technology**: Non-intrusive, respectful of user attention
+2. **Accessibility First**: WCAG AA compliant with inclusive design
+3. **Delightful Micro-interactions**: Smooth, meaningful animations
+4. **Clear Visual Hierarchy**: Important information immediately visible
+5. **Consistent Design Language**: Unified experience across all touchpoints
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 📱 Screenshots
+
+> Coming soon! Screenshots will showcase the timer interface, exercise library, progress tracking, and more.
+
+---
+
+## 🗺 Roadmap
+
+### Phase 1: MVP (Months 1-3) ✅
+- [x] Project setup and architecture
+- [ ] Core timer functionality
+- [ ] Basic exercise library (20 exercises)
+- [ ] Notification system
+- [ ] Usage tracking
+
+### Phase 2: Enhancement (Months 4-6)
+- [ ] Expanded exercise library (100+ exercises)
+- [ ] Advanced analytics dashboard
+- [ ] Subscription system
+- [ ] Social sharing features
+
+### Phase 3: Intelligence (Months 7-9)
+- [ ] ML-based personalization
+- [ ] Health score algorithm
+- [ ] Calendar integration
+- [ ] Widget support
+- [ ] Apple Health / Google Fit sync
+
+### Phase 4: Expansion (Months 10-12)
+- [ ] Team features
+- [ ] Corporate dashboard
+- [ ] Wearable integration
+- [ ] Third-party API
+- [ ] Advanced analytics
+
+---
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `/documentations` folder:
+
+- **[Product Requirements Document](./documentations/PRD_MicroBreaks_Enhanced_v2.md)** - Complete product specifications, market analysis, and technical requirements
+- **[Onboarding Flow](./documentations/Onboarding_Flow_MicroBreaks_v3.md)** - User onboarding experience and flows
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style and conventions
+- Write meaningful commit messages
+- Add tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting PR
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run linting
+npm run lint
+
+# Run tests (when implemented)
+npm test
+
+# Type checking
+npx tsc --noEmit
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👥 Team & Contact
+
+**Product Team** - MicroBreaks Development
+
+- 📧 Email: [contact@microbreaks.app](mailto:contact@microbreaks.app)
+- 🐛 Issues: [GitHub Issues](https://github.com/canknbr/MicroBreaks/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/canknbr/MicroBreaks/discussions)
+
+---
+
+## 🙏 Acknowledgments
+
+- Physiotherapists and ergonomics experts for exercise content
+- Expo team for the amazing development framework
+- React Native community for continuous support
+- All our beta testers and early adopters
+
+---
+
+## 📊 Project Status
+
+**Current Version**: 1.0.0 (MVP Development)
+**Status**: 🚧 Active Development
+**Last Updated**: November 2025
+
+---
+
+<div align="center">
+
+**Made with ❤️ for healthier desk workers everywhere**
+
+[⬆ Back to Top](#microbreaks)
+
+</div>
