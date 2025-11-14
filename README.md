@@ -159,13 +159,32 @@ MicroBreaks/
 │   │   ├── index.tsx        # Home screen
 │   │   ├── explore.tsx      # Explore screen
 │   │   └── _layout.tsx      # Tabs layout
+│   ├── (onboarding)/        # Onboarding flow
+│   │   ├── index.tsx        # Onboarding controller
+│   │   └── _layout.tsx      # Onboarding layout
 │   ├── _layout.tsx          # Root layout
 │   └── modal.tsx            # Modal screens
 ├── components/              # Reusable components
+│   ├── onboarding/          # Onboarding components
+│   │   ├── OnboardingContainer.tsx
+│   │   ├── OnboardingButton.tsx
+│   │   ├── SelectionCard.tsx
+│   │   ├── ScreenHeader.tsx
+│   │   └── screens/         # All onboarding screens
 │   ├── ui/                  # UI components
 │   ├── themed-view.tsx      # Themed view wrapper
 │   ├── themed-text.tsx      # Themed text component
 │   └── ...
+├── contexts/                # React contexts
+│   └── OnboardingContext.tsx
+├── types/                   # TypeScript types
+│   └── onboarding.ts
+├── theme/                   # Design system
+│   ├── colors.ts
+│   ├── typography.ts
+│   ├── spacing.ts
+│   ├── shadows.ts
+│   └── animations.ts
 ├── constants/               # App constants
 │   └── theme.ts             # Theme configuration
 ├── hooks/                   # Custom React hooks
@@ -173,7 +192,8 @@ MicroBreaks/
 │   └── use-color-scheme.ts
 ├── documentations/          # Project documentation
 │   ├── PRD_MicroBreaks_Enhanced_v2.md
-│   └── Onboarding_Flow_MicroBreaks_v3.md
+│   ├── Onboarding_Flow_MicroBreaks_v3.md
+│   └── ONBOARDING_IMPLEMENTATION.md
 ├── assets/                  # Images, fonts, etc.
 ├── scripts/                 # Utility scripts
 └── ...config files
@@ -201,6 +221,8 @@ MicroBreaks/
 
 ### Phase 1: MVP (Months 1-3) ✅
 - [x] Project setup and architecture
+- [x] Comprehensive onboarding flow (21 screens)
+- [x] Design system with theme support
 - [ ] Core timer functionality
 - [ ] Basic exercise library (20 exercises)
 - [ ] Notification system
@@ -233,7 +255,26 @@ MicroBreaks/
 Comprehensive documentation is available in the `/documentations` folder:
 
 - **[Product Requirements Document](./documentations/PRD_MicroBreaks_Enhanced_v2.md)** - Complete product specifications, market analysis, and technical requirements
-- **[Onboarding Flow](./documentations/Onboarding_Flow_MicroBreaks_v3.md)** - User onboarding experience and flows
+- **[Onboarding Flow Design](./documentations/Onboarding_Flow_MicroBreaks_v3.md)** - Detailed onboarding UX specifications with 21 screens across 5 phases
+- **[Onboarding Implementation](./documentations/ONBOARDING_IMPLEMENTATION.md)** - Technical implementation guide for the onboarding flow
+
+### 🎬 Onboarding Flow
+
+The app features a comprehensive 21-screen onboarding experience:
+
+- **Phase 1: Hook** (3 screens) - Capture attention with value proposition
+- **Phase 2: Profile** (8 screens) - Personalize experience through user data
+- **Phase 3: Demonstration** (4 screens) - Show value with live break demo
+- **Phase 4: Activation** (4 screens) - Enable core features and permissions
+- **Phase 5: Monetization** (2 screens) - Present premium options
+
+Key features:
+- ✅ Smooth animations with React Native Reanimated
+- ✅ Progress tracking and auto-save
+- ✅ Dark mode support
+- ✅ Accessible design (WCAG AA)
+- ✅ Analytics-ready with event tracking
+- ✅ Resumes from last screen on app restart
 
 ---
 
