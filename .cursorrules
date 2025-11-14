@@ -1,0 +1,182 @@
+# MicroBreaks - Development Rules
+
+## Code Style and Structure
+
+- Write concise, technical TypeScript code with accurate examples
+- Use functional and declarative programming patterns; avoid classes
+- Prefer iteration and modularization over code duplication
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError)
+- Structure files: exported component, subcomponents, helpers, static content, types
+- Follow Expo's official documentation: https://docs.expo.dev/
+
+## Naming Conventions
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard)
+- Favor named exports for components
+- Use PascalCase for components and interfaces
+- Use camelCase for variables and functions
+- Use UPPER_SNAKE_CASE for constants
+
+## TypeScript Usage
+
+- Use TypeScript for all code; prefer interfaces over types
+- Avoid enums; use maps or const objects instead
+- Use functional components with TypeScript interfaces
+- Use strict mode in TypeScript for better type safety
+- Always type function parameters and return values
+- Avoid `any` type; use `unknown` when type is truly unknown
+
+## Syntax and Formatting
+
+- Use the "function" keyword for pure functions
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements
+- Use declarative JSX
+- Use Prettier for consistent code formatting
+- Maximum line length: 100 characters
+
+## UI and Styling
+
+- Use Expo's built-in components for common UI patterns and layouts
+- Implement responsive design with Flexbox and Expo's useWindowDimensions
+- Use StyleSheet.create() for all styles (no inline styles except for dynamic values)
+- Implement dark mode support using Expo's useColorScheme
+- Ensure high accessibility (a11y) standards using ARIA roles and native accessibility props
+- Leverage react-native-reanimated and react-native-gesture-handler for performant animations
+
+## Safe Area Management
+
+- Use SafeAreaProvider from react-native-safe-area-context globally
+- Wrap top-level components with SafeAreaView to handle notches and status bars
+- Use SafeAreaScrollView for scrollable content
+- Never hardcode padding or margins for safe areas
+
+## Performance Optimization
+
+- Minimize useState and useEffect; prefer context and reducers for state management
+- Use Expo's AppLoading and SplashScreen for optimized startup
+- Optimize images: use WebP where supported, include size data, implement lazy loading
+- Implement code splitting with React's Suspense and dynamic imports
+- Avoid unnecessary re-renders by memoizing components with useMemo and useCallback
+- Profile performance using React Native's built-in tools
+
+## Navigation
+
+- Use expo-router for routing and navigation (file-based routing)
+- Leverage deep linking and universal links for better engagement
+- Use dynamic routes with expo-router for navigation handling
+- Keep navigation structure flat and organized
+
+## State Management
+
+- Use React Context and useReducer for managing global state
+- Leverage React Query for data fetching and caching
+- Handle URL search parameters using expo-linking
+- Keep state as local as possible; lift state only when necessary
+
+## Error Handling and Validation
+
+- Use Zod for runtime validation and error handling
+- Implement proper error logging using Sentry or similar service
+- Handle errors at the beginning of functions
+- Use early returns for error conditions
+- Avoid unnecessary else statements; use if-return pattern
+- Implement global error boundaries to catch unexpected errors
+
+## Testing
+
+- Write unit tests using Jest and React Native Testing Library
+- Implement integration tests for critical user flows
+- Use Expo's testing tools for running tests in different environments
+- Consider snapshot testing for components to ensure UI consistency
+
+## Security
+
+- Sanitize user inputs to prevent XSS attacks
+- Use react-native-encrypted-storage for secure storage of sensitive data
+- Ensure secure communication with APIs using HTTPS
+- Follow Expo's Security guidelines: https://docs.expo.dev/guides/security/
+- Never commit API keys or secrets to version control
+
+## Internationalization (i18n)
+
+- Use expo-localization for internationalization
+- Support multiple languages and RTL layouts
+- Ensure text scaling and font adjustments for accessibility
+- Extract all user-facing strings to translation files
+
+## Firebase Integration
+
+- Use Firebase Auth for authentication
+- Use Firestore for database operations
+- Use Firebase Analytics for event tracking
+- Use Firebase Cloud Functions for serverless operations
+- Always handle offline scenarios gracefully
+- Implement proper error handling for Firebase operations
+
+## Project-Specific Rules
+
+### File Organization
+- Components: `components/` directory
+- Screens: `app/` directory (expo-router structure)
+- Services: `services/` directory
+- Types: `types/` directory
+- Contexts: `contexts/` directory
+- Constants: `constants/` directory
+- Hooks: `hooks/` directory
+
+### Component Structure
+```typescript
+// 1. Imports
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+// 2. Types/Interfaces
+interface ComponentProps {
+  title: string;
+}
+
+// 3. Component
+export function Component({ title }: ComponentProps) {
+  return (
+    <View style={styles.container}>
+      <Text>{title}</Text>
+    </View>
+  );
+}
+
+// 4. Styles
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+```
+
+### Import Order
+1. React and React Native imports
+2. Third-party library imports
+3. Expo imports
+4. Local imports (components, services, types, etc.)
+5. Relative imports
+
+### Accessibility Requirements
+- All interactive elements must have accessibilityLabel
+- All buttons must have accessibilityRole="button"
+- All images must have accessibilityLabel or be marked as decorative
+- Minimum touch target size: 44x44 points
+- Support screen readers (VoiceOver, TalkBack)
+
+### Performance Targets
+- Cold start: < 1.2 seconds
+- Screen transitions: < 300ms
+- Animation FPS: 60fps minimum
+- Memory usage: < 150MB
+- Battery drain: < 2% per hour active use
+
+### Code Quality
+- All functions must have JSDoc comments for public APIs
+- Complex logic must be commented
+- Remove console.logs before production (use proper logging service)
+- No commented-out code in production
+- Keep functions small and focused (max 50 lines when possible)
+
