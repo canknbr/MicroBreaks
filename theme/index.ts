@@ -25,7 +25,7 @@ export type { ShadowLevel, ComponentShadowType, ShadowStyle } from './shadows';
 export type { DurationValue, EasingValue, TransitionType } from './animations';
 
 // Theme configuration
-import { Colors, ColorPalette } from './colors';
+import { Colors, ColorPalette, Gradients } from './colors';
 import { Typography, FontFamily, FontSize, LineHeight } from './typography';
 import { Spacing, BorderRadius, IconSize, ComponentSpacing } from './spacing';
 import { Shadows, ComponentShadows } from './shadows';
@@ -38,6 +38,7 @@ import { Duration, Easing, Transition } from './animations';
 export const Theme = {
   colors: Colors,
   palette: ColorPalette,
+  gradients: Gradients,
   typography: Typography,
   fonts: FontFamily,
   fontSize: FontSize,
