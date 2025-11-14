@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
-import { PAIN_AREAS } from './constants';
+import { PAIN_AREAS } from '@/constants/onboarding';
 
 type Severity = 'mild' | 'moderate' | 'severe';
 

@@ -10,7 +10,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing } from '@/theme';
-import { BREAK_STYLES } from './constants';
+import { BREAK_STYLES } from '@/constants/onboarding';
 
 export default function BreakStyleScreen() {
   const router = useRouter();

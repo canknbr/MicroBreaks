@@ -10,7 +10,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
-import { TIMER_PRESETS } from './constants';
+import { TIMER_PRESETS } from '@/constants/onboarding';
 
 export default function TimerConfigScreen() {
   const router = useRouter();

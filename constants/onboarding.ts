@@ -3,7 +3,7 @@
  * Screen configurations and content for the onboarding experience
  */
 
-import { OnboardingScreenId } from './types';
+import { OnboardingScreenId } from '@/types/onboarding';
 
 export const ONBOARDING_SCREENS: OnboardingScreenId[] = [
   'ONB_001',

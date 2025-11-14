@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
-import { ERGONOMIC_CHECKLIST } from './constants';
+import { ERGONOMIC_CHECKLIST } from '@/constants/onboarding';
 
 export default function ErgonomicSetupScreen() {
   const router = useRouter();

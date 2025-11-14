@@ -10,7 +10,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
-import { PREMIUM_FEATURES } from './constants';
+import { PREMIUM_FEATURES } from '@/constants/onboarding';
 
 export default function PremiumPitchScreen() {
   const router = useRouter();

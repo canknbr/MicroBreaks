@@ -10,7 +10,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing } from '@/theme';
-import { WORK_ROLES } from './constants';
+import { WORK_ROLES } from '@/constants/onboarding';
 
 export default function WorkRoleScreen() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function WorkRoleScreen() {
   };
 
   return (
-    <OnboardingLayout currentStep={4}>
+    <OnboardingLayout currentStep={4} scrollable={false}>
       <View style={styles.container}>
         <Text style={styles.question}>What best describes your work?</Text>
 

@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
-import { TESTIMONIALS } from './constants';
+import { TESTIMONIALS } from '@/constants/onboarding';
 
 export default function SocialProofScreen() {
   const router = useRouter();

@@ -10,7 +10,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing } from '@/theme';
-import { NOTIFICATION_STYLES } from './constants';
+import { NOTIFICATION_STYLES } from '@/constants/onboarding';
 
 export default function NotificationPreferenceScreen() {
   const router = useRouter();

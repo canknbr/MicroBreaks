@@ -11,7 +11,7 @@ import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing } from '@/theme';
-import { ENERGY_PATTERNS } from './constants';
+import { ENERGY_PATTERNS } from '@/constants/onboarding';
 
 export default function EnergyPatternScreen() {
   const router = useRouter();

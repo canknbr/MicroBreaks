@@ -11,7 +11,7 @@ import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing } from '@/theme';
-import { WORK_PATTERNS } from './constants';
+import { WORK_PATTERNS } from '@/constants/onboarding';
 
 export default function WorkPatternScreen() {
   const router = useRouter();
