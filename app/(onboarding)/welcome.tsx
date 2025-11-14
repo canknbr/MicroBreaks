@@ -1,12 +1,11 @@
 /**
  * ONB_001: Welcome & Problem Recognition
- * Modern black-themed welcome screen with animations
+ * Clean, minimalist welcome screen inspired by "How We Feel" design
  */
 
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,7 +18,7 @@ import Animated, {
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
-import { Colors, Typography, Spacing, Gradients } from '@/theme';
+import { Colors, Typography, Spacing } from '@/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -75,51 +74,32 @@ export default function WelcomeScreen() {
     <OnboardingLayout currentStep={1} scrollable={false}>
       <View style={styles.container}>
         <View style={styles.content}>
-          {/* Animated illustration with gradient background */}
+          {/* Animated illustration */}
           <View style={styles.illustrationContainer}>
-            <LinearGradient
-              colors={['rgba(0, 217, 255, 0.2)', 'rgba(180, 126, 255, 0.2)']}
-              style={styles.illustrationGlow}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            />
             <Animated.Text style={[styles.illustration, iconAnimatedStyle]}>
               🧘‍♀️
             </Animated.Text>
           </View>
 
-          <Animated.View style={textAnimatedStyle}>
-            <LinearGradient
-              colors={Gradients.special.neon}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headlineGradient}>
-              <Text style={styles.headline}>Your desk doesn't have to hurt</Text>
-            </LinearGradient>
-
-            <Text style={styles.subhead}>
-              Join 100,000+ workers who've eliminated daily pain
+          <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
+            <Text style={styles.headline}>
+              MicroBreaks—{'\n'}Your Desk Wellness{'\n'}Companion
             </Text>
 
-            {/* Feature highlights */}
-            <View style={styles.features}>
-              {['⚡ Smart breaks', '💪 Feel better', '🎯 Stay focused'].map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
+            <Text style={styles.subhead}>
+              Take smart breaks throughout your day to stay energized, focused, and pain-free
+            </Text>
           </Animated.View>
         </View>
 
         <View style={styles.actions}>
           <PrimaryButton
-            title="Start Feeling Better"
+            title="Get Started"
             onPress={handleStart}
             style={styles.primaryButton}
           />
           <SecondaryButton
-            title="I'm just browsing"
+            title="Skip setup"
             onPress={handleBrowse}
           />
         </View>
@@ -132,73 +112,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.xl,
   },
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
   },
   illustrationContainer: {
-    position: 'relative',
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  illustrationGlow: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    opacity: 0.6,
-  },
   illustration: {
-    fontSize: 120,
+    fontSize: 140,
   },
-  headlineGradient: {
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-    borderRadius: 8,
+  textContainer: {
+    alignItems: 'center',
   },
   headline: {
-    ...Typography.headlineLarge,
+    ...Typography.displaySmall,
     color: Colors.dark.text.primary,
     textAlign: 'center',
-    fontWeight: '800',
-    fontSize: 36,
-    lineHeight: 44,
+    fontWeight: '700',
+    marginBottom: Spacing.lg,
   },
   subhead: {
     ...Typography.bodyLarge,
     color: Colors.dark.text.secondary,
     textAlign: 'center',
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  features: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-  },
-  featureItem: {
-    backgroundColor: 'rgba(0, 217, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 217, 255, 0.3)',
-    borderRadius: 20,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
-  },
-  featureText: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.primary,
-    fontWeight: '600',
+    lineHeight: 24,
+    maxWidth: 320,
   },
   actions: {
     width: '100%',
   },
   primaryButton: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
 });

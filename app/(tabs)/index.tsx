@@ -1,98 +1,135 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * Home Screen - MicroBreaks Dashboard
+ * Inspired by "How We Feel" design with pure black background
+ */
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Typography, Spacing } from '@/theme';
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Welcome back</Text>
+          <Text style={styles.emoji}>🎯</Text>
+        </View>
+
+        {/* Stats Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Today's Progress</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Breaks taken</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>0m</Text>
+              <Text style={styles.statLabel}>Time invested</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Start</Text>
+          <View style={styles.actionCard}>
+            <Text style={styles.actionEmoji}>⏰</Text>
+            <Text style={styles.actionText}>Start a micro break</Text>
+          </View>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.dark.background.primary,
+  },
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: Spacing.lg,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  greeting: {
+    ...Typography.displaySmall,
+    color: Colors.dark.text.primary,
+  },
+  emoji: {
+    fontSize: 40,
+  },
+  card: {
+    backgroundColor: Colors.dark.card.background,
+    borderRadius: 16,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  cardTitle: {
+    ...Typography.titleMedium,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.md,
+  },
+  statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  stat: {
+    flex: 1,
+    alignItems: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  statValue: {
+    ...Typography.displaySmall,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.xxs,
+  },
+  statLabel: {
+    ...Typography.bodySmall,
+    color: Colors.dark.text.secondary,
+  },
+  divider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.dark.border.default,
+  },
+  section: {
+    marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    ...Typography.titleLarge,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.md,
+  },
+  actionCard: {
+    backgroundColor: Colors.dark.card.background,
+    borderRadius: 16,
+    padding: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionEmoji: {
+    fontSize: 32,
+    marginRight: Spacing.md,
+  },
+  actionText: {
+    ...Typography.bodyLarge,
+    color: Colors.dark.text.primary,
   },
 });

@@ -7,13 +7,17 @@
 
 import { Platform } from 'react-native';
 
-// Font Families
+// Font Families - Inspired by "How We Feel" design
 export const FontFamily = Platform.select({
   ios: {
+    // Sans-serif for body text
     regular: 'Inter-Regular',
     medium: 'Inter-Medium',
     semiBold: 'Inter-SemiBold',
     bold: 'Inter-Bold',
+    // Serif for headings (system serif fonts)
+    serifRegular: 'Georgia',
+    serifBold: 'Georgia',
     // System fallbacks
     systemRegular: 'System',
     systemMedium: 'System',
@@ -21,10 +25,14 @@ export const FontFamily = Platform.select({
     systemBold: 'System',
   },
   android: {
+    // Sans-serif for body text
     regular: 'Inter-Regular',
     medium: 'Inter-Medium',
     semiBold: 'Inter-SemiBold',
     bold: 'Inter-Bold',
+    // Serif for headings
+    serifRegular: 'serif',
+    serifBold: 'serif',
     // System fallbacks
     systemRegular: 'sans-serif',
     systemMedium: 'sans-serif-medium',
@@ -36,12 +44,15 @@ export const FontFamily = Platform.select({
     medium: 'Inter-Medium',
     semiBold: 'Inter-SemiBold',
     bold: 'Inter-Bold',
+    serifRegular: 'Georgia',
+    serifBold: 'Georgia',
     systemRegular: 'System',
     systemMedium: 'System',
     systemSemiBold: 'System',
     systemBold: 'System',
   },
   web: {
+    // Sans-serif for body text
     regular:
       "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     medium:
@@ -49,6 +60,12 @@ export const FontFamily = Platform.select({
     semiBold:
       "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     bold: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    // Serif for headings - elegant display serif stack
+    serifRegular:
+      "Georgia, 'Times New Roman', Times, serif",
+    serifBold:
+      "Georgia, 'Times New Roman', Times, serif",
+    // System fallbacks
     systemRegular: 'system-ui, sans-serif',
     systemMedium: 'system-ui, sans-serif',
     systemSemiBold: 'system-ui, sans-serif',
@@ -162,48 +179,48 @@ export const LetterSpacing = {
   wider: 1,
 } as const;
 
-// Typography Presets
+// Typography Presets - Inspired by "How We Feel" design
 export const Typography = {
-  // Display Styles
+  // Display Styles - Serif for elegant headings
   displayLarge: {
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.serifBold,
     fontSize: FontSize.display.large,
     lineHeight: LineHeight.display.large,
     fontWeight: FontWeight.bold,
     letterSpacing: LetterSpacing.tight,
   },
   displayMedium: {
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.serifBold,
     fontSize: FontSize.display.medium,
     lineHeight: LineHeight.display.medium,
     fontWeight: FontWeight.bold,
     letterSpacing: LetterSpacing.tight,
   },
   displaySmall: {
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.serifBold,
     fontSize: FontSize.display.small,
     lineHeight: LineHeight.display.small,
     fontWeight: FontWeight.bold,
     letterSpacing: LetterSpacing.normal,
   },
 
-  // Headline Styles (24-32px)
+  // Headline Styles (24-32px) - Serif for main headings
   headlineLarge: {
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.serifBold,
     fontSize: FontSize.headline.large,
     lineHeight: LineHeight.headline.large,
     fontWeight: FontWeight.bold,
     letterSpacing: LetterSpacing.normal,
   },
   headlineMedium: {
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.serifBold,
     fontSize: FontSize.headline.medium,
     lineHeight: LineHeight.headline.medium,
     fontWeight: FontWeight.bold,
     letterSpacing: LetterSpacing.normal,
   },
   headlineSmall: {
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.serifBold,
     fontSize: FontSize.headline.small,
     lineHeight: LineHeight.headline.small,
     fontWeight: FontWeight.bold,

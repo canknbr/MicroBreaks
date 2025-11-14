@@ -6,41 +6,67 @@
  */
 
 export const ColorPalette = {
-  // Primary Colors
-  primary: {
-    calmBlue: '#4A90E2',
-    energyGreen: '#7ED321',
-  },
-
-  // Secondary Colors
-  secondary: {
-    softPurple: '#9013FE',
-    warmOrange: '#F5A623',
+  // Core Brand Colors - Inspired by "How We Feel" design
+  brand: {
+    yellow: '#FFD166',
+    orange: '#FF9F1C',
+    coral: '#EF476F',
+    red: '#E63946',
+    teal: '#06FFA5',
+    green: '#4ECDC4',
+    blue: '#118AB2',
+    lightBlue: '#82C3EC',
+    purple: '#7B68EE',
+    lavender: '#B47EFF',
   },
 
   // Neutral Colors
   neutral: {
-    dark: '#2C3E50',
-    medium: '#7F8C8D',
-    light: '#ECF0F1',
-    white: '#FFFFFF',
     black: '#000000',
+    darkGray: '#1A1A1A',
+    mediumGray: '#2A2A2A',
+    gray: '#4A4A4A',
+    lightGray: '#9CA3AF',
+    silver: '#C4C4C4',
+    white: '#FFFFFF',
   },
 
-  // Semantic Colors
-  semantic: {
-    error: '#E74C3C',
-    warning: '#F39C12',
-    info: '#3498DB',
-    success: '#7ED321',
+  // Emotion Color Mapping
+  emotions: {
+    // Positive/High Energy
+    energized: '#FFD166',
+    cheerful: '#FFD166',
+    playful: '#FFD166',
+    eager: '#FF9F1C',
+    productive: '#FF9F1C',
+
+    // Positive/Low Energy
+    calm: '#4ECDC4',
+    peaceful: '#4ECDC4',
+    relaxed: '#06FFA5',
+    atEase: '#06FFA5',
+
+    // Negative/High Energy
+    stressed: '#E63946',
+    anxious: '#E63946',
+    restless: '#EF476F',
+    tense: '#EF476F',
+
+    // Negative/Low Energy
+    sad: '#118AB2',
+    tired: '#82C3EC',
+    bored: '#82C3EC',
+    lonely: '#7B68EE',
   },
 
   // UI Element Colors
   ui: {
-    border: '#E0E0E0',
-    divider: '#BDBDBD',
-    overlay: 'rgba(0, 0, 0, 0.5)',
-    backdrop: 'rgba(0, 0, 0, 0.3)',
+    border: '#2A2A2A',
+    divider: '#1A1A1A',
+    overlay: 'rgba(0, 0, 0, 0.85)',
+    backdrop: 'rgba(0, 0, 0, 0.6)',
+    cardBackground: '#1A1A1A',
+    inputBackground: '#2A2A2A',
   },
 } as const;
 
@@ -48,250 +74,251 @@ export const Colors = {
   light: {
     // Text
     text: {
-      primary: ColorPalette.neutral.dark,
-      secondary: ColorPalette.neutral.medium,
-      tertiary: '#95A5A6',
+      primary: ColorPalette.neutral.black,
+      secondary: ColorPalette.neutral.gray,
+      tertiary: ColorPalette.neutral.lightGray,
       inverse: ColorPalette.neutral.white,
-      link: ColorPalette.primary.calmBlue,
-      error: ColorPalette.semantic.error,
-      success: ColorPalette.semantic.success,
-      warning: ColorPalette.semantic.warning,
+      link: ColorPalette.brand.blue,
+      error: ColorPalette.brand.red,
+      success: ColorPalette.brand.teal,
+      warning: ColorPalette.brand.orange,
     },
 
     // Background
     background: {
       primary: ColorPalette.neutral.white,
-      secondary: ColorPalette.neutral.light,
-      tertiary: '#F8F9FA',
-      inverse: ColorPalette.neutral.dark,
+      secondary: '#F9FAFB',
+      tertiary: '#F3F4F6',
+      inverse: ColorPalette.neutral.black,
       surface: ColorPalette.neutral.white,
       overlay: ColorPalette.ui.overlay,
     },
 
     // Brand
     brand: {
-      primary: ColorPalette.primary.calmBlue,
-      secondary: ColorPalette.primary.energyGreen,
-      accent: ColorPalette.secondary.softPurple,
-      highlight: ColorPalette.secondary.warmOrange,
+      primary: ColorPalette.brand.teal,
+      secondary: ColorPalette.brand.yellow,
+      accent: ColorPalette.brand.purple,
+      highlight: ColorPalette.brand.coral,
     },
 
     // Interactive Elements
     interactive: {
-      primary: ColorPalette.primary.calmBlue,
-      primaryHover: '#3A7BC8',
-      primaryActive: '#2A6BB8',
-      primaryDisabled: '#B8D4EE',
-      secondary: ColorPalette.primary.energyGreen,
-      secondaryHover: '#6BC31E',
-      secondaryActive: '#5BB31E',
-      secondaryDisabled: '#C5E9A8',
+      primary: ColorPalette.brand.teal,
+      primaryHover: '#05E094',
+      primaryActive: '#05CC84',
+      primaryDisabled: ColorPalette.neutral.lightGray,
+      secondary: ColorPalette.brand.yellow,
+      secondaryHover: '#FFC94D',
+      secondaryActive: '#FFB733',
+      secondaryDisabled: ColorPalette.neutral.silver,
     },
 
     // Status Colors
     status: {
-      error: ColorPalette.semantic.error,
-      errorLight: '#FADBD8',
-      warning: ColorPalette.semantic.warning,
-      warningLight: '#FCF3CF',
-      success: ColorPalette.semantic.success,
-      successLight: '#D5F4E6',
-      info: ColorPalette.semantic.info,
-      infoLight: '#D6EAF8',
+      error: ColorPalette.brand.red,
+      errorLight: '#FEE2E2',
+      warning: ColorPalette.brand.orange,
+      warningLight: '#FEF3C7',
+      success: ColorPalette.brand.teal,
+      successLight: '#D1FAE5',
+      info: ColorPalette.brand.blue,
+      infoLight: '#DBEAFE',
     },
 
     // Border & Divider
     border: {
-      default: ColorPalette.ui.border,
-      light: '#F0F0F0',
-      dark: ColorPalette.ui.divider,
-      focus: ColorPalette.primary.calmBlue,
-      error: ColorPalette.semantic.error,
+      default: '#E5E7EB',
+      light: '#F3F4F6',
+      dark: '#D1D5DB',
+      focus: ColorPalette.brand.teal,
+      error: ColorPalette.brand.red,
     },
 
     // Icon
     icon: {
-      primary: ColorPalette.neutral.dark,
-      secondary: ColorPalette.neutral.medium,
-      tertiary: '#BDC3C7',
+      primary: ColorPalette.neutral.black,
+      secondary: ColorPalette.neutral.gray,
+      tertiary: ColorPalette.neutral.lightGray,
       inverse: ColorPalette.neutral.white,
-      brand: ColorPalette.primary.calmBlue,
+      brand: ColorPalette.brand.teal,
     },
 
     // Tab Navigation
     tab: {
-      iconDefault: ColorPalette.neutral.medium,
-      iconSelected: ColorPalette.primary.calmBlue,
+      iconDefault: ColorPalette.neutral.gray,
+      iconSelected: ColorPalette.brand.teal,
       background: ColorPalette.neutral.white,
-      activeIndicator: ColorPalette.primary.calmBlue,
+      activeIndicator: ColorPalette.brand.teal,
     },
 
     // Card
     card: {
       background: ColorPalette.neutral.white,
-      border: ColorPalette.ui.border,
+      border: '#E5E7EB',
       shadow: 'rgba(0, 0, 0, 0.1)',
     },
 
     // Input
     input: {
       background: ColorPalette.neutral.white,
-      border: ColorPalette.ui.border,
-      borderFocus: ColorPalette.primary.calmBlue,
-      borderError: ColorPalette.semantic.error,
-      placeholder: ColorPalette.neutral.medium,
-      text: ColorPalette.neutral.dark,
-      disabled: ColorPalette.neutral.light,
+      border: '#E5E7EB',
+      borderFocus: ColorPalette.brand.teal,
+      borderError: ColorPalette.brand.red,
+      placeholder: ColorPalette.neutral.lightGray,
+      text: ColorPalette.neutral.black,
+      disabled: '#F3F4F6',
     },
 
     // Progress & Loading
     progress: {
-      background: ColorPalette.neutral.light,
-      fill: ColorPalette.primary.calmBlue,
-      success: ColorPalette.semantic.success,
+      background: '#E5E7EB',
+      fill: ColorPalette.brand.teal,
+      success: ColorPalette.brand.teal,
     },
   },
 
   dark: {
-    // Text
+    // Text - Pure black background with white text
     text: {
-      primary: '#FFFFFF',
-      secondary: '#B4B4B4',
-      tertiary: '#808080',
-      inverse: '#000000',
-      link: '#00D9FF',
-      error: '#FF6B6B',
-      success: '#00FF94',
-      warning: '#FFB800',
+      primary: ColorPalette.neutral.white,
+      secondary: ColorPalette.neutral.lightGray,
+      tertiary: ColorPalette.neutral.gray,
+      inverse: ColorPalette.neutral.black,
+      link: ColorPalette.brand.teal,
+      error: ColorPalette.brand.coral,
+      success: ColorPalette.brand.teal,
+      warning: ColorPalette.brand.orange,
     },
 
-    // Background
+    // Background - Pure black like "How We Feel"
     background: {
-      primary: '#000000',
-      secondary: '#0A0A0A',
-      tertiary: '#141414',
+      primary: ColorPalette.neutral.black,
+      secondary: ColorPalette.neutral.darkGray,
+      tertiary: ColorPalette.neutral.mediumGray,
       inverse: ColorPalette.neutral.white,
-      surface: '#0F0F0F',
-      overlay: 'rgba(0, 0, 0, 0.85)',
+      surface: ColorPalette.ui.cardBackground,
+      overlay: ColorPalette.ui.overlay,
     },
 
     // Brand
     brand: {
-      primary: '#00D9FF',
-      secondary: '#00FF94',
-      accent: '#B47EFF',
-      highlight: '#FF3D71',
+      primary: ColorPalette.brand.teal,
+      secondary: ColorPalette.brand.yellow,
+      accent: ColorPalette.brand.lavender,
+      highlight: ColorPalette.brand.coral,
     },
 
-    // Interactive Elements
+    // Interactive Elements - White buttons with black text
     interactive: {
-      primary: '#00D9FF',
-      primaryHover: '#33E1FF',
-      primaryActive: '#00B8D9',
-      primaryDisabled: '#1A3D47',
-      secondary: '#00FF94',
-      secondaryHover: '#33FFA8',
-      secondaryActive: '#00D97A',
-      secondaryDisabled: '#1A4733',
+      primary: ColorPalette.neutral.white,
+      primaryHover: ColorPalette.neutral.silver,
+      primaryActive: '#E0E0E0',
+      primaryDisabled: ColorPalette.neutral.gray,
+      secondary: ColorPalette.neutral.mediumGray,
+      secondaryHover: ColorPalette.neutral.gray,
+      secondaryActive: '#5A5A5A',
+      secondaryDisabled: ColorPalette.neutral.darkGray,
     },
 
     // Status Colors
     status: {
-      error: '#FF6B6B',
-      errorLight: '#331515',
-      warning: '#FFB800',
-      warningLight: '#332500',
-      success: '#00FF94',
-      successLight: '#00331D',
-      info: '#00D9FF',
-      infoLight: '#002B33',
+      error: ColorPalette.brand.coral,
+      errorLight: ColorPalette.neutral.darkGray,
+      warning: ColorPalette.brand.orange,
+      warningLight: ColorPalette.neutral.darkGray,
+      success: ColorPalette.brand.teal,
+      successLight: ColorPalette.neutral.darkGray,
+      info: ColorPalette.brand.lightBlue,
+      infoLight: ColorPalette.neutral.darkGray,
     },
 
     // Border & Divider
     border: {
-      default: '#1F1F1F',
-      light: '#141414',
-      dark: '#2A2A2A',
-      focus: '#00D9FF',
-      error: '#FF6B6B',
+      default: ColorPalette.ui.border,
+      light: ColorPalette.neutral.darkGray,
+      dark: ColorPalette.neutral.mediumGray,
+      focus: ColorPalette.brand.teal,
+      error: ColorPalette.brand.coral,
     },
 
     // Icon
     icon: {
-      primary: '#FFFFFF',
-      secondary: '#B4B4B4',
-      tertiary: '#666666',
-      inverse: '#000000',
-      brand: '#00D9FF',
+      primary: ColorPalette.neutral.white,
+      secondary: ColorPalette.neutral.lightGray,
+      tertiary: ColorPalette.neutral.gray,
+      inverse: ColorPalette.neutral.black,
+      brand: ColorPalette.brand.teal,
     },
 
     // Tab Navigation
     tab: {
-      iconDefault: '#808080',
-      iconSelected: '#00D9FF',
-      background: '#000000',
-      activeIndicator: '#00D9FF',
+      iconDefault: ColorPalette.neutral.gray,
+      iconSelected: ColorPalette.brand.teal,
+      background: ColorPalette.neutral.black,
+      activeIndicator: ColorPalette.brand.teal,
     },
 
     // Card
     card: {
-      background: '#0F0F0F',
-      border: '#1F1F1F',
-      shadow: 'rgba(0, 0, 0, 0.6)',
+      background: ColorPalette.ui.cardBackground,
+      border: ColorPalette.ui.border,
+      shadow: 'rgba(0, 0, 0, 0.8)',
     },
 
     // Input
     input: {
-      background: '#141414',
-      border: '#2A2A2A',
-      borderFocus: '#00D9FF',
-      borderError: '#FF6B6B',
-      placeholder: '#666666',
-      text: '#FFFFFF',
-      disabled: '#0A0A0A',
+      background: ColorPalette.ui.inputBackground,
+      border: ColorPalette.ui.border,
+      borderFocus: ColorPalette.brand.teal,
+      borderError: ColorPalette.brand.coral,
+      placeholder: ColorPalette.neutral.gray,
+      text: ColorPalette.neutral.white,
+      disabled: ColorPalette.neutral.darkGray,
     },
 
     // Progress & Loading
     progress: {
-      background: '#1F1F1F',
-      fill: '#00D9FF',
-      success: '#00FF94',
+      background: ColorPalette.neutral.mediumGray,
+      fill: ColorPalette.brand.teal,
+      success: ColorPalette.brand.teal,
     },
   },
 } as const;
 
-// Gradient definitions for modern black-themed UI
+// Gradient definitions inspired by "How We Feel" colorful emotion design
 export const Gradients = {
-  // Primary gradients
-  primary: {
-    cyan: ['#00D9FF', '#0099CC'],
-    cyanVertical: ['#00D9FF', '#006B8F'],
-    green: ['#00FF94', '#00CC75'],
-    purple: ['#B47EFF', '#8B5FD9'],
-    red: ['#FF3D71', '#CC1447'],
+  // Emotion-based gradients
+  emotions: {
+    energized: ['#FFD166', '#FF9F1C'],
+    calm: ['#4ECDC4', '#06FFA5'],
+    happy: ['#FFD166', '#06FFA5'],
+    stressed: ['#EF476F', '#E63946'],
+    peaceful: ['#4ECDC4', '#7B68EE'],
+    rainbow: ['#06FFA5', '#4ECDC4', '#118AB2', '#7B68EE', '#FFD166', '#FF9F1C', '#EF476F'],
   },
 
   // Background gradients
   background: {
-    dark: ['#000000', '#0A0A0A', '#141414'],
-    darkVertical: ['#0A0A0A', '#000000'],
-    subtle: ['#0F0F0F', '#1A1A1A'],
-    card: ['#0F0F0F', '#141414', '#0A0A0A'],
+    pure: ['#000000', '#000000'],
+    subtle: ['#000000', '#0A0A0A'],
+    dark: ['#000000', '#1A1A1A'],
+    card: ['#1A1A1A', '#2A2A2A'],
   },
 
   // Special effect gradients
   special: {
-    aurora: ['#00D9FF', '#B47EFF', '#FF3D71'],
-    neon: ['#00FF94', '#00D9FF', '#B47EFF'],
-    sunset: ['#FF3D71', '#FFB800', '#FF3D71'],
-    midnight: ['#000000', '#0F0F0F', '#1A1A1A', '#000000'],
+    aurora: ['#06FFA5', '#7B68EE', '#EF476F'],
+    sunset: ['#FFD166', '#FF9F1C', '#EF476F'],
+    ocean: ['#4ECDC4', '#118AB2', '#7B68EE'],
+    fire: ['#FFD166', '#FF9F1C', '#E63946'],
   },
 
   // Overlay gradients
   overlay: {
-    top: ['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0)'],
-    bottom: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.8)'],
-    radial: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.9)'],
+    top: ['rgba(0, 0, 0, 0.9)', 'rgba(0, 0, 0, 0)'],
+    bottom: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.9)'],
+    radial: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.95)'],
   },
 } as const;
 
