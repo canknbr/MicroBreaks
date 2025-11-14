@@ -67,7 +67,7 @@ export default function FirstSessionScreen() {
               onValueChange={setNotificationsOn}
               trackColor={{
                 false: Colors.dark.border.default,
-                true: Colors.dark.brand.primary,
+                true: Colors.dark.text.primary,
               }}
             />
           </View>
@@ -81,7 +81,7 @@ export default function FirstSessionScreen() {
               onValueChange={setSoundOn}
               trackColor={{
                 false: Colors.dark.border.default,
-                true: Colors.dark.brand.primary,
+                true: Colors.dark.text.primary,
               }}
             />
           </View>
@@ -95,7 +95,7 @@ export default function FirstSessionScreen() {
               onValueChange={setVibrationOn}
               trackColor={{
                 false: Colors.dark.border.default,
-                true: Colors.dark.brand.primary,
+                true: Colors.dark.text.primary,
               }}
             />
           </View>
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   timerValue: {
     ...Typography.displayLarge,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
     fontWeight: 'bold',
   },
   timerLabel: {

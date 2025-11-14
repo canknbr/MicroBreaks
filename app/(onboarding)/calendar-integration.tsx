@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   privacyNote: {
-    backgroundColor: Colors.dark.status.successLight,
+    backgroundColor: Colors.dark.background.secondary,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.md,

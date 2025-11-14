@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   trustBadge: {
-    backgroundColor: Colors.dark.status.successLight,
+    backgroundColor: Colors.dark.background.secondary,
     paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.sm,

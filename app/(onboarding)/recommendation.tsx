@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     ...Typography.labelSmall,
-    color: Colors.dark.brand.accent,
+    color: Colors.dark.text.primary,
     backgroundColor: Colors.dark.background.secondary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
@@ -123,11 +123,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.card,
     marginBottom: Spacing.md,
     borderWidth: 2,
-    borderColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
   },
   matchValue: {
     ...Typography.displayLarge,
-    color: Colors.dark.status.success,
+    color: Colors.dark.text.primary,
     fontWeight: 'bold',
   },
   matchLabel: {

@@ -139,8 +139,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     ...Typography.labelSmall,
-    color: Colors.dark.status.error,
-    backgroundColor: Colors.dark.status.errorLight,
+    color: Colors.dark.text.inverse,
+    backgroundColor: Colors.dark.text.primary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.full,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   premiumColumn: {
-    backgroundColor: Colors.dark.status.infoLight,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.sm,
     marginVertical: -Spacing.xxs,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.text.primary,
   },
   premiumTitle: {
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
   },
   featureLabel: {
     flex: 2,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.text.primary,
   },
   offerCard: {
-    backgroundColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.text.primary,
     borderRadius: BorderRadius.card,
     padding: Spacing.md,
     alignItems: 'center',
@@ -227,15 +227,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   urgencyBadge: {
-    backgroundColor: Colors.dark.status.warning,
+    backgroundColor: Colors.dark.background.secondary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderColor: Colors.dark.border.default,
   },
   urgencyText: {
     ...Typography.bodySmall,
-    color: Colors.dark.text.primary,
-    fontWeight: 'bold',
+    color: Colors.dark.text.secondary,
+    fontWeight: '600',
   },
   socialProof: {
     alignItems: 'center',
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
   },
   highlight: {
     ...Typography.bodyMediumBold,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
   },
   primaryButton: {
     marginBottom: Spacing.xs,

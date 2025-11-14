@@ -3,13 +3,14 @@
  * Interactive body map for pain area selection
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { PAIN_AREAS } from '@/constants/onboarding';
+import { BorderRadius, Colors, Spacing, Typography } from '@/theme';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
-import { PAIN_AREAS } from '@/constants/onboarding';
 
 type Severity = 'mild' | 'moderate' | 'severe';
 
@@ -24,6 +25,7 @@ export default function PainAssessmentScreen() {
   }, []);
 
   const toggleArea = (areaId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newSelected = new Set(selectedAreas);
     if (newSelected.has(areaId)) {
       newSelected.delete(areaId);
@@ -44,6 +46,7 @@ export default function PainAssessmentScreen() {
   };
 
   const setSeverityForArea = (areaId: string, level: Severity) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSeverity({ ...severity, [areaId]: level });
   };
 
@@ -71,32 +74,33 @@ export default function PainAssessmentScreen() {
             const isSelected = selectedAreas.has(area.id);
             return (
               <View key={area.id} style={styles.areaContainer}>
-                <View
+                <Pressable
                   style={[
                     styles.areaCard,
                     isSelected && styles.areaCardSelected,
                   ]}
-                  onTouchEnd={() => toggleArea(area.id)}>
+                  onPress={() => toggleArea(area.id)}>
+                  <Text style={styles.areaIcon}>{area.icon}</Text>
                   <Text style={[
                     styles.areaLabel,
                     isSelected && styles.areaLabelSelected
                   ]}>
                     {area.label}
                   </Text>
-                </View>
+                </Pressable>
 
                 {/* Severity selector */}
                 {isSelected && area.id !== 'none' && (
                   <View style={styles.severityContainer}>
                     {(['mild', 'moderate', 'severe'] as Severity[]).map((level) => (
-                      <View
+                      <Pressable
                         key={level}
                         style={[
                           styles.severityDot,
                           severity[area.id] === level && styles.severityDotActive,
                           level === 'severe' && styles.severityDotSevere,
                         ]}
-                        onTouchEnd={() => setSeverityForArea(area.id, level)}
+                        onPress={() => setSeverityForArea(area.id, level)}
                       />
                     ))}
                   </View>
@@ -161,8 +165,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   areaCardSelected: {
-    borderColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
     backgroundColor: Colors.dark.background.secondary,
+  },
+  areaIcon: {
+    fontSize: 32,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.xs,
   },
   areaLabel: {
     ...Typography.bodyMedium,
@@ -171,7 +180,7 @@ const styles = StyleSheet.create({
   },
   areaLabelSelected: {
     ...Typography.bodyMediumBold,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
   },
   severityContainer: {
     flexDirection: 'row',
@@ -183,14 +192,14 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.dark.status.warning,
+    backgroundColor: Colors.dark.text.secondary,
     opacity: 0.3,
   },
   severityDotActive: {
     opacity: 1,
   },
   severityDotSevere: {
-    backgroundColor: Colors.dark.status.error,
+    backgroundColor: Colors.dark.text.primary,
   },
   legend: {
     alignItems: 'center',

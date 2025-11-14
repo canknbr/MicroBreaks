@@ -41,15 +41,15 @@ export const WORK_ROLES = [
 ] as const;
 
 export const PAIN_AREAS = [
-  { id: 'eyes', label: 'Eyes', icon: '👁️' },
-  { id: 'head', label: 'Head', icon: '🧠' },
-  { id: 'neck', label: 'Neck', icon: '🦴' },
-  { id: 'shoulders', label: 'Shoulders', icon: '💪' },
-  { id: 'upper_back', label: 'Upper Back', icon: '🔺' },
-  { id: 'lower_back', label: 'Lower Back', icon: '🔻' },
-  { id: 'wrists', label: 'Wrists', icon: '🖐️' },
-  { id: 'hands', label: 'Hands', icon: '👐' },
-  { id: 'none', label: "I'm pain-free!", icon: '✨' },
+  { id: 'eyes', label: 'Eyes', icon: '◉' },
+  { id: 'head', label: 'Head', icon: '○' },
+  { id: 'neck', label: 'Neck', icon: '│' },
+  { id: 'shoulders', label: 'Shoulders', icon: '─' },
+  { id: 'upper_back', label: 'Upper Back', icon: '▲' },
+  { id: 'lower_back', label: 'Lower Back', icon: '▼' },
+  { id: 'wrists', label: 'Wrists', icon: '║' },
+  { id: 'hands', label: 'Hands', icon: '╬' },
+  { id: 'none', label: "I'm pain-free!", icon: '✓' },
 ] as const;
 
 export const WORK_PATTERNS = [

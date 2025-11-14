@@ -11,8 +11,6 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -22,8 +20,6 @@ import SecondaryButton from './components/SecondaryButton';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const iconScale = useSharedValue(0.8);
-  const iconRotate = useSharedValue(0);
   const textOpacity = useSharedValue(0);
   const textTranslateY = useSharedValue(20);
 
@@ -32,26 +28,9 @@ export default function WelcomeScreen() {
     // console.log('[Analytics] onb_welcome_viewed');
 
     // Entrance animations
-    iconScale.value = withSpring(1, { damping: 50 });
-    iconRotate.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(5, { duration: 1500, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
     textOpacity.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) });
     textTranslateY.value = withSpring(0, { damping: 50 });
   }, []);
-
-  const iconAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: iconScale.value },
-      { rotate: `${iconRotate.value}deg` },
-    ],
-  }));
 
   const textAnimatedStyle = useAnimatedStyle(() => ({
     opacity: textOpacity.value,
@@ -76,7 +55,7 @@ export default function WelcomeScreen() {
         <View style={styles.content}>
           <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
             <Text style={styles.headline}>
-              MicroBreaks—{'\n'}Your Desk Wellness{'\n'}Companion
+              MicroBreaks{'\n'}{'\n'}{'\n'}Your Desk Wellness{'\n'}Companion
             </Text>
 
             <Text style={styles.subhead}>

@@ -113,13 +113,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   badge: {
-    backgroundColor: Colors.dark.status.warningLight,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
     padding: Spacing.md,
     alignItems: 'center',
     width: '80%',
-    borderWidth: 3,
-    borderColor: Colors.dark.status.warning,
+    borderWidth: 2,
+    borderColor: Colors.dark.text.primary,
   },
   badgeIcon: {
     fontSize: 48,
@@ -171,14 +171,14 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: Colors.dark.background.secondary,
     borderWidth: 8,
-    borderColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
   progressValue: {
     ...Typography.headlineLarge,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
     fontWeight: 'bold',
   },
   progressLabel: {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   tipContainer: {
-    backgroundColor: Colors.dark.status.infoLight,
+    backgroundColor: Colors.dark.background.secondary,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
   },

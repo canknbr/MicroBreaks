@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
   benefitIcon: {
     fontSize: 32,
     marginRight: Spacing.xs,
-    color: Colors.dark.brand.secondary,
   },
   benefitText: {
     ...Typography.bodyLarge,
@@ -109,7 +108,7 @@ const styles = StyleSheet.create({
   },
   socialProof: {
     padding: Spacing.md,
-    backgroundColor: Colors.dark.status.infoLight,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     marginBottom: Spacing.md,
   },
@@ -120,7 +119,7 @@ const styles = StyleSheet.create({
   },
   highlight: {
     ...Typography.bodyLargeBold,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
   },
   progressCard: {
     padding: Spacing.sm,
@@ -134,14 +133,14 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: Colors.dark.progress.background,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.full,
     marginBottom: Spacing.xxs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.dark.progress.fill,
+    backgroundColor: Colors.dark.text.primary,
   },
   progressText: {
     ...Typography.bodySmall,

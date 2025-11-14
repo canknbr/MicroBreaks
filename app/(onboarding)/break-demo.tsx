@@ -196,14 +196,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: Colors.dark.background.secondary,
     borderWidth: 8,
-    borderColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: Spacing.xl,
   },
   countdown: {
     ...Typography.displayLarge,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
     fontWeight: 'bold',
   },
   countdownLabel: {
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.border.default,
   },
   feedbackButtonSelected: {
-    borderColor: Colors.dark.brand.primary,
-    backgroundColor: Colors.dark.status.infoLight,
+    borderColor: Colors.dark.text.primary,
+    backgroundColor: Colors.dark.background.secondary,
   },
   feedbackEmoji: {
     fontSize: 48,

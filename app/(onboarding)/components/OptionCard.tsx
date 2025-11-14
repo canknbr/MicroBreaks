@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     minHeight: 72,
   },
   cardSelected: {
-    borderColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
     backgroundColor: Colors.dark.background.secondary,
   },
   content: {
@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
   },
   checkboxSelected: {
-    borderColor: Colors.dark.brand.primary,
-    backgroundColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
+    backgroundColor: Colors.dark.text.primary,
   },
   checkmark: {
     color: Colors.dark.text.inverse,

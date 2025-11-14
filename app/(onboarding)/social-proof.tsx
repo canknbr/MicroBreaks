@@ -91,7 +91,7 @@ export default function SocialProofScreen() {
         {/* Real-time counter */}
         <View style={styles.liveCounter}>
           <Text style={styles.liveCounterText}>
-            🟢 2,847 breaks taken today
+            2,847 breaks taken today
           </Text>
         </View>
 
@@ -151,11 +151,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
     borderWidth: 1,
-    borderColor: Colors.dark.brand.primary,
+    borderColor: Colors.dark.text.primary,
   },
   metricValue: {
     ...Typography.displayMedium,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
     marginBottom: Spacing.xs,
     fontWeight: '700',
   },
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.border.default,
   },
   dotActive: {
-    backgroundColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.text.primary,
     width: 18,
   },
   liveCounter: {

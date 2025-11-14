@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
@@ -14,6 +15,7 @@ import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
 export default function ScreenTimeScreen() {
   const router = useRouter();
   const [hours, setHours] = useState(8);
+  const [trackWidth, setTrackWidth] = useState(0);
 
   useEffect(() => {
     // Track analytics: onb_screen_time_viewed
@@ -33,9 +35,9 @@ export default function ScreenTimeScreen() {
   };
 
   const getColor = (value: number) => {
-    if (value <= 4) return Colors.dark.brand.primary;
-    if (value <= 8) return Colors.dark.brand.secondary;
-    return Colors.dark.status.error;
+    if (value <= 4) return Colors.dark.text.primary;
+    if (value <= 8) return Colors.dark.text.secondary;
+    return Colors.dark.text.primary;
   };
 
   const getFeedback = (value: number) => {
@@ -43,6 +45,24 @@ export default function ScreenTimeScreen() {
     if (value <= 8) return "That's about average for desk workers";
     if (value <= 10) return `That's ${Math.round((value / 8 - 1) * 100)}% more than recommended`;
     return 'Consider taking extra breaks';
+  };
+
+  const handleHourSelect = (value: number) => {
+    // Only updates the selection - does NOT auto-advance to next screen
+    // User must press "Continue" button to proceed
+    if (isNaN(value) || value < 0 || value > 14) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setHours(Math.round(value));
+  };
+
+  const handleTrackPress = (e: any) => {
+    if (!trackWidth) return;
+    const { locationX } = e.nativeEvent;
+    if (locationX === undefined || isNaN(locationX)) return;
+    
+    const percentage = Math.max(0, Math.min(1, locationX / trackWidth));
+    const newValue = Math.round(percentage * 14);
+    handleHourSelect(newValue);
   };
 
   return (
@@ -62,33 +82,46 @@ export default function ScreenTimeScreen() {
         {/* Hour Display */}
         <View style={styles.displayContainer}>
           <Text style={[styles.hoursDisplay, { color: getColor(hours) }]}>
-            {hours}
+            {isNaN(hours) ? 8 : hours}
           </Text>
           <Text style={styles.hoursLabel}>hours per day</Text>
         </View>
 
         {/* Slider */}
         <View style={styles.sliderContainer}>
-          <View style={styles.sliderTrack}>
+          <Pressable
+            style={styles.sliderTrack}
+            onLayout={(e) => {
+              const { width } = e.nativeEvent.layout;
+              if (width && !isNaN(width)) {
+                setTrackWidth(width);
+              }
+            }}
+            onPress={handleTrackPress}>
             <View
               style={[
                 styles.sliderFill,
                 {
-                  width: `${(hours / 14) * 100}%`,
+                  width: `${Math.max(0, Math.min(100, (hours / 14) * 100))}%`,
                   backgroundColor: getColor(hours),
                 },
               ]}
             />
-          </View>
+          </Pressable>
           <View style={styles.sliderButtons}>
             {[...Array(15)].map((_, i) => (
-              <View key={i} style={styles.sliderButton}>
+              <Pressable
+                key={i}
+                style={styles.sliderButton}
+                onPress={() => handleHourSelect(i)}>
                 <Text
-                  style={styles.sliderButtonText}
-                  onPress={() => setHours(i)}>
+                  style={[
+                    styles.sliderButtonText,
+                    hours === i && styles.sliderButtonTextActive,
+                  ]}>
                   {i}
                 </Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -155,10 +188,15 @@ const styles = StyleSheet.create({
   sliderButton: {
     flex: 1,
     alignItems: 'center',
+    paddingVertical: Spacing.xs,
   },
   sliderButtonText: {
     ...Typography.bodySmall,
     color: Colors.dark.text.tertiary,
+  },
+  sliderButtonTextActive: {
+    color: Colors.dark.text.primary,
+    fontWeight: '600',
   },
   feedback: {
     ...Typography.bodyMedium,

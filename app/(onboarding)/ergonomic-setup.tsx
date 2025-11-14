@@ -35,9 +35,9 @@ export default function ErgonomicSetupScreen() {
 
   const getScoreColor = () => {
     const score = getScore();
-    if (score >= 4) return Colors.dark.status.success;
-    if (score >= 3) return Colors.dark.status.warning;
-    return Colors.dark.status.error;
+    if (score >= 4) return Colors.dark.text.primary;
+    if (score >= 3) return Colors.dark.text.secondary;
+    return Colors.dark.text.primary;
   };
 
   const getScoreLabel = () => {

@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   suggestionBanner: {
-    backgroundColor: Colors.dark.status.infoLight,
+    backgroundColor: Colors.dark.background.secondary,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.md,
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
   suggestionBold: {
     ...Typography.bodyMediumBold,
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
   },
   presets: {
     marginBottom: Spacing.sm,

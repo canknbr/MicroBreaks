@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.border.default,
   },
   dotActive: {
-    backgroundColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.text.primary,
     width: 24,
   },
   spacer: {
