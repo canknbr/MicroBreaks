@@ -74,13 +74,6 @@ export default function WelcomeScreen() {
     <OnboardingLayout currentStep={1} scrollable={false}>
       <View style={styles.container}>
         <View style={styles.content}>
-          {/* Animated illustration */}
-          <View style={styles.illustrationContainer}>
-            <Animated.Text style={[styles.illustration, iconAnimatedStyle]}>
-              🧘‍♀️
-            </Animated.Text>
-          </View>
-
           <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
             <Text style={styles.headline}>
               MicroBreaks—{'\n'}Your Desk Wellness{'\n'}Companion
@@ -119,14 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.md,
-  },
-  illustrationContainer: {
-    marginBottom: Spacing.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  illustration: {
-    fontSize: 140,
   },
   textContainer: {
     alignItems: 'center',

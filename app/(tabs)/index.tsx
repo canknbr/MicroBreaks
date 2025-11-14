@@ -19,7 +19,6 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>Welcome back</Text>
-          <Text style={styles.emoji}>🎯</Text>
         </View>
 
         {/* Stats Card */}
@@ -42,7 +41,6 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Start</Text>
           <View style={styles.actionCard}>
-            <Text style={styles.actionEmoji}>⏰</Text>
             <Text style={styles.actionText}>Start a micro break</Text>
           </View>
         </View>
@@ -64,17 +62,11 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: Spacing.xl,
   },
   greeting: {
     ...Typography.displaySmall,
     color: Colors.dark.text.primary,
-  },
-  emoji: {
-    fontSize: 40,
   },
   card: {
     backgroundColor: Colors.dark.card.background,
@@ -121,12 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.card.background,
     borderRadius: 16,
     padding: Spacing.lg,
-    flexDirection: 'row',
     alignItems: 'center',
-  },
-  actionEmoji: {
-    fontSize: 32,
-    marginRight: Spacing.md,
   },
   actionText: {
     ...Typography.bodyLarge,

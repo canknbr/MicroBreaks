@@ -46,10 +46,6 @@ export default function NotificationPermissionScreen() {
   return (
     <OnboardingLayout currentStep={17}>
       <View style={styles.container}>
-        <View style={styles.iconContainer}>
-          <Text style={styles.icon}>🔔</Text>
-        </View>
-
         <Text style={styles.headline}>
           Stay healthy without thinking about it
         </Text>
@@ -61,17 +57,14 @@ export default function NotificationPermissionScreen() {
         {/* Benefits */}
         <View style={styles.benefits}>
           <View style={styles.benefitItem}>
-            <Text style={styles.checkmark}>✓</Text>
             <Text style={styles.benefitText}>
               Gentle reminders between tasks
             </Text>
           </View>
           <View style={styles.benefitItem}>
-            <Text style={styles.checkmark}>✓</Text>
             <Text style={styles.benefitText}>Skip when in meetings</Text>
           </View>
           <View style={styles.benefitItem}>
-            <Text style={styles.checkmark}>✓</Text>
             <Text style={styles.benefitText}>Full control over frequency</Text>
           </View>
         </View>
@@ -79,13 +72,13 @@ export default function NotificationPermissionScreen() {
         {/* Trust builders */}
         <View style={styles.trustContainer}>
           <View style={styles.trustBadge}>
-            <Text style={styles.trustText}>🚫 No spam, ever</Text>
+            <Text style={styles.trustText}>No spam, ever</Text>
           </View>
           <View style={styles.trustBadge}>
-            <Text style={styles.trustText}>⏰ Snooze anytime</Text>
+            <Text style={styles.trustText}>Snooze anytime</Text>
           </View>
           <View style={styles.trustBadge}>
-            <Text style={styles.trustText}>🧠 Smart detection</Text>
+            <Text style={styles.trustText}>Smart detection</Text>
           </View>
         </View>
 
@@ -105,18 +98,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginVertical: Spacing.lg,
-  },
-  icon: {
-    fontSize: 80,
-  },
   headline: {
     ...Typography.titleLarge,
     color: Colors.dark.text.primary,
     fontWeight: '700',
     textAlign: 'center',
+    marginTop: Spacing.lg,
     marginBottom: Spacing.xs,
   },
   subtext: {
@@ -132,14 +119,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: Spacing.xs,
-  },
-  checkmark: {
-    fontSize: 20,
-    color: Colors.dark.status.success,
-    marginRight: Spacing.xs,
   },
   benefitText: {
     ...Typography.bodyMedium,

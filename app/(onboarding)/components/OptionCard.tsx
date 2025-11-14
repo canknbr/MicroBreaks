@@ -55,7 +55,6 @@ export default function OptionCard({
       <Animated.View style={[styles.container, style, animatedStyle]}>
         <View style={[styles.card, selected && styles.cardSelected]}>
           <View style={styles.content}>
-            {icon && <Text style={styles.icon}>{icon}</Text>}
             <View style={styles.textContainer}>
               <Text style={[styles.title, selected && styles.titleSelected]}>
                 {title}
@@ -95,12 +94,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    fontSize: 32,
-    marginRight: Spacing.sm,
   },
   textContainer: {
     flex: 1,

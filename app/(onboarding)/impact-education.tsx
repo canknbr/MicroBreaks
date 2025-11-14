@@ -15,22 +15,18 @@ const EDUCATION_CARDS = [
   {
     title: '20-20-20 Rule',
     description: 'Look 20ft away, for 20 seconds, every 20 minutes',
-    icon: '👁️',
   },
   {
     title: 'Muscle Memory',
     description: 'Regular stretches prevent chronic tension buildup',
-    icon: '💪',
   },
   {
     title: 'Focus Boost',
     description: '2-min breaks improve concentration by 23%',
-    icon: '🧠',
   },
   {
     title: 'Compound Effect',
     description: '10 daily breaks = 1 full yoga session',
-    icon: '✨',
   },
 ];
 
@@ -73,7 +69,6 @@ export default function ImpactEducationScreen() {
         {/* Educational Card */}
         <View style={styles.cardContainer}>
           <View style={styles.card}>
-            <Text style={styles.cardIcon}>{card.icon}</Text>
             <Text style={styles.cardTitle}>{card.title}</Text>
             <Text style={styles.cardDescription}>{card.description}</Text>
           </View>
@@ -125,10 +120,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 300,
     justifyContent: 'center',
-  },
-  cardIcon: {
-    fontSize: 80,
-    marginBottom: Spacing.md,
   },
   cardTitle: {
     ...Typography.headlineSmall,

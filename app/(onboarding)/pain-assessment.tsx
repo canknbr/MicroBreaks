@@ -77,7 +77,6 @@ export default function PainAssessmentScreen() {
                     isSelected && styles.areaCardSelected,
                   ]}
                   onTouchEnd={() => toggleArea(area.id)}>
-                  <Text style={styles.areaIcon}>{area.icon}</Text>
                   <Text style={[
                     styles.areaLabel,
                     isSelected && styles.areaLabelSelected
@@ -164,10 +163,6 @@ const styles = StyleSheet.create({
   areaCardSelected: {
     borderColor: Colors.dark.brand.primary,
     backgroundColor: Colors.dark.background.secondary,
-  },
-  areaIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.xxs,
   },
   areaLabel: {
     ...Typography.bodyMedium,
