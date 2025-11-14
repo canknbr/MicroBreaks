@@ -4,15 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -22,6 +14,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Gradients } from '@/theme';
 
 interface OnboardingLayoutProps {
@@ -73,7 +66,7 @@ export default function OnboardingLayout({
         style={styles.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}>
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
           {showProgress && (
             <BlurView intensity={20} tint="dark" style={styles.progressContainer}>
               <View style={styles.progressBar}>
