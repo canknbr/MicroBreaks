@@ -1,12 +1,10 @@
 /**
  * Onboarding Layout Component
- * Modern black-themed layout with blur effects and animations
+ * Pure black background layout inspired by "How We Feel" design
  */
 
 import React, { useEffect } from 'react';
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,7 +13,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing, Gradients } from '@/theme';
+import { Colors, Spacing } from '@/theme';
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -61,25 +59,14 @@ export default function OnboardingLayout({
   return (
     <>
       <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={Gradients.background.dark}
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}>
+      <View style={styles.background}>
         <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
           {showProgress && (
-            <BlurView intensity={20} tint="dark" style={styles.progressContainer}>
+            <View style={styles.progressContainer}>
               <View style={styles.progressBar}>
-                <Animated.View style={[styles.progressFill, animatedProgressStyle]}>
-                  <LinearGradient
-                    colors={Gradients.primary.cyan}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={StyleSheet.absoluteFill}
-                  />
-                </Animated.View>
+                <Animated.View style={[styles.progressFill, animatedProgressStyle]} />
               </View>
-            </BlurView>
+            </View>
           )}
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -98,32 +85,33 @@ export default function OnboardingLayout({
             </Animated.View>
           </KeyboardAvoidingView>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientBackground: {
+  background: {
     flex: 1,
+    backgroundColor: Colors.dark.background.primary,
   },
   container: {
     flex: 1,
   },
   progressContainer: {
-    paddingHorizontal: Spacing.sm,
-    paddingTop: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
-    overflow: 'hidden',
   },
   progressBar: {
-    height: 4,
-    backgroundColor: Colors.dark.progress.background,
+    height: 3,
+    backgroundColor: Colors.dark.border.default,
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
+    backgroundColor: Colors.dark.interactive.primary,
     borderRadius: 2,
   },
   keyboardView: {
@@ -134,11 +122,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.sm,
-    paddingBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
   },
 });

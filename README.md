@@ -159,6 +159,10 @@ MicroBreaks/
 │   │   ├── index.tsx        # Home screen
 │   │   ├── explore.tsx      # Explore screen
 │   │   └── _layout.tsx      # Tabs layout
+│   ├── (onboarding)/        # Onboarding flow
+│   │   ├── components/      # Onboarding components
+│   │   ├── welcome.tsx      # Welcome screen
+│   │   └── ...              # Other onboarding screens
 │   ├── _layout.tsx          # Root layout
 │   └── modal.tsx            # Modal screens
 ├── components/              # Reusable components
@@ -166,8 +170,14 @@ MicroBreaks/
 │   ├── themed-view.tsx      # Themed view wrapper
 │   ├── themed-text.tsx      # Themed text component
 │   └── ...
+├── theme/                   # Design system tokens
+│   ├── colors.ts            # Color palette
+│   ├── typography.ts        # Typography styles
+│   ├── spacing.ts           # Spacing & layout
+│   ├── shadows.ts           # Shadow definitions
+│   ├── animations.ts        # Animation configs
+│   └── index.ts             # Theme exports
 ├── constants/               # App constants
-│   └── theme.ts             # Theme configuration
 ├── hooks/                   # Custom React hooks
 │   ├── use-theme-color.ts
 │   └── use-color-scheme.ts
@@ -175,18 +185,48 @@ MicroBreaks/
 │   ├── PRD_MicroBreaks_Enhanced_v2.md
 │   └── Onboarding_Flow_MicroBreaks_v3.md
 ├── assets/                  # Images, fonts, etc.
+│   └── images/              # Image assets
+│       └── img/             # Reference images
 ├── scripts/                 # Utility scripts
 └── ...config files
 ```
 
 ---
 
-## 🎨 Design Principles
+## 🎨 Design System
+
+MicroBreaks features a modern, minimalist design system inspired by "How We Feel" - focusing on clarity, emotional connection, and accessibility.
+
+### Visual Style
+
+- **Pure Black Background**: `#000000` for the main interface, creating a modern, premium feel
+- **Clean White Elements**: White text and buttons for maximum contrast and readability
+- **Vibrant Emotion Colors**: Bright, saturated colors for emotion-based features
+  - **Energized/Positive**: Yellows and oranges (`#FFD166`, `#FF9F1C`)
+  - **Calm/Peaceful**: Teals and greens (`#4ECDC4`, `#06FFA5`)
+  - **Stressed/Alert**: Reds and corals (`#EF476F`, `#E63946`)
+  - **Neutral/Low Energy**: Blues and purples (`#118AB2`, `#7B68EE`)
+
+### Typography
+
+- **Serif Headings**: Georgia for elegant, readable display text
+- **Sans-Serif Body**: Inter for clean, modern UI text
+- **Clear Hierarchy**: From 48px display to 12px captions
+- **Generous Spacing**: Line heights at 1.5x for optimal readability
+
+### Components
+
+- **Primary Button**: White, fully-rounded (28px border radius), black text
+- **Secondary Button**: Simple text-only, gray color
+- **Cards**: Dark gray (`#1A1A1A`) with subtle borders
+- **Progress Bars**: White fill on dark backgrounds
+
+### Design Principles
 
 1. **Calm Technology**: Non-intrusive, respectful of user attention
-2. **Accessibility First**: WCAG AA compliant with inclusive design
-3. **Delightful Micro-interactions**: Smooth, meaningful animations
-4. **Clear Visual Hierarchy**: Important information immediately visible
+2. **Emotional Connection**: Colors that reflect feelings and states
+3. **Accessibility First**: WCAG AA compliant, minimum contrast ratios met
+4. **Smooth Animations**: Subtle spring physics for natural feel
 5. **Consistent Design Language**: Unified experience across all touchpoints
 
 ---

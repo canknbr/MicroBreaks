@@ -1,6 +1,6 @@
 /**
  * Secondary Button Component
- * Modern secondary action button with subtle animations
+ * Simple text button inspired by "How We Feel" design
  */
 
 import React from 'react';
@@ -27,18 +27,15 @@ export default function SecondaryButton({
   disabled = false,
   style,
 }: SecondaryButtonProps) {
-  const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
   const tap = Gesture.Tap()
     .enabled(!disabled)
     .onBegin(() => {
-      scale.value = withSpring(0.96, { damping: 15 });
-      opacity.value = withSpring(0.6, { damping: 15 });
+      opacity.value = withSpring(0.5, { damping: 15 });
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     })
     .onFinalize(() => {
-      scale.value = withSpring(1, { damping: 15 });
       opacity.value = withSpring(1, { damping: 15 });
     })
     .onEnd(() => {
@@ -46,7 +43,6 @@ export default function SecondaryButton({
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
     opacity: opacity.value,
   }));
 
@@ -63,8 +59,8 @@ export default function SecondaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
@@ -72,7 +68,7 @@ const styles = StyleSheet.create({
   buttonText: {
     ...Typography.buttonMedium,
     color: Colors.dark.text.secondary,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   buttonTextDisabled: {
     color: Colors.dark.text.tertiary,
