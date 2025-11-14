@@ -17,7 +17,7 @@ export default function ErgonomicSetupScreen() {
 
   useEffect(() => {
     // Track analytics: onb_ergo_assessment_viewed
-    console.log('[Analytics] onb_ergo_assessment_viewed');
+    // console.log('[Analytics] onb_ergo_assessment_viewed');
   }, []);
 
   const toggleItem = (itemId: string) => {
@@ -35,9 +35,9 @@ export default function ErgonomicSetupScreen() {
 
   const getScoreColor = () => {
     const score = getScore();
-    if (score >= 4) return Colors.light.status.success;
-    if (score >= 3) return Colors.light.status.warning;
-    return Colors.light.status.error;
+    if (score >= 4) return Colors.dark.status.success;
+    if (score >= 3) return Colors.dark.status.warning;
+    return Colors.dark.status.error;
   };
 
   const getScoreLabel = () => {
@@ -49,9 +49,9 @@ export default function ErgonomicSetupScreen() {
 
   const handleContinue = () => {
     // Track analytics: onb_ergo_score
-    console.log('[Analytics] onb_ergo_score:', getScore());
-    console.log('[Analytics] onb_ergo_items:', Array.from(checkedItems));
-    router.push('/(onboarding)/notification-preference');
+    // console.log('[Analytics] onb_ergo_score:', getScore());
+    // console.log('[Analytics] onb_ergo_items:', Array.from(checkedItems));
+    router.push('./notification-preference');
   };
 
   return (
@@ -109,12 +109,13 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.xxs,
   },
   subtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.md,
   },
   checklist: {
@@ -123,46 +124,49 @@ const styles = StyleSheet.create({
   checklistItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    backgroundColor: Colors.light.background.secondary,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.dark.card.background,
+    borderRadius: BorderRadius.card,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.dark.border.default,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: Colors.light.border.default,
+    borderColor: Colors.dark.border.default,
     marginRight: Spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: Colors.light.interactive.primary,
-    borderColor: Colors.light.interactive.primary,
+    backgroundColor: Colors.dark.interactive.primary,
+    borderColor: Colors.dark.interactive.primary,
   },
   checkmark: {
-    color: Colors.light.text.inverse,
+    color: Colors.dark.text.inverse,
     fontSize: 16,
     fontWeight: 'bold',
   },
   checklistLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     flex: 1,
   },
   scoreContainer: {
     alignItems: 'center',
-    padding: Spacing.md,
-    backgroundColor: Colors.light.background.secondary,
+    padding: Spacing.lg,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
-    borderWidth: 3,
+    borderWidth: 2,
+    borderColor: Colors.dark.border.default,
   },
   scoreTitle: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.xxs,
   },
   scoreValue: {

@@ -10,6 +10,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Colors, Typography, Spacing } from '@/theme';
@@ -33,13 +34,13 @@ export default function SecondaryButton({
     .enabled(!disabled)
     .onBegin(() => {
       opacity.value = withSpring(0.5, { damping: 15 });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     })
     .onFinalize(() => {
       opacity.value = withSpring(1, { damping: 15 });
     })
     .onEnd(() => {
-      onPress();
+      runOnJS(onPress)();
     });
 
   const animatedStyle = useAnimatedStyle(() => ({

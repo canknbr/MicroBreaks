@@ -15,16 +15,16 @@ export default function CompletionScreen() {
 
   useEffect(() => {
     // Track analytics: onb_completed
-    console.log('[Analytics] onb_completed', {
-      completion_time: Date.now(),
-      screens_completed: 21,
-    });
+    // console.log('[Analytics] onb_completed', {
+      // completion_time: Date.now(),
+      // screens_completed: 21,
+    // });
   }, []);
 
   const handleGoToDashboard = () => {
     // Track analytics: onb_dashboard_entered
-    console.log('[Analytics] onb_dashboard_entered');
-    router.replace('/(tabs)');
+    // console.log('[Analytics] onb_dashboard_entered');
+    router.replace('/(tabs)/index' as any);
   };
 
   return (
@@ -105,20 +105,21 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.headlineLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
   },
   badgeContainer: {
     alignItems: 'center',
     marginBottom: Spacing.lg,
   },
   badge: {
-    backgroundColor: Colors.light.status.warningLight,
+    backgroundColor: Colors.dark.status.warningLight,
     borderRadius: BorderRadius.card,
     padding: Spacing.md,
     alignItems: 'center',
     width: '80%',
     borderWidth: 3,
-    borderColor: Colors.light.status.warning,
+    borderColor: Colors.dark.status.warning,
   },
   badgeIcon: {
     fontSize: 48,
@@ -126,12 +127,12 @@ const styles = StyleSheet.create({
   },
   badgeTitle: {
     ...Typography.titleMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     marginBottom: Spacing.xxs,
   },
   badgeSubtext: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   summaryContainer: {
     flexDirection: 'row',
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     padding: Spacing.sm,
     alignItems: 'center',
@@ -152,12 +153,12 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     ...Typography.bodyLargeBold,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     marginBottom: 2,
   },
   summaryLabel: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
   },
   progressContainer: {
@@ -168,32 +169,32 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderWidth: 8,
-    borderColor: Colors.light.brand.primary,
+    borderColor: Colors.dark.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
   progressValue: {
     ...Typography.headlineLarge,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
     fontWeight: 'bold',
   },
   progressLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
     paddingHorizontal: Spacing.md,
   },
   tipContainer: {
-    backgroundColor: Colors.light.status.infoLight,
+    backgroundColor: Colors.dark.status.infoLight,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
   },
   tipText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
   },
   spacer: {

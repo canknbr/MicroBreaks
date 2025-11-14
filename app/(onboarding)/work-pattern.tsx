@@ -19,21 +19,21 @@ export default function WorkPatternScreen() {
 
   useEffect(() => {
     // Track analytics: onb_work_pattern_viewed
-    console.log('[Analytics] onb_work_pattern_viewed');
+    // console.log('[Analytics] onb_work_pattern_viewed');
   }, []);
 
   const handleContinue = () => {
     if (selectedPattern) {
       // Track analytics: onb_work_pattern_selected
-      console.log('[Analytics] onb_work_pattern_selected:', selectedPattern);
-      router.push('/(onboarding)/ergonomic-setup');
+      // console.log('[Analytics] onb_work_pattern_selected:', selectedPattern);
+      router.push('./ergonomic-setup');
     }
   };
 
   const handleSkip = () => {
     // Track analytics: onb_work_pattern_skipped
-    console.log('[Analytics] onb_work_pattern_skipped');
-    router.push('/(onboarding)/ergonomic-setup');
+    // console.log('[Analytics] onb_work_pattern_skipped');
+    router.push('./ergonomic-setup');
   };
 
   return (
@@ -73,7 +73,8 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.md,
   },
   grid: {

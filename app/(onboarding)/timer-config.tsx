@@ -18,13 +18,13 @@ export default function TimerConfigScreen() {
 
   useEffect(() => {
     // Track analytics: onb_timer_config_viewed
-    console.log('[Analytics] onb_timer_config_viewed');
+    // console.log('[Analytics] onb_timer_config_viewed');
   }, []);
 
   const handleContinue = () => {
     // Track analytics: onb_timer_selected
-    console.log('[Analytics] onb_timer_selected:', selectedPreset);
-    router.push('/(onboarding)/notification-permission');
+    // console.log('[Analytics] onb_timer_selected:', selectedPreset);
+    router.push('./notification-permission');
   };
 
   const selectedPresetData = TIMER_PRESETS.find((p) => p.id === selectedPreset);
@@ -80,44 +80,45 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.sm,
   },
   suggestionBanner: {
-    backgroundColor: Colors.light.status.infoLight,
+    backgroundColor: Colors.dark.status.infoLight,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.md,
   },
   suggestionText: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   suggestionBold: {
     ...Typography.bodyMediumBold,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
   },
   presets: {
     marginBottom: Spacing.sm,
   },
   commitmentCard: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     padding: Spacing.sm,
     borderRadius: BorderRadius.card,
     alignItems: 'center',
   },
   commitmentLabel: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   commitmentValue: {
     ...Typography.titleMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     marginVertical: Spacing.xxs,
   },
   commitmentSubtext: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   spacer: {
     flex: 1,

@@ -18,14 +18,14 @@ export default function NotificationPreferenceScreen() {
 
   useEffect(() => {
     // Track analytics: onb_notification_pref_viewed
-    console.log('[Analytics] onb_notification_pref_viewed');
+    // console.log('[Analytics] onb_notification_pref_viewed');
   }, []);
 
   const handleContinue = () => {
     if (selectedStyle) {
       // Track analytics: onb_notification_style
-      console.log('[Analytics] onb_notification_style:', selectedStyle);
-      router.push('/(onboarding)/energy-pattern');
+      // console.log('[Analytics] onb_notification_style:', selectedStyle);
+      router.push('./energy-pattern');
     }
   };
 
@@ -71,12 +71,13 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.xxs,
   },
   subtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.md,
   },
   options: {
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
   },
   note: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },

@@ -24,26 +24,26 @@ export default function CalendarIntegrationScreen() {
 
   useEffect(() => {
     // Track analytics: onb_calendar_integration_viewed
-    console.log('[Analytics] onb_calendar_integration_viewed');
+    // console.log('[Analytics] onb_calendar_integration_viewed');
   }, []);
 
   const handleConnect = () => {
     if (selectedProvider) {
       // Track analytics: onb_calendar_integration_started
-      console.log('[Analytics] onb_calendar_integration_started:', selectedProvider);
+      // console.log('[Analytics] onb_calendar_integration_started:', selectedProvider);
       // Simulate OAuth flow
       setTimeout(() => {
         // Track analytics: onb_calendar_integration_completed
-        console.log('[Analytics] onb_calendar_integration_completed');
-        router.push('/(onboarding)/first-session');
+        // console.log('[Analytics] onb_calendar_integration_completed');
+        router.push('./first-session');
       }, 1000);
     }
   };
 
   const handleSkip = () => {
     // Track analytics: onb_calendar_integration_skipped
-    console.log('[Analytics] onb_calendar_integration_skipped');
-    router.push('/(onboarding)/first-session');
+    // console.log('[Analytics] onb_calendar_integration_skipped');
+    router.push('./first-session');
   };
 
   return (
@@ -107,16 +107,17 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.xxs,
   },
   subtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.md,
   },
   benefitsCard: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     padding: Spacing.sm,
     marginBottom: Spacing.sm,
@@ -132,18 +133,18 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     flex: 1,
   },
   privacyNote: {
-    backgroundColor: Colors.light.status.successLight,
+    backgroundColor: Colors.dark.status.successLight,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.md,
   },
   privacyText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
   },
   providers: {

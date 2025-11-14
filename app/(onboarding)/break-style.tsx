@@ -18,7 +18,7 @@ export default function BreakStyleScreen() {
 
   useEffect(() => {
     // Track analytics: onb_break_style_viewed
-    console.log('[Analytics] onb_break_style_viewed');
+    // console.log('[Analytics] onb_break_style_viewed');
   }, []);
 
   const toggleStyle = (styleId: string) => {
@@ -34,8 +34,8 @@ export default function BreakStyleScreen() {
   const handleContinue = () => {
     if (selectedStyles.size > 0) {
       // Track analytics: onb_break_styles_liked
-      console.log('[Analytics] onb_break_styles_liked:', Array.from(selectedStyles));
-      router.push('/(onboarding)/recommendation');
+      // console.log('[Analytics] onb_break_styles_liked:', Array.from(selectedStyles));
+      router.push('./recommendation');
     }
   };
 
@@ -77,12 +77,13 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.xxs,
   },
   subtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.md,
   },
   styles: {

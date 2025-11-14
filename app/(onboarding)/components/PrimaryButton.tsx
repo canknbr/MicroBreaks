@@ -10,6 +10,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
@@ -35,13 +36,13 @@ export default function PrimaryButton({
     .enabled(!disabled && !loading)
     .onBegin(() => {
       scale.value = withSpring(0.97, { damping: 15 });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
     })
     .onFinalize(() => {
       scale.value = withSpring(1, { damping: 15 });
     })
     .onEnd(() => {
-      onPress();
+      runOnJS(onPress)();
     });
 
   const animatedStyle = useAnimatedStyle(() => ({

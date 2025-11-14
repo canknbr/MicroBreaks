@@ -1,21 +1,19 @@
 /**
  * Option Card Component
- * Modern selectable card with glass morphism and animations
+ * Clean, minimal selectable card with smooth animations
  */
 
 import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Colors, Typography, Spacing, BorderRadius, Gradients } from '@/theme';
+import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
 
 interface OptionCardProps {
   icon?: string;
@@ -35,85 +33,41 @@ export default function OptionCard({
   style,
 }: OptionCardProps) {
   const scale = useSharedValue(1);
-  const glowOpacity = useSharedValue(selected ? 0.8 : 0);
-
-  React.useEffect(() => {
-    glowOpacity.value = withTiming(selected ? 0.8 : 0, { duration: 300 });
-  }, [selected]);
 
   const tap = Gesture.Tap()
     .onBegin(() => {
-      scale.value = withSpring(0.97, { damping: 15 });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      scale.value = withSpring(0.98, { damping: 20 });
+      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     })
     .onFinalize(() => {
-      scale.value = withSpring(1, { damping: 15 });
+      scale.value = withSpring(1, { damping: 20 });
     })
     .onEnd(() => {
-      onPress();
+      runOnJS(onPress)();
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const animatedGlowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
-
   return (
     <GestureDetector gesture={tap}>
       <Animated.View style={[styles.container, style, animatedStyle]}>
-        {/* Glow effect for selected state */}
-        <Animated.View style={[styles.glow, animatedGlowStyle]} />
-
-        {/* Border gradient */}
-        <View style={styles.borderWrapper}>
-          {selected ? (
-            <LinearGradient
-              colors={Gradients.primary.cyan}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientBorder}>
-              <BlurView intensity={40} tint="dark" style={styles.cardContent}>
-                <View style={styles.content}>
-                  {icon && <Text style={styles.icon}>{icon}</Text>}
-                  <View style={styles.textContainer}>
-                    <Text style={[styles.title, selected && styles.titleSelected]}>
-                      {title}
-                    </Text>
-                    {description && (
-                      <Text style={styles.description}>{description}</Text>
-                    )}
-                  </View>
-                </View>
-                <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-                  {selected && (
-                    <LinearGradient
-                      colors={Gradients.primary.cyan}
-                      style={styles.checkboxGradient}>
-                      <Text style={styles.checkmark}>✓</Text>
-                    </LinearGradient>
-                  )}
-                </View>
-              </BlurView>
-            </LinearGradient>
-          ) : (
-            <View style={styles.regularBorder}>
-              <BlurView intensity={20} tint="dark" style={styles.cardContent}>
-                <View style={styles.content}>
-                  {icon && <Text style={styles.icon}>{icon}</Text>}
-                  <View style={styles.textContainer}>
-                    <Text style={styles.title}>{title}</Text>
-                    {description && (
-                      <Text style={styles.description}>{description}</Text>
-                    )}
-                  </View>
-                </View>
-                <View style={styles.checkbox} />
-              </BlurView>
+        <View style={[styles.card, selected && styles.cardSelected]}>
+          <View style={styles.content}>
+            {icon && <Text style={styles.icon}>{icon}</Text>}
+            <View style={styles.textContainer}>
+              <Text style={[styles.title, selected && styles.titleSelected]}>
+                {title}
+              </Text>
+              {description && (
+                <Text style={styles.description}>{description}</Text>
+              )}
             </View>
-          )}
+          </View>
+          <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+            {selected && <Text style={styles.checkmark}>✓</Text>}
+          </View>
         </View>
       </Animated.View>
     </GestureDetector>
@@ -122,45 +76,22 @@ export default function OptionCard({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
-  glow: {
-    position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    backgroundColor: '#00D9FF',
-    borderRadius: BorderRadius.card + 2,
-    shadowColor: '#00D9FF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  borderWrapper: {
-    borderRadius: BorderRadius.card,
-    overflow: 'hidden',
-  },
-  gradientBorder: {
-    padding: 2,
-    borderRadius: BorderRadius.card,
-  },
-  regularBorder: {
-    borderWidth: 2,
-    borderColor: Colors.dark.border.default,
-    borderRadius: BorderRadius.card,
-    backgroundColor: Colors.dark.card.background,
-  },
-  cardContent: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.sm,
-    minHeight: 68,
-    borderRadius: BorderRadius.card - 2,
-    overflow: 'hidden',
+    backgroundColor: Colors.dark.card.background,
+    borderWidth: 2,
+    borderColor: Colors.dark.border.default,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.md,
+    minHeight: 72,
+  },
+  cardSelected: {
+    borderColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.background.secondary,
   },
   content: {
     flex: 1,
@@ -169,7 +100,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 32,
-    marginRight: Spacing.xs,
+    marginRight: Spacing.sm,
   },
   textContainer: {
     flex: 1,
@@ -177,39 +108,33 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.bodyLargeBold,
     color: Colors.dark.text.primary,
-    marginBottom: 2,
+    marginBottom: Spacing.xxs,
   },
   titleSelected: {
-    color: Colors.dark.brand.primary,
+    color: Colors.dark.text.primary,
   },
   description: {
     ...Typography.bodySmall,
     color: Colors.dark.text.secondary,
+    lineHeight: 18,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: Colors.dark.border.dark,
+    borderColor: Colors.dark.border.default,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: Spacing.xs,
+    marginLeft: Spacing.sm,
   },
   checkboxSelected: {
-    borderWidth: 0,
-    overflow: 'hidden',
-  },
-  checkboxGradient: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.brand.primary,
   },
   checkmark: {
-    color: Colors.dark.text.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: Colors.dark.text.inverse,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

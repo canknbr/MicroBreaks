@@ -33,13 +33,13 @@ export default function ValuePromiseScreen() {
 
   useEffect(() => {
     // Track analytics: onb_value_prop_viewed
-    console.log('[Analytics] onb_value_prop_viewed');
+    // console.log('[Analytics] onb_value_prop_viewed');
   }, []);
 
   const handlePersonalize = () => {
     // Track analytics: onb_personalization_started
-    console.log('[Analytics] onb_personalization_started');
-    router.push('/(onboarding)/work-role');
+    // console.log('[Analytics] onb_personalization_started');
+    router.push('./work-role');
   };
 
   return (
@@ -89,15 +89,17 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.headlineMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.lg,
+    fontWeight: '700',
   },
   subhead: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
+    lineHeight: 24,
   },
   benefitsContainer: {
     marginBottom: Spacing.lg,
@@ -105,34 +107,37 @@ const styles = StyleSheet.create({
   benefitCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: Colors.light.background.secondary,
-    padding: Spacing.sm,
+    backgroundColor: Colors.dark.card.background,
+    padding: Spacing.md,
     borderRadius: BorderRadius.card,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.dark.border.default,
   },
   benefitIcon: {
-    width: 48,
-    height: 48,
-    backgroundColor: Colors.light.background.primary,
+    width: 56,
+    height: 56,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.xs,
+    marginRight: Spacing.sm,
   },
   benefitIconText: {
-    fontSize: 24,
+    fontSize: 28,
   },
   benefitContent: {
     flex: 1,
   },
   benefitTitle: {
     ...Typography.bodyLargeBold,
-    color: Colors.light.text.primary,
-    marginBottom: 2,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.xxs,
   },
   benefitDescription: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
+    lineHeight: 20,
   },
   trustSignals: {
     flexDirection: 'row',
@@ -141,7 +146,7 @@ const styles = StyleSheet.create({
   },
   trustText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   spacer: {
     flex: 1,

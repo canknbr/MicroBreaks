@@ -20,7 +20,7 @@ export default function PainAssessmentScreen() {
 
   useEffect(() => {
     // Track analytics: onb_pain_assessment_viewed
-    console.log('[Analytics] onb_pain_assessment_viewed');
+    // console.log('[Analytics] onb_pain_assessment_viewed');
   }, []);
 
   const toggleArea = (areaId: string) => {
@@ -50,8 +50,8 @@ export default function PainAssessmentScreen() {
   const handleContinue = () => {
     if (selectedAreas.size > 0) {
       // Track analytics: onb_pain_areas_selected
-      console.log('[Analytics] onb_pain_areas_selected:', Array.from(selectedAreas));
-      router.push('/(onboarding)/work-pattern');
+      // console.log('[Analytics] onb_pain_areas_selected:', Array.from(selectedAreas));
+      router.push('./work-pattern');
     }
   };
 
@@ -129,12 +129,13 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.xxs,
   },
   subtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.md,
   },
   scrollView: {
@@ -151,18 +152,18 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   areaCard: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.card.background,
     borderWidth: 2,
-    borderColor: Colors.light.border.default,
+    borderColor: Colors.dark.border.default,
     borderRadius: BorderRadius.card,
-    padding: Spacing.sm,
+    padding: Spacing.md,
     alignItems: 'center',
     minHeight: 100,
     justifyContent: 'center',
   },
   areaCardSelected: {
-    borderColor: Colors.light.brand.primary,
-    backgroundColor: Colors.light.status.infoLight,
+    borderColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.background.secondary,
   },
   areaIcon: {
     fontSize: 32,
@@ -170,12 +171,12 @@ const styles = StyleSheet.create({
   },
   areaLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
   },
   areaLabelSelected: {
     ...Typography.bodyMediumBold,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
   },
   severityContainer: {
     flexDirection: 'row',
@@ -187,14 +188,14 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.light.status.warning,
+    backgroundColor: Colors.dark.status.warning,
     opacity: 0.3,
   },
   severityDotActive: {
     opacity: 1,
   },
   severityDotSevere: {
-    backgroundColor: Colors.light.status.error,
+    backgroundColor: Colors.dark.status.error,
   },
   legend: {
     alignItems: 'center',
@@ -202,6 +203,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
 });

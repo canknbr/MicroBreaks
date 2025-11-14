@@ -3,22 +3,22 @@
  * Clean, minimalist welcome screen inspired by "How We Feel" design
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Colors, Spacing, Typography } from '@/theme';
 import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  useSharedValue,
+  Easing,
   useAnimatedStyle,
-  withSpring,
+  useSharedValue,
   withRepeat,
   withSequence,
+  withSpring,
   withTiming,
-  Easing,
 } from 'react-native-reanimated';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
-import { Colors, Typography, Spacing } from '@/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -29,10 +29,10 @@ export default function WelcomeScreen() {
 
   useEffect(() => {
     // Track analytics: onb_welcome_viewed
-    console.log('[Analytics] onb_welcome_viewed');
+    // console.log('[Analytics] onb_welcome_viewed');
 
     // Entrance animations
-    iconScale.value = withSpring(1, { damping: 12 });
+    iconScale.value = withSpring(1, { damping: 50 });
     iconRotate.value = withRepeat(
       withSequence(
         withTiming(-5, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
     );
 
     textOpacity.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) });
-    textTranslateY.value = withSpring(0, { damping: 15 });
+    textTranslateY.value = withSpring(0, { damping: 50 });
   }, []);
 
   const iconAnimatedStyle = useAnimatedStyle(() => ({
@@ -60,14 +60,14 @@ export default function WelcomeScreen() {
 
   const handleStart = () => {
     // Track analytics: onb_welcome_cta_tapped
-    console.log('[Analytics] onb_welcome_cta_tapped');
-    router.push('/(onboarding)/social-proof');
+    // console.log('[Analytics] onb_welcome_cta_tapped');
+    router.push('./social-proof');
   };
 
   const handleBrowse = () => {
     // Track analytics: onb_welcome_dismissed
-    console.log('[Analytics] onb_welcome_dismissed');
-    router.push('/(tabs)');
+    // console.log('[Analytics] onb_welcome_dismissed');
+    router.replace('/(tabs)/index' as any);
   };
 
   return (
@@ -150,5 +150,6 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginBottom: Spacing.md,
+    marginTop: Spacing.lg,
   },
 });

@@ -19,21 +19,21 @@ export default function EnergyPatternScreen() {
 
   useEffect(() => {
     // Track analytics: onb_energy_pattern_viewed
-    console.log('[Analytics] onb_energy_pattern_viewed');
+    // console.log('[Analytics] onb_energy_pattern_viewed');
   }, []);
 
   const handleContinue = () => {
     if (selectedPattern) {
       // Track analytics: onb_energy_preset
-      console.log('[Analytics] onb_energy_preset:', selectedPattern);
-      router.push('/(onboarding)/break-style');
+      // console.log('[Analytics] onb_energy_preset:', selectedPattern);
+      router.push('./break-style');
     }
   };
 
   const handleSkip = () => {
     // Track analytics: onb_energy_skipped
-    console.log('[Analytics] onb_energy_skipped');
-    router.push('/(onboarding)/break-style');
+    // console.log('[Analytics] onb_energy_skipped');
+    router.push('./break-style');
   };
 
   return (
@@ -77,12 +77,13 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.xxs,
   },
   subtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.md,
   },
   patterns: {

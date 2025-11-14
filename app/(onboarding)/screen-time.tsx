@@ -17,25 +17,25 @@ export default function ScreenTimeScreen() {
 
   useEffect(() => {
     // Track analytics: onb_screen_time_viewed
-    console.log('[Analytics] onb_screen_time_viewed');
+    // console.log('[Analytics] onb_screen_time_viewed');
   }, []);
 
   const handleContinue = () => {
     // Track analytics: onb_screen_time_set
-    console.log('[Analytics] onb_screen_time_set:', hours);
-    router.push('/(onboarding)/pain-assessment');
+    // console.log('[Analytics] onb_screen_time_set:', hours);
+    router.push('./pain-assessment');
   };
 
   const handleSkip = () => {
     // Track analytics: onb_screen_time_skipped
-    console.log('[Analytics] onb_screen_time_skipped');
-    router.push('/(onboarding)/pain-assessment');
+    // console.log('[Analytics] onb_screen_time_skipped');
+    router.push('./pain-assessment');
   };
 
   const getColor = (value: number) => {
-    if (value <= 4) return Colors.light.status.success;
-    if (value <= 8) return Colors.light.status.warning;
-    return Colors.light.status.error;
+    if (value <= 4) return Colors.dark.brand.primary;
+    if (value <= 8) return Colors.dark.brand.secondary;
+    return Colors.dark.status.error;
   };
 
   const getFeedback = (value: number) => {
@@ -111,36 +111,38 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     marginBottom: Spacing.lg,
+    fontWeight: '700',
   },
   characterContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   character: {
-    fontSize: 80,
+    fontSize: 100,
   },
   displayContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   hoursDisplay: {
     ...Typography.displayLarge,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   hoursLabel: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
+    marginTop: Spacing.xs,
   },
   sliderContainer: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   sliderTrack: {
-    height: 8,
-    backgroundColor: Colors.light.background.secondary,
+    height: 10,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.full,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   sliderFill: {
     height: '100%',
@@ -156,11 +158,11 @@ const styles = StyleSheet.create({
   },
   sliderButtonText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.tertiary,
   },
   feedback: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
   },
   spacer: {

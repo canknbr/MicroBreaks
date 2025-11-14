@@ -3,14 +3,14 @@
  * Collect user's work role for personalization
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
-import OnboardingLayout from './components/OnboardingLayout';
-import PrimaryButton from './components/PrimaryButton';
-import OptionCard from './components/OptionCard';
-import { Colors, Typography, Spacing } from '@/theme';
 import { WORK_ROLES } from '@/constants/onboarding';
+import { Colors, Spacing, Typography } from '@/theme';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import OnboardingLayout from './components/OnboardingLayout';
+import OptionCard from './components/OptionCard';
+import PrimaryButton from './components/PrimaryButton';
 
 export default function WorkRoleScreen() {
   const router = useRouter();
@@ -18,14 +18,14 @@ export default function WorkRoleScreen() {
 
   useEffect(() => {
     // Track analytics: onb_role_screen_viewed
-    console.log('[Analytics] onb_role_screen_viewed');
+    // console.log('[Analytics] onb_role_screen_viewed');
   }, []);
 
   const handleContinue = () => {
     if (selectedRole) {
       // Track analytics: onb_role_selected
-      console.log('[Analytics] onb_role_selected:', selectedRole);
-      router.push('/(onboarding)/screen-time');
+      // console.log('[Analytics] onb_role_selected:', selectedRole);
+      router.push('./screen-time');
     }
   };
 
@@ -65,8 +65,9 @@ const styles = StyleSheet.create({
   },
   question: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
-    marginBottom: Spacing.md,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.lg,
+    fontWeight: '700',
   },
   listContent: {
     flexGrow: 1,

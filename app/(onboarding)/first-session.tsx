@@ -19,23 +19,23 @@ export default function FirstSessionScreen() {
 
   useEffect(() => {
     // Track analytics: onb_first_session_viewed
-    console.log('[Analytics] onb_first_session_viewed');
+    // console.log('[Analytics] onb_first_session_viewed');
   }, []);
 
   const handleStart = () => {
     // Track analytics: onb_first_session_started
-    console.log('[Analytics] onb_first_session_started', {
-      notifications: notificationsOn,
-      sound: soundOn,
-      vibration: vibrationOn,
-    });
-    router.push('/(onboarding)/premium-pitch');
+    // console.log('[Analytics] onb_first_session_started', {
+      // notifications: notificationsOn,
+      // sound: soundOn,
+      // vibration: vibrationOn,
+    // });
+    router.push('./premium-pitch');
   };
 
   const handleExplore = () => {
     // Track analytics: onb_first_session_deferred
-    console.log('[Analytics] onb_first_session_deferred');
-    router.push('/(onboarding)/premium-pitch');
+    // console.log('[Analytics] onb_first_session_deferred');
+    router.push('./premium-pitch');
   };
 
   return (
@@ -68,8 +68,8 @@ export default function FirstSessionScreen() {
               value={notificationsOn}
               onValueChange={setNotificationsOn}
               trackColor={{
-                false: Colors.light.border.default,
-                true: Colors.light.brand.primary,
+                false: Colors.dark.border.default,
+                true: Colors.dark.brand.primary,
               }}
             />
           </View>
@@ -83,8 +83,8 @@ export default function FirstSessionScreen() {
               value={soundOn}
               onValueChange={setSoundOn}
               trackColor={{
-                false: Colors.light.border.default,
-                true: Colors.light.brand.primary,
+                false: Colors.dark.border.default,
+                true: Colors.dark.brand.primary,
               }}
             />
           </View>
@@ -98,8 +98,8 @@ export default function FirstSessionScreen() {
               value={vibrationOn}
               onValueChange={setVibrationOn}
               trackColor={{
-                false: Colors.light.border.default,
-                true: Colors.light.brand.primary,
+                false: Colors.dark.border.default,
+                true: Colors.dark.brand.primary,
               }}
             />
           </View>
@@ -128,11 +128,12 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     textAlign: 'center',
   },
   timerCard: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
     alignItems: 'center',
@@ -140,27 +141,27 @@ const styles = StyleSheet.create({
   },
   timerValue: {
     ...Typography.displayLarge,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
     fontWeight: 'bold',
   },
   timerLabel: {
     ...Typography.titleMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     marginTop: Spacing.xs,
   },
   timerSubtext: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginTop: Spacing.xxs,
   },
   settings: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     padding: Spacing.sm,
   },
   settingsTitle: {
     ...Typography.bodyLargeBold,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     marginBottom: Spacing.sm,
   },
   settingRow: {
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   spacer: {
     flex: 1,

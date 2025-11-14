@@ -40,14 +40,14 @@ export default function ImpactEducationScreen() {
 
   useEffect(() => {
     // Track analytics: onb_education_viewed
-    console.log('[Analytics] onb_education_viewed');
+    // console.log('[Analytics] onb_education_viewed');
   }, []);
 
   const handleNext = () => {
     if (currentCard < EDUCATION_CARDS.length - 1) {
       setCurrentCard(currentCard + 1);
       // Track analytics: onb_education_cards_swiped
-      console.log('[Analytics] onb_education_cards_swiped:', currentCard + 1);
+      // console.log('[Analytics] onb_education_cards_swiped:', currentCard + 1);
     } else {
       handleContinue();
     }
@@ -55,12 +55,12 @@ export default function ImpactEducationScreen() {
 
   const handleSkip = () => {
     // Track analytics: onb_education_skipped
-    console.log('[Analytics] onb_education_skipped');
-    router.push('/(onboarding)/timer-config');
+    // console.log('[Analytics] onb_education_skipped');
+    router.push('./timer-config');
   };
 
   const handleContinue = () => {
-    router.push('/(onboarding)/timer-config');
+    router.push('./timer-config');
   };
 
   const card = EDUCATION_CARDS[currentCard];
@@ -107,7 +107,8 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
     alignItems: 'center',
@@ -131,13 +132,13 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     ...Typography.headlineSmall,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   cardDescription: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
     lineHeight: 28,
   },
@@ -151,10 +152,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.light.border.default,
+    backgroundColor: Colors.dark.border.default,
   },
   dotActive: {
-    backgroundColor: Colors.light.brand.primary,
+    backgroundColor: Colors.dark.brand.primary,
     width: 24,
   },
   spacer: {

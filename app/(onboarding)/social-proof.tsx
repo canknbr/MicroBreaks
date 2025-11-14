@@ -17,7 +17,7 @@ export default function SocialProofScreen() {
 
   useEffect(() => {
     // Track analytics: onb_social_proof_viewed
-    console.log('[Analytics] onb_social_proof_viewed');
+    // console.log('[Analytics] onb_social_proof_viewed');
 
     // Auto-advance after 8s if no interaction
     const timer = setTimeout(() => {
@@ -38,8 +38,8 @@ export default function SocialProofScreen() {
 
   const handleContinue = () => {
     // Track analytics: onb_authority_badges_viewed
-    console.log('[Analytics] onb_authority_badges_viewed');
-    router.push('/(onboarding)/value-promise');
+    // console.log('[Analytics] onb_authority_badges_viewed');
+    router.push('./value-promise');
   };
 
   return (
@@ -109,86 +109,96 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.headlineMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.lg,
+    fontWeight: '700',
   },
   badgesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: Spacing.lg,
+    gap: Spacing.sm,
   },
   badge: {
     alignItems: 'center',
-    padding: Spacing.sm,
-    backgroundColor: Colors.light.background.secondary,
+    padding: Spacing.md,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
     flex: 1,
-    marginHorizontal: Spacing.xxs,
+    borderWidth: 1,
+    borderColor: Colors.dark.border.default,
   },
   badgeIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.xxs,
+    fontSize: 36,
+    marginBottom: Spacing.xs,
   },
   badgeText: {
     ...Typography.bodyMediumBold,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
+    marginBottom: Spacing.xxs,
   },
   badgeSubtext: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
   },
   metricContainer: {
     alignItems: 'center',
     marginVertical: Spacing.lg,
-    padding: Spacing.md,
-    backgroundColor: Colors.light.status.successLight,
+    padding: Spacing.lg,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.dark.brand.primary,
   },
   metricValue: {
     ...Typography.displayMedium,
-    color: Colors.light.status.success,
-    marginBottom: Spacing.xxs,
+    color: Colors.dark.brand.primary,
+    marginBottom: Spacing.xs,
+    fontWeight: '700',
   },
   metricLabel: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
   },
   testimonialContainer: {
-    padding: Spacing.md,
-    backgroundColor: Colors.light.background.secondary,
+    padding: Spacing.lg,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.border.default,
   },
   testimonialQuote: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     fontStyle: 'italic',
     textAlign: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    lineHeight: 24,
   },
   testimonialAuthor: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: Spacing.xxs,
+    gap: Spacing.xs,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.light.border.default,
+    backgroundColor: Colors.dark.border.default,
   },
   dotActive: {
-    backgroundColor: Colors.light.brand.primary,
+    backgroundColor: Colors.dark.brand.primary,
     width: 18,
   },
   liveCounter: {
@@ -197,7 +207,7 @@ const styles = StyleSheet.create({
   },
   liveCounterText: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   spacer: {
     flex: 1,

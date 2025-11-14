@@ -16,18 +16,18 @@ export default function RecommendationScreen() {
 
   useEffect(() => {
     // Track analytics: onb_recommendation_viewed
-    console.log('[Analytics] onb_recommendation_viewed');
+    // console.log('[Analytics] onb_recommendation_viewed');
   }, []);
 
   const handleTryBreak = () => {
     // Track analytics: onb_recommendation_accepted
-    console.log('[Analytics] onb_recommendation_accepted');
-    router.push('/(onboarding)/break-demo');
+    // console.log('[Analytics] onb_recommendation_accepted');
+    router.push('./break-demo');
   };
 
   const handleAdjust = () => {
     // Track analytics: onb_recommendation_adjusted
-    console.log('[Analytics] onb_recommendation_adjusted');
+    // console.log('[Analytics] onb_recommendation_adjusted');
     // Navigate back to adjust settings
     router.back();
   };
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     ...Typography.labelSmall,
-    color: Colors.light.brand.accent,
-    backgroundColor: Colors.light.background.secondary,
+    color: Colors.dark.brand.accent,
+    backgroundColor: Colors.dark.background.secondary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.full,
@@ -112,37 +112,42 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     textAlign: 'center',
   },
   matchContainer: {
     alignItems: 'center',
-    padding: Spacing.md,
-    backgroundColor: Colors.light.status.successLight,
+    padding: Spacing.lg,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
     marginBottom: Spacing.md,
+    borderWidth: 2,
+    borderColor: Colors.dark.brand.primary,
   },
   matchValue: {
     ...Typography.displayLarge,
-    color: Colors.light.status.success,
+    color: Colors.dark.status.success,
     fontWeight: 'bold',
   },
   matchLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   planContainer: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.card.background,
     borderRadius: BorderRadius.card,
-    padding: Spacing.sm,
+    padding: Spacing.md,
     marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.dark.border.default,
   },
   planItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border.light,
+    borderBottomColor: Colors.dark.border.light,
   },
   planIcon: {
     fontSize: 32,
@@ -153,11 +158,11 @@ const styles = StyleSheet.create({
   },
   planLabel: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   planValue: {
     ...Typography.bodyLargeBold,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   spacer: {
     flex: 1,

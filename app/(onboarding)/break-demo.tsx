@@ -21,7 +21,7 @@ export default function BreakDemoScreen() {
 
   useEffect(() => {
     // Track analytics: onb_demo_started
-    console.log('[Analytics] onb_demo_started');
+    // console.log('[Analytics] onb_demo_started');
 
     // Phase timing
     const timers: number[] = [];
@@ -48,18 +48,18 @@ export default function BreakDemoScreen() {
   const handleFeedback = (rating: 'good' | 'neutral' | 'bad') => {
     setFeedback(rating);
     // Track analytics: onb_demo_feedback
-    console.log('[Analytics] onb_demo_feedback:', rating);
+    // console.log('[Analytics] onb_demo_feedback:', rating);
     setTimeout(() => {
       // Track analytics: onb_demo_completed
-      console.log('[Analytics] onb_demo_completed');
-      router.push('/(onboarding)/value-display');
+      // console.log('[Analytics] onb_demo_completed');
+      router.push('./value-display');
     }, 1000);
   };
 
   const handleSkip = () => {
     // Track analytics: onb_demo_skipped
-    console.log('[Analytics] onb_demo_skipped:', phase);
-    router.push('/(onboarding)/value-display');
+    // console.log('[Analytics] onb_demo_skipped:', phase);
+    router.push('./value-display');
   };
 
   const renderContent = () => {
@@ -164,13 +164,14 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.headlineMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   subtitle: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   },
   instruction: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
     paddingHorizontal: Spacing.md,
     lineHeight: 28,
@@ -193,21 +194,21 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderWidth: 8,
-    borderColor: Colors.light.brand.primary,
+    borderColor: Colors.dark.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: Spacing.xl,
   },
   countdown: {
     ...Typography.displayLarge,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
     fontWeight: 'bold',
   },
   countdownLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   feedbackButtons: {
     flexDirection: 'row',
@@ -218,14 +219,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: Spacing.md,
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     borderWidth: 2,
-    borderColor: Colors.light.border.default,
+    borderColor: Colors.dark.border.default,
   },
   feedbackButtonSelected: {
-    borderColor: Colors.light.brand.primary,
-    backgroundColor: Colors.light.status.infoLight,
+    borderColor: Colors.dark.brand.primary,
+    backgroundColor: Colors.dark.status.infoLight,
   },
   feedbackEmoji: {
     fontSize: 48,
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
   },
   feedbackLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   spacer: {
     flex: 1,

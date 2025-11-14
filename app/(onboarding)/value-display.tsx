@@ -15,13 +15,13 @@ export default function ValueDisplayScreen() {
 
   useEffect(() => {
     // Track analytics: onb_value_displayed
-    console.log('[Analytics] onb_value_displayed');
+    // console.log('[Analytics] onb_value_displayed');
   }, []);
 
   const handleContinue = () => {
     // Track analytics: onb_benefits_viewed
-    console.log('[Analytics] onb_benefits_viewed');
-    router.push('/(onboarding)/impact-education');
+    // console.log('[Analytics] onb_benefits_viewed');
+    router.push('./impact-education');
   };
 
   return (
@@ -82,7 +82,8 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     marginBottom: Spacing.lg,
   },
   benefitsContainer: {
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.xs,
@@ -99,52 +100,52 @@ const styles = StyleSheet.create({
   benefitIcon: {
     fontSize: 32,
     marginRight: Spacing.xs,
-    color: Colors.light.brand.secondary,
+    color: Colors.dark.brand.secondary,
   },
   benefitText: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     flex: 1,
   },
   socialProof: {
     padding: Spacing.md,
-    backgroundColor: Colors.light.status.infoLight,
+    backgroundColor: Colors.dark.status.infoLight,
     borderRadius: BorderRadius.card,
     marginBottom: Spacing.md,
   },
   socialProofText: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     textAlign: 'center',
   },
   highlight: {
     ...Typography.bodyLargeBold,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
   },
   progressCard: {
     padding: Spacing.sm,
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
   },
   progressLabel: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     marginBottom: Spacing.xxs,
   },
   progressBar: {
     height: 8,
-    backgroundColor: Colors.light.progress.background,
+    backgroundColor: Colors.dark.progress.background,
     borderRadius: BorderRadius.full,
     marginBottom: Spacing.xxs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.light.progress.fill,
+    backgroundColor: Colors.dark.progress.fill,
   },
   progressText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   spacer: {
     flex: 1,

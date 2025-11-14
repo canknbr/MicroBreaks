@@ -17,30 +17,30 @@ export default function NotificationPermissionScreen() {
 
   useEffect(() => {
     // Track analytics: onb_notification_pre_prompt_shown
-    console.log('[Analytics] onb_notification_pre_prompt_shown');
+    // console.log('[Analytics] onb_notification_pre_prompt_shown');
   }, []);
 
   const handleEnable = async () => {
     // Track analytics: onb_notification_pre_prompt_accepted
-    console.log('[Analytics] onb_notification_pre_prompt_accepted');
+    // console.log('[Analytics] onb_notification_pre_prompt_accepted');
 
     // Request system permission
     // In real implementation, use expo-notifications
     const granted = true; // Simulated
 
     // Track analytics: onb_notification_system_prompt_result
-    console.log('[Analytics] onb_notification_system_prompt_result:', granted);
+    // console.log('[Analytics] onb_notification_system_prompt_result:', granted);
     setPermissionGranted(granted);
 
     setTimeout(() => {
-      router.push('/(onboarding)/calendar-integration');
+      router.push('./calendar-integration');
     }, 500);
   };
 
   const handleLater = () => {
     // Track analytics: onb_notification_denied
-    console.log('[Analytics] onb_notification_denied');
-    router.push('/(onboarding)/calendar-integration');
+    // console.log('[Analytics] onb_notification_denied');
+    router.push('./calendar-integration');
   };
 
   return (
@@ -114,18 +114,19 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   subtext: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   benefits: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     padding: Spacing.sm,
     marginBottom: Spacing.md,
@@ -137,12 +138,12 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 20,
-    color: Colors.light.status.success,
+    color: Colors.dark.status.success,
     marginRight: Spacing.xs,
   },
   benefitText: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     flex: 1,
   },
   trustContainer: {
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   trustBadge: {
-    backgroundColor: Colors.light.status.successLight,
+    backgroundColor: Colors.dark.status.successLight,
     paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.sm,
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   },
   trustText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   spacer: {
     flex: 1,

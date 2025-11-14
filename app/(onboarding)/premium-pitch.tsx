@@ -18,19 +18,19 @@ export default function PremiumPitchScreen() {
 
   useEffect(() => {
     // Track analytics: onb_paywall_displayed
-    console.log('[Analytics] onb_paywall_displayed');
+    // console.log('[Analytics] onb_paywall_displayed');
   }, []);
 
   const handleStartTrial = () => {
     // Track analytics: onb_trial_started
-    console.log('[Analytics] onb_trial_started');
-    router.push('/(onboarding)/completion');
+    // console.log('[Analytics] onb_trial_started');
+    router.push('./completion');
   };
 
   const handleContinueFree = () => {
     // Track analytics: onb_paywall_dismissed
-    console.log('[Analytics] onb_paywall_dismissed');
-    router.push('/(onboarding)/completion');
+    // console.log('[Analytics] onb_paywall_dismissed');
+    router.push('./completion');
   };
 
   const formatTimeLeft = () => {
@@ -139,8 +139,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     ...Typography.labelSmall,
-    color: Colors.light.status.error,
-    backgroundColor: Colors.light.status.errorLight,
+    color: Colors.dark.status.error,
+    backgroundColor: Colors.dark.status.errorLight,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.full,
@@ -149,11 +149,12 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...Typography.titleLarge,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
+    fontWeight: '700',
     textAlign: 'center',
   },
   comparison: {
-    backgroundColor: Colors.light.background.secondary,
+    backgroundColor: Colors.dark.background.secondary,
     borderRadius: BorderRadius.card,
     padding: Spacing.xs,
     marginBottom: Spacing.md,
@@ -162,13 +163,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingBottom: Spacing.xs,
     borderBottomWidth: 2,
-    borderBottomColor: Colors.light.border.default,
+    borderBottomColor: Colors.dark.border.default,
   },
   comparisonRow: {
     flexDirection: 'row',
     paddingVertical: Spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border.light,
+    borderBottomColor: Colors.dark.border.light,
   },
   comparisonLabel: {
     flex: 2,
@@ -179,16 +180,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   premiumColumn: {
-    backgroundColor: Colors.light.status.infoLight,
+    backgroundColor: Colors.dark.status.infoLight,
     borderRadius: BorderRadius.sm,
     marginVertical: -Spacing.xxs,
   },
   columnTitle: {
     ...Typography.bodyMediumBold,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   premiumTitle: {
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
   },
   featureLabel: {
     flex: 2,
@@ -196,14 +197,14 @@ const styles = StyleSheet.create({
   },
   featureName: {
     ...Typography.bodySmall,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   featureValue: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
   },
   offerCard: {
-    backgroundColor: Colors.light.brand.primary,
+    backgroundColor: Colors.dark.brand.primary,
     borderRadius: BorderRadius.card,
     padding: Spacing.md,
     alignItems: 'center',
@@ -211,29 +212,29 @@ const styles = StyleSheet.create({
   },
   offerTitle: {
     ...Typography.bodyLarge,
-    color: Colors.light.text.inverse,
+    color: Colors.dark.text.inverse,
     marginBottom: Spacing.xxs,
   },
   offerPrice: {
     ...Typography.headlineMedium,
-    color: Colors.light.text.inverse,
+    color: Colors.dark.text.inverse,
     fontWeight: 'bold',
     marginBottom: Spacing.xxs,
   },
   offerDetails: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.inverse,
+    color: Colors.dark.text.inverse,
     marginBottom: Spacing.sm,
   },
   urgencyBadge: {
-    backgroundColor: Colors.light.status.warning,
+    backgroundColor: Colors.dark.status.warning,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.full,
   },
   urgencyText: {
     ...Typography.bodySmall,
-    color: Colors.light.text.primary,
+    color: Colors.dark.text.primary,
     fontWeight: 'bold',
   },
   socialProof: {
@@ -242,11 +243,11 @@ const styles = StyleSheet.create({
   },
   socialProofText: {
     ...Typography.bodyMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
   },
   highlight: {
     ...Typography.bodyMediumBold,
-    color: Colors.light.brand.primary,
+    color: Colors.dark.brand.primary,
   },
   primaryButton: {
     marginBottom: Spacing.xs,
