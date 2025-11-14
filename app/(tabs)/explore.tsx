@@ -1,112 +1,149 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * Explore Screen - MicroBreaks Resources & Information
+ * Sleek, professional, icon-free black-white design
+ */
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Typography, Spacing } from '@/theme';
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Explore</Text>
+          <Text style={styles.subtitle}>
+            Learn about wellness practices and break strategies
+          </Text>
+        </View>
+
+        {/* Features Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Features</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Smart Break Reminders</Text>
+            <Text style={styles.cardDescription}>
+              Customizable notifications that adapt to your work patterns and help you maintain consistent wellness habits.
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Guided Exercises</Text>
+            <Text style={styles.cardDescription}>
+              Quick, effective movements designed to reduce strain and increase energy throughout your workday.
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Progress Tracking</Text>
+            <Text style={styles.cardDescription}>
+              Monitor your wellness journey with simple, meaningful metrics that show your commitment to self-care.
+            </Text>
+          </View>
+        </View>
+
+        {/* Benefits Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Benefits</Text>
+
+          <View style={styles.benefitRow}>
+            <View style={styles.benefitDot} />
+            <Text style={styles.benefitText}>Reduce physical strain and prevent injury</Text>
+          </View>
+
+          <View style={styles.benefitRow}>
+            <View style={styles.benefitDot} />
+            <Text style={styles.benefitText}>Improve focus and mental clarity</Text>
+          </View>
+
+          <View style={styles.benefitRow}>
+            <View style={styles.benefitDot} />
+            <Text style={styles.benefitText}>Boost energy levels naturally</Text>
+          </View>
+
+          <View style={styles.benefitRow}>
+            <View style={styles.benefitDot} />
+            <Text style={styles.benefitText}>Create sustainable wellness habits</Text>
+          </View>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.dark.background.primary,
   },
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: Spacing.lg,
+  },
+  header: {
+    marginBottom: Spacing.xl,
+  },
+  title: {
+    ...Typography.displaySmall,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  subtitle: {
+    ...Typography.bodyLarge,
+    color: Colors.dark.text.secondary,
+    lineHeight: 24,
+  },
+  section: {
+    marginBottom: Spacing.xl,
+  },
+  sectionTitle: {
+    ...Typography.titleLarge,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.md,
+  },
+  card: {
+    backgroundColor: Colors.dark.card.background,
+    borderRadius: 16,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  cardTitle: {
+    ...Typography.titleMedium,
+    color: Colors.dark.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  cardDescription: {
+    ...Typography.bodyMedium,
+    color: Colors.dark.text.secondary,
+    lineHeight: 22,
+  },
+  benefitRow: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  benefitDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.dark.text.primary,
+    marginRight: Spacing.md,
+  },
+  benefitText: {
+    ...Typography.bodyMedium,
+    color: Colors.dark.text.primary,
+    flex: 1,
+    lineHeight: 22,
   },
 });
