@@ -9,15 +9,15 @@ import { useRouter } from 'expo-router';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 // Phase 1: Hook
-import { WelcomeScreen } from '../../components/onboarding/screens/WelcomeScreen';
-import { SocialProofScreen } from '../../components/onboarding/screens/SocialProofScreen';
-import { ValuePromiseScreen } from '../../components/onboarding/screens/ValuePromiseScreen';
+import { WelcomeScreen } from './screens/WelcomeScreen';
+import { SocialProofScreen } from './screens/SocialProofScreen';
+import { ValuePromiseScreen } from './screens/ValuePromiseScreen';
 
 // Phase 2: Profile Building
-import { WorkRoleScreen } from '../../components/onboarding/screens/WorkRoleScreen';
-import { ScreenTimeScreen } from '../../components/onboarding/screens/ScreenTimeScreen';
-import { PainAssessmentScreen } from '../../components/onboarding/screens/PainAssessmentScreen';
-import { WorkPatternScreen } from '../../components/onboarding/screens/WorkPatternScreen';
+import { WorkRoleScreen } from './screens/WorkRoleScreen';
+import { ScreenTimeScreen } from './screens/ScreenTimeScreen';
+import { PainAssessmentScreen } from './screens/PainAssessmentScreen';
+import { WorkPatternScreen } from './screens/WorkPatternScreen';
 import {
   ErgoSetupScreen,
   NotificationPreferenceScreen,
@@ -33,7 +33,7 @@ import {
   FirstSessionScreen,
   PremiumPitchScreen,
   CompletionScreen,
-} from '../../components/onboarding/screens/AllRemainingScreens';
+} from './screens/AllRemainingScreens';
 
 // Define all screens in order (Total: 21 screens)
 const ONBOARDING_SCREENS = [

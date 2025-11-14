@@ -7,14 +7,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { OnboardingContainer } from '../OnboardingContainer';
-import { OnboardingButton } from '../OnboardingButton';
-import { ScreenHeader } from '../ScreenHeader';
-import { SelectionCard } from '../SelectionCard';
-import { useOnboarding } from '../../../contexts/OnboardingContext';
+import { OnboardingContainer } from '@/components/onboarding/OnboardingContainer';
+import { OnboardingButton } from '@/components/onboarding/OnboardingButton';
+import { ScreenHeader } from '@/components/onboarding/ScreenHeader';
+import { SelectionCard } from '@/components/onboarding/SelectionCard';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { PainArea, PainAreaWithSeverity } from '../../../types/onboarding';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../../theme';
-import { useColorScheme } from '../../../hooks/useColorScheme';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/theme';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 const PAIN_AREAS: Array<{ value: PainArea; label: string; icon: string }> = [
   { value: 'eyes', label: 'Eyes', icon: '👁️' },

@@ -7,13 +7,13 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { OnboardingContainer } from '../OnboardingContainer';
-import { OnboardingButton } from '../OnboardingButton';
-import { ScreenHeader } from '../ScreenHeader';
-import { SelectionCard } from '../SelectionCard';
-import { useOnboarding } from '../../../contexts/OnboardingContext';
+import { OnboardingContainer } from '@/components/onboarding/OnboardingContainer';
+import { OnboardingButton } from '@/components/onboarding/OnboardingButton';
+import { ScreenHeader } from '@/components/onboarding/ScreenHeader';
+import { SelectionCard } from '@/components/onboarding/SelectionCard';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { WorkRole } from '../../../types/onboarding';
-import { Spacing } from '../../../theme';
+import { Spacing } from '@/theme';
 
 const WORK_ROLES: Array<{ value: WorkRole; label: string; icon: string }> = [
   { value: 'developer', label: 'Software Developer', icon: '💻' },

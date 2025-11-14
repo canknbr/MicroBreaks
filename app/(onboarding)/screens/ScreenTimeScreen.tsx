@@ -8,12 +8,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import Slider from '@react-native-community/slider';
-import { OnboardingContainer } from '../OnboardingContainer';
-import { OnboardingButton } from '../OnboardingButton';
-import { ScreenHeader } from '../ScreenHeader';
-import { useOnboarding } from '../../../contexts/OnboardingContext';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../../theme';
-import { useColorScheme } from '../../../hooks/useColorScheme';
+import { OnboardingContainer } from '@/components/onboarding/OnboardingContainer';
+import { OnboardingButton } from '@/components/onboarding/OnboardingButton';
+import { ScreenHeader } from '@/components/onboarding/ScreenHeader';
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/theme';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export const ScreenTimeScreen: React.FC = () => {
   const { goToNextScreen, updateData, progress, data } = useOnboarding();

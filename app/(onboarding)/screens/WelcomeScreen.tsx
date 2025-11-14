@@ -15,11 +15,11 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { OnboardingContainer } from '../OnboardingContainer';
-import { OnboardingButton } from '../OnboardingButton';
-import { ScreenHeader } from '../ScreenHeader';
-import { useOnboarding } from '../../../contexts/OnboardingContext';
-import { Spacing } from '../../../theme';
+import { OnboardingContainer } from '@/components/onboarding/OnboardingContainer';
+import { OnboardingButton } from '@/components/onboarding/OnboardingButton';
+import { ScreenHeader } from '@/components/onboarding/ScreenHeader';
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import { Spacing } from '@/theme';
 
 export const WelcomeScreen: React.FC = () => {
   const { goToNextScreen, updateData, progress } = useOnboarding();
