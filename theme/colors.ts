@@ -155,108 +155,143 @@ export const Colors = {
   dark: {
     // Text
     text: {
-      primary: '#ECEDEE',
-      secondary: '#BDC3C7',
-      tertiary: '#95A5A6',
-      inverse: ColorPalette.neutral.dark,
-      link: '#5DADE2',
-      error: '#EC7063',
-      success: '#82E0AA',
-      warning: '#F8C471',
+      primary: '#FFFFFF',
+      secondary: '#B4B4B4',
+      tertiary: '#808080',
+      inverse: '#000000',
+      link: '#00D9FF',
+      error: '#FF6B6B',
+      success: '#00FF94',
+      warning: '#FFB800',
     },
 
     // Background
     background: {
-      primary: '#151718',
-      secondary: '#1E2124',
-      tertiary: '#2C2F33',
+      primary: '#000000',
+      secondary: '#0A0A0A',
+      tertiary: '#141414',
       inverse: ColorPalette.neutral.white,
-      surface: '#1E2124',
-      overlay: 'rgba(0, 0, 0, 0.7)',
+      surface: '#0F0F0F',
+      overlay: 'rgba(0, 0, 0, 0.85)',
     },
 
     // Brand
     brand: {
-      primary: '#5DADE2',
-      secondary: '#82E0AA',
-      accent: '#A569BD',
-      highlight: '#F8C471',
+      primary: '#00D9FF',
+      secondary: '#00FF94',
+      accent: '#B47EFF',
+      highlight: '#FF3D71',
     },
 
     // Interactive Elements
     interactive: {
-      primary: '#5DADE2',
-      primaryHover: '#6DC0F0',
-      primaryActive: '#4A9AD0',
-      primaryDisabled: '#2E5C78',
-      secondary: '#82E0AA',
-      secondaryHover: '#92EAB8',
-      secondaryActive: '#72D09A',
-      secondaryDisabled: '#3E6850',
+      primary: '#00D9FF',
+      primaryHover: '#33E1FF',
+      primaryActive: '#00B8D9',
+      primaryDisabled: '#1A3D47',
+      secondary: '#00FF94',
+      secondaryHover: '#33FFA8',
+      secondaryActive: '#00D97A',
+      secondaryDisabled: '#1A4733',
     },
 
     // Status Colors
     status: {
-      error: '#EC7063',
-      errorLight: '#641E16',
-      warning: '#F8C471',
-      warningLight: '#7D6608',
-      success: '#82E0AA',
-      successLight: '#145A32',
-      info: '#5DADE2',
-      infoLight: '#154360',
+      error: '#FF6B6B',
+      errorLight: '#331515',
+      warning: '#FFB800',
+      warningLight: '#332500',
+      success: '#00FF94',
+      successLight: '#00331D',
+      info: '#00D9FF',
+      infoLight: '#002B33',
     },
 
     // Border & Divider
     border: {
-      default: '#2C2F33',
-      light: '#1E2124',
-      dark: '#36393F',
-      focus: '#5DADE2',
-      error: '#EC7063',
+      default: '#1F1F1F',
+      light: '#141414',
+      dark: '#2A2A2A',
+      focus: '#00D9FF',
+      error: '#FF6B6B',
     },
 
     // Icon
     icon: {
-      primary: '#ECEDEE',
-      secondary: '#BDC3C7',
-      tertiary: '#7F8C8D',
-      inverse: ColorPalette.neutral.dark,
-      brand: '#5DADE2',
+      primary: '#FFFFFF',
+      secondary: '#B4B4B4',
+      tertiary: '#666666',
+      inverse: '#000000',
+      brand: '#00D9FF',
     },
 
     // Tab Navigation
     tab: {
-      iconDefault: '#BDC3C7',
-      iconSelected: '#5DADE2',
-      background: '#151718',
-      activeIndicator: '#5DADE2',
+      iconDefault: '#808080',
+      iconSelected: '#00D9FF',
+      background: '#000000',
+      activeIndicator: '#00D9FF',
     },
 
     // Card
     card: {
-      background: '#1E2124',
-      border: '#2C2F33',
-      shadow: 'rgba(0, 0, 0, 0.3)',
+      background: '#0F0F0F',
+      border: '#1F1F1F',
+      shadow: 'rgba(0, 0, 0, 0.6)',
     },
 
     // Input
     input: {
-      background: '#2C2F33',
-      border: '#36393F',
-      borderFocus: '#5DADE2',
-      borderError: '#EC7063',
-      placeholder: '#7F8C8D',
-      text: '#ECEDEE',
-      disabled: '#1E2124',
+      background: '#141414',
+      border: '#2A2A2A',
+      borderFocus: '#00D9FF',
+      borderError: '#FF6B6B',
+      placeholder: '#666666',
+      text: '#FFFFFF',
+      disabled: '#0A0A0A',
     },
 
     // Progress & Loading
     progress: {
-      background: '#2C2F33',
-      fill: '#5DADE2',
-      success: '#82E0AA',
+      background: '#1F1F1F',
+      fill: '#00D9FF',
+      success: '#00FF94',
     },
+  },
+} as const;
+
+// Gradient definitions for modern black-themed UI
+export const Gradients = {
+  // Primary gradients
+  primary: {
+    cyan: ['#00D9FF', '#0099CC'],
+    cyanVertical: ['#00D9FF', '#006B8F'],
+    green: ['#00FF94', '#00CC75'],
+    purple: ['#B47EFF', '#8B5FD9'],
+    red: ['#FF3D71', '#CC1447'],
+  },
+
+  // Background gradients
+  background: {
+    dark: ['#000000', '#0A0A0A', '#141414'],
+    darkVertical: ['#0A0A0A', '#000000'],
+    subtle: ['#0F0F0F', '#1A1A1A'],
+    card: ['#0F0F0F', '#141414', '#0A0A0A'],
+  },
+
+  // Special effect gradients
+  special: {
+    aurora: ['#00D9FF', '#B47EFF', '#FF3D71'],
+    neon: ['#00FF94', '#00D9FF', '#B47EFF'],
+    sunset: ['#FF3D71', '#FFB800', '#FF3D71'],
+    midnight: ['#000000', '#0F0F0F', '#1A1A1A', '#000000'],
+  },
+
+  // Overlay gradients
+  overlay: {
+    top: ['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0)'],
+    bottom: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.8)'],
+    radial: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.9)'],
   },
 } as const;
 

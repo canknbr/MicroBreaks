@@ -1,10 +1,17 @@
 /**
  * Secondary Button Component
- * Secondary action button for onboarding screens
+ * Modern secondary action button with subtle animations
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Colors, Typography, Spacing } from '@/theme';
 
 interface SecondaryButtonProps {
@@ -20,16 +27,37 @@ export default function SecondaryButton({
   disabled = false,
   style,
 }: SecondaryButtonProps) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const tap = Gesture.Tap()
+    .enabled(!disabled)
+    .onBegin(() => {
+      scale.value = withSpring(0.96, { damping: 15 });
+      opacity.value = withSpring(0.6, { damping: 15 });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    })
+    .onFinalize(() => {
+      scale.value = withSpring(1, { damping: 15 });
+      opacity.value = withSpring(1, { damping: 15 });
+    })
+    .onEnd(() => {
+      onPress();
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
   return (
-    <TouchableOpacity
-      style={[styles.button, style]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.6}>
-      <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
-        {title}
-      </Text>
-    </TouchableOpacity>
+    <GestureDetector gesture={tap}>
+      <Animated.View style={[styles.button, style, animatedStyle]}>
+        <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
+          {title}
+        </Text>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -43,9 +71,10 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...Typography.buttonMedium,
-    color: Colors.light.text.secondary,
+    color: Colors.dark.text.secondary,
+    fontWeight: '600',
   },
   buttonTextDisabled: {
-    color: Colors.light.text.tertiary,
+    color: Colors.dark.text.tertiary,
   },
 });
