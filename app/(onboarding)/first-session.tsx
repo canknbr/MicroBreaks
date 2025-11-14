@@ -42,7 +42,6 @@ export default function FirstSessionScreen() {
     <OnboardingLayout currentStep={19}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.icon}>🚀</Text>
           <Text style={styles.headline}>
             Ready for your first focused session?
           </Text>
@@ -61,7 +60,6 @@ export default function FirstSessionScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>🔔</Text>
               <Text style={styles.settingLabel}>Notifications</Text>
             </View>
             <Switch
@@ -76,7 +74,6 @@ export default function FirstSessionScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>🎵</Text>
               <Text style={styles.settingLabel}>Sound</Text>
             </View>
             <Switch
@@ -91,7 +88,6 @@ export default function FirstSessionScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>📳</Text>
               <Text style={styles.settingLabel}>Vibration</Text>
             </View>
             <Switch
@@ -121,10 +117,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: Spacing.lg,
-  },
-  icon: {
-    fontSize: 64,
-    marginBottom: Spacing.xs,
+    marginTop: Spacing.md,
   },
   headline: {
     ...Typography.titleLarge,
@@ -171,13 +164,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   settingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1,
-  },
-  settingIcon: {
-    fontSize: 24,
-    marginRight: Spacing.xs,
   },
   settingLabel: {
     ...Typography.bodyMedium,

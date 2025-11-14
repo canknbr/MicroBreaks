@@ -13,9 +13,9 @@ import OptionCard from './components/OptionCard';
 import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
 
 const CALENDAR_PROVIDERS = [
-  { id: 'google', label: 'Google Calendar', icon: '📅' },
-  { id: 'outlook', label: 'Outlook / Office 365', icon: '📆' },
-  { id: 'apple', label: 'Apple Calendar', icon: '🍎' },
+  { id: 'google', label: 'Google Calendar' },
+  { id: 'outlook', label: 'Outlook / Office 365' },
+  { id: 'apple', label: 'Apple Calendar' },
 ];
 
 export default function CalendarIntegrationScreen() {
@@ -55,15 +55,12 @@ export default function CalendarIntegrationScreen() {
         {/* Benefits */}
         <View style={styles.benefitsCard}>
           <View style={styles.benefitRow}>
-            <Text style={styles.benefitIcon}>🎯</Text>
             <Text style={styles.benefitText}>Auto-pause during meetings</Text>
           </View>
           <View style={styles.benefitRow}>
-            <Text style={styles.benefitIcon}>🧠</Text>
             <Text style={styles.benefitText}>Smart break scheduling</Text>
           </View>
           <View style={styles.benefitRow}>
-            <Text style={styles.benefitIcon}>📊</Text>
             <Text style={styles.benefitText}>Daily summary in calendar</Text>
           </View>
         </View>
@@ -71,7 +68,7 @@ export default function CalendarIntegrationScreen() {
         {/* Privacy Note */}
         <View style={styles.privacyNote}>
           <Text style={styles.privacyText}>
-            🔒 We only check busy/free status, never read event details
+            We only check busy/free status, never read event details
           </Text>
         </View>
 
@@ -80,7 +77,6 @@ export default function CalendarIntegrationScreen() {
           {CALENDAR_PROVIDERS.map((provider) => (
             <OptionCard
               key={provider.id}
-              icon={provider.icon}
               title={provider.label}
               selected={selectedProvider === provider.id}
               onPress={() => setSelectedProvider(provider.id)}
@@ -123,13 +119,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   benefitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: Spacing.xs,
-  },
-  benefitIcon: {
-    fontSize: 24,
-    marginRight: Spacing.xs,
   },
   benefitText: {
     ...Typography.bodyMedium,

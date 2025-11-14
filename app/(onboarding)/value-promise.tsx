@@ -12,17 +12,14 @@ import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
 
 const BENEFITS = [
   {
-    icon: '🎯',
     title: 'Personalized exercises',
     description: 'Tailored for your specific pain points',
   },
   {
-    icon: '🔔',
     title: 'Smart reminders',
     description: 'That respect your flow state',
   },
   {
-    icon: '📊',
     title: 'Track improvements',
     description: 'Monitor your health progress',
   },
@@ -55,9 +52,6 @@ export default function ValuePromiseScreen() {
         <View style={styles.benefitsContainer}>
           {BENEFITS.map((benefit, index) => (
             <View key={index} style={styles.benefitCard}>
-              <View style={styles.benefitIcon}>
-                <Text style={styles.benefitIconText}>{benefit.icon}</Text>
-              </View>
               <View style={styles.benefitContent}>
                 <Text style={styles.benefitTitle}>{benefit.title}</Text>
                 <Text style={styles.benefitDescription}>
@@ -70,9 +64,9 @@ export default function ValuePromiseScreen() {
 
         {/* Trust signals */}
         <View style={styles.trustSignals}>
-          <Text style={styles.trustText}>✓ Quick setup</Text>
-          <Text style={styles.trustText}>✓ No spam</Text>
-          <Text style={styles.trustText}>✓ Cancel anytime</Text>
+          <Text style={styles.trustText}>Quick setup</Text>
+          <Text style={styles.trustText}>No spam</Text>
+          <Text style={styles.trustText}>Cancel anytime</Text>
         </View>
 
         <View style={styles.spacer} />
@@ -105,26 +99,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   benefitCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     backgroundColor: Colors.dark.card.background,
     padding: Spacing.md,
     borderRadius: BorderRadius.card,
     marginBottom: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.dark.border.default,
-  },
-  benefitIcon: {
-    width: 56,
-    height: 56,
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  benefitIconText: {
-    fontSize: 28,
   },
   benefitContent: {
     flex: 1,
