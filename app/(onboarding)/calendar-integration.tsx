@@ -1,88 +1,129 @@
 /**
  * ONB_018: Calendar Integration (Optional)
- * Optional calendar integration for smart scheduling
+ * Premium zen design with smooth animations
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import OptionCard from './components/OptionCard';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
+import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 
 const CALENDAR_PROVIDERS = [
-  { id: 'google', label: 'Google Calendar' },
-  { id: 'outlook', label: 'Outlook / Office 365' },
-  { id: 'apple', label: 'Apple Calendar' },
+  { id: 'google', label: 'Google Calendar', icon: '📅' },
+  { id: 'outlook', label: 'Outlook / Office 365', icon: '📆' },
+  { id: 'apple', label: 'Apple Calendar', icon: '🍎' },
+];
+
+const BENEFITS = [
+  { icon: 'pause-circle-outline', text: 'Auto-pause during meetings' },
+  { icon: 'calendar-outline', text: 'Smart break scheduling' },
+  { icon: 'document-text-outline', text: 'Daily summary in calendar' },
 ];
 
 export default function CalendarIntegrationScreen() {
   const router = useRouter();
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
+  // Animation values
+  const benefitsOpacity = useSharedValue(0);
+  const privacyOpacity = useSharedValue(0);
+  const providersOpacity = useSharedValue(0);
+
   useEffect(() => {
-    // Track analytics: onb_calendar_integration_viewed
-    // console.log('[Analytics] onb_calendar_integration_viewed');
+    benefitsOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
+    privacyOpacity.value = withDelay(400, withTiming(1, { duration: 400 }));
+    providersOpacity.value = withDelay(600, withTiming(1, { duration: 400 }));
   }, []);
+
+  const benefitsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: benefitsOpacity.value,
+    transform: [{ translateY: interpolate(benefitsOpacity.value, [0, 1], [20, 0]) }],
+  }));
+
+  const privacyAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: privacyOpacity.value,
+  }));
+
+  const providersAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: providersOpacity.value,
+    transform: [{ translateY: interpolate(providersOpacity.value, [0, 1], [20, 0]) }],
+  }));
 
   const handleConnect = () => {
     if (selectedProvider) {
-      // Track analytics: onb_calendar_integration_started
-      // console.log('[Analytics] onb_calendar_integration_started:', selectedProvider);
-      // Simulate OAuth flow
       setTimeout(() => {
-        // Track analytics: onb_calendar_integration_completed
-        // console.log('[Analytics] onb_calendar_integration_completed');
         router.push('./first-session');
       }, 1000);
     }
   };
 
   const handleSkip = () => {
-    // Track analytics: onb_calendar_integration_skipped
-    // console.log('[Analytics] onb_calendar_integration_skipped');
     router.push('./first-session');
   };
 
   return (
-    <OnboardingLayout currentStep={18}>
+    <OnboardingLayout currentStep={18} ambientColor="teal">
       <View style={styles.container}>
-        <Text style={styles.headline}>Breaks that respect your calendar</Text>
-        <Text style={styles.subtext}>Optional, but highly recommended</Text>
+        <HeadlineText delay={0}>
+          Breaks that respect your calendar
+        </HeadlineText>
+        <SubheadText delay={100}>
+          Optional, but highly recommended
+        </SubheadText>
 
         {/* Benefits */}
-        <View style={styles.benefitsCard}>
-          <View style={styles.benefitRow}>
-            <Text style={styles.benefitText}>Auto-pause during meetings</Text>
-          </View>
-          <View style={styles.benefitRow}>
-            <Text style={styles.benefitText}>Smart break scheduling</Text>
-          </View>
-          <View style={styles.benefitRow}>
-            <Text style={styles.benefitText}>Daily summary in calendar</Text>
-          </View>
-        </View>
+        <Animated.View style={[styles.benefitsCard, benefitsAnimatedStyle]}>
+          {BENEFITS.map((benefit, index) => (
+            <View key={index} style={styles.benefitRow}>
+              <View style={styles.benefitIconContainer}>
+                <Ionicons name={benefit.icon as any} size={20} color={ZenColors.primary.main} />
+              </View>
+              <Text style={styles.benefitText}>{benefit.text}</Text>
+            </View>
+          ))}
+        </Animated.View>
 
         {/* Privacy Note */}
-        <View style={styles.privacyNote}>
+        <Animated.View style={[styles.privacyNote, privacyAnimatedStyle]}>
+          <Ionicons name="shield-checkmark-outline" size={16} color={ZenColors.primary.main} />
           <Text style={styles.privacyText}>
             We only check busy/free status, never read event details
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Calendar Providers */}
-        <View style={styles.providers}>
-          {CALENDAR_PROVIDERS.map((provider) => (
-            <OptionCard
-              key={provider.id}
-              title={provider.label}
-              selected={selectedProvider === provider.id}
-              onPress={() => setSelectedProvider(provider.id)}
-            />
-          ))}
-        </View>
+        <Animated.View style={providersAnimatedStyle}>
+          <ScrollView
+            style={styles.providersScroll}
+            contentContainerStyle={styles.providers}
+            showsVerticalScrollIndicator={false}
+          >
+            {CALENDAR_PROVIDERS.map((provider) => (
+              <OptionCard
+                key={provider.id}
+                icon={provider.icon}
+                title={provider.label}
+                selected={selectedProvider === provider.id}
+                onPress={() => setSelectedProvider(provider.id)}
+              />
+            ))}
+          </ScrollView>
+        </Animated.View>
 
         <View style={styles.spacer} />
 
@@ -90,8 +131,9 @@ export default function CalendarIntegrationScreen() {
           title="Connect Calendar"
           onPress={handleConnect}
           disabled={!selectedProvider}
+          variant="primary"
         />
-        <SecondaryButton title="Skip for now" onPress={handleSkip} />
+        <SecondaryButton title="Skip for now" onPress={handleSkip} variant="muted" />
       </View>
     </OnboardingLayout>
   );
@@ -101,44 +143,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headline: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
-    marginBottom: Spacing.xxs,
-  },
-  subtext: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
-    marginBottom: Spacing.md,
-  },
   benefitsCard: {
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.sm,
-    marginBottom: Spacing.sm,
+    backgroundColor: ZenColors.background.card,
+    borderRadius: ZenRadius.xl,
+    padding: ZenSpacing.md,
+    marginTop: ZenSpacing.md,
+    marginBottom: ZenSpacing.md,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
   },
   benefitRow: {
-    paddingVertical: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: ZenSpacing.sm,
+  },
+  benefitIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: ZenRadius.md,
+    backgroundColor: ZenColors.background.elevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: ZenSpacing.sm,
   },
   benefitText: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.primary,
     flex: 1,
   },
   privacyNote: {
-    backgroundColor: Colors.dark.background.secondary,
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: ZenColors.background.card,
+    padding: ZenSpacing.sm,
+    borderRadius: ZenRadius.lg,
+    marginBottom: ZenSpacing.md,
+    gap: ZenSpacing.xs,
+    borderWidth: 1,
+    borderColor: ZenColors.primary.glow,
   },
   privacyText: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.primary,
-    textAlign: 'center',
+    ...ZenTypography.body.small,
+    color: ZenColors.text.secondary,
+    flex: 1,
+  },
+  providersScroll: {
+    flex: 1,
   },
   providers: {
-    marginBottom: Spacing.sm,
+    paddingBottom: ZenSpacing.md,
   },
   spacer: {
     flex: 1,

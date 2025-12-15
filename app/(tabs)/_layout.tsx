@@ -1,27 +1,16 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { Colors } from '@/theme';
+import { CustomTabBar } from '@/components/navigation';
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: Colors.dark.text.primary,
-        tabBarInactiveTintColor: Colors.dark.text.secondary,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarStyle: {
-          backgroundColor: Colors.dark.background.primary,
-          borderTopWidth: 1,
-          borderTopColor: Colors.dark.border.default,
-        },
-        tabBarLabelStyle: {
-          fontSize: 14,
-          fontWeight: '600',
-        },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
@@ -29,9 +18,21 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="breaks"
         options={{
-          title: 'Explore',
+          title: 'Breaks',
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'Stats',
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
         }}
       />
     </Tabs>

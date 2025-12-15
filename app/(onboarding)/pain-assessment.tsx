@@ -1,28 +1,100 @@
 /**
  * ONB_006: Current Pain Assessment
- * Interactive body map for pain area selection
+ * Premium zen design with animated body area selection
  */
 
-import { PAIN_AREAS } from '@/constants/onboarding';
-import { BorderRadius, Colors, Spacing, Typography } from '@/theme';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
+import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
+import { PAIN_AREAS } from '@/constants/onboarding';
 
 type Severity = 'mild' | 'moderate' | 'severe';
+
+function PainAreaCard({ area, isSelected, severity, onToggle, onSeverityChange, index }: {
+  area: { id: string; icon: string; label: string };
+  isSelected: boolean;
+  severity?: Severity;
+  onToggle: () => void;
+  onSeverityChange: (level: Severity) => void;
+  index: number;
+}) {
+  const cardScale = useSharedValue(1);
+
+  const handlePress = () => {
+    cardScale.value = withTiming(0.97, { duration: 80, easing: Easing.out(Easing.cubic) });
+    setTimeout(() => {
+      cardScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) });
+    }, 80);
+    onToggle();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const getSeverityColor = (level: Severity) => {
+    switch (level) {
+      case 'mild': return ZenColors.primary.main;
+      case 'moderate': return ZenColors.accent.main;
+      case 'severe': return ZenColors.secondary.main;
+    }
+  };
+
+  return (
+    <Animated.View style={[styles.areaContainer, animatedStyle]}>
+      <Pressable
+        style={[styles.areaCard, isSelected && styles.areaCardSelected]}
+        onPress={handlePress}
+      >
+        {isSelected && (
+          <LinearGradient
+            colors={[ZenColors.primary.glow, 'transparent']}
+            style={styles.areaCardGlow}
+          />
+        )}
+        <Text style={styles.areaIcon}>{area.icon}</Text>
+        <Text style={[styles.areaLabel, isSelected && styles.areaLabelSelected]}>
+          {area.label}
+        </Text>
+      </Pressable>
+
+      {/* Severity selector */}
+      {isSelected && area.id !== 'none' && (
+        <View style={styles.severityContainer}>
+          {(['mild', 'moderate', 'severe'] as Severity[]).map((level) => (
+            <Pressable
+              key={level}
+              style={[
+                styles.severityDot,
+                { backgroundColor: getSeverityColor(level) },
+                severity !== level && styles.severityDotInactive,
+              ]}
+              onPress={() => onSeverityChange(level)}
+            />
+          ))}
+        </View>
+      )}
+    </Animated.View>
+  );
+}
 
 export default function PainAssessmentScreen() {
   const router = useRouter();
   const [selectedAreas, setSelectedAreas] = useState<Set<string>>(new Set());
   const [severity, setSeverity] = useState<Record<string, Severity>>({});
-
-  useEffect(() => {
-    // Track analytics: onb_pain_assessment_viewed
-    // console.log('[Analytics] onb_pain_assessment_viewed');
-  }, []);
 
   const toggleArea = (areaId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -52,67 +124,42 @@ export default function PainAssessmentScreen() {
 
   const handleContinue = () => {
     if (selectedAreas.size > 0) {
-      // Track analytics: onb_pain_areas_selected
-      // console.log('[Analytics] onb_pain_areas_selected:', Array.from(selectedAreas));
       router.push('./work-pattern');
     }
   };
 
   return (
-    <OnboardingLayout currentStep={6}>
+    <OnboardingLayout currentStep={6} ambientColor="purple">
       <View style={styles.container}>
-        <Text style={styles.question}>Where do you feel discomfort?</Text>
-        <Text style={styles.subtext}>
+        <HeadlineText delay={0}>
+          Where do you feel discomfort?
+        </HeadlineText>
+        <SubheadText delay={100}>
           Select all areas that apply
-        </Text>
+        </SubheadText>
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.areaGrid}
-          showsVerticalScrollIndicator={false}>
-          {PAIN_AREAS.map((area) => {
-            const isSelected = selectedAreas.has(area.id);
-            return (
-              <View key={area.id} style={styles.areaContainer}>
-                <Pressable
-                  style={[
-                    styles.areaCard,
-                    isSelected && styles.areaCardSelected,
-                  ]}
-                  onPress={() => toggleArea(area.id)}>
-                  <Text style={styles.areaIcon}>{area.icon}</Text>
-                  <Text style={[
-                    styles.areaLabel,
-                    isSelected && styles.areaLabelSelected
-                  ]}>
-                    {area.label}
-                  </Text>
-                </Pressable>
-
-                {/* Severity selector */}
-                {isSelected && area.id !== 'none' && (
-                  <View style={styles.severityContainer}>
-                    {(['mild', 'moderate', 'severe'] as Severity[]).map((level) => (
-                      <Pressable
-                        key={level}
-                        style={[
-                          styles.severityDot,
-                          severity[area.id] === level && styles.severityDotActive,
-                          level === 'severe' && styles.severityDotSevere,
-                        ]}
-                        onPress={() => setSeverityForArea(area.id, level)}
-                      />
-                    ))}
-                  </View>
-                )}
-              </View>
-            );
-          })}
+          showsVerticalScrollIndicator={false}
+        >
+          {PAIN_AREAS.map((area, index) => (
+            <PainAreaCard
+              key={area.id}
+              area={area}
+              isSelected={selectedAreas.has(area.id)}
+              severity={severity[area.id]}
+              onToggle={() => toggleArea(area.id)}
+              onSeverityChange={(level) => setSeverityForArea(area.id, level)}
+              index={index}
+            />
+          ))}
         </ScrollView>
 
         <View style={styles.legend}>
+          <View style={styles.legendDot} />
           <Text style={styles.legendText}>
-            Tap again to adjust intensity
+            Dots show intensity level
           </Text>
         </View>
 
@@ -130,83 +177,84 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  question: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
-    marginBottom: Spacing.xxs,
-  },
-  subtext: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
-    marginBottom: Spacing.md,
-  },
   scrollView: {
     flex: 1,
+    marginTop: ZenSpacing.md,
   },
   areaGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingBottom: Spacing.sm,
+    paddingBottom: ZenSpacing.sm,
   },
   areaContainer: {
     width: '48%',
-    marginBottom: Spacing.sm,
+    marginBottom: ZenSpacing.sm,
   },
   areaCard: {
-    backgroundColor: Colors.dark.card.background,
-    borderWidth: 2,
-    borderColor: Colors.dark.border.default,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.md,
+    backgroundColor: ZenColors.background.card,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
+    borderRadius: ZenRadius.lg,
+    padding: ZenSpacing.md,
     alignItems: 'center',
     minHeight: 100,
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   areaCardSelected: {
-    borderColor: Colors.dark.text.primary,
-    backgroundColor: Colors.dark.background.secondary,
+    borderColor: ZenColors.primary.main,
+    backgroundColor: ZenColors.background.cardHover,
+  },
+  areaCardGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 60,
   },
   areaIcon: {
     fontSize: 32,
-    color: Colors.dark.text.primary,
-    marginBottom: Spacing.xs,
+    marginBottom: ZenSpacing.xs,
   },
   areaLabel: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.primary,
     textAlign: 'center',
   },
   areaLabelSelected: {
-    ...Typography.bodyMediumBold,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.label.medium,
+    color: ZenColors.text.primary,
   },
   severityContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.xxs,
-    gap: Spacing.xxs,
+    marginTop: ZenSpacing.xs,
+    gap: ZenSpacing.xs,
   },
   severityDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.dark.text.secondary,
+  },
+  severityDotInactive: {
     opacity: 0.3,
   },
-  severityDotActive: {
-    opacity: 1,
-  },
-  severityDotSevere: {
-    backgroundColor: Colors.dark.text.primary,
-  },
   legend: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    justifyContent: 'center',
+    marginBottom: ZenSpacing.sm,
+    gap: ZenSpacing.xs,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: ZenColors.text.muted,
   },
   legendText: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.body.small,
+    color: ZenColors.text.muted,
   },
 });

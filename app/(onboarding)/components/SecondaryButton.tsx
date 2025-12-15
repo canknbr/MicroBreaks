@@ -1,6 +1,6 @@
 /**
- * Secondary Button Component
- * Simple text button inspired by "How We Feel" design
+ * Premium Zen Secondary Button
+ * Subtle, elegant text button
  */
 
 import React from 'react';
@@ -9,16 +9,18 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   runOnJS,
+  Easing,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Colors, Typography, Spacing } from '@/theme';
+import { ZenColors, ZenSpacing, ZenTypography } from '../constants/design';
 
 interface SecondaryButtonProps {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  variant?: 'default' | 'muted' | 'accent';
   style?: any;
 }
 
@@ -26,6 +28,7 @@ export default function SecondaryButton({
   title,
   onPress,
   disabled = false,
+  variant = 'default',
   style,
 }: SecondaryButtonProps) {
   const opacity = useSharedValue(1);
@@ -33,11 +36,11 @@ export default function SecondaryButton({
   const tap = Gesture.Tap()
     .enabled(!disabled)
     .onBegin(() => {
-      opacity.value = withSpring(0.5, { damping: 15 });
+      opacity.value = withTiming(0.5, { duration: 100 });
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     })
     .onFinalize(() => {
-      opacity.value = withSpring(1, { damping: 15 });
+      opacity.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) });
     })
     .onEnd(() => {
       runOnJS(onPress)();
@@ -47,10 +50,22 @@ export default function SecondaryButton({
     opacity: opacity.value,
   }));
 
+  const textColors = {
+    default: ZenColors.text.secondary,
+    muted: ZenColors.text.muted,
+    accent: ZenColors.primary.main,
+  };
+
   return (
     <GestureDetector gesture={tap}>
-      <Animated.View style={[styles.button, style, animatedStyle]}>
-        <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
+      <Animated.View style={[styles.button, animatedStyle, style]}>
+        <Text
+          style={[
+            styles.buttonText,
+            { color: textColors[variant] },
+            disabled && styles.buttonTextDisabled,
+          ]}
+        >
           {title}
         </Text>
       </Animated.View>
@@ -60,18 +75,17 @@ export default function SecondaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: ZenSpacing.md,
+    paddingHorizontal: ZenSpacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: 48,
   },
   buttonText: {
-    ...Typography.buttonMedium,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.label.medium,
     fontWeight: '500',
   },
   buttonTextDisabled: {
-    color: Colors.dark.text.tertiary,
+    color: ZenColors.text.muted,
   },
 });

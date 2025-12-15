@@ -1,15 +1,28 @@
 /**
  * ONB_019: First Session Start
- * Ready to start the first work session
+ * Premium zen design with smooth animations
  */
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withRepeat,
+  withSequence,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
+import { HeadlineText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 
 export default function FirstSessionScreen() {
   const router = useRouter();
@@ -17,94 +30,149 @@ export default function FirstSessionScreen() {
   const [soundOn, setSoundOn] = useState(true);
   const [vibrationOn, setVibrationOn] = useState(true);
 
+  // Animation values
+  const timerScale = useSharedValue(0.9);
+  const timerOpacity = useSharedValue(0);
+  const timerPulse = useSharedValue(1);
+  const settingsOpacity = useSharedValue(0);
+  const buttonsOpacity = useSharedValue(0);
+
   useEffect(() => {
-    // Track analytics: onb_first_session_viewed
-    // console.log('[Analytics] onb_first_session_viewed');
+    const easing = Easing.out(Easing.cubic);
+
+    timerOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing }));
+    timerScale.value = withDelay(200, withTiming(1, { duration: 600, easing }));
+    settingsOpacity.value = withDelay(400, withTiming(1, { duration: 400, easing }));
+    buttonsOpacity.value = withDelay(600, withTiming(1, { duration: 400, easing }));
+
+    // Subtle pulse animation for timer
+    timerPulse.value = withDelay(
+      700,
+      withRepeat(
+        withSequence(
+          withTiming(1.01, { duration: 2000, easing: Easing.inOut(Easing.sine) }),
+          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.sine) })
+        ),
+        -1,
+        true
+      )
+    );
   }, []);
 
+  const timerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: timerOpacity.value,
+    transform: [{ scale: timerScale.value * timerPulse.value }],
+  }));
+
+  const settingsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: settingsOpacity.value,
+    transform: [{ translateY: interpolate(settingsOpacity.value, [0, 1], [20, 0]) }],
+  }));
+
+  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: buttonsOpacity.value,
+  }));
+
   const handleStart = () => {
-    // Track analytics: onb_first_session_started
-    // console.log('[Analytics] onb_first_session_started', {
-      // notifications: notificationsOn,
-      // sound: soundOn,
-      // vibration: vibrationOn,
-    // });
     router.push('./premium-pitch');
   };
 
   const handleExplore = () => {
-    // Track analytics: onb_first_session_deferred
-    // console.log('[Analytics] onb_first_session_deferred');
     router.push('./premium-pitch');
   };
 
   return (
-    <OnboardingLayout currentStep={19}>
+    <OnboardingLayout currentStep={19} ambientColor="purple">
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headline}>
-            Ready for your first focused session?
-          </Text>
-        </View>
+        <HeadlineText delay={0}>
+          Ready for your first focused session?
+        </HeadlineText>
 
         {/* Timer Display */}
-        <View style={styles.timerCard}>
-          <Text style={styles.timerValue}>50:00</Text>
-          <Text style={styles.timerLabel}>Deep Work Session</Text>
+        <Animated.View style={[styles.timerCard, timerAnimatedStyle]}>
+          <LinearGradient
+            colors={[ZenColors.primary.glow, 'transparent']}
+            style={styles.timerGlow}
+          />
+          <View style={styles.timerRing}>
+            <LinearGradient
+              colors={[ZenColors.primary.main, ZenColors.secondary.main]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.ringGradient}
+            />
+            <View style={styles.timerInner}>
+              <Text style={styles.timerValue}>50:00</Text>
+              <Text style={styles.timerLabel}>Deep Work Session</Text>
+            </View>
+          </View>
           <Text style={styles.timerSubtext}>Your first break in 50 minutes</Text>
-        </View>
+        </Animated.View>
 
         {/* Quick Settings */}
-        <View style={styles.settings}>
+        <Animated.View style={[styles.settings, settingsAnimatedStyle]}>
           <Text style={styles.settingsTitle}>Quick Settings</Text>
 
           <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Notifications</Text>
+            <View style={styles.settingIcon}>
+              <Ionicons name="notifications-outline" size={20} color={ZenColors.primary.main} />
             </View>
+            <Text style={styles.settingLabel}>Notifications</Text>
             <Switch
               value={notificationsOn}
               onValueChange={setNotificationsOn}
               trackColor={{
-                false: Colors.dark.border.default,
-                true: Colors.dark.text.primary,
+                false: ZenColors.border.default,
+                true: ZenColors.primary.main,
               }}
+              thumbColor={ZenColors.text.inverse}
             />
           </View>
 
           <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Sound</Text>
+            <View style={styles.settingIcon}>
+              <Ionicons name="volume-high-outline" size={20} color={ZenColors.primary.main} />
             </View>
+            <Text style={styles.settingLabel}>Sound</Text>
             <Switch
               value={soundOn}
               onValueChange={setSoundOn}
               trackColor={{
-                false: Colors.dark.border.default,
-                true: Colors.dark.text.primary,
+                false: ZenColors.border.default,
+                true: ZenColors.primary.main,
               }}
+              thumbColor={ZenColors.text.inverse}
             />
           </View>
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Vibration</Text>
+          <View style={[styles.settingRow, styles.settingRowLast]}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="phone-portrait-outline" size={20} color={ZenColors.primary.main} />
             </View>
+            <Text style={styles.settingLabel}>Vibration</Text>
             <Switch
               value={vibrationOn}
               onValueChange={setVibrationOn}
               trackColor={{
-                false: Colors.dark.border.default,
-                true: Colors.dark.text.primary,
+                false: ZenColors.border.default,
+                true: ZenColors.primary.main,
               }}
+              thumbColor={ZenColors.text.inverse}
             />
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.spacer} />
 
-        <PrimaryButton title="Start Working" onPress={handleStart} />
-        <SecondaryButton title="Explore first" onPress={handleExplore} />
+        <Animated.View style={buttonsAnimatedStyle}>
+          <PrimaryButton
+            title="Start Working"
+            onPress={handleStart}
+            size="large"
+            variant="primary"
+          />
+          <SecondaryButton title="Explore first" onPress={handleExplore} variant="muted" />
+        </Animated.View>
       </View>
     </OnboardingLayout>
   );
@@ -114,61 +182,87 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-    marginTop: Spacing.md,
-  },
-  headline: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
   timerCard: {
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginTop: ZenSpacing.xl,
+    marginBottom: ZenSpacing.lg,
+  },
+  timerGlow: {
+    position: 'absolute',
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+  },
+  timerRing: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    padding: 6,
+    marginBottom: ZenSpacing.md,
+  },
+  ringGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 100,
+  },
+  timerInner: {
+    flex: 1,
+    backgroundColor: ZenColors.background.pure,
+    borderRadius: 94,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timerValue: {
-    ...Typography.displayLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: 'bold',
+    ...ZenTypography.display.large,
+    color: ZenColors.primary.main,
   },
   timerLabel: {
-    ...Typography.titleMedium,
-    color: Colors.dark.text.primary,
-    marginTop: Spacing.xs,
+    ...ZenTypography.label.medium,
+    color: ZenColors.text.secondary,
+    marginTop: ZenSpacing.xxs,
   },
   timerSubtext: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
-    marginTop: Spacing.xxs,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.secondary,
   },
   settings: {
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.sm,
+    backgroundColor: ZenColors.background.card,
+    borderRadius: ZenRadius.xl,
+    padding: ZenSpacing.md,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
   },
   settingsTitle: {
-    ...Typography.bodyLargeBold,
-    color: Colors.dark.text.primary,
-    marginBottom: Spacing.sm,
+    ...ZenTypography.label.large,
+    color: ZenColors.text.primary,
+    marginBottom: ZenSpacing.md,
   },
   settingRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    paddingVertical: ZenSpacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: ZenColors.border.subtle,
   },
-  settingInfo: {
-    flex: 1,
+  settingRowLast: {
+    borderBottomWidth: 0,
+  },
+  settingIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: ZenRadius.md,
+    backgroundColor: ZenColors.background.elevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: ZenSpacing.sm,
   },
   settingLabel: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.primary,
+    flex: 1,
   },
   spacer: {
     flex: 1,

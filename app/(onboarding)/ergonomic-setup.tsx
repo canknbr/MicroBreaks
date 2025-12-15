@@ -1,24 +1,68 @@
 /**
  * ONB_008: Ergonomic Setup Assessment
- * Quick checklist for ergonomic evaluation
+ * Premium zen design with animated checklist
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
+import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { ERGONOMIC_CHECKLIST } from '@/constants/onboarding';
+
+function ChecklistItem({ item, isChecked, onToggle, index }: {
+  item: { id: string; label: string };
+  isChecked: boolean;
+  onToggle: () => void;
+  index: number;
+}) {
+  const checkScale = useSharedValue(isChecked ? 1 : 0);
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    checkScale.value = withTiming(isChecked ? 0 : 1, { duration: 200, easing: Easing.out(Easing.cubic) });
+    onToggle();
+  };
+
+  const checkAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkScale.value }],
+    opacity: checkScale.value,
+  }));
+
+  return (
+    <TouchableOpacity
+      style={[styles.checklistItem, isChecked && styles.checklistItemChecked]}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+        <Animated.View style={checkAnimatedStyle}>
+          <Ionicons name="checkmark" size={16} color={ZenColors.text.inverse} />
+        </Animated.View>
+      </View>
+      <Text style={[styles.checklistLabel, isChecked && styles.checklistLabelChecked]}>
+        {item.label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 export default function ErgonomicSetupScreen() {
   const router = useRouter();
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    // Track analytics: onb_ergo_assessment_viewed
-    // console.log('[Analytics] onb_ergo_assessment_viewed');
-  }, []);
 
   const toggleItem = (itemId: string) => {
     const newChecked = new Set(checkedItems);
@@ -35,57 +79,55 @@ export default function ErgonomicSetupScreen() {
 
   const getScoreColor = () => {
     const score = getScore();
-    if (score >= 4) return Colors.dark.text.primary;
-    if (score >= 3) return Colors.dark.text.secondary;
-    return Colors.dark.text.primary;
+    if (score >= 4) return ZenColors.primary.main;
+    if (score >= 3) return ZenColors.accent.main;
+    return ZenColors.secondary.main;
   };
 
   const getScoreLabel = () => {
     const score = getScore();
-    if (score >= 4) return 'Good setup! 👍';
+    if (score >= 4) return 'Great setup!';
     if (score >= 3) return 'Room for improvement';
-    return 'High risk - needs attention';
+    return 'Needs attention';
   };
 
   const handleContinue = () => {
-    // Track analytics: onb_ergo_score
-    // console.log('[Analytics] onb_ergo_score:', getScore());
-    // console.log('[Analytics] onb_ergo_items:', Array.from(checkedItems));
     router.push('./notification-preference');
   };
 
   return (
-    <OnboardingLayout currentStep={8}>
+    <OnboardingLayout currentStep={8} ambientColor="teal">
       <View style={styles.container}>
-        <Text style={styles.question}>Check your setup basics</Text>
-        <Text style={styles.subtext}>
+        <HeadlineText delay={0}>
+          Check your setup basics
+        </HeadlineText>
+        <SubheadText delay={100}>
           Select what applies to your current workspace
-        </Text>
+        </SubheadText>
 
         {/* Checklist */}
-        <View style={styles.checklist}>
-          {ERGONOMIC_CHECKLIST.map((item) => {
-            const isChecked = checkedItems.has(item.id);
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.checklistItem}
-                onPress={() => toggleItem(item.id)}
-                activeOpacity={0.7}>
-                <View style={[
-                  styles.checkbox,
-                  isChecked && styles.checkboxChecked
-                ]}>
-                  {isChecked && <Text style={styles.checkmark}>✓</Text>}
-                </View>
-                <Text style={styles.checklistLabel}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.checklist}
+          showsVerticalScrollIndicator={false}
+        >
+          {ERGONOMIC_CHECKLIST.map((item, index) => (
+            <ChecklistItem
+              key={item.id}
+              item={item}
+              isChecked={checkedItems.has(item.id)}
+              onToggle={() => toggleItem(item.id)}
+              index={index}
+            />
+          ))}
+        </ScrollView>
 
         {/* Score Display */}
         <View style={[styles.scoreContainer, { borderColor: getScoreColor() }]}>
+          <LinearGradient
+            colors={[getScoreColor() + '20', 'transparent']}
+            style={styles.scoreGlow}
+          />
           <Text style={styles.scoreTitle}>Your setup score</Text>
           <Text style={[styles.scoreValue, { color: getScoreColor() }]}>
             {getScore()}/{getTotalItems()}
@@ -94,8 +136,6 @@ export default function ErgonomicSetupScreen() {
             {getScoreLabel()}
           </Text>
         </View>
-
-        <View style={styles.spacer} />
 
         <PrimaryButton title="Continue" onPress={handleContinue} />
       </View>
@@ -107,78 +147,77 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  question: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
-    marginBottom: Spacing.xxs,
-  },
-  subtext: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
-    marginBottom: Spacing.md,
+  scrollView: {
+    flex: 1,
+    marginTop: ZenSpacing.md,
   },
   checklist: {
-    marginBottom: Spacing.lg,
+    paddingBottom: ZenSpacing.md,
   },
   checklistItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.dark.card.background,
-    borderRadius: BorderRadius.card,
-    marginBottom: Spacing.sm,
+    paddingVertical: ZenSpacing.sm,
+    paddingHorizontal: ZenSpacing.md,
+    backgroundColor: ZenColors.background.card,
+    borderRadius: ZenRadius.lg,
+    marginBottom: ZenSpacing.sm,
     borderWidth: 1,
-    borderColor: Colors.dark.border.default,
+    borderColor: ZenColors.border.subtle,
+  },
+  checklistItemChecked: {
+    backgroundColor: ZenColors.background.cardHover,
+    borderColor: ZenColors.primary.main,
   },
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 4,
+    borderRadius: ZenRadius.sm,
     borderWidth: 2,
-    borderColor: Colors.dark.border.default,
-    marginRight: Spacing.xs,
+    borderColor: ZenColors.border.default,
+    marginRight: ZenSpacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   checkboxChecked: {
-    backgroundColor: Colors.dark.interactive.primary,
-    borderColor: Colors.dark.interactive.primary,
-  },
-  checkmark: {
-    color: Colors.dark.text.inverse,
-    fontSize: 16,
-    fontWeight: 'bold',
+    backgroundColor: ZenColors.primary.main,
+    borderColor: ZenColors.primary.main,
   },
   checklistLabel: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.primary,
     flex: 1,
+  },
+  checklistLabelChecked: {
+    color: ZenColors.text.primary,
   },
   scoreContainer: {
     alignItems: 'center',
-    padding: Spacing.lg,
-    backgroundColor: Colors.dark.card.background,
-    borderRadius: BorderRadius.card,
+    padding: ZenSpacing.lg,
+    backgroundColor: ZenColors.background.card,
+    borderRadius: ZenRadius.xl,
     borderWidth: 2,
-    borderColor: Colors.dark.border.default,
+    marginBottom: ZenSpacing.md,
+    overflow: 'hidden',
+  },
+  scoreGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 80,
   },
   scoreTitle: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
-    marginBottom: Spacing.xxs,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.secondary,
+    marginBottom: ZenSpacing.xxs,
   },
   scoreValue: {
-    ...Typography.displayMedium,
-    fontWeight: 'bold',
-    marginBottom: Spacing.xxs,
+    ...ZenTypography.display.medium,
+    marginBottom: ZenSpacing.xxs,
   },
   scoreLabel: {
-    ...Typography.bodyLarge,
-    fontWeight: '600',
-  },
-  spacer: {
-    flex: 1,
+    ...ZenTypography.label.large,
   },
 });

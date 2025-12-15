@@ -1,35 +1,73 @@
 /**
  * ONB_020: Premium Soft Pitch
- * Value comparison and trial offer
+ * Premium zen design with smooth animations
  */
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { PREMIUM_FEATURES } from '@/constants/onboarding';
 
 export default function PremiumPitchScreen() {
   const router = useRouter();
-  const [timeLeft, setTimeLeft] = useState(24 * 60); // 24 hours in minutes
+  const [timeLeft, setTimeLeft] = useState(24 * 60);
+
+  // Animation values
+  const headerOpacity = useSharedValue(0);
+  const headerScale = useSharedValue(0.95);
+  const comparisonOpacity = useSharedValue(0);
+  const offerOpacity = useSharedValue(0);
+  const offerScale = useSharedValue(0.95);
+  const buttonsOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Track analytics: onb_paywall_displayed
-    // console.log('[Analytics] onb_paywall_displayed');
+    const easing = Easing.out(Easing.cubic);
+    headerOpacity.value = withDelay(100, withTiming(1, { duration: 500, easing }));
+    headerScale.value = withDelay(100, withTiming(1, { duration: 600, easing }));
+    comparisonOpacity.value = withDelay(250, withTiming(1, { duration: 400, easing }));
+    offerOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing }));
+    offerScale.value = withDelay(400, withTiming(1, { duration: 600, easing }));
+    buttonsOpacity.value = withDelay(550, withTiming(1, { duration: 400, easing }));
   }, []);
 
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: headerScale.value }],
+    opacity: headerOpacity.value,
+  }));
+
+  const comparisonAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: comparisonOpacity.value,
+    transform: [{ translateY: interpolate(comparisonOpacity.value, [0, 1], [10, 0]) }],
+  }));
+
+  const offerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: offerScale.value }],
+    opacity: offerOpacity.value,
+  }));
+
+  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: buttonsOpacity.value,
+  }));
+
   const handleStartTrial = () => {
-    // Track analytics: onb_trial_started
-    // console.log('[Analytics] onb_trial_started');
     router.push('./completion');
   };
 
   const handleContinueFree = () => {
-    // Track analytics: onb_paywall_dismissed
-    // console.log('[Analytics] onb_paywall_dismissed');
     router.push('./completion');
   };
 
@@ -39,27 +77,33 @@ export default function PremiumPitchScreen() {
   };
 
   return (
-    <OnboardingLayout currentStep={20}>
+    <OnboardingLayout currentStep={20} ambientColor="gold">
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.badge}>LIMITED TIME OFFER</Text>
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
+          <View style={styles.badge}>
+            <Ionicons name="sparkles" size={12} color={ZenColors.accent.main} />
+            <Text style={styles.badgeText}>LIMITED TIME OFFER</Text>
+          </View>
           <Text style={styles.headline}>Your personalized plan is ready!</Text>
-        </View>
+        </Animated.View>
 
         {/* Comparison Table */}
-        <View style={styles.comparison}>
+        <Animated.View style={[styles.comparison, comparisonAnimatedStyle]}>
           <View style={styles.comparisonHeader}>
             <View style={styles.comparisonLabel} />
             <View style={styles.comparisonColumn}>
               <Text style={styles.columnTitle}>Free</Text>
             </View>
             <View style={[styles.comparisonColumn, styles.premiumColumn]}>
-              <Text style={[styles.columnTitle, styles.premiumTitle]}>
-                Premium
-              </Text>
+              <LinearGradient
+                colors={[ZenColors.primary.glow, 'transparent']}
+                style={styles.premiumGlow}
+              />
+              <Text style={[styles.columnTitle, styles.premiumTitle]}>Premium</Text>
             </View>
           </View>
 
@@ -70,57 +114,70 @@ export default function PremiumPitchScreen() {
               </View>
               <View style={styles.comparisonColumn}>
                 <Text style={styles.featureValue}>
-                  {typeof item.free === 'boolean'
-                    ? item.free
-                      ? '✅'
-                      : '❌'
-                    : item.free}
+                  {typeof item.free === 'boolean' ? (
+                    <Ionicons
+                      name={item.free ? 'checkmark-circle' : 'close-circle'}
+                      size={20}
+                      color={item.free ? ZenColors.primary.main : ZenColors.text.muted}
+                    />
+                  ) : item.free}
                 </Text>
               </View>
               <View style={styles.comparisonColumn}>
                 <Text style={styles.featureValue}>
-                  {typeof item.premium === 'boolean'
-                    ? item.premium
-                      ? '✅'
-                      : '❌'
-                    : item.premium}
+                  {typeof item.premium === 'boolean' ? (
+                    <Ionicons
+                      name={item.premium ? 'checkmark-circle' : 'close-circle'}
+                      size={20}
+                      color={item.premium ? ZenColors.primary.main : ZenColors.text.muted}
+                    />
+                  ) : item.premium}
                 </Text>
               </View>
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         {/* Special Offer */}
-        <View style={styles.offerCard}>
-          <Text style={styles.offerTitle}>🎉 Special Offer</Text>
-          <Text style={styles.offerPrice}>7-day free trial</Text>
-          <Text style={styles.offerDetails}>
-            Then $4.99/month • Cancel anytime
-          </Text>
-          <View style={styles.urgencyBadge}>
-            <Text style={styles.urgencyText}>
-              50% off first month - Expires in {formatTimeLeft()}
-            </Text>
-          </View>
-        </View>
+        <Animated.View style={[styles.offerCard, offerAnimatedStyle]}>
+          <LinearGradient
+            colors={[ZenColors.primary.main, ZenColors.secondary.main]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.offerGradient}
+          >
+            <Text style={styles.offerTitle}>Special Offer</Text>
+            <Text style={styles.offerPrice}>7-day free trial</Text>
+            <Text style={styles.offerDetails}>Then $4.99/month • Cancel anytime</Text>
+            <View style={styles.urgencyBadge}>
+              <Ionicons name="time-outline" size={14} color={ZenColors.accent.main} />
+              <Text style={styles.urgencyText}>
+                50% off first month - Expires in {formatTimeLeft()}
+              </Text>
+            </View>
+          </LinearGradient>
+        </Animated.View>
 
         {/* Social Proof */}
         <View style={styles.socialProof}>
           <Text style={styles.socialProofText}>
-            Join <Text style={styles.highlight}>100,000+</Text> users who chose
-            Premium
+            Join <Text style={styles.highlight}>100,000+</Text> users who chose Premium
           </Text>
         </View>
 
-        <PrimaryButton
-          title="Start 7-Day Free Trial"
-          onPress={handleStartTrial}
-          style={styles.primaryButton}
-        />
-        <SecondaryButton
-          title="Continue with Free"
-          onPress={handleContinueFree}
-        />
+        <Animated.View style={buttonsAnimatedStyle}>
+          <PrimaryButton
+            title="Start 7-Day Free Trial"
+            onPress={handleStartTrial}
+            size="large"
+            variant="accent"
+          />
+          <SecondaryButton
+            title="Continue with Free"
+            onPress={handleContinueFree}
+            variant="muted"
+          />
+        </Animated.View>
       </ScrollView>
     </OnboardingLayout>
   );
@@ -131,45 +188,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingBottom: Spacing.lg,
+    paddingBottom: ZenSpacing.lg,
   },
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: ZenSpacing.lg,
   },
   badge: {
-    ...Typography.labelSmall,
-    color: Colors.dark.text.inverse,
-    backgroundColor: Colors.dark.text.primary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.xs,
-    fontWeight: 'bold',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ZenSpacing.xxs,
+    backgroundColor: ZenColors.background.card,
+    paddingHorizontal: ZenSpacing.sm,
+    paddingVertical: ZenSpacing.xs,
+    borderRadius: ZenRadius.full,
+    marginBottom: ZenSpacing.sm,
+    borderWidth: 1,
+    borderColor: ZenColors.accent.glow,
+  },
+  badgeText: {
+    ...ZenTypography.caption,
+    color: ZenColors.accent.main,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   headline: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
+    ...ZenTypography.headline.medium,
+    color: ZenColors.text.primary,
     textAlign: 'center',
   },
   comparison: {
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.xs,
-    marginBottom: Spacing.md,
+    backgroundColor: ZenColors.background.card,
+    borderRadius: ZenRadius.xl,
+    padding: ZenSpacing.sm,
+    marginBottom: ZenSpacing.md,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
   },
   comparisonHeader: {
     flexDirection: 'row',
-    paddingBottom: Spacing.xs,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.dark.border.default,
+    paddingBottom: ZenSpacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: ZenColors.border.subtle,
   },
   comparisonRow: {
     flexDirection: 'row',
-    paddingVertical: Spacing.xs,
+    paddingVertical: ZenSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.border.light,
+    borderBottomColor: ZenColors.border.subtle,
   },
   comparisonLabel: {
     flex: 2,
@@ -180,78 +246,85 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   premiumColumn: {
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.sm,
-    marginVertical: -Spacing.xxs,
+    backgroundColor: ZenColors.background.cardHover,
+    borderRadius: ZenRadius.md,
+    marginVertical: -ZenSpacing.xxs,
+    overflow: 'hidden',
+  },
+  premiumGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 30,
   },
   columnTitle: {
-    ...Typography.bodyMediumBold,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.label.medium,
+    color: ZenColors.text.secondary,
   },
   premiumTitle: {
-    color: Colors.dark.text.primary,
+    color: ZenColors.primary.main,
   },
   featureLabel: {
     flex: 2,
     justifyContent: 'center',
   },
   featureName: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.small,
+    color: ZenColors.text.primary,
   },
   featureValue: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.primary,
   },
   offerCard: {
-    backgroundColor: Colors.dark.text.primary,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.md,
+    borderRadius: ZenRadius.xl,
+    overflow: 'hidden',
+    marginBottom: ZenSpacing.md,
+  },
+  offerGradient: {
+    padding: ZenSpacing.lg,
     alignItems: 'center',
-    marginBottom: Spacing.sm,
   },
   offerTitle: {
-    ...Typography.bodyLarge,
-    color: Colors.dark.text.inverse,
-    marginBottom: Spacing.xxs,
+    ...ZenTypography.label.large,
+    color: ZenColors.text.inverse,
+    marginBottom: ZenSpacing.xs,
   },
   offerPrice: {
-    ...Typography.headlineMedium,
-    color: Colors.dark.text.inverse,
-    fontWeight: 'bold',
-    marginBottom: Spacing.xxs,
+    ...ZenTypography.display.small,
+    color: ZenColors.text.inverse,
+    marginBottom: ZenSpacing.xs,
   },
   offerDetails: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.inverse,
-    marginBottom: Spacing.sm,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.inverse,
+    opacity: 0.9,
+    marginBottom: ZenSpacing.md,
   },
   urgencyBadge: {
-    backgroundColor: Colors.dark.background.secondary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    borderColor: Colors.dark.border.default,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: ZenColors.background.card,
+    paddingHorizontal: ZenSpacing.sm,
+    paddingVertical: ZenSpacing.xs,
+    borderRadius: ZenRadius.full,
+    gap: ZenSpacing.xxs,
   },
   urgencyText: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.secondary,
-    fontWeight: '600',
+    ...ZenTypography.caption,
+    color: ZenColors.text.secondary,
   },
   socialProof: {
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: ZenSpacing.md,
   },
   socialProofText: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.secondary,
   },
   highlight: {
-    ...Typography.bodyMediumBold,
-    color: Colors.dark.text.primary,
-  },
-  primaryButton: {
-    marginBottom: Spacing.xs,
+    ...ZenTypography.label.medium,
+    color: ZenColors.primary.main,
   },
 });

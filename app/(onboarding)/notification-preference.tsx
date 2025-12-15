@@ -1,43 +1,44 @@
 /**
  * ONB_009: Notification Preference
- * Choose notification style preference
+ * Premium zen design with option cards
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import OptionCard from './components/OptionCard';
-import { Colors, Typography, Spacing } from '@/theme';
+import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { NOTIFICATION_STYLES } from '@/constants/onboarding';
 
 export default function NotificationPreferenceScreen() {
   const router = useRouter();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Track analytics: onb_notification_pref_viewed
-    // console.log('[Analytics] onb_notification_pref_viewed');
-  }, []);
-
   const handleContinue = () => {
     if (selectedStyle) {
-      // Track analytics: onb_notification_style
-      // console.log('[Analytics] onb_notification_style:', selectedStyle);
       router.push('./energy-pattern');
     }
   };
 
   return (
-    <OnboardingLayout currentStep={9}>
+    <OnboardingLayout currentStep={9} ambientColor="purple">
       <View style={styles.container}>
-        <Text style={styles.question}>How should we remind you?</Text>
-        <Text style={styles.subtext}>
+        <HeadlineText delay={0}>
+          How should we remind you?
+        </HeadlineText>
+        <SubheadText delay={100}>
           Choose your notification style
-        </Text>
+        </SubheadText>
 
-        <View style={styles.options}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.options}
+          showsVerticalScrollIndicator={false}
+        >
           {NOTIFICATION_STYLES.map((style) => (
             <OptionCard
               key={style.id}
@@ -47,13 +48,14 @@ export default function NotificationPreferenceScreen() {
               onPress={() => setSelectedStyle(style.id)}
             />
           ))}
+        </ScrollView>
+
+        <View style={styles.noteContainer}>
+          <Ionicons name="bulb-outline" size={16} color={ZenColors.accent.main} />
+          <Text style={styles.note}>
+            You can change this anytime in settings
+          </Text>
         </View>
-
-        <Text style={styles.note}>
-          💡 You can change this anytime in settings
-        </Text>
-
-        <View style={styles.spacer} />
 
         <PrimaryButton
           title="Continue"
@@ -69,27 +71,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  question: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
-    marginBottom: Spacing.xxs,
-  },
-  subtext: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
-    marginBottom: Spacing.md,
+  scrollView: {
+    flex: 1,
+    marginTop: ZenSpacing.md,
   },
   options: {
-    marginBottom: Spacing.sm,
+    paddingBottom: ZenSpacing.md,
+  },
+  noteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ZenSpacing.xs,
+    marginBottom: ZenSpacing.md,
+    backgroundColor: ZenColors.background.card,
+    padding: ZenSpacing.sm,
+    borderRadius: ZenRadius.md,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
   },
   note: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.secondary,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  spacer: {
-    flex: 1,
+    ...ZenTypography.body.small,
+    color: ZenColors.text.secondary,
   },
 });

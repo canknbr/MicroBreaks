@@ -1,25 +1,46 @@
 /**
  * ONB_002: Authority & Social Proof
- * Builds trust with testimonials and authority signals
+ * Premium zen design with smooth animations
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  interpolate,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
+import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { TESTIMONIALS } from '@/constants/onboarding';
 
 export default function SocialProofScreen() {
   const router = useRouter();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
-  useEffect(() => {
-    // Track analytics: onb_social_proof_viewed
-    // console.log('[Analytics] onb_social_proof_viewed');
+  // Animation values
+  const metricScale = useSharedValue(0.9);
+  const metricOpacity = useSharedValue(0);
+  const badgesOpacity = useSharedValue(0);
+  const testimonialOpacity = useSharedValue(1);
 
-    // Auto-advance after 8s if no interaction
+  useEffect(() => {
+    const easing = Easing.out(Easing.cubic);
+    // Entrance animations
+    badgesOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing }));
+    metricOpacity.value = withDelay(350, withTiming(1, { duration: 600, easing }));
+    metricScale.value = withDelay(350, withTiming(1, { duration: 700, easing }));
+
+    // Auto-advance after 8s
     const timer = setTimeout(() => {
       handleContinue();
     }, 8000);
@@ -27,48 +48,92 @@ export default function SocialProofScreen() {
     return () => clearTimeout(timer);
   }, []);
 
+  const advanceTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
+  };
+
   useEffect(() => {
     // Rotate testimonials every 3 seconds
     const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
+      testimonialOpacity.value = withTiming(0, { duration: 200 }, () => {
+        runOnJS(advanceTestimonial)();
+        testimonialOpacity.value = withTiming(1, { duration: 300 });
+      });
     }, 3000);
 
     return () => clearInterval(interval);
   }, []);
 
+  const badgesAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: badgesOpacity.value,
+    transform: [{ translateY: interpolate(badgesOpacity.value, [0, 1], [20, 0]) }],
+  }));
+
+  const metricAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: metricOpacity.value,
+    transform: [{ scale: metricScale.value }],
+  }));
+
+  const testimonialAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: testimonialOpacity.value,
+  }));
+
   const handleContinue = () => {
-    // Track analytics: onb_authority_badges_viewed
-    // console.log('[Analytics] onb_authority_badges_viewed');
     router.push('./value-promise');
   };
 
   return (
-    <OnboardingLayout currentStep={2}>
+    <OnboardingLayout currentStep={2} ambientColor="purple">
       <View style={styles.container}>
-        <Text style={styles.headline}>Backed by science, loved by users</Text>
+        <HeadlineText delay={0}>
+          Backed by science, loved by users
+        </HeadlineText>
 
         {/* Authority Badges */}
-        <View style={styles.badgesContainer}>
+        <Animated.View style={[styles.badgesContainer, badgesAnimatedStyle]}>
           <View style={styles.badge}>
-            <Text style={styles.badgeIcon}>⭐</Text>
+            {Platform.OS === 'ios' ? (
+              <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+            )}
+            <View style={styles.badgeIconContainer}>
+              <Text style={styles.badgeIcon}>⭐</Text>
+            </View>
             <Text style={styles.badgeText}>4.8 stars</Text>
             <Text style={styles.badgeSubtext}>10K+ reviews</Text>
           </View>
           <View style={styles.badge}>
-            <Text style={styles.badgeIcon}>🏥</Text>
+            {Platform.OS === 'ios' ? (
+              <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+            )}
+            <View style={styles.badgeIconContainer}>
+              <Text style={styles.badgeIcon}>🏥</Text>
+            </View>
             <Text style={styles.badgeText}>Expert-designed</Text>
             <Text style={styles.badgeSubtext}>By physiotherapists</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Success Metric */}
-        <View style={styles.metricContainer}>
+        <Animated.View style={[styles.metricContainer, metricAnimatedStyle]}>
+          <LinearGradient
+            colors={[ZenColors.primary.glow, 'transparent']}
+            style={styles.metricGlow}
+          />
           <Text style={styles.metricValue}>89%</Text>
           <Text style={styles.metricLabel}>report less pain in 7 days</Text>
-        </View>
+        </Animated.View>
 
         {/* Testimonial Carousel */}
-        <View style={styles.testimonialContainer}>
+        <Animated.View style={[styles.testimonialContainer, testimonialAnimatedStyle]}>
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+          )}
           <Text style={styles.testimonialQuote}>
             "{TESTIMONIALS[currentTestimonial].quote}"
           </Text>
@@ -86,10 +151,11 @@ export default function SocialProofScreen() {
               />
             ))}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Real-time counter */}
         <View style={styles.liveCounter}>
+          <View style={styles.liveDot} />
           <Text style={styles.liveCounterText}>
             2,847 breaks taken today
           </Text>
@@ -107,107 +173,131 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headline: {
-    ...Typography.headlineMedium,
-    color: Colors.dark.text.primary,
-    textAlign: 'center',
-    marginVertical: Spacing.lg,
-    fontWeight: '700',
-  },
   badgesContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
+    justifyContent: 'space-between',
+    marginBottom: ZenSpacing.lg,
+    gap: ZenSpacing.sm,
+    marginTop: ZenSpacing.md,
   },
   badge: {
     alignItems: 'center',
-    padding: Spacing.md,
-    backgroundColor: Colors.dark.card.background,
-    borderRadius: BorderRadius.card,
+    padding: ZenSpacing.md,
+    backgroundColor: 'rgba(20, 20, 30, 0.7)',
+    borderRadius: ZenRadius.lg,
     flex: 1,
     borderWidth: 1,
-    borderColor: Colors.dark.border.default,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  androidFallback: {
+    backgroundColor: 'rgba(18, 18, 26, 0.92)',
+    borderRadius: ZenRadius.lg,
+  },
+  badgeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: ZenRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: ZenSpacing.sm,
   },
   badgeIcon: {
-    fontSize: 36,
-    marginBottom: Spacing.xs,
+    fontSize: 24,
   },
   badgeText: {
-    ...Typography.bodyMediumBold,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.label.medium,
+    color: ZenColors.text.primary,
     textAlign: 'center',
-    marginBottom: Spacing.xxs,
+    marginBottom: ZenSpacing.xxs,
   },
   badgeSubtext: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.body.small,
+    color: ZenColors.text.secondary,
     textAlign: 'center',
   },
   metricContainer: {
     alignItems: 'center',
-    marginVertical: Spacing.lg,
-    padding: Spacing.lg,
-    backgroundColor: Colors.dark.card.background,
-    borderRadius: BorderRadius.card,
+    marginVertical: ZenSpacing.lg,
+    padding: ZenSpacing.xl,
+    backgroundColor: ZenColors.background.card,
+    borderRadius: ZenRadius.xl,
     borderWidth: 1,
-    borderColor: Colors.dark.text.primary,
+    borderColor: ZenColors.primary.main,
+    overflow: 'hidden',
+  },
+  metricGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 100,
   },
   metricValue: {
-    ...Typography.displayMedium,
-    color: Colors.dark.text.primary,
-    marginBottom: Spacing.xs,
-    fontWeight: '700',
+    ...ZenTypography.display.large,
+    color: ZenColors.primary.main,
+    marginBottom: ZenSpacing.xs,
   },
   metricLabel: {
-    ...Typography.bodyLarge,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.large,
+    color: ZenColors.text.primary,
     textAlign: 'center',
   },
   testimonialContainer: {
-    padding: Spacing.lg,
-    backgroundColor: Colors.dark.card.background,
-    borderRadius: BorderRadius.card,
-    marginBottom: Spacing.md,
+    padding: ZenSpacing.lg,
+    backgroundColor: 'rgba(20, 20, 30, 0.7)',
+    borderRadius: ZenRadius.lg,
+    marginBottom: ZenSpacing.md,
     borderWidth: 1,
-    borderColor: Colors.dark.border.default,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
   },
   testimonialQuote: {
-    ...Typography.bodyLarge,
-    color: Colors.dark.text.primary,
+    ...ZenTypography.body.large,
+    color: ZenColors.text.primary,
     fontStyle: 'italic',
     textAlign: 'center',
-    marginBottom: Spacing.sm,
-    lineHeight: 24,
+    marginBottom: ZenSpacing.sm,
+    lineHeight: 26,
   },
   testimonialAuthor: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.secondary,
     textAlign: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: ZenSpacing.md,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: Spacing.xs,
+    gap: ZenSpacing.xs,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.dark.border.default,
+    backgroundColor: ZenColors.border.default,
   },
   dotActive: {
-    backgroundColor: Colors.dark.text.primary,
-    width: 18,
+    backgroundColor: ZenColors.primary.main,
+    width: 20,
   },
   liveCounter: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    justifyContent: 'center',
+    marginBottom: ZenSpacing.sm,
+    gap: ZenSpacing.xs,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: ZenColors.primary.main,
   },
   liveCounterText: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.secondary,
   },
   spacer: {
     flex: 1,

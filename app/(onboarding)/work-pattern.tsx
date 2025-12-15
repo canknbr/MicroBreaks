@@ -1,67 +1,66 @@
 /**
  * ONB_007: Work Pattern
- * Understand how the user typically works
+ * Premium zen design with option cards
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import OptionCard from './components/OptionCard';
-import { Colors, Typography, Spacing } from '@/theme';
+import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { ZenSpacing } from './constants/design';
 import { WORK_PATTERNS } from '@/constants/onboarding';
 
 export default function WorkPatternScreen() {
   const router = useRouter();
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Track analytics: onb_work_pattern_viewed
-    // console.log('[Analytics] onb_work_pattern_viewed');
-  }, []);
-
   const handleContinue = () => {
     if (selectedPattern) {
-      // Track analytics: onb_work_pattern_selected
-      // console.log('[Analytics] onb_work_pattern_selected:', selectedPattern);
       router.push('./ergonomic-setup');
     }
   };
 
   const handleSkip = () => {
-    // Track analytics: onb_work_pattern_skipped
-    // console.log('[Analytics] onb_work_pattern_skipped');
     router.push('./ergonomic-setup');
   };
 
   return (
-    <OnboardingLayout currentStep={7}>
+    <OnboardingLayout currentStep={7} ambientColor="teal">
       <View style={styles.container}>
-        <Text style={styles.question}>How do you typically work?</Text>
+        <HeadlineText delay={0}>
+          How do you typically work?
+        </HeadlineText>
 
-        <View style={styles.grid}>
+        <SubheadText delay={100}>
+          We'll optimize your breaks for your work style
+        </SubheadText>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {WORK_PATTERNS.map((pattern) => (
-            <View key={pattern.id} style={styles.gridItem}>
-              <OptionCard
-                title={pattern.label}
-                description={pattern.description}
-                selected={selectedPattern === pattern.id}
-                onPress={() => setSelectedPattern(pattern.id)}
-              />
-            </View>
+            <OptionCard
+              key={pattern.id}
+              title={pattern.label}
+              description={pattern.description}
+              selected={selectedPattern === pattern.id}
+              onPress={() => setSelectedPattern(pattern.id)}
+            />
           ))}
-        </View>
-
-        <View style={styles.spacer} />
+        </ScrollView>
 
         <PrimaryButton
           title="Continue"
           onPress={handleContinue}
           disabled={!selectedPattern}
         />
-        <SecondaryButton title="Skip this" onPress={handleSkip} />
+        <SecondaryButton title="Skip this" onPress={handleSkip} variant="muted" />
       </View>
     </OnboardingLayout>
   );
@@ -71,22 +70,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  question: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    fontWeight: '700',
-    marginBottom: Spacing.md,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
-  },
-  gridItem: {
-    width: '100%',
-  },
-  spacer: {
+  scrollView: {
     flex: 1,
+    marginTop: ZenSpacing.md,
+  },
+  scrollContent: {
+    paddingBottom: ZenSpacing.md,
   },
 });

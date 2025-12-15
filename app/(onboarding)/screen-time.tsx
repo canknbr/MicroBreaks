@@ -1,43 +1,74 @@
 /**
  * ONB_005: Daily Screen Time
- * Collect user's daily screen hours
+ * Premium zen design with animated slider
  */
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  interpolate,
+  interpolateColor,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
-import { Colors, Typography, Spacing, BorderRadius } from '@/theme';
+import { HeadlineText } from './components/AnimatedText';
+import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 
 export default function ScreenTimeScreen() {
   const router = useRouter();
   const [hours, setHours] = useState(8);
   const [trackWidth, setTrackWidth] = useState(0);
 
+  // Animation values
+  const characterScale = useSharedValue(0.9);
+  const characterOpacity = useSharedValue(0);
+  const displayScale = useSharedValue(0.9);
+  const sliderOpacity = useSharedValue(0);
+
   useEffect(() => {
-    // Track analytics: onb_screen_time_viewed
-    // console.log('[Analytics] onb_screen_time_viewed');
+    const easing = Easing.out(Easing.cubic);
+    characterOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing }));
+    characterScale.value = withDelay(200, withTiming(1, { duration: 600, easing }));
+    displayScale.value = withDelay(350, withTiming(1, { duration: 600, easing }));
+    sliderOpacity.value = withDelay(500, withTiming(1, { duration: 400, easing }));
   }, []);
 
+  const characterAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: characterOpacity.value,
+    transform: [{ scale: characterScale.value }],
+  }));
+
+  const displayAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: displayScale.value }],
+    opacity: displayScale.value,
+  }));
+
+  const sliderAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: sliderOpacity.value,
+    transform: [{ translateY: interpolate(sliderOpacity.value, [0, 1], [20, 0]) }],
+  }));
+
   const handleContinue = () => {
-    // Track analytics: onb_screen_time_set
-    // console.log('[Analytics] onb_screen_time_set:', hours);
     router.push('./pain-assessment');
   };
 
   const handleSkip = () => {
-    // Track analytics: onb_screen_time_skipped
-    // console.log('[Analytics] onb_screen_time_skipped');
     router.push('./pain-assessment');
   };
 
   const getColor = (value: number) => {
-    if (value <= 4) return Colors.dark.text.primary;
-    if (value <= 8) return Colors.dark.text.secondary;
-    return Colors.dark.text.primary;
+    if (value <= 4) return ZenColors.primary.main;
+    if (value <= 8) return ZenColors.accent.main;
+    return ZenColors.secondary.main;
   };
 
   const getFeedback = (value: number) => {
@@ -48,8 +79,6 @@ export default function ScreenTimeScreen() {
   };
 
   const handleHourSelect = (value: number) => {
-    // Only updates the selection - does NOT auto-advance to next screen
-    // User must press "Continue" button to proceed
     if (isNaN(value) || value < 0 || value > 14) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setHours(Math.round(value));
@@ -59,36 +88,42 @@ export default function ScreenTimeScreen() {
     if (!trackWidth) return;
     const { locationX } = e.nativeEvent;
     if (locationX === undefined || isNaN(locationX)) return;
-    
+
     const percentage = Math.max(0, Math.min(1, locationX / trackWidth));
     const newValue = Math.round(percentage * 14);
     handleHourSelect(newValue);
   };
 
   return (
-    <OnboardingLayout currentStep={5}>
+    <OnboardingLayout currentStep={5} ambientColor="gold">
       <View style={styles.container}>
-        <Text style={styles.question}>
+        <HeadlineText delay={0}>
           How many hours at your screen daily?
-        </Text>
+        </HeadlineText>
 
         {/* Character showing fatigue level */}
-        <View style={styles.characterContainer}>
-          <Text style={styles.character}>
-            {hours <= 4 ? '😊' : hours <= 8 ? '😐' : hours <= 10 ? '😓' : '😵'}
-          </Text>
-        </View>
+        <Animated.View style={[styles.characterContainer, characterAnimatedStyle]}>
+          <View style={styles.characterBg}>
+            <LinearGradient
+              colors={[getColor(hours) + '20', 'transparent']}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.character}>
+              {hours <= 4 ? '😊' : hours <= 8 ? '😐' : hours <= 10 ? '😓' : '😵'}
+            </Text>
+          </View>
+        </Animated.View>
 
         {/* Hour Display */}
-        <View style={styles.displayContainer}>
+        <Animated.View style={[styles.displayContainer, displayAnimatedStyle]}>
           <Text style={[styles.hoursDisplay, { color: getColor(hours) }]}>
             {isNaN(hours) ? 8 : hours}
           </Text>
           <Text style={styles.hoursLabel}>hours per day</Text>
-        </View>
+        </Animated.View>
 
         {/* Slider */}
-        <View style={styles.sliderContainer}>
+        <Animated.View style={[styles.sliderContainer, sliderAnimatedStyle]}>
           <Pressable
             style={styles.sliderTrack}
             onLayout={(e) => {
@@ -98,41 +133,38 @@ export default function ScreenTimeScreen() {
               }
             }}
             onPress={handleTrackPress}>
-            <View
+            <LinearGradient
+              colors={[ZenColors.primary.main, ZenColors.accent.main, ZenColors.secondary.main]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
               style={[
                 styles.sliderFill,
-                {
-                  width: `${Math.max(0, Math.min(100, (hours / 14) * 100))}%`,
-                  backgroundColor: getColor(hours),
-                },
+                { width: `${Math.max(0, Math.min(100, (hours / 14) * 100))}%` },
+              ]}
+            />
+            <View
+              style={[
+                styles.sliderThumb,
+                { left: `${Math.max(0, Math.min(100, (hours / 14) * 100))}%`, backgroundColor: getColor(hours) },
               ]}
             />
           </Pressable>
-          <View style={styles.sliderButtons}>
-            {[...Array(15)].map((_, i) => (
-              <Pressable
-                key={i}
-                style={styles.sliderButton}
-                onPress={() => handleHourSelect(i)}>
-                <Text
-                  style={[
-                    styles.sliderButtonText,
-                    hours === i && styles.sliderButtonTextActive,
-                  ]}>
-                  {i}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={styles.sliderLabels}>
+            <Text style={styles.sliderLabel}>0h</Text>
+            <Text style={styles.sliderLabel}>7h</Text>
+            <Text style={styles.sliderLabel}>14h</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Feedback */}
-        <Text style={styles.feedback}>{getFeedback(hours)}</Text>
+        <View style={styles.feedbackContainer}>
+          <Text style={styles.feedback}>{getFeedback(hours)}</Text>
+        </View>
 
         <View style={styles.spacer} />
 
         <PrimaryButton title="Continue" onPress={handleContinue} />
-        <SecondaryButton title="It varies" onPress={handleSkip} />
+        <SecondaryButton title="It varies" onPress={handleSkip} variant="muted" />
       </View>
     </OnboardingLayout>
   );
@@ -142,65 +174,82 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  question: {
-    ...Typography.titleLarge,
-    color: Colors.dark.text.primary,
-    marginBottom: Spacing.lg,
-    fontWeight: '700',
-  },
   characterContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginTop: ZenSpacing.lg,
+    marginBottom: ZenSpacing.lg,
+  },
+  characterBg: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: ZenColors.background.card,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
   },
   character: {
-    fontSize: 100,
+    fontSize: 72,
   },
   displayContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: ZenSpacing.xl,
   },
   hoursDisplay: {
-    ...Typography.displayLarge,
-    fontWeight: '700',
+    ...ZenTypography.display.large,
   },
   hoursLabel: {
-    ...Typography.bodyLarge,
-    color: Colors.dark.text.secondary,
-    marginTop: Spacing.xs,
+    ...ZenTypography.body.large,
+    color: ZenColors.text.secondary,
+    marginTop: ZenSpacing.xs,
   },
   sliderContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: ZenSpacing.lg,
+    paddingHorizontal: ZenSpacing.sm,
   },
   sliderTrack: {
-    height: 10,
-    backgroundColor: Colors.dark.background.secondary,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.sm,
+    height: 8,
+    backgroundColor: ZenColors.background.elevated,
+    borderRadius: ZenRadius.full,
+    marginBottom: ZenSpacing.sm,
+    overflow: 'hidden',
   },
   sliderFill: {
     height: '100%',
-    borderRadius: BorderRadius.full,
+    borderRadius: ZenRadius.full,
   },
-  sliderButtons: {
+  sliderThumb: {
+    position: 'absolute',
+    top: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginLeft: -10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  sliderButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
+  sliderLabel: {
+    ...ZenTypography.caption,
+    color: ZenColors.text.muted,
   },
-  sliderButtonText: {
-    ...Typography.bodySmall,
-    color: Colors.dark.text.tertiary,
-  },
-  sliderButtonTextActive: {
-    color: Colors.dark.text.primary,
-    fontWeight: '600',
+  feedbackContainer: {
+    backgroundColor: ZenColors.background.card,
+    padding: ZenSpacing.md,
+    borderRadius: ZenRadius.lg,
+    borderWidth: 1,
+    borderColor: ZenColors.border.subtle,
   },
   feedback: {
-    ...Typography.bodyMedium,
-    color: Colors.dark.text.secondary,
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.secondary,
     textAlign: 'center',
   },
   spacer: {
