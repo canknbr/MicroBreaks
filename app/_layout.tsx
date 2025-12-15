@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useEffectiveTheme } from '@/hooks/useTheme';
 import { SplashScreen } from '@/components/splash';
 import {
   initializeNotifications,
@@ -38,6 +39,7 @@ const MicroBreaksDarkTheme = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const effectiveTheme = useEffectiveTheme();
   const [showSplash, setShowSplash] = useState(true);
   const [appIsReady, setAppIsReady] = useState(false);
 
@@ -118,6 +120,14 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="notifications"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_right',
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
                 name="modal"
                 options={{
                   presentation: 'modal',
@@ -135,7 +145,7 @@ export default function RootLayout() {
               />
             )}
           </View>
-          <StatusBar style="light" />
+          <StatusBar style={effectiveTheme === 'dark' ? 'light' : 'dark'} />
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

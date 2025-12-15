@@ -1,9 +1,9 @@
 /**
  * Breaks Screen - All break types and guided sessions
- * Premium design with categories and featured breaks
+ * Premium design with categories, search, filtering, and featured breaks
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ScrollView,
   Platform,
   Pressable,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,9 +26,20 @@ import Animated, {
   withSpring,
   Easing,
   interpolate,
+  FadeIn,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
+import { useUserStore } from '@/store';
+import { useTheme, ThemeColors } from '@/hooks/useTheme';
+
+// Duration filter options
+const DURATION_FILTERS = [
+  { id: 'all', label: 'All', min: 0, max: 999 },
+  { id: 'quick', label: '1-2m', min: 1, max: 2 },
+  { id: 'medium', label: '3-5m', min: 3, max: 5 },
+  { id: 'long', label: '5m+', min: 5, max: 999 },
+];
 
 // Break categories with their breaks
 const BREAK_CATEGORIES = [
@@ -97,11 +109,17 @@ function BreakCard({
   index,
   categoryColor,
   onPress,
+  isFavorite,
+  onToggleFavorite,
+  theme,
 }: {
   item: typeof BREAK_CATEGORIES[0]['breaks'][0];
   index: number;
   categoryColor: string;
   onPress: (id: string) => void;
+  isFavorite: boolean;
+  onToggleFavorite: (id: string) => void;
+  theme: ThemeColors;
 }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -130,23 +148,50 @@ function BreakCard({
     onPress(item.id);
   };
 
+  const handleFavoritePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggleFavorite(item.id);
+  };
+
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
-      <Animated.View style={[styles.breakCard, animatedStyle]}>
+      <Animated.View style={[
+        styles.breakCard,
+        {
+          borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.isDark ? 0 : 0.06,
+          shadowRadius: 8,
+          elevation: theme.isDark ? 0 : 3,
+        },
+        animatedStyle,
+      ]}>
         {Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
         )}
         <View style={styles.breakCardContent}>
-          <View style={[styles.breakIconContainer, { backgroundColor: `${categoryColor}20` }]}>
+          <View style={[styles.breakIconContainer, { backgroundColor: `${categoryColor}15` }]}>
             <Text style={styles.breakIcon}>{item.icon}</Text>
           </View>
           <View style={styles.breakInfo}>
-            <Text style={styles.breakTitle}>{item.title}</Text>
-            <Text style={styles.breakDescription}>{item.description}</Text>
+            <Text style={[styles.breakTitle, { color: theme.text.primary }]}>{item.title}</Text>
+            <Text style={[styles.breakDescription, { color: theme.text.muted }]}>{item.description}</Text>
           </View>
-          <View style={styles.breakDuration}>
+          <View style={styles.breakActions}>
+            <Pressable
+              style={styles.favoriteButton}
+              onPress={handleFavoritePress}
+              hitSlop={8}
+            >
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFavorite ? '#FF6B6B' : theme.text.muted}
+              />
+            </Pressable>
             <Text style={[styles.durationText, { color: categoryColor }]}>{item.duration}</Text>
             <Ionicons name="play-circle" size={24} color={categoryColor} />
           </View>
@@ -161,10 +206,16 @@ function CategorySection({
   category,
   delay,
   onBreakPress,
+  favoriteBreaks,
+  onToggleFavorite,
+  theme,
 }: {
   category: typeof BREAK_CATEGORIES[0];
   delay: number;
   onBreakPress: (id: string) => void;
+  favoriteBreaks: string[];
+  onToggleFavorite: (id: string) => void;
+  theme: ThemeColors;
 }) {
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(-20);
@@ -186,30 +237,306 @@ function CategorySection({
           <Ionicons name={category.icon as any} size={20} color={category.color} />
         </View>
         <View>
-          <Text style={styles.categoryTitle}>{category.title}</Text>
-          <Text style={styles.categorySubtitle}>{category.subtitle}</Text>
+          <Text style={[styles.categoryTitle, { color: theme.text.primary }]}>{category.title}</Text>
+          <Text style={[styles.categorySubtitle, { color: theme.text.muted }]}>{category.subtitle}</Text>
         </View>
       </Animated.View>
       <View style={styles.breaksList}>
         {category.breaks.map((item, index) => (
-          <BreakCard key={item.id} item={item} index={index} categoryColor={category.color} onPress={onBreakPress} />
+          <BreakCard
+            key={item.id}
+            item={item}
+            index={index}
+            categoryColor={category.color}
+            onPress={onBreakPress}
+            isFavorite={favoriteBreaks.includes(item.id)}
+            onToggleFavorite={onToggleFavorite}
+            theme={theme}
+          />
         ))}
       </View>
     </View>
   );
 }
 
+// Search Bar Component
+function SearchBar({
+  value,
+  onChangeText,
+  onClear,
+  theme,
+}: {
+  value: string;
+  onChangeText: (text: string) => void;
+  onClear: () => void;
+  theme: ThemeColors;
+}) {
+  return (
+    <View style={[styles.searchContainer, { borderColor: theme.border.subtle }]}>
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={20} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
+      )}
+      <Ionicons name="search" size={18} color={theme.text.muted} />
+      <TextInput
+        style={[styles.searchInput, { color: theme.text.primary }]}
+        placeholder="Search breaks..."
+        placeholderTextColor={theme.text.muted}
+        value={value}
+        onChangeText={onChangeText}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      {value.length > 0 && (
+        <Pressable onPress={onClear} style={styles.clearButton}>
+          <Ionicons name="close-circle" size={18} color={theme.text.muted} />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+// Filter Chips Component
+function FilterChips({
+  selectedCategory,
+  selectedDuration,
+  onCategoryChange,
+  onDurationChange,
+  theme,
+}: {
+  selectedCategory: string | null;
+  selectedDuration: string;
+  onCategoryChange: (id: string | null) => void;
+  onDurationChange: (id: string) => void;
+  theme: ThemeColors;
+}) {
+  return (
+    <View style={styles.filtersContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterChips}
+      >
+        {/* Category Filters */}
+        <Pressable
+          style={[
+            styles.filterChip,
+            {
+              backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: theme.isDark ? 0 : 0.06,
+              shadowRadius: 3,
+              elevation: theme.isDark ? 0 : 2,
+            },
+            !selectedCategory && [styles.filterChipActive, { backgroundColor: theme.isDark ? 'rgba(6, 255, 165, 0.15)' : `${theme.accent.primary}15` }],
+          ]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            onCategoryChange(null);
+          }}
+        >
+          <Text style={[styles.filterChipText, { color: theme.text.secondary }, !selectedCategory && styles.filterChipTextActive]}>
+            All
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.filterChip,
+            {
+              backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: theme.isDark ? 0 : 0.06,
+              shadowRadius: 3,
+              elevation: theme.isDark ? 0 : 2,
+            },
+            selectedCategory === 'favorites' && { backgroundColor: 'rgba(255, 107, 107, 0.12)' },
+          ]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            onCategoryChange('favorites');
+          }}
+        >
+          <Ionicons
+            name="heart"
+            size={14}
+            color={selectedCategory === 'favorites' ? '#FF6B6B' : theme.text.muted}
+            style={{ marginRight: 4 }}
+          />
+          <Text
+            style={[
+              styles.filterChipText,
+              { color: theme.text.secondary },
+              selectedCategory === 'favorites' && { color: '#FF6B6B' },
+            ]}
+          >
+            Favorites
+          </Text>
+        </Pressable>
+        {BREAK_CATEGORIES.map((cat) => (
+          <Pressable
+            key={cat.id}
+            style={[
+              styles.filterChip,
+              {
+                backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 3,
+                elevation: theme.isDark ? 0 : 2,
+              },
+              selectedCategory === cat.id && { backgroundColor: `${cat.color}15` },
+            ]}
+            onPress={() => {
+              Haptics.selectionAsync();
+              onCategoryChange(cat.id);
+            }}
+          >
+            <Ionicons
+              name={cat.icon as any}
+              size={14}
+              color={selectedCategory === cat.id ? cat.color : theme.text.muted}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.filterChipText,
+                { color: theme.text.secondary },
+                selectedCategory === cat.id && { color: cat.color },
+              ]}
+            >
+              {cat.title.replace(' Breaks', '')}
+            </Text>
+          </Pressable>
+        ))}
+
+        {/* Divider */}
+        <View style={[styles.filterDivider, { backgroundColor: theme.isDark ? theme.border.medium : theme.border.strong }]} />
+
+        {/* Duration Filters */}
+        {DURATION_FILTERS.map((dur) => (
+          <Pressable
+            key={dur.id}
+            style={[
+              styles.filterChip,
+              {
+                backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 3,
+                elevation: theme.isDark ? 0 : 2,
+              },
+              selectedDuration === dur.id && [styles.filterChipActive, { backgroundColor: theme.isDark ? 'rgba(6, 255, 165, 0.15)' : `${theme.accent.primary}15` }],
+            ]}
+            onPress={() => {
+              Haptics.selectionAsync();
+              onDurationChange(dur.id);
+            }}
+          >
+            <Text style={[styles.filterChipText, { color: theme.text.secondary }, selectedDuration === dur.id && styles.filterChipTextActive]}>
+              {dur.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// Parse duration string to number (e.g., "3m" -> 3)
+function parseDuration(duration: string): number {
+  return parseInt(duration.replace('m', ''), 10) || 0;
+}
+
 export default function BreaksScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const headerOpacity = useSharedValue(0);
   const featuredScale = useSharedValue(0.9);
   const featuredOpacity = useSharedValue(0);
+
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState('all');
+
+  // Favorites from store
+  const favoriteBreaks = useUserStore((state) => state.preferences.favoriteBreaks);
+  const toggleFavorite = useUserStore((state) => state.toggleFavorite);
 
   useEffect(() => {
     headerOpacity.value = withTiming(1, { duration: 600 });
     featuredOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
     featuredScale.value = withDelay(200, withSpring(1));
   }, []);
+
+  // Filter breaks based on search and filters
+  const filteredCategories = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    const durationFilter = DURATION_FILTERS.find((d) => d.id === selectedDuration);
+
+    // Special handling for favorites
+    if (selectedCategory === 'favorites') {
+      // Create a virtual "Favorites" category with all favorited breaks
+      const allBreaks = BREAK_CATEGORIES.flatMap((cat) =>
+        cat.breaks.map((brk) => ({ ...brk, categoryColor: cat.color }))
+      );
+      const favoriteBreaksList = allBreaks.filter((brk) => favoriteBreaks.includes(brk.id));
+
+      if (favoriteBreaksList.length === 0) {
+        return [];
+      }
+
+      return [{
+        id: 'favorites',
+        title: 'Your Favorites',
+        subtitle: `${favoriteBreaksList.length} saved`,
+        icon: 'heart',
+        color: '#FF6B6B',
+        breaks: favoriteBreaksList.filter((brk) => {
+          const matchesSearch =
+            !query ||
+            brk.title.toLowerCase().includes(query) ||
+            brk.description.toLowerCase().includes(query);
+          const duration = parseDuration(brk.duration);
+          const matchesDuration =
+            !durationFilter ||
+            (duration >= durationFilter.min && duration <= durationFilter.max);
+          return matchesSearch && matchesDuration;
+        }),
+      }].filter((cat) => cat.breaks.length > 0);
+    }
+
+    return BREAK_CATEGORIES
+      .filter((cat) => !selectedCategory || cat.id === selectedCategory)
+      .map((cat) => ({
+        ...cat,
+        breaks: cat.breaks.filter((brk) => {
+          // Search filter
+          const matchesSearch =
+            !query ||
+            brk.title.toLowerCase().includes(query) ||
+            brk.description.toLowerCase().includes(query);
+
+          // Duration filter
+          const duration = parseDuration(brk.duration);
+          const matchesDuration =
+            !durationFilter ||
+            (duration >= durationFilter.min && duration <= durationFilter.max);
+
+          return matchesSearch && matchesDuration;
+        }),
+      }))
+      .filter((cat) => cat.breaks.length > 0);
+  }, [searchQuery, selectedCategory, selectedDuration, favoriteBreaks]);
+
+  // Check if we have any results
+  const hasResults = filteredCategories.length > 0;
+  const isFiltering = searchQuery.length > 0 || selectedCategory !== null || selectedDuration !== 'all';
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -221,23 +548,33 @@ export default function BreaksScreen() {
     transform: [{ scale: featuredScale.value }],
   }));
 
-  const handleBreakPress = (breakId: string) => {
+  const handleBreakPress = useCallback((breakId: string) => {
     router.push({
       pathname: '/break-session',
       params: { breakId },
     });
-  };
+  }, [router]);
 
-  const handleFeaturedPress = () => {
+  const handleFeaturedPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/break-session',
       params: { breakId: FEATURED_BREAK.id },
     });
-  };
+  }, [router]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setSelectedCategory(null);
+    setSelectedDuration('all');
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
       {/* Ambient Background */}
       <View style={[styles.ambientGlow, styles.ambientPurple]} />
       <View style={[styles.ambientGlow, styles.ambientTeal]} />
@@ -250,42 +587,82 @@ export default function BreaksScreen() {
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
-            <Text style={styles.title}>Breaks</Text>
-            <Text style={styles.subtitle}>Choose your wellness moment</Text>
+            <Text style={[styles.title, { color: theme.text.primary }]}>Breaks</Text>
+            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>Choose your wellness moment</Text>
           </Animated.View>
 
-          {/* Featured Break */}
-          <Pressable onPress={handleFeaturedPress}>
-            <Animated.View style={[styles.featuredCard, featuredStyle]}>
-              <LinearGradient
-                colors={FEATURED_BREAK.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.featuredContent}>
-                <View style={styles.featuredBadge}>
-                  <Ionicons name="star" size={12} color="#000" />
-                  <Text style={styles.featuredBadgeText}>FEATURED</Text>
-                </View>
-                <Text style={styles.featuredIcon}>{FEATURED_BREAK.icon}</Text>
-                <Text style={styles.featuredTitle}>{FEATURED_BREAK.title}</Text>
-                <Text style={styles.featuredDescription}>{FEATURED_BREAK.description}</Text>
-                <View style={styles.featuredFooter}>
-                  <Text style={styles.featuredDuration}>{FEATURED_BREAK.duration}</Text>
-                  <View style={styles.featuredButton}>
-                    <Text style={styles.featuredButtonText}>Start</Text>
-                    <Ionicons name="play" size={16} color="#000" />
+          {/* Search Bar */}
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={handleClearSearch}
+            theme={theme}
+          />
+
+          {/* Filter Chips */}
+          <FilterChips
+            selectedCategory={selectedCategory}
+            selectedDuration={selectedDuration}
+            onCategoryChange={setSelectedCategory}
+            onDurationChange={setSelectedDuration}
+            theme={theme}
+          />
+
+          {/* Featured Break - only show when not filtering */}
+          {!isFiltering && (
+            <Pressable onPress={handleFeaturedPress}>
+              <Animated.View style={[styles.featuredCard, featuredStyle]}>
+                <LinearGradient
+                  colors={FEATURED_BREAK.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.featuredContent}>
+                  <View style={styles.featuredBadge}>
+                    <Ionicons name="star" size={12} color="#000" />
+                    <Text style={styles.featuredBadgeText}>FEATURED</Text>
+                  </View>
+                  <Text style={styles.featuredIcon}>{FEATURED_BREAK.icon}</Text>
+                  <Text style={styles.featuredTitle}>{FEATURED_BREAK.title}</Text>
+                  <Text style={styles.featuredDescription}>{FEATURED_BREAK.description}</Text>
+                  <View style={styles.featuredFooter}>
+                    <Text style={styles.featuredDuration}>{FEATURED_BREAK.duration}</Text>
+                    <View style={styles.featuredButton}>
+                      <Text style={styles.featuredButtonText}>Start</Text>
+                      <Ionicons name="play" size={16} color="#000" />
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Animated.View>
-          </Pressable>
+              </Animated.View>
+            </Pressable>
+          )}
 
-          {/* Categories */}
-          {BREAK_CATEGORIES.map((category, index) => (
-            <CategorySection key={category.id} category={category} delay={300 + index * 150} onBreakPress={handleBreakPress} />
-          ))}
+          {/* Categories - show filtered results */}
+          {hasResults ? (
+            filteredCategories.map((category, index) => (
+              <CategorySection
+                key={category.id}
+                category={category}
+                delay={isFiltering ? 0 : 300 + index * 150}
+                onBreakPress={handleBreakPress}
+                favoriteBreaks={favoriteBreaks}
+                onToggleFavorite={toggleFavorite}
+                theme={theme}
+              />
+            ))
+          ) : (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.noResultsContainer}>
+              <Ionicons name="search-outline" size={48} color={theme.text.muted} />
+              <Text style={[styles.noResultsTitle, { color: theme.text.primary }]}>No breaks found</Text>
+              <Text style={[styles.noResultsText, { color: theme.text.muted }]}>
+                Try adjusting your search or filters
+              </Text>
+              <Pressable style={styles.clearFiltersButton} onPress={handleClearFilters}>
+                <Text style={styles.clearFiltersText}>Clear Filters</Text>
+              </Pressable>
+            </Animated.View>
+          )}
 
           {/* Bottom Spacing */}
           <View style={styles.bottomSpacer} />
@@ -471,16 +848,111 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.5)',
   },
-  breakDuration: {
+  breakActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  favoriteButton: {
+    padding: 4,
   },
   durationText: {
     fontSize: 14,
     fontWeight: '600',
-    marginRight: 8,
   },
   bottomSpacer: {
     height: 120,
+  },
+  // Search styles
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#FFFFFF',
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  // Filter styles
+  filtersContainer: {
+    marginBottom: Spacing.md,
+    marginHorizontal: -Spacing.lg,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.lg,
+    gap: 8,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  filterChipActive: {
+    backgroundColor: 'rgba(6, 255, 165, 0.15)',
+    borderColor: '#06FFA5',
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  filterChipTextActive: {
+    color: '#06FFA5',
+  },
+  filterDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginHorizontal: 4,
+  },
+  // No results styles
+  noResultsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  noResultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  clearFiltersButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(6, 255, 165, 0.15)',
+    borderWidth: 1,
+    borderColor: '#06FFA5',
+  },
+  clearFiltersText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#06FFA5',
   },
 });

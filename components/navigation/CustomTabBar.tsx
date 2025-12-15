@@ -19,6 +19,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useTheme, ThemeColors } from '@/hooks/useTheme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -29,9 +30,10 @@ interface TabItemProps {
   isFocused: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  theme: ThemeColors;
 }
 
-function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress }: TabItemProps) {
+function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress, theme }: TabItemProps) {
   const scale = useSharedValue(1);
   const animatedFocus = useSharedValue(isFocused ? 1 : 0);
 
@@ -92,27 +94,29 @@ function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress }: 
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
-      {/* Glow effect */}
-      <Animated.View style={[styles.glow, glowStyle]}>
-        <LinearGradient
-          colors={['#06FFA5', 'transparent']}
-          style={styles.glowGradient}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-        />
-      </Animated.View>
+      {/* Glow effect - only for dark mode */}
+      {theme.isDark && (
+        <Animated.View style={[styles.glow, glowStyle]}>
+          <LinearGradient
+            colors={['#06FFA5', 'transparent']}
+            style={styles.glowGradient}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+          />
+        </Animated.View>
+      )}
 
       {/* Icon */}
       <Animated.View style={iconStyle}>
         <Ionicons
           name={(isFocused ? iconFocused : icon) as any}
           size={22}
-          color={isFocused ? '#06FFA5' : 'rgba(255, 255, 255, 0.5)'}
+          color={isFocused ? theme.accent.primary : theme.text.muted}
         />
       </Animated.View>
 
       {/* Label */}
-      <Animated.Text style={[styles.label, isFocused && styles.labelFocused, labelStyle]}>
+      <Animated.Text style={[styles.label, { color: isFocused ? theme.accent.primary : theme.text.muted }, labelStyle]}>
         {label}
       </Animated.Text>
     </AnimatedPressable>
@@ -128,24 +132,40 @@ const TAB_CONFIG: Record<string, { icon: string; iconFocused: string }> = {
 
 export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <View style={styles.tabBarWrapper}>
-        {/* Glassmorphism background */}
-        {Platform.OS === 'ios' ? (
-          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+      <View style={[
+        styles.tabBarWrapper,
+        {
+          borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+          backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: theme.isDark ? 0.3 : 0.12,
+          shadowRadius: 12,
+          elevation: theme.isDark ? 0 : 10,
+        }
+      ]}>
+        {/* BlurView only for dark mode */}
+        {theme.isDark && (
+          Platform.OS === 'ios' ? (
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15, 15, 20, 0.95)' }]} />
+          )
         )}
 
-        {/* Border highlight */}
-        <LinearGradient
-          colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
-          style={styles.borderHighlight}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        />
+        {/* Border highlight - only for dark mode */}
+        {theme.isDark && (
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
+            style={styles.borderHighlight}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          />
+        )}
 
         {/* Tabs */}
         <View style={styles.tabBar}>
@@ -184,6 +204,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                 isFocused={isFocused}
                 onPress={onPress}
                 onLongPress={onLongPress}
+                theme={theme}
               />
             );
           })}

@@ -18,6 +18,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/hooks/useTheme';
 
 type InsightType = 'warning' | 'suggestion' | 'achievement' | 'motivation';
 
@@ -61,6 +62,7 @@ export default function SmartInsight({
   onAction,
   delay = 0,
 }: SmartInsightProps) {
+  const theme = useTheme();
   const config = INSIGHT_CONFIG[type];
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
@@ -101,15 +103,31 @@ export default function SmartInsight({
   };
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+    <Animated.View style={[
+      styles.container,
+      {
+        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: theme.isDark ? 0 : 0.08,
+        shadowRadius: 8,
+        elevation: theme.isDark ? 0 : 4,
+      },
+      containerStyle,
+    ]}>
+      {/* BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20, 20, 30, 0.9)' }]} />
+        )
       )}
 
+      {/* Gradient overlay - subtle for light mode */}
       <LinearGradient
-        colors={config.colors}
+        colors={theme.isDark ? config.colors : [`${config.iconColor}08`, `${config.iconColor}02`]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -121,8 +139,8 @@ export default function SmartInsight({
         </Animated.View>
 
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+          <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
+          <Text style={[styles.message, { color: theme.text.secondary }]}>{message}</Text>
         </View>
 
         {actionLabel && (

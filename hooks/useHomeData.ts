@@ -1,7 +1,7 @@
 /**
  * Home Screen Data Hook
  * Manages state, loading, and data fetching for home screen
- * Uses real data from AsyncStorage
+ * Uses real data from AsyncStorage and Zustand stores
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -12,6 +12,7 @@ import {
   getUserStats,
   getRecentBreaks,
 } from '@/services/breakHistory';
+import { useUserStore } from '@/store';
 
 export interface UserData {
   name: string;
@@ -45,6 +46,7 @@ export interface WeeklyInsight {
 
 export interface HomeData {
   user: UserData;
+  avatar: string | null;
   dailyProgress: DailyProgress;
   streak: StreakData;
   weeklyInsights: WeeklyInsight[];
@@ -109,7 +111,7 @@ function calculateWeeklyDays(streakHistory: { date: string; count: number }[]): 
 }
 
 // Generate home data from stored data
-async function generateHomeData(): Promise<HomeData> {
+async function generateHomeData(userName: string, userAvatar: string | null): Promise<HomeData & { avatar: string | null }> {
   const [todayBreaks, weekBreaks, storedStreak, userStats, recentBreaks] = await Promise.all([
     getTodayBreaks(),
     getWeekBreaks(),
@@ -141,12 +143,13 @@ async function generateHomeData(): Promise<HomeData> {
 
   return {
     user: {
-      name: 'Can', // This could come from a user profile in the future
+      name: userName,
       level: userStats.level,
       currentXP: userStats.totalXP % 100,
       nextLevelXP: 100,
       levelTitle,
     },
+    avatar: userAvatar,
     dailyProgress: {
       breaksTaken: todayBreaks.length,
       breaksGoal: userStats.weeklyGoal > 0 ? Math.max(Math.round(userStats.weeklyGoal / 7), 3) : 8,
@@ -203,6 +206,9 @@ export function useHomeData(): UseHomeDataReturn {
   const [celebration, setCelebration] = useState<UseHomeDataReturn['shouldCelebrate']>(null);
   const [previousData, setPreviousData] = useState<HomeData | null>(null);
 
+  // Get user profile from store
+  const userProfile = useUserStore((state) => state.profile);
+
   const fetchData = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -212,7 +218,7 @@ export function useHomeData(): UseHomeDataReturn {
       }
       setError(null);
 
-      const newData = await generateHomeData();
+      const newData = await generateHomeData(userProfile.name, userProfile.avatar);
 
       // Check for celebrations (only on refresh, not initial load)
       if (previousData && isRefresh) {
@@ -251,11 +257,11 @@ export function useHomeData(): UseHomeDataReturn {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [data, previousData]);
+  }, [data, previousData, userProfile.name, userProfile.avatar]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [userProfile.name, userProfile.avatar]);
 
   const refresh = useCallback(async () => {
     await fetchData(true);

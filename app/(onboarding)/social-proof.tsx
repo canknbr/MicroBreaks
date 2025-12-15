@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
-import { HeadlineText, SubheadText } from './components/AnimatedText';
+import { HeadlineText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { TESTIMONIALS } from '@/constants/onboarding';
 

@@ -86,7 +86,8 @@ const BREAK_REMINDER_MESSAGES = [
 // Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),

@@ -61,6 +61,8 @@ import {
   useAmbientColors,
   useFormattedDate,
 } from '@/hooks/useHomeData';
+import { useNotificationStore } from '@/store';
+import { useTheme, ThemeColors } from '@/hooks/useTheme';
 
 // Break types data - IDs match exercise IDs in data/exercises.ts
 const BREAK_TYPES = [
@@ -79,20 +81,22 @@ const HeaderActions = memo(function HeaderActions({
   onNotificationsPress,
   onSettingsPress,
   notificationCount = 0,
+  theme,
 }: {
   onNotificationsPress: () => void;
   onSettingsPress: () => void;
   notificationCount?: number;
+  theme: ThemeColors;
 }) {
   return (
     <View style={styles.headerActions}>
       <Pressable
-        style={styles.headerActionButton}
+        style={[styles.headerActionButton, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
         onPress={onNotificationsPress}
         accessibilityRole="button"
         accessibilityLabel={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ''}`}
       >
-        <Ionicons name="notifications-outline" size={22} color="rgba(255, 255, 255, 0.7)" />
+        <Ionicons name="notifications-outline" size={22} color={theme.text.secondary} />
         {notificationCount > 0 && (
           <View style={styles.notificationBadge}>
             <Text style={styles.notificationBadgeText}>
@@ -102,12 +106,12 @@ const HeaderActions = memo(function HeaderActions({
         )}
       </Pressable>
       <Pressable
-        style={styles.headerActionButton}
+        style={[styles.headerActionButton, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
         onPress={onSettingsPress}
         accessibilityRole="button"
         accessibilityLabel="Settings"
       >
-        <Ionicons name="settings-outline" size={22} color="rgba(255, 255, 255, 0.7)" />
+        <Ionicons name="settings-outline" size={22} color={theme.text.secondary} />
       </Pressable>
     </View>
   );
@@ -176,6 +180,9 @@ function useSmartInsight(
 }
 
 export default function HomeScreen() {
+  // Theme
+  const theme = useTheme();
+
   // Data hook
   const {
     data,
@@ -189,6 +196,9 @@ export default function HomeScreen() {
     shouldCelebrate,
     clearCelebration,
   } = useHomeData();
+
+  // Notification count from store
+  const unreadCount = useNotificationStore((state) => state.notifications.filter((n) => !n.read).length);
 
   // Dynamic content hooks
   const { greeting, subtitle: dynamicSubtitle } = useGreeting(data?.user.name);
@@ -285,9 +295,8 @@ export default function HomeScreen() {
 
   const handleNotificationsPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // TODO: Navigate to notifications when screen is set up
-    console.log('Open notifications');
-  }, []);
+    router.push('/notifications');
+  }, [router]);
 
   const handleSettingsPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -314,7 +323,7 @@ export default function HomeScreen() {
   // Loading state
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
         <Animated.View style={[styles.ambientGlow, styles.ambientTeal]} />
         <Animated.View style={[styles.ambientGlow, styles.ambientPurple]} />
         <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -327,7 +336,7 @@ export default function HomeScreen() {
   // Error state
   if (error) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
           <ScrollView
             contentContainerStyle={styles.centerContent}
@@ -335,7 +344,7 @@ export default function HomeScreen() {
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
-                tintColor="#06FFA5"
+                tintColor={theme.accent.primary}
               />
             }
           >
@@ -347,7 +356,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
       {/* Celebration Overlay */}
       {shouldCelebrate && (
         <CelebrationOverlay
@@ -372,7 +381,7 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#06FFA5"
+              tintColor={theme.accent.primary}
               progressViewOffset={20}
             />
           }
@@ -381,7 +390,7 @@ export default function HomeScreen() {
           <Animated.View style={[styles.header, headerStyle]}>
             <View style={styles.headerTop}>
               <Text
-                style={styles.dateText}
+                style={[styles.dateText, { color: theme.text.muted }]}
                 accessibilityRole="text"
                 accessibilityLabel={`Today is ${formattedDate}`}
               >
@@ -390,18 +399,19 @@ export default function HomeScreen() {
               <HeaderActions
                 onNotificationsPress={handleNotificationsPress}
                 onSettingsPress={handleSettingsPress}
-                notificationCount={2}
+                notificationCount={unreadCount}
+                theme={theme}
               />
             </View>
             <Text
-              style={styles.greeting}
+              style={[styles.greeting, { color: theme.text.primary }]}
               accessibilityRole="header"
               accessibilityLabel={greeting}
             >
               {greeting}
             </Text>
             <Text
-              style={styles.subtitle}
+              style={[styles.subtitle, { color: theme.text.secondary }]}
               accessibilityRole="text"
             >
               {subtitle}
@@ -418,12 +428,12 @@ export default function HomeScreen() {
                 <View style={styles.sectionHeader}>
                   <View>
                     <Text
-                      style={styles.sectionTitle}
+                      style={[styles.sectionTitle, { color: theme.text.primary }]}
                       accessibilityRole="header"
                     >
                       Take a Break
                     </Text>
-                    <Text style={styles.sectionSubtitle}>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
                       Tap to start a quick exercise
                     </Text>
                   </View>
@@ -434,8 +444,8 @@ export default function HomeScreen() {
                       router.push('/breaks');
                     }}
                   >
-                    <Text style={styles.seeAllText}>See All</Text>
-                    <Ionicons name="chevron-forward" size={14} color="#06FFA5" />
+                    <Text style={[styles.seeAllText, { color: theme.accent.primary }]}>See All</Text>
+                    <Ionicons name="chevron-forward" size={14} color={theme.accent.primary} />
                   </Pressable>
                 </View>
                 <ScrollView
@@ -488,33 +498,47 @@ export default function HomeScreen() {
                     colors={[ambientColors.primary, ambientColors.secondary]}
                     delay={300}
                   >
-                    <Text style={styles.miniProgressValue}>{data?.dailyProgress.breaksTaken}</Text>
-                    <Text style={styles.miniProgressLabel}>/{data?.dailyProgress.breaksGoal}</Text>
+                    <Text style={[styles.miniProgressValue, { color: theme.text.primary }]}>{data?.dailyProgress.breaksTaken}</Text>
+                    <Text style={[styles.miniProgressLabel, { color: theme.text.muted }]}>/{data?.dailyProgress.breaksGoal}</Text>
                   </ProgressRing>
                 </View>
 
                 {/* Stats */}
                 <View
-                  style={styles.compactStatsCard}
+                  style={[
+                    styles.compactStatsCard,
+                    {
+                      borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                      backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: theme.isDark ? 0 : 0.1,
+                      shadowRadius: 12,
+                      elevation: theme.isDark ? 0 : 5,
+                    },
+                  ]}
                   accessible
                   accessibilityRole="summary"
                 >
-                  {Platform.OS === 'ios' ? (
-                    <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
                   )}
                   <View style={styles.compactStatsContent}>
                     <View style={styles.compactStatItem}>
-                      <Ionicons name="time-outline" size={16} color="#00E5FF" />
-                      <Text style={styles.compactStatValue}>{data?.dailyProgress.minutesInvested ?? 0}m</Text>
-                      <Text style={styles.compactStatLabel}>today</Text>
+                      <Ionicons name="time-outline" size={16} color={theme.accent.secondary} />
+                      <Text style={[styles.compactStatValue, { color: theme.text.primary }]}>{data?.dailyProgress.minutesInvested ?? 0}m</Text>
+                      <Text style={[styles.compactStatLabel, { color: theme.text.muted }]}>today</Text>
                     </View>
-                    <View style={styles.compactStatDivider} />
+                    <View style={[styles.compactStatDivider, { backgroundColor: theme.border.subtle }]} />
                     <View style={styles.compactStatItem}>
-                      <Ionicons name="flame" size={16} color="#FFD166" />
-                      <Text style={styles.compactStatValue}>{data?.streak.current ?? 0}</Text>
-                      <Text style={styles.compactStatLabel}>streak</Text>
+                      <Ionicons name="flame" size={16} color={theme.accent.warning} />
+                      <Text style={[styles.compactStatValue, { color: theme.text.primary }]}>{data?.streak.current ?? 0}</Text>
+                      <Text style={[styles.compactStatLabel, { color: theme.text.muted }]}>streak</Text>
                     </View>
                   </View>
                 </View>
@@ -566,21 +590,37 @@ export default function HomeScreen() {
               {/* Streak Calendar */}
               {data && (
                 <View
-                  style={styles.streakCard}
+                  style={[
+                    styles.streakCard,
+                    {
+                      borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                      backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: theme.isDark ? 0 : 0.1,
+                      shadowRadius: 12,
+                      elevation: theme.isDark ? 0 : 5,
+                    },
+                  ]}
                   accessible
                   accessibilityRole="summary"
                   accessibilityLabel={`Weekly streak calendar. Current streak: ${data.streak.current} days`}
                 >
-                  {Platform.OS === 'ios' ? (
-                    <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
                   )}
-                  <LinearGradient
-                    colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
-                    style={styles.cardHighlight}
-                  />
-                  <Text style={styles.streakTitle}>This Week</Text>
+                  {theme.isDark && (
+                    <LinearGradient
+                      colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
+                      style={styles.cardHighlight}
+                    />
+                  )}
+                  <Text style={[styles.streakTitle, { color: theme.text.primary }]}>This Week</Text>
                   <StreakCalendar
                     completedDays={data.streak.completedDays}
                     currentDayIndex={data.streak.currentDayIndex}

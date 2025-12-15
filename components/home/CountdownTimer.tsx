@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/hooks/useTheme';
 
 interface CountdownTimerProps {
   targetMinutes: number; // Minutes until next break
@@ -25,6 +26,7 @@ export default function CountdownTimer({
   targetMinutes,
   onComplete,
 }: CountdownTimerProps) {
+  const theme = useTheme();
   const [timeLeft, setTimeLeft] = useState(targetMinutes * 60);
   const pulseScale = useSharedValue(1);
   const glowOpacity = useSharedValue(0.3);
@@ -90,51 +92,69 @@ export default function CountdownTimer({
   };
 
   return (
-    <Animated.View style={[styles.container, pulseStyle]}>
-      {/* Glassmorphism background */}
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+    <Animated.View style={[
+      styles.container,
+      {
+        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: theme.isDark ? 0 : 0.1,
+        shadowRadius: 12,
+        elevation: theme.isDark ? 0 : 5,
+      },
+      pulseStyle,
+    ]}>
+      {/* Background - BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+        )
       )}
 
-      {/* Glow effect */}
-      <Animated.View
-        style={[
-          styles.glow,
-          { backgroundColor: isUrgent ? '#FFD166' : '#06FFA5' },
-          glowStyle,
-        ]}
-      />
+      {/* Glow effect - only for dark mode */}
+      {theme.isDark && (
+        <Animated.View
+          style={[
+            styles.glow,
+            { backgroundColor: isUrgent ? '#FFD166' : '#06FFA5' },
+            glowStyle,
+          ]}
+        />
+      )}
 
-      {/* Top highlight */}
-      <LinearGradient
-        colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
-        style={styles.highlight}
-      />
+      {/* Top highlight - only for dark mode */}
+      {theme.isDark && (
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
+          style={styles.highlight}
+        />
+      )}
 
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.icon}>{isUrgent ? '⚡' : '⏱️'}</Text>
-          <Text style={styles.label}>Next break in</Text>
+          <Text style={[styles.label, { color: theme.text.secondary }]}>Next break in</Text>
         </View>
 
-        <Text style={[styles.time, isUrgent && styles.timeUrgent]}>
+        <Text style={[styles.time, { color: theme.text.primary }, isUrgent && { color: theme.accent.warning }]}>
           {formatTime(timeLeft)}
         </Text>
 
         {/* Progress bar */}
         <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
+          <View style={[styles.progressTrack, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium }]}>
             <LinearGradient
-              colors={isUrgent ? ['#FFD166', '#FF9F1C'] : ['#06FFA5', '#00E5FF']}
+              colors={isUrgent ? ['#FFD166', '#FF9F1C'] : [theme.accent.primary, theme.accent.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.progressFill, { width: `${progress}%` }]}
             />
           </View>
-          <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+          <Text style={[styles.progressText, { color: theme.text.muted }]}>{Math.round(progress)}%</Text>
         </View>
       </View>
     </Animated.View>

@@ -16,7 +16,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  Dimensions,
   Animated as RNAnimated,
 } from 'react-native';
 import Animated, {
@@ -30,8 +29,6 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ZenColors, ZenSpacing, ZenGradients } from '../constants/design';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;

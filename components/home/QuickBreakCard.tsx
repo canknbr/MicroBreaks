@@ -18,6 +18,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/hooks/useTheme';
 
 interface QuickBreakCardProps {
   icon: string;
@@ -40,6 +41,7 @@ export default function QuickBreakCard({
   accessibilityLabel,
   accessibilityHint,
 }: QuickBreakCardProps) {
+  const theme = useTheme();
   const scale = useSharedValue(1);
   const pressed = useSharedValue(0);
 
@@ -73,27 +75,43 @@ export default function QuickBreakCard({
   return (
     <GestureDetector gesture={tap}>
       <Animated.View
-        style={[styles.container, animatedStyle]}
+        style={[
+          styles.container,
+          {
+            backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+            borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.isDark ? 0 : 0.1,
+            shadowRadius: 8,
+            elevation: theme.isDark ? 0 : 4,
+          },
+          animatedStyle,
+        ]}
         accessible
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel || `Start ${title} break, ${duration}`}
         accessibilityHint={accessibilityHint || 'Double tap to start this break exercise'}
       >
-        {/* Glassmorphism background */}
-        {Platform.OS === 'ios' ? (
-          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+        {/* BlurView only for dark mode */}
+        {theme.isDark && (
+          Platform.OS === 'ios' ? (
+            <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+          )
         )}
 
-        {/* Top highlight */}
-        <LinearGradient
-          colors={['rgba(255, 255, 255, 0.1)', 'transparent']}
-          style={styles.highlight}
-        />
+        {/* Top highlight - only for dark mode */}
+        {theme.isDark && (
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.1)', 'transparent']}
+            style={styles.highlight}
+          />
+        )}
 
-        {/* Glow effect on press */}
-        <Animated.View style={[styles.glow, { backgroundColor: color }, glowStyle]} />
+        {/* Glow effect on press - only for dark mode */}
+        {theme.isDark && <Animated.View style={[styles.glow, { backgroundColor: color }, glowStyle]} />}
 
         {/* Recommended badge */}
         {isRecommended && (
@@ -106,7 +124,7 @@ export default function QuickBreakCard({
         <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
           <Text style={styles.icon}>{icon}</Text>
         </View>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
         <View style={styles.actionRow}>
           <Animated.View style={[styles.playButton, { backgroundColor: color }, playButtonStyle]}>
             <Ionicons name="play" size={10} color="#000" />

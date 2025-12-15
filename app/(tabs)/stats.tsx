@@ -32,6 +32,7 @@ import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
 import { useStatsData, StatsPeriod } from '@/hooks/useStatsData';
 import { CompletedBreak } from '@/services/storage';
+import { useTheme, ThemeColors } from '@/hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,6 +51,7 @@ function StatCard({
   suffix,
   color,
   delay,
+  theme,
 }: {
   icon: string;
   label: string;
@@ -57,6 +59,7 @@ function StatCard({
   suffix?: string;
   color: string;
   delay: number;
+  theme: ThemeColors;
 }) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
@@ -72,19 +75,30 @@ function StatCard({
   }));
 
   return (
-    <Animated.View style={[styles.statCard, containerStyle]}>
+    <Animated.View style={[
+      styles.statCard,
+      {
+        borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: theme.isDark ? 0 : 0.06,
+        shadowRadius: 10,
+        elevation: theme.isDark ? 0 : 3,
+      },
+      containerStyle,
+    ]}>
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
       )}
-      <View style={[styles.statIconContainer, { backgroundColor: `${color}20` }]}>
+      <View style={[styles.statIconContainer, { backgroundColor: `${color}12` }]}>
         <Ionicons name={icon as any} size={20} color={color} />
       </View>
-      <Text style={styles.statValue}>
+      <Text style={[styles.statValue, { color: theme.text.primary }]}>
         {Math.round(value)}{suffix}
       </Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, { color: theme.text.muted }]}>{label}</Text>
     </Animated.View>
   );
 }
@@ -93,9 +107,11 @@ function StatCard({
 function BarChart({
   data,
   delay,
+  theme,
 }: {
   data: { label: string; value: number; minutes: number }[];
   delay: number;
+  theme: ThemeColors;
 }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const barHeights = data.map(() => useSharedValue(0));
@@ -129,10 +145,10 @@ function BarChart({
 
           return (
             <View key={index} style={[styles.barWrapper, data.length > 7 && styles.barWrapperSmall]}>
-              <View style={[styles.barTrack, data.length > 7 && styles.barTrackSmall]}>
+              <View style={[styles.barTrack, data.length > 7 && styles.barTrackSmall, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : theme.border.subtle }]}>
                 <Animated.View style={[styles.bar, barStyle]}>
                   <LinearGradient
-                    colors={isToday ? ['#06FFA5', '#00E5FF'] : ['#3A3A4A', '#2A2A3A']}
+                    colors={isToday ? (theme.isDark ? ['#06FFA5', '#00E5FF'] : [theme.accent.primary, theme.accent.secondary]) : (theme.isDark ? ['#3A3A4A', '#2A2A3A'] : [theme.border.strong, theme.border.medium])}
                     style={StyleSheet.absoluteFill}
                   />
                 </Animated.View>
@@ -141,7 +157,8 @@ function BarChart({
                 <Text
                   style={[
                     styles.barLabel,
-                    isToday && styles.barLabelActive,
+                    { color: theme.text.muted },
+                    isToday && [styles.barLabelActive, { color: theme.accent.primary }],
                     data.length > 14 && styles.barLabelSmall,
                   ]}
                 >
@@ -160,9 +177,11 @@ function BarChart({
 function BreakTypeItem({
   item,
   delay,
+  theme,
 }: {
   item: { category: string; count: number; percentage: number; color: string };
   delay: number;
+  theme: ThemeColors;
 }) {
   const percentage = item.percentage;
   const width = useSharedValue(0);
@@ -186,13 +205,76 @@ function BreakTypeItem({
       <View style={styles.typeHeader}>
         <View style={styles.typeInfo}>
           <View style={[styles.typeDot, { backgroundColor: item.color }]} />
-          <Text style={styles.typeName}>{item.category}</Text>
+          <Text style={[styles.typeName, { color: theme.text.primary }]}>{item.category}</Text>
         </View>
-        <Text style={styles.typeCount}>{item.count} breaks</Text>
+        <Text style={[styles.typeCount, { color: theme.text.muted }]}>{item.count} breaks</Text>
       </View>
-      <View style={styles.typeBarTrack}>
+      <View style={[styles.typeBarTrack, { backgroundColor: theme.border.subtle }]}>
         <Animated.View style={[styles.typeBar, { backgroundColor: item.color }, barStyle]} />
       </View>
+    </Animated.View>
+  );
+}
+
+// Time Pattern Item
+function TimePatternItem({
+  item,
+  delay,
+  isTop,
+  theme,
+}: {
+  item: { period: string; label: string; count: number; percentage: number; timeRange: string; color: string; icon: string };
+  delay: number;
+  isTop: boolean;
+  theme: ThemeColors;
+}) {
+  const opacity = useSharedValue(0);
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+    width.value = withDelay(delay, withTiming(item.percentage, { duration: 800 }));
+  }, [delay, item.percentage]);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${width.value}%`,
+  }));
+
+  return (
+    <Animated.View style={[styles.timePatternItem, containerStyle]}>
+      <View style={styles.timePatternHeader}>
+        <View style={styles.timePatternInfo}>
+          <Text style={styles.timePatternIcon}>{item.icon}</Text>
+          <View>
+            <Text style={[styles.timePatternLabel, { color: theme.text.primary }, isTop && { color: item.color }]}>
+              {item.label}
+            </Text>
+            <Text style={[styles.timePatternRange, { color: theme.text.muted }]}>{item.timeRange}</Text>
+          </View>
+        </View>
+        <View style={styles.timePatternStats}>
+          <Text style={[styles.timePatternCount, { color: theme.text.primary }]}>{item.count}</Text>
+          <Text style={[styles.timePatternPercent, { color: theme.text.muted }]}>{item.percentage}%</Text>
+        </View>
+      </View>
+      <View style={[styles.timePatternBarTrack, { backgroundColor: theme.border.subtle }]}>
+        <Animated.View
+          style={[
+            styles.timePatternBar,
+            { backgroundColor: item.color },
+            barStyle,
+          ]}
+        />
+      </View>
+      {isTop && (
+        <View style={[styles.topTimeBadge, { backgroundColor: `${item.color}20` }]}>
+          <Text style={[styles.topTimeBadgeText, { color: item.color }]}>Most Active</Text>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -201,9 +283,11 @@ function BreakTypeItem({
 function RecentBreakItem({
   item,
   index,
+  theme,
 }: {
   item: CompletedBreak;
   index: number;
+  theme: ThemeColors;
 }) {
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(20);
@@ -240,26 +324,26 @@ function RecentBreakItem({
   };
 
   return (
-    <Animated.View style={[styles.recentItem, style]}>
-      <View style={styles.recentIcon}>
+    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.medium }, style]}>
+      <View style={[styles.recentIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
         <Text style={styles.recentIconText}>{item.icon}</Text>
       </View>
       <View style={styles.recentInfo}>
-        <Text style={styles.recentType}>{item.title}</Text>
-        <Text style={styles.recentTime}>{formatTime(item.completedAt)}</Text>
+        <Text style={[styles.recentType, { color: theme.text.primary }]}>{item.title}</Text>
+        <Text style={[styles.recentTime, { color: theme.text.muted }]}>{formatTime(item.completedAt)}</Text>
       </View>
-      <Text style={styles.recentDuration}>{formatDuration(item.duration)}</Text>
+      <Text style={[styles.recentDuration, { color: theme.accent.primary }]}>{formatDuration(item.duration)}</Text>
     </Animated.View>
   );
 }
 
 // Empty State Component
-function EmptyState() {
+function EmptyState({ theme }: { theme: ThemeColors }) {
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateEmoji}>📊</Text>
-      <Text style={styles.emptyStateTitle}>No Data Yet</Text>
-      <Text style={styles.emptyStateText}>
+      <Text style={[styles.emptyStateTitle, { color: theme.text.primary }]}>No Data Yet</Text>
+      <Text style={[styles.emptyStateText, { color: theme.text.muted }]}>
         Complete your first break to start tracking your progress
       </Text>
     </View>
@@ -267,6 +351,7 @@ function EmptyState() {
 }
 
 export default function StatsScreen() {
+  const theme = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('week');
   const [refreshing, setRefreshing] = useState(false);
   const headerOpacity = useSharedValue(0);
@@ -296,7 +381,7 @@ export default function StatsScreen() {
     const hasData = stats.totalBreaks > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
       {/* Ambient Background */}
       <View style={[styles.ambientGlow, styles.ambientBlue]} />
       <View style={[styles.ambientGlow, styles.ambientGreen]} />
@@ -310,30 +395,41 @@ export default function StatsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#06FFA5"
+              tintColor={theme.accent.primary}
             />
           }
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
-            <Text style={styles.title}>Statistics</Text>
-            <Text style={styles.subtitle}>Your wellness journey</Text>
+            <Text style={[styles.title, { color: theme.text.primary }]}>Statistics</Text>
+            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>Your wellness journey</Text>
           </Animated.View>
 
           {/* Period Selector */}
-          <View style={styles.periodSelector}>
+          <View style={[styles.periodSelector, {
+            backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: theme.isDark ? 0 : 0.05,
+            shadowRadius: 8,
+            elevation: theme.isDark ? 0 : 2,
+          }]}>
             {TIME_PERIODS.map((period) => (
               <Pressable
                 key={period.value}
                 style={[
                   styles.periodButton,
-                  selectedPeriod === period.value && styles.periodButtonActive,
+                  selectedPeriod === period.value && [
+                    styles.periodButtonActive,
+                    { backgroundColor: theme.isDark ? 'rgba(6, 255, 165, 0.15)' : `${theme.accent.primary}12` },
+                  ],
                 ]}
                 onPress={() => handlePeriodChange(period.value)}
               >
                 <Text
                   style={[
                     styles.periodText,
+                    { color: theme.text.muted },
                     selectedPeriod === period.value && styles.periodTextActive,
                   ]}
                 >
@@ -345,10 +441,10 @@ export default function StatsScreen() {
 
           {stats.isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#06FFA5" />
+              <ActivityIndicator size="large" color={theme.accent.primary} />
             </View>
           ) : !hasData ? (
-            <EmptyState />
+            <EmptyState theme={theme} />
           ) : (
             <>
               {/* Stats Grid */}
@@ -359,6 +455,7 @@ export default function StatsScreen() {
                   value={stats.totalBreaks}
                   color="#06FFA5"
                   delay={200}
+                  theme={theme}
                 />
                 <StatCard
                   icon="time"
@@ -366,6 +463,7 @@ export default function StatsScreen() {
                   value={stats.totalMinutes}
                   color="#00E5FF"
                   delay={300}
+                  theme={theme}
                 />
                 <StatCard
                   icon="flame"
@@ -374,6 +472,7 @@ export default function StatsScreen() {
                   suffix=" days"
                   color="#FFD166"
                   delay={400}
+                  theme={theme}
                 />
                 <StatCard
                   icon="trophy"
@@ -382,42 +481,98 @@ export default function StatsScreen() {
                   suffix=" days"
                   color="#B47EFF"
                   delay={500}
+                  theme={theme}
                 />
               </View>
 
               {/* Chart */}
               {stats.chartData.length > 0 && (
-                <View style={styles.chartCard}>
+                <View style={[
+                  styles.chartCard,
+                  {
+                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowRadius: 12,
+                    elevation: theme.isDark ? 0 : 4,
+                  },
+                ]}>
                   {Platform.OS === 'ios' ? (
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                   ) : (
-                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
                   )}
-                  <Text style={styles.chartTitle}>
+                  <Text style={[styles.chartTitle, { color: theme.text.primary }]}>
                     {selectedPeriod === 'week'
                       ? 'This Week'
                       : selectedPeriod === 'month'
                       ? 'Last 30 Days'
                       : 'This Year'}
                   </Text>
-                  <BarChart data={stats.chartData} delay={400} />
+                  <BarChart data={stats.chartData} delay={400} theme={theme} />
                 </View>
               )}
 
               {/* Break Types Distribution */}
               {stats.breakTypes.length > 0 && (
-                <View style={styles.sectionCard}>
+                <View style={[
+                  styles.sectionCard,
+                  {
+                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowRadius: 12,
+                    elevation: theme.isDark ? 0 : 4,
+                  },
+                ]}>
                   {Platform.OS === 'ios' ? (
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                   ) : (
-                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
                   )}
-                  <Text style={styles.sectionTitle}>Break Types</Text>
+                  <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Break Types</Text>
                   {stats.breakTypes.map((item, index) => (
                     <BreakTypeItem
                       key={item.category}
                       item={item}
                       delay={500 + index * 100}
+                      theme={theme}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {/* Time Patterns */}
+              {stats.timePatterns.length > 0 && (
+                <View style={[
+                  styles.sectionCard,
+                  {
+                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowRadius: 12,
+                    elevation: theme.isDark ? 0 : 4,
+                  },
+                ]}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                  )}
+                  <View style={styles.sectionTitleRow}>
+                    <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Time Patterns</Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>When you take breaks</Text>
+                  </View>
+                  {stats.timePatterns.map((item, index) => (
+                    <TimePatternItem
+                      key={item.period}
+                      item={item}
+                      delay={600 + index * 100}
+                      isTop={index === 0}
+                      theme={theme}
                     />
                   ))}
                 </View>
@@ -425,40 +580,60 @@ export default function StatsScreen() {
 
               {/* Recent Activity */}
               {stats.recentBreaks.length > 0 && (
-                <View style={styles.sectionCard}>
+                <View style={[
+                  styles.sectionCard,
+                  {
+                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowRadius: 12,
+                    elevation: theme.isDark ? 0 : 4,
+                  },
+                ]}>
                   {Platform.OS === 'ios' ? (
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                   ) : (
-                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
                   )}
-                  <Text style={styles.sectionTitle}>Recent Activity</Text>
+                  <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recent Activity</Text>
                   {stats.recentBreaks.map((item, index) => (
-                    <RecentBreakItem key={item.id} item={item} index={index} />
+                    <RecentBreakItem key={item.id} item={item} index={index} theme={theme} />
                   ))}
                 </View>
               )}
 
               {/* XP & Level Card */}
-              <View style={styles.xpCard}>
+              <View style={[
+                styles.xpCard,
+                {
+                  borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: theme.isDark ? 0 : 0.06,
+                  shadowRadius: 12,
+                  elevation: theme.isDark ? 0 : 4,
+                },
+              ]}>
                 {Platform.OS === 'ios' ? (
-                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                  <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                 ) : (
-                  <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
                 )}
                 <View style={styles.xpContent}>
                   <View style={styles.xpLeft}>
-                    <Text style={styles.xpLabel}>Level {stats.level}</Text>
-                    <Text style={styles.xpValue}>{stats.xpEarned} XP</Text>
+                    <Text style={[styles.xpLabel, { color: theme.text.secondary }]}>Level {stats.level}</Text>
+                    <Text style={[styles.xpValue, { color: theme.accent.primary }]}>{stats.xpEarned} XP</Text>
                   </View>
                   <View style={styles.xpRight}>
-                    <Text style={styles.xpNextLevel}>
+                    <Text style={[styles.xpNextLevel, { color: theme.text.muted }]}>
                       {100 - (stats.xpEarned % 100)} XP to next level
                     </Text>
-                    <View style={styles.xpProgressTrack}>
+                    <View style={[styles.xpProgressTrack, { backgroundColor: theme.border.subtle }]}>
                       <View
                         style={[
                           styles.xpProgressBar,
-                          { width: `${stats.xpEarned % 100}%` },
+                          { width: `${stats.xpEarned % 100}%`, backgroundColor: theme.accent.primary },
                         ]}
                       />
                     </View>
@@ -681,6 +856,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: Spacing.md,
   },
+  sectionTitleRow: {
+    marginBottom: Spacing.md,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 4,
+  },
   typeItem: {
     marginBottom: 16,
   },
@@ -801,5 +984,68 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 120,
+  },
+  // Time Pattern styles
+  timePatternItem: {
+    marginBottom: 16,
+    position: 'relative',
+  },
+  timePatternHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timePatternInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  timePatternIcon: {
+    fontSize: 24,
+  },
+  timePatternLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  timePatternRange: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.4)',
+    marginTop: 2,
+  },
+  timePatternStats: {
+    alignItems: 'flex-end',
+  },
+  timePatternCount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  timePatternPercent: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  timePatternBarTrack: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  timePatternBar: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  topTimeBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  topTimeBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
 });

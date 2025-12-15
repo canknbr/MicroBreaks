@@ -10,8 +10,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
-  interpolate,
   Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,11 +21,10 @@ import { HeadlineText, SubheadText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { ERGONOMIC_CHECKLIST } from '@/constants/onboarding';
 
-function ChecklistItem({ item, isChecked, onToggle, index }: {
+function ChecklistItem({ item, isChecked, onToggle }: {
   item: { id: string; label: string };
   isChecked: boolean;
   onToggle: () => void;
-  index: number;
 }) {
   const checkScale = useSharedValue(isChecked ? 1 : 0);
 
@@ -111,13 +108,12 @@ export default function ErgonomicSetupScreen() {
           contentContainerStyle={styles.checklist}
           showsVerticalScrollIndicator={false}
         >
-          {ERGONOMIC_CHECKLIST.map((item, index) => (
+          {ERGONOMIC_CHECKLIST.map((item) => (
             <ChecklistItem
               key={item.id}
               item={item}
               isChecked={checkedItems.has(item.id)}
               onToggle={() => toggleItem(item.id)}
-              index={index}
             />
           ))}
         </ScrollView>

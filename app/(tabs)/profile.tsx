@@ -14,6 +14,7 @@ import {
   Switch,
   Alert,
   Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,7 +32,9 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
 import { useNotifications } from '@/hooks/useNotifications';
-import { getUserStats } from '@/services/breakHistory';
+import { useUserStore, useSettingsStore } from '@/store';
+import { useAchievements } from '@/hooks/useAchievements';
+import { useTheme } from '@/hooks/useTheme';
 
 // Level colors
 const LEVEL_COLORS: Record<number, [string, string]> = {
@@ -60,6 +63,13 @@ const REMINDER_INTERVALS = [
   { label: '60 min', value: 60 },
 ];
 
+// Theme options
+const THEME_OPTIONS: { label: string; value: 'dark' | 'light' | 'system' }[] = [
+  { label: 'Dark', value: 'dark' },
+  { label: 'Light', value: 'light' },
+  { label: 'System', value: 'system' },
+];
+
 // Setting Item Component
 function SettingItem({
   icon,
@@ -72,6 +82,7 @@ function SettingItem({
   delay,
   index,
   disabled,
+  theme,
 }: {
   icon: string;
   label: string;
@@ -83,6 +94,7 @@ function SettingItem({
   delay: number;
   index: number;
   disabled?: boolean;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(20);
@@ -122,11 +134,16 @@ function SettingItem({
       onPress={handlePress}
       disabled={type === 'toggle' || disabled}
     >
-      <Animated.View style={[styles.settingItem, animatedStyle, disabled && styles.settingItemDisabled]}>
-        <View style={styles.settingIcon}>
-          <Ionicons name={icon as any} size={20} color={disabled ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.7)'} />
+      <Animated.View style={[
+        styles.settingItem,
+        { borderBottomColor: theme.border.subtle },
+        animatedStyle,
+        disabled && styles.settingItemDisabled,
+      ]}>
+        <View style={[styles.settingIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
+          <Ionicons name={icon as any} size={20} color={disabled ? theme.text.muted : theme.text.secondary} />
         </View>
-        <Text style={[styles.settingLabel, disabled && styles.settingLabelDisabled]}>{label}</Text>
+        <Text style={[styles.settingLabel, { color: theme.text.primary }, disabled && { color: theme.text.muted }]}>{label}</Text>
         {type === 'toggle' && (
           <Switch
             value={isEnabled}
@@ -134,20 +151,127 @@ function SettingItem({
               Haptics.selectionAsync();
               onToggle?.();
             }}
-            trackColor={{ false: 'rgba(255, 255, 255, 0.1)', true: '#06FFA5' }}
+            trackColor={{ false: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium, true: theme.accent.primary }}
             thumbColor="#FFFFFF"
-            ios_backgroundColor="rgba(255, 255, 255, 0.1)"
+            ios_backgroundColor={theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium}
             disabled={disabled}
           />
         )}
         {type === 'value' && (
-          <Text style={styles.settingValue}>{value}</Text>
+          <Text style={[styles.settingValue, { color: theme.text.muted }]}>{value}</Text>
         )}
         {type === 'arrow' && (
-          <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.3)" />
+          <Ionicons name="chevron-forward" size={20} color={theme.text.muted} />
         )}
       </Animated.View>
     </Pressable>
+  );
+}
+
+// Avatar emoji options
+const AVATAR_EMOJIS = ['😊', '😎', '🧘', '💪', '🌟', '🔥', '🎯', '🌈', '🦋', '🌸', '🍀', '⭐'];
+
+// Edit Profile Modal
+function EditProfileModal({
+  visible,
+  currentName,
+  currentAvatar,
+  onSave,
+  onClose,
+}: {
+  visible: boolean;
+  currentName: string;
+  currentAvatar: string | null;
+  onSave: (name: string, avatar: string | null) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(currentName);
+  const [avatar, setAvatar] = useState<string | null>(currentAvatar);
+
+  useEffect(() => {
+    if (visible) {
+      setName(currentName);
+      setAvatar(currentAvatar);
+    }
+  }, [visible, currentName, currentAvatar]);
+
+  const handleSave = () => {
+    if (name.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onSave(name.trim(), avatar);
+      onClose();
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <Pressable style={styles.editModalContent} onPress={(e) => e.stopPropagation()}>
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
+          )}
+          <Text style={styles.modalTitle}>Edit Profile</Text>
+
+          {/* Name Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Display Name</Text>
+            <TextInput
+              style={styles.nameInput}
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter your name"
+              placeholderTextColor="rgba(255, 255, 255, 0.3)"
+              maxLength={20}
+              autoCapitalize="words"
+            />
+          </View>
+
+          {/* Avatar Selection */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Avatar</Text>
+            <View style={styles.avatarGrid}>
+              <Pressable
+                style={[styles.avatarOption, !avatar && styles.avatarOptionActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setAvatar(null);
+                }}
+              >
+                <Text style={styles.avatarInitialOption}>{name.charAt(0).toUpperCase() || 'U'}</Text>
+              </Pressable>
+              {AVATAR_EMOJIS.map((emoji) => (
+                <Pressable
+                  key={emoji}
+                  style={[styles.avatarOption, avatar === emoji && styles.avatarOptionActive]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setAvatar(emoji);
+                  }}
+                >
+                  <Text style={styles.avatarEmoji}>{emoji}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Actions */}
+          <View style={styles.modalActions}>
+            <Pressable style={styles.cancelButton} onPress={onClose}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.saveButton, !name.trim() && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={!name.trim()}
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -205,7 +329,75 @@ function IntervalPickerModal({
   );
 }
 
+// Theme Picker Modal
+function ThemePickerModal({
+  visible,
+  currentValue,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  currentValue: 'dark' | 'light' | 'system';
+  onSelect: (value: 'dark' | 'light' | 'system') => void;
+  onClose: () => void;
+}) {
+  const themeIcons: Record<string, string> = {
+    dark: 'moon',
+    light: 'sunny',
+    system: 'phone-portrait',
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <View style={styles.modalContent}>
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
+          )}
+          <Text style={styles.modalTitle}>App Theme</Text>
+          <Text style={styles.modalSubtitle}>Choose your preferred appearance</Text>
+          <View style={styles.intervalOptions}>
+            {THEME_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.intervalOption,
+                  styles.themeOption,
+                  currentValue === option.value && styles.intervalOptionActive,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onSelect(option.value);
+                  onClose();
+                }}
+              >
+                <Ionicons
+                  name={themeIcons[option.value] as any}
+                  size={20}
+                  color={currentValue === option.value ? '#06FFA5' : 'rgba(255, 255, 255, 0.6)'}
+                  style={styles.themeOptionIcon}
+                />
+                <Text
+                  style={[
+                    styles.intervalOptionText,
+                    currentValue === option.value && styles.intervalOptionTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+}
+
 export default function ProfileScreen() {
+  const theme = useTheme();
   const {
     settings,
     hasPermission,
@@ -218,35 +410,32 @@ export default function ProfileScreen() {
     toggleQuietHours,
   } = useNotifications();
 
-  const [userStats, setUserStats] = useState({ level: 1, totalXP: 0, totalBreaks: 0 });
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  // User store
+  const profile = useUserStore((state) => state.profile);
+  const progress = useUserStore((state) => state.progress);
+  const updateProfile = useUserStore((state) => state.updateProfile);
+  const signOut = useUserStore((state) => state.signOut);
+
+  // Settings store
+  const settingsStore = useSettingsStore();
+
+  // Achievements
+  const { unlockedAchievements, stats: achievementStats, nextToUnlock } = useAchievements();
+
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   const headerOpacity = useSharedValue(0);
   const profileScale = useSharedValue(0.9);
   const profileOpacity = useSharedValue(0);
   const premiumPulse = useSharedValue(1);
 
-  const level = Math.min(userStats.level, 5);
+  const level = Math.min(progress.level, 5);
   const levelColors = LEVEL_COLORS[level] || LEVEL_COLORS[1];
   const levelTitle = LEVEL_TITLES[level] || LEVEL_TITLES[1];
-  const currentXP = userStats.totalXP % 100;
-  const progress = currentXP;
-
-  // Load user stats
-  useEffect(() => {
-    loadUserStats();
-  }, []);
-
-  const loadUserStats = async () => {
-    const stats = await getUserStats();
-    setUserStats({
-      level: stats.level,
-      totalXP: stats.totalXP,
-      totalBreaks: stats.totalBreaks,
-    });
-  };
+  const currentXP = progress.totalXP % 100;
+  const xpProgress = currentXP;
 
   useEffect(() => {
     headerOpacity.value = withTiming(1, { duration: 600 });
@@ -308,8 +497,16 @@ export default function ProfileScreen() {
 
   const notificationsDisabled = !settings.enabled;
 
+  const getThemeLabel = (theme: 'dark' | 'light' | 'system') => {
+    switch (theme) {
+      case 'dark': return 'Dark';
+      case 'light': return 'Light';
+      case 'system': return 'System';
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
       {/* Ambient Background */}
       <View style={[styles.ambientGlow, styles.ambientPurple]} />
       <View style={[styles.ambientGlow, styles.ambientGold]} />
@@ -322,24 +519,41 @@ export default function ProfileScreen() {
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
-            <Text style={styles.title}>Profile</Text>
+            <Text style={[styles.title, { color: theme.text.primary }]}>Profile</Text>
           </Animated.View>
 
           {/* Profile Card */}
-          <Animated.View style={[styles.profileCard, profileStyle]}>
+          <Animated.View style={[
+            styles.profileCard,
+            {
+              borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: theme.isDark ? 0 : 0.08,
+              shadowRadius: 16,
+              elevation: theme.isDark ? 0 : 5,
+            },
+            profileStyle,
+          ]}>
             {Platform.OS === 'ios' ? (
-              <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+              <BlurView intensity={theme.isDark ? 25 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
             ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
             )}
             <LinearGradient
-              colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
+              colors={theme.isDark ? ['rgba(255, 255, 255, 0.08)', 'transparent'] : ['rgba(0, 0, 0, 0.03)', 'transparent']}
               style={styles.cardHighlight}
             />
 
             <View style={styles.profileContent}>
               {/* Avatar with Level */}
-              <View style={styles.avatarContainer}>
+              <Pressable
+                style={styles.avatarContainer}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowEditProfile(true);
+                }}
+              >
                 <LinearGradient
                   colors={levelColors}
                   style={styles.avatarGradient}
@@ -347,7 +561,9 @@ export default function ProfileScreen() {
                   end={{ x: 1, y: 1 }}
                 />
                 <View style={styles.avatarInner}>
-                  <Text style={styles.avatarText}>C</Text>
+                  <Text style={styles.avatarText}>
+                    {profile.avatar || profile.name.charAt(0).toUpperCase()}
+                  </Text>
                 </View>
                 <View style={styles.levelBadge}>
                   <LinearGradient
@@ -356,17 +572,21 @@ export default function ProfileScreen() {
                   />
                   <Text style={styles.levelText}>{level}</Text>
                 </View>
-              </View>
+                {/* Edit indicator */}
+                <View style={styles.editIndicator}>
+                  <Ionicons name="pencil" size={10} color="#FFF" />
+                </View>
+              </Pressable>
 
               {/* User Info */}
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>Can</Text>
-                <Text style={styles.userTitle}>{levelTitle}</Text>
+                <Text style={[styles.userName, { color: theme.text.primary }]}>{profile.name}</Text>
+                <Text style={[styles.userTitle, { color: theme.text.secondary }]}>{levelTitle}</Text>
 
                 {/* XP Progress */}
                 <View style={styles.xpContainer}>
-                  <View style={styles.xpTrack}>
-                    <View style={[styles.xpFill, { width: `${progress}%` }]}>
+                  <View style={[styles.xpTrack, { backgroundColor: theme.border.subtle }]}>
+                    <View style={[styles.xpFill, { width: `${xpProgress}%` }]}>
                       <LinearGradient
                         colors={levelColors}
                         start={{ x: 0, y: 0 }}
@@ -375,7 +595,7 @@ export default function ProfileScreen() {
                       />
                     </View>
                   </View>
-                  <Text style={styles.xpText}>
+                  <Text style={[styles.xpText, { color: theme.text.muted }]}>
                     {currentXP}/100 XP
                   </Text>
                 </View>
@@ -383,18 +603,108 @@ export default function ProfileScreen() {
             </View>
 
             {/* Stats Row */}
-            <View style={styles.profileStats}>
+            <View style={[styles.profileStats, { borderTopColor: theme.border.subtle }]}>
               <View style={styles.profileStatItem}>
-                <Text style={styles.profileStatValue}>{userStats.totalBreaks}</Text>
-                <Text style={styles.profileStatLabel}>Total Breaks</Text>
+                <Text style={[styles.profileStatValue, { color: theme.text.primary }]}>{progress.totalBreaks}</Text>
+                <Text style={[styles.profileStatLabel, { color: theme.text.muted }]}>Total Breaks</Text>
               </View>
-              <View style={styles.profileStatDivider} />
+              <View style={[styles.profileStatDivider, { backgroundColor: theme.border.subtle }]} />
               <View style={styles.profileStatItem}>
-                <Text style={styles.profileStatValue}>{userStats.totalXP}</Text>
-                <Text style={styles.profileStatLabel}>Total XP</Text>
+                <Text style={[styles.profileStatValue, { color: theme.text.primary }]}>{progress.totalXP}</Text>
+                <Text style={[styles.profileStatLabel, { color: theme.text.muted }]}>Total XP</Text>
+              </View>
+              <View style={[styles.profileStatDivider, { backgroundColor: theme.border.subtle }]} />
+              <View style={styles.profileStatItem}>
+                <Text style={[styles.profileStatValue, { color: theme.text.primary }]}>{progress.currentStreak}</Text>
+                <Text style={[styles.profileStatLabel, { color: theme.text.muted }]}>Day Streak</Text>
               </View>
             </View>
           </Animated.View>
+
+          {/* Achievements Section */}
+          <View style={styles.settingsSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>ACHIEVEMENTS</Text>
+              <Text style={[styles.achievementProgress, { color: theme.accent.primary }]}>
+                {achievementStats.unlocked}/{achievementStats.total}
+              </Text>
+            </View>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
+              {Platform.OS === 'ios' ? (
+                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+              )}
+
+              {/* Recent Achievements */}
+              {unlockedAchievements.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.achievementsList}
+                >
+                  {unlockedAchievements.slice(0, 5).map((achievement) => (
+                    <View key={achievement.id} style={styles.achievementBadge}>
+                      <View style={[styles.achievementIcon, { backgroundColor: `${achievement.color}20` }]}>
+                        <Text style={styles.achievementEmoji}>{achievement.icon}</Text>
+                      </View>
+                      <Text style={styles.achievementTitle} numberOfLines={1}>
+                        {achievement.title}
+                      </Text>
+                    </View>
+                  ))}
+                  {achievementStats.unlocked > 5 && (
+                    <View style={styles.achievementMore}>
+                      <Text style={styles.achievementMoreText}>
+                        +{achievementStats.unlocked - 5}
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+              ) : (
+                <View style={styles.noAchievements}>
+                  <Text style={styles.noAchievementsIcon}>🏆</Text>
+                  <Text style={styles.noAchievementsText}>
+                    Complete breaks to earn achievements!
+                  </Text>
+                </View>
+              )}
+
+              {/* Next to Unlock */}
+              {nextToUnlock.length > 0 && (
+                <View style={styles.nextToUnlock}>
+                  <Text style={styles.nextToUnlockLabel}>Next to unlock:</Text>
+                  <View style={styles.nextAchievement}>
+                    <Text style={styles.nextAchievementIcon}>{nextToUnlock[0].icon}</Text>
+                    <View style={styles.nextAchievementInfo}>
+                      <Text style={styles.nextAchievementTitle}>{nextToUnlock[0].title}</Text>
+                      <View style={styles.nextProgressBar}>
+                        <View
+                          style={[
+                            styles.nextProgressFill,
+                            { width: `${nextToUnlock[0].progress}%`, backgroundColor: nextToUnlock[0].color },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                    <Text style={styles.nextProgressText}>
+                      {Math.round(nextToUnlock[0].progress)}%
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
 
           {/* Premium Card */}
           <Pressable onPress={handlePremiumPress}>
@@ -422,12 +732,22 @@ export default function ProfileScreen() {
 
           {/* Notifications Section */}
           <View style={styles.settingsSection}>
-            <Text style={styles.sectionHeader}>NOTIFICATIONS</Text>
-            <View style={styles.sectionCard}>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>NOTIFICATIONS</Text>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
               {Platform.OS === 'ios' ? (
-                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
               ) : (
-                <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
               )}
               <SettingItem
                 icon="notifications"
@@ -437,6 +757,7 @@ export default function ProfileScreen() {
                 onToggle={handleNotificationToggle}
                 delay={400}
                 index={0}
+                theme={theme}
               />
               <SettingItem
                 icon="alarm"
@@ -447,6 +768,7 @@ export default function ProfileScreen() {
                 delay={400}
                 index={1}
                 disabled={notificationsDisabled}
+                theme={theme}
               />
               <SettingItem
                 icon="time"
@@ -457,6 +779,7 @@ export default function ProfileScreen() {
                 delay={400}
                 index={2}
                 disabled={notificationsDisabled || !settings.breakReminders}
+                theme={theme}
               />
               <SettingItem
                 icon="flame"
@@ -467,6 +790,7 @@ export default function ProfileScreen() {
                 delay={400}
                 index={3}
                 disabled={notificationsDisabled}
+                theme={theme}
               />
               <SettingItem
                 icon="flag"
@@ -477,6 +801,7 @@ export default function ProfileScreen() {
                 delay={400}
                 index={4}
                 disabled={notificationsDisabled}
+                theme={theme}
               />
               <SettingItem
                 icon="moon"
@@ -487,6 +812,7 @@ export default function ProfileScreen() {
                 delay={400}
                 index={5}
                 disabled={notificationsDisabled}
+                theme={theme}
               />
               {settings.quietHoursEnabled && !notificationsDisabled && (
                 <View style={styles.quietHoursInfo}>
@@ -500,42 +826,84 @@ export default function ProfileScreen() {
 
           {/* Preferences Section */}
           <View style={styles.settingsSection}>
-            <Text style={styles.sectionHeader}>PREFERENCES</Text>
-            <View style={styles.sectionCard}>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>PREFERENCES</Text>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
               {Platform.OS === 'ios' ? (
-                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
               ) : (
-                <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
               )}
+              <SettingItem
+                icon="color-palette"
+                label="App Theme"
+                type="value"
+                value={getThemeLabel(settingsStore.settings.theme)}
+                onPress={() => setShowThemePicker(true)}
+                delay={500}
+                index={0}
+                theme={theme}
+              />
               <SettingItem
                 icon="volume-high"
                 label="Sounds"
                 type="toggle"
-                isEnabled={soundEnabled}
-                onToggle={() => setSoundEnabled(!soundEnabled)}
+                isEnabled={settingsStore.settings.soundEnabled}
+                onToggle={() => settingsStore.toggleSound()}
                 delay={500}
-                index={0}
+                index={1}
+                theme={theme}
               />
               <SettingItem
                 icon="phone-portrait"
                 label="Haptic Feedback"
                 type="toggle"
-                isEnabled={hapticsEnabled}
-                onToggle={() => setHapticsEnabled(!hapticsEnabled)}
+                isEnabled={settingsStore.settings.hapticsEnabled}
+                onToggle={() => settingsStore.toggleHaptics()}
                 delay={500}
-                index={1}
+                index={2}
+                theme={theme}
+              />
+              <SettingItem
+                icon="mic"
+                label="Voice Guidance"
+                type="toggle"
+                isEnabled={settingsStore.settings.voiceGuidanceEnabled}
+                onToggle={() => settingsStore.toggleVoiceGuidance()}
+                delay={500}
+                index={3}
+                theme={theme}
               />
             </View>
           </View>
 
           {/* About Section */}
           <View style={styles.settingsSection}>
-            <Text style={styles.sectionHeader}>ABOUT</Text>
-            <View style={styles.sectionCard}>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>ABOUT</Text>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
               {Platform.OS === 'ios' ? (
-                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
               ) : (
-                <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
               )}
               <SettingItem
                 icon="help-circle"
@@ -543,6 +911,7 @@ export default function ProfileScreen() {
                 type="arrow"
                 delay={600}
                 index={0}
+                theme={theme}
               />
               <SettingItem
                 icon="shield-checkmark"
@@ -550,6 +919,7 @@ export default function ProfileScreen() {
                 type="arrow"
                 delay={600}
                 index={1}
+                theme={theme}
               />
               <SettingItem
                 icon="document-text"
@@ -557,6 +927,7 @@ export default function ProfileScreen() {
                 type="arrow"
                 delay={600}
                 index={2}
+                theme={theme}
               />
               <SettingItem
                 icon="information-circle"
@@ -565,12 +936,32 @@ export default function ProfileScreen() {
                 value="1.0.0"
                 delay={600}
                 index={3}
+                theme={theme}
               />
             </View>
           </View>
 
           {/* Sign Out Button */}
-          <Pressable style={styles.signOutButton}>
+          <Pressable
+            style={styles.signOutButton}
+            onPress={() => {
+              Alert.alert(
+                'Sign Out',
+                'Are you sure you want to sign out? Your progress will be reset.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Sign Out',
+                    style: 'destructive',
+                    onPress: () => {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                      signOut();
+                    },
+                  },
+                ]
+              );
+            }}
+          >
             <Text style={styles.signOutText}>Sign Out</Text>
           </Pressable>
 
@@ -585,6 +976,25 @@ export default function ProfileScreen() {
         currentValue={settings.reminderIntervalMinutes}
         onSelect={setReminderInterval}
         onClose={() => setShowIntervalPicker(false)}
+      />
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        visible={showEditProfile}
+        currentName={profile.name}
+        currentAvatar={profile.avatar}
+        onSave={(name, avatar) => {
+          updateProfile({ name, avatar });
+        }}
+        onClose={() => setShowEditProfile(false)}
+      />
+
+      {/* Theme Picker Modal */}
+      <ThemePickerModal
+        visible={showThemePicker}
+        currentValue={settingsStore.settings.theme}
+        onSelect={(theme) => settingsStore.setTheme(theme)}
+        onClose={() => setShowThemePicker(false)}
       />
     </View>
   );
@@ -918,5 +1328,224 @@ const styles = StyleSheet.create({
   },
   intervalOptionTextActive: {
     color: '#06FFA5',
+  },
+  themeOption: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  themeOptionIcon: {
+    marginRight: 12,
+  },
+  // Edit Profile Modal styles
+  editIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(6, 255, 165, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  editModalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: Spacing.lg,
+  },
+  inputContainer: {
+    marginTop: Spacing.md,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 8,
+  },
+  nameInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  avatarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  avatarOption: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  avatarOptionActive: {
+    borderColor: '#06FFA5',
+    backgroundColor: 'rgba(6, 255, 165, 0.15)',
+  },
+  avatarInitialOption: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  avatarEmoji: {
+    fontSize: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: Spacing.xl,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#06FFA5',
+    alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    backgroundColor: 'rgba(6, 255, 165, 0.3)',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+  },
+  // Achievements styles
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  achievementProgress: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#06FFA5',
+  },
+  achievementsList: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  achievementBadge: {
+    alignItems: 'center',
+    width: 72,
+  },
+  achievementIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  achievementEmoji: {
+    fontSize: 24,
+  },
+  achievementTitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  achievementMore: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  achievementMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  noAchievements: {
+    alignItems: 'center',
+    padding: 24,
+  },
+  noAchievementsIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  noAchievementsText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+  },
+  nextToUnlock: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  nextToUnlockLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.4)',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  nextAchievement: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nextAchievementIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  nextAchievementInfo: {
+    flex: 1,
+  },
+  nextAchievementTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  nextProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  nextProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  nextProgressText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginLeft: 12,
   },
 });

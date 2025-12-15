@@ -3,14 +3,13 @@
  * Premium zen design with smooth card animations
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  interpolate,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';

@@ -10,7 +10,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import OptionCard from './components/OptionCard';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
-import { ZenColors, ZenSpacing } from './constants/design';
+import { ZenSpacing } from './constants/design';
 import { BREAK_STYLES } from '@/constants/onboarding';
 
 export default function BreakStyleScreen() {
@@ -49,7 +49,7 @@ export default function BreakStyleScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {BREAK_STYLES.map((style, index) => (
+          {BREAK_STYLES.map((style) => (
             <OptionCard
               key={style.id}
               title={style.label}

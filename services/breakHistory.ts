@@ -307,3 +307,101 @@ export async function checkStreakStatus(): Promise<{
     hoursUntilReset: Math.round(hoursRemaining),
   };
 }
+
+// Time pattern data
+export interface TimePatternData {
+  period: 'morning' | 'afternoon' | 'evening' | 'night';
+  label: string;
+  count: number;
+  percentage: number;
+  timeRange: string;
+  color: string;
+  icon: string;
+}
+
+// Get time patterns - when user typically takes breaks
+export async function getTimePatterns(
+  period: 'week' | 'month' | 'all' = 'week'
+): Promise<TimePatternData[]> {
+  let breaks: CompletedBreak[];
+
+  if (period === 'week') {
+    breaks = await getWeekBreaks();
+  } else if (period === 'month') {
+    breaks = await getMonthBreaks();
+  } else {
+    breaks = await getBreakHistory();
+  }
+
+  if (breaks.length === 0) {
+    return [];
+  }
+
+  // Define time periods
+  const timePeriods = {
+    morning: { start: 5, end: 12, label: 'Morning', timeRange: '5 AM - 12 PM', color: '#FFD166', icon: '🌅' },
+    afternoon: { start: 12, end: 17, label: 'Afternoon', timeRange: '12 PM - 5 PM', color: '#06FFA5', icon: '☀️' },
+    evening: { start: 17, end: 21, label: 'Evening', timeRange: '5 PM - 9 PM', color: '#B47EFF', icon: '🌆' },
+    night: { start: 21, end: 5, label: 'Night', timeRange: '9 PM - 5 AM', color: '#00E5FF', icon: '🌙' },
+  };
+
+  // Count breaks by time period
+  const counts: Record<string, number> = {
+    morning: 0,
+    afternoon: 0,
+    evening: 0,
+    night: 0,
+  };
+
+  breaks.forEach((b) => {
+    const hour = new Date(b.completedAt).getHours();
+
+    if (hour >= 5 && hour < 12) {
+      counts.morning += 1;
+    } else if (hour >= 12 && hour < 17) {
+      counts.afternoon += 1;
+    } else if (hour >= 17 && hour < 21) {
+      counts.evening += 1;
+    } else {
+      counts.night += 1;
+    }
+  });
+
+  const total = breaks.length;
+  const result: TimePatternData[] = [];
+
+  (Object.keys(timePeriods) as Array<keyof typeof timePeriods>).forEach((key) => {
+    const period = timePeriods[key];
+    result.push({
+      period: key,
+      label: period.label,
+      count: counts[key],
+      percentage: Math.round((counts[key] / total) * 100),
+      timeRange: period.timeRange,
+      color: period.color,
+      icon: period.icon,
+    });
+  });
+
+  // Sort by count descending
+  result.sort((a, b) => b.count - a.count);
+
+  return result;
+}
+
+// Get best break time (most productive period)
+export async function getBestBreakTime(): Promise<{
+  period: string;
+  percentage: number;
+  icon: string;
+} | null> {
+  const patterns = await getTimePatterns('all');
+  if (patterns.length === 0) return null;
+
+  const best = patterns[0];
+  return {
+    period: best.label,
+    percentage: best.percentage,
+    icon: best.icon,
+  };
+}

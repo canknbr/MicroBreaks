@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
-  interpolate,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -92,6 +91,7 @@ export default function BreakDemoScreen() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [phase, countdown]);
 
   const pulseAnimatedStyle = useAnimatedStyle(() => ({

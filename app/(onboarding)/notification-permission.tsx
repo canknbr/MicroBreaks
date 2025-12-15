@@ -30,7 +30,7 @@ const BENEFITS = [
 
 export default function NotificationPermissionScreen() {
   const router = useRouter();
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [, setPermissionGranted] = useState(false);
 
   // Animation values
   const bellOpacity = useSharedValue(0);

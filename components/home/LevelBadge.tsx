@@ -15,6 +15,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/useTheme';
 
 interface LevelBadgeProps {
   level: number;
@@ -39,6 +40,7 @@ export default function LevelBadge({
   title,
   delay = 0,
 }: LevelBadgeProps) {
+  const theme = useTheme();
   const colors = LEVEL_COLORS[Math.min(level, 5)] || LEVEL_COLORS[1];
   const progress = (currentXP / nextLevelXP) * 100;
 
@@ -68,11 +70,26 @@ export default function LevelBadge({
   }));
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+    <Animated.View style={[
+      styles.container,
+      {
+        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: theme.isDark ? 0 : 0.08,
+        shadowRadius: 8,
+        elevation: theme.isDark ? 0 : 4,
+      },
+      containerStyle,
+    ]}>
+      {/* BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+        )
       )}
 
       <View style={styles.content}>
@@ -89,9 +106,9 @@ export default function LevelBadge({
 
         {/* Info */}
         <View style={styles.info}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
           <View style={styles.xpContainer}>
-            <View style={styles.progressTrack}>
+            <View style={[styles.progressTrack, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium }]}>
               <Animated.View style={[styles.progressFill, progressStyle]}>
                 <LinearGradient
                   colors={colors}
@@ -101,7 +118,7 @@ export default function LevelBadge({
                 />
               </Animated.View>
             </View>
-            <Text style={styles.xpText}>{currentXP}/{nextLevelXP} XP</Text>
+            <Text style={[styles.xpText, { color: theme.text.muted }]}>{currentXP}/{nextLevelXP} XP</Text>
           </View>
         </View>
       </View>

@@ -15,6 +15,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/useTheme';
 
 interface InsightItem {
   icon: string;
@@ -30,6 +31,7 @@ interface WeeklyInsightsProps {
 }
 
 export default function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsProps) {
+  const theme = useTheme();
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
 
@@ -44,21 +46,38 @@ export default function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsPr
   }));
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+    <Animated.View style={[
+      styles.container,
+      {
+        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: theme.isDark ? 0 : 0.1,
+        shadowRadius: 12,
+        elevation: theme.isDark ? 0 : 5,
+      },
+      containerStyle,
+    ]}>
+      {/* BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20, 20, 30, 0.9)' }]} />
+        )
       )}
 
-      <LinearGradient
-        colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
-        style={styles.headerGradient}
-      />
+      {theme.isDark && (
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.05)', 'transparent']}
+          style={styles.headerGradient}
+        />
+      )}
 
       <View style={styles.header}>
-        <Ionicons name="analytics" size={18} color="#B47EFF" />
-        <Text style={styles.headerTitle}>This Week</Text>
+        <Ionicons name="analytics" size={18} color={theme.accent.tertiary} />
+        <Text style={[styles.headerTitle, { color: theme.text.primary }]}>This Week</Text>
       </View>
 
       <View style={styles.insightsGrid}>
@@ -67,17 +86,17 @@ export default function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsPr
             <View style={[styles.insightIcon, { backgroundColor: `${insight.color}15` }]}>
               <Ionicons name={insight.icon as any} size={18} color={insight.color} />
             </View>
-            <Text style={styles.insightValue}>{insight.value}</Text>
-            <Text style={styles.insightLabel}>{insight.label}</Text>
+            <Text style={[styles.insightValue, { color: theme.text.primary }]}>{insight.value}</Text>
+            <Text style={[styles.insightLabel, { color: theme.text.muted }]}>{insight.label}</Text>
             <View style={styles.changeContainer}>
               <Ionicons
                 name={insight.change >= 0 ? 'trending-up' : 'trending-down'}
                 size={12}
-                color={insight.change >= 0 ? '#06FFA5' : '#FF6B6B'}
+                color={insight.change >= 0 ? theme.accent.success : theme.accent.error}
               />
               <Text style={[
                 styles.changeText,
-                { color: insight.change >= 0 ? '#06FFA5' : '#FF6B6B' }
+                { color: insight.change >= 0 ? theme.accent.success : theme.accent.error }
               ]}>
                 {insight.change >= 0 ? '+' : ''}{insight.change}%
               </Text>

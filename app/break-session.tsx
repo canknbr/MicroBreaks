@@ -12,11 +12,20 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useBreakSession } from '@/hooks/useBreakSession';
+import { useAchievements } from '@/hooks/useAchievements';
 import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
 import {
   scheduleBreakReminder,
   sendGoalCompletedNotification,
 } from '@/services/notifications';
+import {
+  useUserStore,
+  useNotificationStore,
+  createGoalNotification,
+  createStreakNotification,
+  createLevelUpNotification,
+} from '@/store';
+import { useTheme } from '@/hooks/useTheme';
 import {
   BreakHeader,
   BreakProgress,
@@ -33,12 +42,28 @@ import { AnimationType } from '@/data/exercises';
 
 export default function BreakSessionScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { breakId } = useLocalSearchParams<{ breakId: string }>();
 
   const { state, actions, stats, progress } = useBreakSession(breakId || 'deep-breath');
 
+  // User store actions
+  const incrementBreaks = useUserStore((state) => state.incrementBreaks);
+  const addXP = useUserStore((state) => state.addXP);
+  const trackBreakCompletion = useUserStore((state) => state.trackBreakCompletion);
+  const addRecentBreak = useUserStore((state) => state.addRecentBreak);
+  const currentLevel = useUserStore((state) => state.progress.level);
+  const currentStreak = useUserStore((state) => state.progress.currentStreak);
+
+  // Notifications
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  // Achievements
+  const { checkAndUnlockAchievements } = useAchievements();
+
   // Track if we've already saved this session
   const savedRef = useRef(false);
+  const previousLevelRef = useRef(currentLevel);
 
   // Save completed break to storage when session completes
   useEffect(() => {
@@ -46,7 +71,7 @@ export default function BreakSessionScreen() {
       savedRef.current = true;
 
       const saveAndNotify = async () => {
-        // Save the completed break
+        // Save the completed break to history
         await saveCompletedBreak({
           breakId: state.exercise!.id,
           title: state.exercise!.title,
@@ -61,6 +86,15 @@ export default function BreakSessionScreen() {
           completedAt: new Date().toISOString(),
         });
 
+        // Sync with user store
+        incrementBreaks(); // Increment total breaks
+        addXP(stats.xpEarned); // Add XP to user profile
+        trackBreakCompletion(state.exercise!.category, Math.round(stats.totalDuration / 60)); // Track for achievements
+        addRecentBreak(state.exercise!.id); // Add to recent breaks
+
+        // Check for new achievements
+        checkAndUnlockAchievements();
+
         // Schedule next break reminder
         await scheduleBreakReminder();
 
@@ -70,14 +104,43 @@ export default function BreakSessionScreen() {
         const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), 3);
 
         if (todayBreaks.length === dailyGoal) {
-          // Just completed daily goal
+          // Just completed daily goal - create in-app notification
+          addNotification(createGoalNotification());
           await sendGoalCompletedNotification();
+        }
+
+        // Check for streak milestones (7, 14, 30, 60, 100 days)
+        const streakMilestones = [7, 14, 30, 60, 100];
+        if (streakMilestones.includes(currentStreak)) {
+          addNotification(createStreakNotification(currentStreak));
         }
       };
 
       saveAndNotify();
     }
-  }, [state.phase, state.exercise, state.feedbackRating, stats]);
+  }, [state.phase, state.exercise, state.feedbackRating, stats, incrementBreaks, addXP, trackBreakCompletion, addRecentBreak, checkAndUnlockAchievements, addNotification, currentStreak, currentLevel]);
+
+  // Check for level up after XP is added
+  useEffect(() => {
+    if (currentLevel > previousLevelRef.current) {
+      // User leveled up!
+      const levelTitles: Record<number, string> = {
+        1: 'Wellness Beginner',
+        2: 'Break Enthusiast',
+        3: 'Committed Breaker',
+        4: 'Wellness Warrior',
+        5: 'Break Master',
+        6: 'Zen Apprentice',
+        7: 'Mindfulness Pro',
+        8: 'Wellness Champion',
+        9: 'Break Legend',
+        10: 'Zen Master',
+      };
+      const title = levelTitles[Math.min(currentLevel, 10)] || levelTitles[10];
+      addNotification(createLevelUpNotification(currentLevel, title));
+      previousLevelRef.current = currentLevel;
+    }
+  }, [currentLevel, addNotification]);
 
   // Update rating when feedback is submitted
   useEffect(() => {
@@ -198,7 +261,7 @@ export default function BreakSessionScreen() {
     if (!exercise) {
       return (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={[styles.loadingText, { color: theme.text.secondary }]}>Loading...</Text>
         </View>
       );
     }
@@ -207,7 +270,7 @@ export default function BreakSessionScreen() {
       case 'loading':
         return (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Preparing...</Text>
+            <Text style={[styles.loadingText, { color: theme.text.secondary }]}>Preparing...</Text>
           </View>
         );
 
@@ -218,11 +281,11 @@ export default function BreakSessionScreen() {
             exiting={FadeOut.duration(200)}
             style={styles.preparationContainer}
           >
-            <Text style={styles.preparationTitle}>Get Ready</Text>
-            <View style={[styles.preparationIconContainer, { borderColor: exercise.color }]}>
+            <Text style={[styles.preparationTitle, { color: theme.text.secondary }]}>Get Ready</Text>
+            <View style={[styles.preparationIconContainer, { borderColor: exercise.color, backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }]}>
               <Text style={styles.preparationIcon}>{exercise.icon}</Text>
             </View>
-            <Text style={styles.preparationExercise}>{exercise.title}</Text>
+            <Text style={[styles.preparationExercise, { color: theme.text.primary }]}>{exercise.title}</Text>
             <Text style={[styles.preparationCountdown, { color: exercise.color }]}>
               {state.timeRemaining}
             </Text>
@@ -300,8 +363,8 @@ export default function BreakSessionScreen() {
           >
             <View style={styles.feedbackComplete}>
               <Text style={styles.feedbackCompleteEmoji}>🙏</Text>
-              <Text style={styles.feedbackCompleteTitle}>Thank you!</Text>
-              <Text style={styles.feedbackCompleteText}>
+              <Text style={[styles.feedbackCompleteTitle, { color: theme.text.primary }]}>Thank you!</Text>
+              <Text style={[styles.feedbackCompleteText, { color: theme.text.secondary }]}>
                 Your feedback helps us improve
               </Text>
             </View>
@@ -327,16 +390,17 @@ export default function BreakSessionScreen() {
     handleClose,
     handleFinish,
     renderExerciseAnimation,
+    theme,
   ]);
 
   // Ambient background color based on exercise
   const ambientColor = state.exercise?.color || '#06FFA5';
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
       {/* Background gradient */}
       <LinearGradient
-        colors={['#000000', '#0a0a15', '#000000']}
+        colors={theme.isDark ? ['#000000', '#0a0a15', '#000000'] : ['#F8F9FA', '#FFFFFF', '#F8F9FA']}
         style={StyleSheet.absoluteFill}
       />
 
@@ -348,7 +412,8 @@ export default function BreakSessionScreen() {
         {state.exercise &&
           state.phase !== 'completion' &&
           state.phase !== 'feedback' && (
-            <BreakHeader
+            <View style={styles.headerWrapper}>
+              <BreakHeader
               title={state.exercise.title}
               icon={state.exercise.icon}
               color={state.exercise.color}
@@ -358,6 +423,7 @@ export default function BreakSessionScreen() {
               onToggleVoice={actions.toggleVoice}
               isVoiceEnabled={state.isVoiceEnabled}
             />
+            </View>
           )}
 
         {/* Main Content */}
@@ -385,6 +451,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  headerWrapper: {
+    marginTop: 8,
   },
   content: {
     flex: 1,

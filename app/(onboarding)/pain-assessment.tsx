@@ -11,7 +11,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
   Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,13 +22,12 @@ import { PAIN_AREAS } from '@/constants/onboarding';
 
 type Severity = 'mild' | 'moderate' | 'severe';
 
-function PainAreaCard({ area, isSelected, severity, onToggle, onSeverityChange, index }: {
+function PainAreaCard({ area, isSelected, severity, onToggle, onSeverityChange }: {
   area: { id: string; icon: string; label: string };
   isSelected: boolean;
   severity?: Severity;
   onToggle: () => void;
   onSeverityChange: (level: Severity) => void;
-  index: number;
 }) {
   const cardScale = useSharedValue(1);
 
@@ -143,7 +141,7 @@ export default function PainAssessmentScreen() {
           contentContainerStyle={styles.areaGrid}
           showsVerticalScrollIndicator={false}
         >
-          {PAIN_AREAS.map((area, index) => (
+          {PAIN_AREAS.map((area) => (
             <PainAreaCard
               key={area.id}
               area={area}
@@ -151,7 +149,6 @@ export default function PainAssessmentScreen() {
               severity={severity[area.id]}
               onToggle={() => toggleArea(area.id)}
               onSeverityChange={(level) => setSeverityForArea(area.id, level)}
-              index={index}
             />
           ))}
         </ScrollView>

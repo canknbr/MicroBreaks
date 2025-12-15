@@ -50,8 +50,8 @@ export default function FirstSessionScreen() {
       700,
       withRepeat(
         withSequence(
-          withTiming(1.01, { duration: 2000, easing: Easing.inOut(Easing.sine) }),
-          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.sine) })
+          withTiming(1.01, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.sin) })
         ),
         -1,
         true

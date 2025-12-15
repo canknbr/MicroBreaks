@@ -19,11 +19,9 @@ import Animated, {
   SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CENTER_Y = SCREEN_HEIGHT / 2 - 60;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Premium Color Palette
 const COLORS = {

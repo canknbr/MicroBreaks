@@ -12,6 +12,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/useTheme';
 
 const QUOTES = [
   { text: "Small breaks lead to big breakthroughs.", author: "Wellness Wisdom" },
@@ -29,6 +30,7 @@ interface MotivationalQuoteProps {
 }
 
 export default function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
+  const theme = useTheme();
   const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(15);
@@ -45,9 +47,9 @@ export default function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps)
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <Text style={styles.quoteIcon}>"</Text>
-      <Text style={styles.quoteText}>{quote.text}</Text>
-      <Text style={styles.author}>— {quote.author}</Text>
+      <Text style={[styles.quoteIcon, { color: `${theme.accent.primary}50` }]}>"</Text>
+      <Text style={[styles.quoteText, { color: theme.text.secondary }]}>{quote.text}</Text>
+      <Text style={[styles.author, { color: theme.text.muted }]}>— {quote.author}</Text>
     </Animated.View>
   );
 }

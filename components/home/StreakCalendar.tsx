@@ -13,6 +13,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/useTheme';
 
 interface StreakCalendarProps {
   completedDays: boolean[]; // Array of 7 booleans for each day
@@ -36,6 +37,7 @@ function DayItem({
   isToday: boolean;
   isFuture: boolean;
 }) {
+  const theme = useTheme();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.5);
   const translateY = useSharedValue(10);
@@ -57,19 +59,20 @@ function DayItem({
 
   return (
     <Animated.View style={[styles.dayContainer, animatedStyle]}>
-      <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>
+      <Text style={[styles.dayLabel, { color: theme.text.muted }, isToday && { color: theme.accent.primary, fontWeight: '700' }]}>
         {day}
       </Text>
       <View
         style={[
           styles.dayDot,
-          isCompleted && styles.dayDotCompleted,
-          isToday && !isCompleted && styles.dayDotToday,
+          { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.medium },
+          isCompleted && { backgroundColor: theme.accent.primary, borderColor: theme.accent.primary },
+          isToday && !isCompleted && { borderColor: theme.accent.primary, backgroundColor: `${theme.accent.primary}15` },
           isFuture && styles.dayDotFuture,
         ]}
       >
         {isCompleted && <Text style={styles.checkmark}>✓</Text>}
-        {isToday && !isCompleted && <View style={styles.todayInner} />}
+        {isToday && !isCompleted && <View style={[styles.todayInner, { backgroundColor: theme.accent.primary }]} />}
       </View>
     </Animated.View>
   );
@@ -80,6 +83,7 @@ export default function StreakCalendar({
   currentDayIndex,
   streak,
 }: StreakCalendarProps) {
+  const theme = useTheme();
   const streakScale = useSharedValue(0);
   const streakOpacity = useSharedValue(0);
 
@@ -105,7 +109,7 @@ export default function StreakCalendar({
       {/* Streak Badge */}
       <Animated.View style={[styles.streakBadge, streakBadgeStyle]}>
         <Text style={styles.fireIcon}>🔥</Text>
-        <Text style={styles.streakCount}>{streak}</Text>
+        <Text style={[styles.streakCount, { color: theme.accent.warning }]}>{streak}</Text>
       </Animated.View>
 
       {/* Days Row */}

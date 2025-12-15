@@ -13,6 +13,8 @@ import {
   getStreakData,
   getTodayBreaks,
   getWeekBreaks,
+  getTimePatterns,
+  TimePatternData,
 } from '@/services/breakHistory';
 import { CompletedBreak, StreakData, UserStats } from '@/services/storage';
 
@@ -50,6 +52,9 @@ interface StatsData {
   // Break type distribution
   breakTypes: BreakTypeData[];
 
+  // Time patterns
+  timePatterns: TimePatternData[];
+
   // Recent breaks
   recentBreaks: CompletedBreak[];
 
@@ -66,6 +71,7 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
   const [streakData, setStreakData] = useState<StreakData | null>(null);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [breakTypes, setBreakTypes] = useState<BreakTypeData[]>([]);
+  const [timePatterns, setTimePatterns] = useState<TimePatternData[]>([]);
   const [recentBreaks, setRecentBreaks] = useState<CompletedBreak[]>([]);
   const [todayCount, setTodayCount] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
@@ -119,6 +125,10 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
       // Load break type distribution for the period
       const types = await getBreakTypeDistribution(period === 'year' ? 'all' : period);
       setBreakTypes(types);
+
+      // Load time patterns
+      const patterns = await getTimePatterns(period === 'year' ? 'all' : period);
+      setTimePatterns(patterns);
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
@@ -143,6 +153,7 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
     weeklyProgress: userStats?.weeklyProgress || 0,
     chartData,
     breakTypes,
+    timePatterns,
     recentBreaks,
     isLoading,
     refresh: loadData,

@@ -5,7 +5,7 @@
 
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,11 +19,11 @@ import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText, DisplayText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing } from './constants/design';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useOnboardingStore } from '@/store';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const skipOnboarding = useOnboardingStore((s) => s.skipOnboarding);
 
   // Animation values
   const logoScale = useSharedValue(0.9);
@@ -69,7 +69,8 @@ export default function WelcomeScreen() {
   };
 
   const handleBrowse = () => {
-    router.replace('/(tabs)/index' as any);
+    skipOnboarding();
+    router.replace('/(tabs)');
   };
 
   return (

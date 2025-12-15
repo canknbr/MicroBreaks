@@ -11,7 +11,6 @@ import Animated, {
   useAnimatedStyle,
   withDelay,
   withTiming,
-  interpolate,
   Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';

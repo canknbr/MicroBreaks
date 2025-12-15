@@ -12,7 +12,6 @@ import Animated, {
   withDelay,
   withTiming,
   withSequence,
-  withRepeat,
   interpolate,
   Easing,
 } from 'react-native-reanimated';
@@ -21,9 +20,21 @@ import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
+import { useOnboardingStore, useUserStore, useNotificationStore } from '@/store';
 
 export default function CompletionScreen() {
   const router = useRouter();
+  const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
+  const onboardingData = useOnboardingStore((s) => s.data);
+
+  // User store actions
+  const setWeeklyGoal = useUserStore((s) => s.setWeeklyGoal);
+  const updateProfile = useUserStore((s) => s.updateProfile);
+  const unlockAchievement = useUserStore((s) => s.unlockAchievement);
+  const addXP = useUserStore((s) => s.addXP);
+
+  // Notification store
+  const addNotification = useNotificationStore((s) => s.addNotification);
 
   // Animation values
   const celebrationScale = useSharedValue(0.9);
@@ -108,7 +119,54 @@ export default function CompletionScreen() {
   }));
 
   const handleGoToDashboard = () => {
-    router.replace('/(tabs)/index' as any);
+    // Sync onboarding data with user store
+    syncOnboardingData();
+
+    // Mark onboarding as complete
+    completeOnboarding();
+
+    // Navigate to main app
+    router.replace('/(tabs)');
+  };
+
+  const syncOnboardingData = () => {
+    // Calculate weekly goal based on break interval
+    // Default: 25 min interval = ~16 breaks per 8-hour day = ~80 breaks per week
+    // We'll use a more reasonable 5 breaks per day as default
+    const breakInterval = onboardingData.breakInterval || 25;
+    const breaksPerHour = 60 / breakInterval;
+    const breaksPerDay = Math.round(breaksPerHour * 8); // 8-hour workday
+    const weeklyGoal = Math.max(breaksPerDay * 5, 20); // 5 work days, minimum 20
+
+    setWeeklyGoal(weeklyGoal);
+
+    // Update profile with joined date
+    updateProfile({
+      joinedAt: new Date().toISOString(),
+    });
+
+    // Unlock first achievement - "Health Pioneer" for completing onboarding
+    unlockAchievement('health-pioneer');
+    addXP(25); // Bonus XP for completing onboarding
+
+    // Create welcome notification
+    addNotification({
+      type: 'welcome',
+      title: 'Welcome to MicroBreaks!',
+      message: 'Your wellness journey starts now. Take your first break to earn XP!',
+      icon: '🎉',
+      color: '#06FFA5',
+    });
+
+    // Create achievement notification
+    addNotification({
+      type: 'achievement',
+      title: 'Achievement Unlocked!',
+      message: 'Health Pioneer: Completed your wellness setup. +25 XP',
+      icon: '🏆',
+      color: '#FFD166',
+      data: { achievementTitle: 'Health Pioneer', xpReward: 25 },
+    });
   };
 
   return (

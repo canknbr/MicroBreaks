@@ -24,7 +24,7 @@ import { PREMIUM_FEATURES } from '@/constants/onboarding';
 
 export default function PremiumPitchScreen() {
   const router = useRouter();
-  const [timeLeft, setTimeLeft] = useState(24 * 60);
+  const [timeLeft] = useState(24 * 60);
 
   // Animation values
   const headerOpacity = useSharedValue(0);

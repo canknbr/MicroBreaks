@@ -18,6 +18,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/hooks/useTheme';
 
 type EmptyStateType = 'no_breaks_today' | 'no_streak' | 'new_user' | 'error';
 
@@ -64,6 +65,7 @@ const EMPTY_STATE_CONFIG: Record<EmptyStateType, {
 };
 
 export default function EmptyState({ type, onAction }: EmptyStateProps) {
+  const theme = useTheme();
   const config = EMPTY_STATE_CONFIG[type];
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.9);
@@ -101,15 +103,31 @@ export default function EmptyState({ type, onAction }: EmptyStateProps) {
   };
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+    <Animated.View style={[
+      styles.container,
+      {
+        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: theme.isDark ? 0 : 0.12,
+        shadowRadius: 16,
+        elevation: theme.isDark ? 0 : 6,
+      },
+      containerStyle,
+    ]}>
+      {/* BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.95)' }]} />
+        )
       )}
 
+      {/* Gradient overlay - subtle for light mode */}
       <LinearGradient
-        colors={[`${config.gradient[0]}15`, 'transparent']}
+        colors={[`${config.gradient[0]}${theme.isDark ? '15' : '08'}`, 'transparent']}
         style={styles.gradientOverlay}
       />
 
@@ -123,8 +141,8 @@ export default function EmptyState({ type, onAction }: EmptyStateProps) {
         <Ionicons name={config.icon as any} size={32} color="#000" />
       </Animated.View>
 
-      <Text style={styles.title}>{config.title}</Text>
-      <Text style={styles.message}>{config.message}</Text>
+      <Text style={[styles.title, { color: theme.text.primary }]}>{config.title}</Text>
+      <Text style={[styles.message, { color: theme.text.secondary }]}>{config.message}</Text>
 
       <Pressable
         style={({ pressed }) => [
