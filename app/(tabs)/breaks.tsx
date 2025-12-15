@@ -159,18 +159,22 @@ function BreakCard({
         styles.breakCard,
         {
           borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+          backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: theme.isDark ? 0 : 0.06,
+          shadowOpacity: theme.isDark ? 0 : 0.08,
           shadowRadius: 8,
-          elevation: theme.isDark ? 0 : 3,
+          elevation: theme.isDark ? 0 : 4,
         },
         animatedStyle,
       ]}>
-        {Platform.OS === 'ios' ? (
-          <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+        {/* BlurView only for dark mode */}
+        {theme.isDark && (
+          Platform.OS === 'ios' ? (
+            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+          )
         )}
         <View style={styles.breakCardContent}>
           <View style={[styles.breakIconContainer, { backgroundColor: `${categoryColor}15` }]}>
@@ -272,11 +276,25 @@ function SearchBar({
   theme: ThemeColors;
 }) {
   return (
-    <View style={[styles.searchContainer, { borderColor: theme.border.subtle }]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={20} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
+    <View style={[
+      styles.searchContainer,
+      {
+        borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: theme.isDark ? 0 : 0.06,
+        shadowRadius: 4,
+        elevation: theme.isDark ? 0 : 2,
+      }
+    ]}>
+      {/* BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+        )
       )}
       <Ionicons name="search" size={18} color={theme.text.muted} />
       <TextInput

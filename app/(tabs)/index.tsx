@@ -308,6 +308,11 @@ export default function HomeScreen() {
     router.push('/breaks');
   }, []);
 
+  const handleSeeAllBreaks = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/breaks');
+  }, []);
+
   const handleRefresh = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await refresh();
@@ -439,10 +444,7 @@ export default function HomeScreen() {
                   </View>
                   <Pressable
                     style={styles.seeAllButton}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push('/breaks');
-                    }}
+                    onPress={handleSeeAllBreaks}
                   >
                     <Text style={[styles.seeAllText, { color: theme.accent.primary }]}>See All</Text>
                     <Ionicons name="chevron-forward" size={14} color={theme.accent.primary} />

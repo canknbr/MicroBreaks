@@ -31,7 +31,7 @@ interface QuickBreakCardProps {
   accessibilityHint?: string;
 }
 
-export default function QuickBreakCard({
+function QuickBreakCard({
   icon,
   title,
   duration,
@@ -135,6 +135,8 @@ export default function QuickBreakCard({
     </GestureDetector>
   );
 }
+
+export default React.memo(QuickBreakCard);
 
 const styles = StyleSheet.create({
   container: {

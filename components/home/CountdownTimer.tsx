@@ -22,7 +22,7 @@ interface CountdownTimerProps {
   onComplete?: () => void;
 }
 
-export default function CountdownTimer({
+function CountdownTimer({
   targetMinutes,
   onComplete,
 }: CountdownTimerProps) {
@@ -160,6 +160,8 @@ export default function CountdownTimer({
     </Animated.View>
   );
 }
+
+export default React.memo(CountdownTimer);
 
 const styles = StyleSheet.create({
   container: {

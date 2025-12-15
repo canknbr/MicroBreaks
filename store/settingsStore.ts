@@ -90,6 +90,31 @@ const defaultSettings: AppSettings = {
   crashReportingEnabled: true,
 };
 
+// Granular selectors for performance optimization
+export const useSettings = () => useSettingsStore((state) => state.settings);
+
+// Individual setting selectors
+export const useThemeSetting = () => useSettingsStore((state) => state.settings.theme);
+export const useAccentColor = () => useSettingsStore((state) => state.settings.accentColor);
+export const useSoundEnabled = () => useSettingsStore((state) => state.settings.soundEnabled);
+export const useHapticsEnabled = () => useSettingsStore((state) => state.settings.hapticsEnabled);
+export const useVoiceGuidanceEnabled = () => useSettingsStore((state) => state.settings.voiceGuidanceEnabled);
+export const useNotificationsEnabled = () => useSettingsStore((state) => state.settings.notificationsEnabled);
+export const useBreakReminders = () => useSettingsStore((state) => state.settings.breakReminders);
+export const useReminderInterval = () => useSettingsStore((state) => state.settings.reminderIntervalMinutes);
+
+// Action selectors (stable references)
+export const useSettingsActions = () => useSettingsStore((state) => ({
+  updateSettings: state.updateSettings,
+  toggleSound: state.toggleSound,
+  toggleHaptics: state.toggleHaptics,
+  toggleVoiceGuidance: state.toggleVoiceGuidance,
+  toggleNotifications: state.toggleNotifications,
+  toggleBreakReminders: state.toggleBreakReminders,
+  setReminderInterval: state.setReminderInterval,
+  setTheme: state.setTheme,
+}));
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({

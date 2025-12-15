@@ -535,10 +535,15 @@ export default function ProfileScreen() {
             },
             profileStyle,
           ]}>
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={theme.isDark ? 25 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+            {/* BlurView only for dark mode */}
+            {theme.isDark ? (
+              Platform.OS === 'ios' ? (
+                <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+              )
             ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
             )}
             <LinearGradient
               colors={theme.isDark ? ['rgba(255, 255, 255, 0.08)', 'transparent'] : ['rgba(0, 0, 0, 0.03)', 'transparent']}
@@ -640,10 +645,15 @@ export default function ProfileScreen() {
                 elevation: theme.isDark ? 0 : 4,
               },
             ]}>
-              {Platform.OS === 'ios' ? (
-                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+              {/* BlurView only for dark mode */}
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
               ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
               )}
 
               {/* Recent Achievements */}
@@ -658,14 +668,14 @@ export default function ProfileScreen() {
                       <View style={[styles.achievementIcon, { backgroundColor: `${achievement.color}20` }]}>
                         <Text style={styles.achievementEmoji}>{achievement.icon}</Text>
                       </View>
-                      <Text style={styles.achievementTitle} numberOfLines={1}>
+                      <Text style={[styles.achievementTitle, { color: theme.text.primary }]} numberOfLines={1}>
                         {achievement.title}
                       </Text>
                     </View>
                   ))}
                   {achievementStats.unlocked > 5 && (
                     <View style={styles.achievementMore}>
-                      <Text style={styles.achievementMoreText}>
+                      <Text style={[styles.achievementMoreText, { color: theme.text.primary }]}>
                         +{achievementStats.unlocked - 5}
                       </Text>
                     </View>
@@ -674,7 +684,7 @@ export default function ProfileScreen() {
               ) : (
                 <View style={styles.noAchievements}>
                   <Text style={styles.noAchievementsIcon}>🏆</Text>
-                  <Text style={styles.noAchievementsText}>
+                  <Text style={[styles.noAchievementsText, { color: theme.text.muted }]}>
                     Complete breaks to earn achievements!
                   </Text>
                 </View>
@@ -683,12 +693,12 @@ export default function ProfileScreen() {
               {/* Next to Unlock */}
               {nextToUnlock.length > 0 && (
                 <View style={styles.nextToUnlock}>
-                  <Text style={styles.nextToUnlockLabel}>Next to unlock:</Text>
+                  <Text style={[styles.nextToUnlockLabel, { color: theme.text.muted }]}>Next to unlock:</Text>
                   <View style={styles.nextAchievement}>
                     <Text style={styles.nextAchievementIcon}>{nextToUnlock[0].icon}</Text>
                     <View style={styles.nextAchievementInfo}>
-                      <Text style={styles.nextAchievementTitle}>{nextToUnlock[0].title}</Text>
-                      <View style={styles.nextProgressBar}>
+                      <Text style={[styles.nextAchievementTitle, { color: theme.text.primary }]}>{nextToUnlock[0].title}</Text>
+                      <View style={[styles.nextProgressBar, { backgroundColor: theme.border.subtle }]}>
                         <View
                           style={[
                             styles.nextProgressFill,
@@ -697,7 +707,7 @@ export default function ProfileScreen() {
                         />
                       </View>
                     </View>
-                    <Text style={styles.nextProgressText}>
+                    <Text style={[styles.nextProgressText, { color: theme.text.muted }]}>
                       {Math.round(nextToUnlock[0].progress)}%
                     </Text>
                   </View>
@@ -744,10 +754,15 @@ export default function ProfileScreen() {
                 elevation: theme.isDark ? 0 : 4,
               },
             ]}>
-              {Platform.OS === 'ios' ? (
-                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+              {/* BlurView only for dark mode */}
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
               ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
               )}
               <SettingItem
                 icon="notifications"
@@ -838,10 +853,15 @@ export default function ProfileScreen() {
                 elevation: theme.isDark ? 0 : 4,
               },
             ]}>
-              {Platform.OS === 'ios' ? (
-                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+              {/* BlurView only for dark mode */}
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
               ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
               )}
               <SettingItem
                 icon="color-palette"
@@ -900,10 +920,15 @@ export default function ProfileScreen() {
                 elevation: theme.isDark ? 0 : 4,
               },
             ]}>
-              {Platform.OS === 'ios' ? (
-                <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+              {/* BlurView only for dark mode */}
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
               ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
               )}
               <SettingItem
                 icon="help-circle"

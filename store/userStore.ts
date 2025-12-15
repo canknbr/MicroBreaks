@@ -97,6 +97,45 @@ const initialAchievements: UserAchievements = {
   totalMinutes: 0,
 };
 
+// Granular selectors for performance optimization
+export const useUserProfile = () => useUserStore((state) => state.profile);
+export const useUserProgress = () => useUserStore((state) => state.progress);
+export const useUserPreferences = () => useUserStore((state) => state.preferences);
+export const useUserAchievements = () => useUserStore((state) => state.achievements);
+
+// Individual progress selectors
+export const useUserLevel = () => useUserStore((state) => state.progress.level);
+export const useUserXP = () => useUserStore((state) => state.progress.totalXP);
+export const useUserStreak = () => useUserStore((state) => state.progress.currentStreak);
+export const useUserTotalBreaks = () => useUserStore((state) => state.progress.totalBreaks);
+export const useUserWeeklyGoal = () => useUserStore((state) => state.progress.weeklyGoal);
+export const useUserDailyGoal = () => useUserStore((state) => state.progress.dailyGoal);
+
+// Individual profile selectors
+export const useUserName = () => useUserStore((state) => state.profile.name);
+export const useUserAvatar = () => useUserStore((state) => state.profile.avatar);
+
+// Favorites selectors
+export const useFavoriteBreaks = () => useUserStore((state) => state.preferences.favoriteBreaks);
+export const useRecentBreaks = () => useUserStore((state) => state.preferences.recentBreaks);
+
+// Action selectors (stable references)
+export const useUserActions = () => useUserStore((state) => ({
+  updateProfile: state.updateProfile,
+  updateProgress: state.updateProgress,
+  setName: state.setName,
+  setAvatar: state.setAvatar,
+  setWeeklyGoal: state.setWeeklyGoal,
+  setDailyGoal: state.setDailyGoal,
+  addXP: state.addXP,
+  incrementBreaks: state.incrementBreaks,
+  updateStreak: state.updateStreak,
+  toggleFavorite: state.toggleFavorite,
+  addRecentBreak: state.addRecentBreak,
+  unlockAchievement: state.unlockAchievement,
+  trackBreakCompletion: state.trackBreakCompletion,
+}));
+
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({

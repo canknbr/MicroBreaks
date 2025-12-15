@@ -14,6 +14,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { AnimationType } from '@/data/exercises';
+import { useTheme } from '@/hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 const DOT_TRAVEL = Math.min(width - 100, 200);
@@ -29,6 +30,7 @@ export default function EyeExercise({
   instruction,
   color,
 }: EyeExerciseProps) {
+  const theme = useTheme();
   const dotX = useSharedValue(0);
   const dotY = useSharedValue(0);
   const dotScale = useSharedValue(1);
@@ -204,7 +206,7 @@ export default function EyeExercise({
   return (
     <View style={styles.container}>
       {/* Guide area */}
-      <View style={[styles.guideArea, { borderColor: `${color}30` }]}>
+      <View style={[styles.guideArea, { borderColor: `${color}30`, backgroundColor: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)' }]}>
         {/* Dot to follow */}
         <Animated.View style={[styles.dot, { backgroundColor: color }, dotStyle]}>
           {isResting ? (
@@ -224,7 +226,7 @@ export default function EyeExercise({
       {/* Instruction */}
       <View style={styles.instructionContainer}>
         <Text style={styles.emoji}>{getVisualGuide()}</Text>
-        <Text style={styles.instruction}>{instruction}</Text>
+        <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
       </View>
     </View>
   );

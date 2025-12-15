@@ -1,6 +1,6 @@
 /**
  * Break Completion Component
- * Success screen with stats and celebration
+ * Zen master level success screen with stats and celebration
  */
 
 import React, { useEffect } from 'react';
@@ -14,7 +14,11 @@ import Animated, {
   withDelay,
   withSpring,
   withSequence,
+  withRepeat,
+  interpolate,
+  Easing,
 } from 'react-native-reanimated';
+import { useTheme } from '@/hooks/useTheme';
 
 interface BreakCompletionProps {
   title: string;
@@ -34,10 +38,13 @@ export default function BreakCompletion({
   color,
   stats,
 }: BreakCompletionProps) {
+  const theme = useTheme();
   const iconScale = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const statsOpacity = useSharedValue(0);
   const confettiOpacity = useSharedValue(0);
+  const glowPulse = useSharedValue(0);
+  const ringRotation = useSharedValue(0);
 
   useEffect(() => {
     // Staggered entrance animation
@@ -47,6 +54,21 @@ export default function BreakCompletion({
     confettiOpacity.value = withSequence(
       withDelay(100, withTiming(1, { duration: 300 })),
       withDelay(2000, withTiming(0.3, { duration: 500 }))
+    );
+    // Zen-like ambient glow pulse
+    glowPulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+    // Subtle ring rotation
+    ringRotation.value = withRepeat(
+      withTiming(360, { duration: 20000, easing: Easing.linear }),
+      -1,
+      false
     );
   }, []);
 
@@ -68,6 +90,15 @@ export default function BreakCompletion({
     opacity: confettiOpacity.value,
   }));
 
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(glowPulse.value, [0, 1], [0.3, 0.6]),
+    transform: [{ scale: interpolate(glowPulse.value, [0, 1], [1, 1.1]) }],
+  }));
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${ringRotation.value}deg` }],
+  }));
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -77,58 +108,81 @@ export default function BreakCompletion({
 
   return (
     <View style={styles.container}>
+      {/* Zen ambient glow */}
+      <Animated.View style={[styles.ambientGlow, { backgroundColor: color }, glowStyle]} />
+
       {/* Confetti emojis */}
       <Animated.View style={[styles.confettiContainer, confettiStyle]}>
         <Text style={[styles.confetti, styles.confetti1]}>🎉</Text>
         <Text style={[styles.confetti, styles.confetti2]}>✨</Text>
         <Text style={[styles.confetti, styles.confetti3]}>🎊</Text>
         <Text style={[styles.confetti, styles.confetti4]}>⭐</Text>
+        <Text style={[styles.confetti, styles.confetti5]}>🌟</Text>
+        <Text style={[styles.confetti, styles.confetti6]}>💫</Text>
       </Animated.View>
 
-      {/* Success Icon */}
-      <Animated.View style={[styles.iconContainer, iconStyle]}>
-        <LinearGradient
-          colors={[color, `${color}80`]}
-          style={styles.iconGradient}
-        />
-        <Text style={styles.icon}>{icon}</Text>
-        <View style={styles.checkBadge}>
-          <Text style={styles.checkMark}>✓</Text>
-        </View>
-      </Animated.View>
+      {/* Success Icon with rotating ring */}
+      <View style={styles.iconWrapper}>
+        <Animated.View style={[styles.rotatingRing, { borderColor: color }, ringStyle]} />
+        <Animated.View style={[styles.iconContainer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }, iconStyle]}>
+          <LinearGradient
+            colors={[`${color}40`, `${color}10`]}
+            style={styles.iconGradient}
+          />
+          <Text style={styles.icon}>{icon}</Text>
+          <View style={[styles.checkBadge, { borderColor: theme.background.primary }]}>
+            <Text style={styles.checkMark}>✓</Text>
+          </View>
+        </Animated.View>
+      </View>
 
       {/* Title */}
       <Animated.View style={titleStyle}>
-        <Text style={styles.title}>Great Job!</Text>
-        <Text style={styles.subtitle}>You completed {title}</Text>
+        <Text style={[styles.title, { color: theme.text.primary }]}>Great Job!</Text>
+        <Text style={[styles.subtitle, { color: theme.text.secondary }]}>You completed {title}</Text>
       </Animated.View>
 
       {/* Stats Card */}
-      <Animated.View style={[styles.statsCard, statsStyle]}>
-        {Platform.OS === 'ios' ? (
-          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+      <Animated.View style={[
+        styles.statsCard,
+        {
+          borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+          backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: theme.isDark ? 0 : 0.1,
+          shadowRadius: 12,
+          elevation: theme.isDark ? 0 : 6,
+        },
+        statsStyle
+      ]}>
+        {/* BlurView only for dark mode */}
+        {theme.isDark && (
+          Platform.OS === 'ios' ? (
+            <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+          )
         )}
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatDuration(stats.totalDuration)}</Text>
-            <Text style={styles.statLabel}>Duration</Text>
+            <Text style={[styles.statValue, { color: theme.text.primary }]}>{formatDuration(stats.totalDuration)}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.muted }]}>Duration</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          <View style={[styles.statDivider, { backgroundColor: theme.border.subtle }]} />
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.stepsCompleted}/{stats.totalSteps}</Text>
-            <Text style={styles.statLabel}>Steps</Text>
+            <Text style={[styles.statValue, { color: theme.text.primary }]}>{stats.stepsCompleted}/{stats.totalSteps}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.muted }]}>Steps</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          <View style={[styles.statDivider, { backgroundColor: theme.border.subtle }]} />
 
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color }]}>+{stats.xpEarned}</Text>
-            <Text style={styles.statLabel}>XP Earned</Text>
+            <Text style={[styles.statLabel, { color: theme.text.muted }]}>XP Earned</Text>
           </View>
         </View>
       </Animated.View>
@@ -143,29 +197,60 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  ambientGlow: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.15,
+  },
   confettiContainer: {
     ...StyleSheet.absoluteFillObject,
     pointerEvents: 'none',
   },
   confetti: {
     position: 'absolute',
-    fontSize: 40,
+    fontSize: 36,
   },
   confetti1: {
-    top: '10%',
-    left: '15%',
+    top: '8%',
+    left: '12%',
   },
   confetti2: {
-    top: '15%',
-    right: '20%',
+    top: '12%',
+    right: '18%',
   },
   confetti3: {
-    top: '25%',
-    left: '25%',
+    top: '22%',
+    left: '22%',
   },
   confetti4: {
-    top: '20%',
-    right: '15%',
+    top: '18%',
+    right: '12%',
+  },
+  confetti5: {
+    top: '5%',
+    left: '45%',
+  },
+  confetti6: {
+    top: '28%',
+    right: '28%',
+  },
+  iconWrapper: {
+    width: 140,
+    height: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  rotatingRing: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    opacity: 0.4,
   },
   iconContainer: {
     width: 120,
@@ -173,12 +258,10 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
     overflow: 'hidden',
   },
   iconGradient: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.2,
   },
   icon: {
     fontSize: 60,
@@ -194,7 +277,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#000',
   },
   checkMark: {
     fontSize: 18,
@@ -204,13 +286,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -219,7 +299,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   androidFallback: {
     backgroundColor: 'rgba(25, 25, 35, 0.9)',
@@ -238,16 +317,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#FFFFFF',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 });

@@ -54,7 +54,7 @@ const INSIGHT_CONFIG: Record<InsightType, { icon: string; colors: [string, strin
   },
 };
 
-export default function SmartInsight({
+function SmartInsight({
   type,
   title,
   message,
@@ -153,6 +153,8 @@ export default function SmartInsight({
     </Animated.View>
   );
 }
+
+export default React.memo(SmartInsight);
 
 const styles = StyleSheet.create({
   container: {

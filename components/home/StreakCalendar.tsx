@@ -23,8 +23,8 @@ interface StreakCalendarProps {
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-// Separate component to avoid hook violations
-function DayItem({
+// Separate component to avoid hook violations - memoized for performance
+const DayItem = React.memo(function DayItem({
   day,
   index,
   isCompleted,
@@ -76,9 +76,9 @@ function DayItem({
       </View>
     </Animated.View>
   );
-}
+});
 
-export default function StreakCalendar({
+function StreakCalendar({
   completedDays,
   currentDayIndex,
   streak,
@@ -128,6 +128,8 @@ export default function StreakCalendar({
     </View>
   );
 }
+
+export default React.memo(StreakCalendar);
 
 const styles = StyleSheet.create({
   container: {

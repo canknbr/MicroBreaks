@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimationType } from '@/data/exercises';
+import { useTheme } from '@/hooks/useTheme';
 
 interface NeckExerciseProps {
   animation: AnimationType;
@@ -29,6 +30,7 @@ export default function NeckExercise({
   color,
   visualGuide,
 }: NeckExerciseProps) {
+  const theme = useTheme();
   const rotation = useSharedValue(0);
   const arrowOpacity = useSharedValue(0);
   const tiltX = useSharedValue(0);
@@ -180,7 +182,7 @@ export default function NeckExercise({
 
         {/* Head/neck visualization */}
         <Animated.View style={[styles.headContainer, headStyle]}>
-          <View style={[styles.head, { borderColor: `${color}40` }]}>
+          <View style={[styles.head, { borderColor: `${color}40`, backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }]}>
             <Text style={styles.headEmoji}>🧑</Text>
           </View>
         </Animated.View>
@@ -202,7 +204,7 @@ export default function NeckExercise({
       {/* Visual guide and instruction */}
       <View style={styles.instructionContainer}>
         <Text style={styles.visualGuide}>{visualGuide}</Text>
-        <Text style={styles.instruction}>{instruction}</Text>
+        <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
       </View>
     </View>
   );

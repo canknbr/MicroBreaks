@@ -79,18 +79,22 @@ function StatCard({
       styles.statCard,
       {
         borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: theme.isDark ? 0 : 0.06,
+        shadowOpacity: theme.isDark ? 0 : 0.08,
         shadowRadius: 10,
-        elevation: theme.isDark ? 0 : 3,
+        elevation: theme.isDark ? 0 : 4,
       },
       containerStyle,
     ]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+      {/* BlurView only for dark mode */}
+      {theme.isDark && (
+        Platform.OS === 'ios' ? (
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+        )
       )}
       <View style={[styles.statIconContainer, { backgroundColor: `${color}12` }]}>
         <Ionicons name={icon as any} size={20} color={color} />
@@ -491,17 +495,21 @@ export default function StatsScreen() {
                   styles.chartCard,
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowOpacity: theme.isDark ? 0 : 0.08,
                     shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 4,
+                    elevation: theme.isDark ? 0 : 5,
                   },
                 ]}>
-                  {Platform.OS === 'ios' ? (
-                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
                   )}
                   <Text style={[styles.chartTitle, { color: theme.text.primary }]}>
                     {selectedPeriod === 'week'
@@ -520,17 +528,21 @@ export default function StatsScreen() {
                   styles.sectionCard,
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowOpacity: theme.isDark ? 0 : 0.08,
                     shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 4,
+                    elevation: theme.isDark ? 0 : 5,
                   },
                 ]}>
-                  {Platform.OS === 'ios' ? (
-                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
                   )}
                   <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Break Types</Text>
                   {stats.breakTypes.map((item, index) => (
@@ -550,17 +562,21 @@ export default function StatsScreen() {
                   styles.sectionCard,
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowOpacity: theme.isDark ? 0 : 0.08,
                     shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 4,
+                    elevation: theme.isDark ? 0 : 5,
                   },
                 ]}>
-                  {Platform.OS === 'ios' ? (
-                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
                   )}
                   <View style={styles.sectionTitleRow}>
                     <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Time Patterns</Text>
@@ -584,17 +600,21 @@ export default function StatsScreen() {
                   styles.sectionCard,
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.06,
+                    shadowOpacity: theme.isDark ? 0 : 0.08,
                     shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 4,
+                    elevation: theme.isDark ? 0 : 5,
                   },
                 ]}>
-                  {Platform.OS === 'ios' ? (
-                    <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
                   )}
                   <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recent Activity</Text>
                   {stats.recentBreaks.map((item, index) => (
@@ -608,17 +628,21 @@ export default function StatsScreen() {
                 styles.xpCard,
                 {
                   borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                  backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: theme.isDark ? 0 : 0.06,
+                  shadowOpacity: theme.isDark ? 0 : 0.08,
                   shadowRadius: 12,
-                  elevation: theme.isDark ? 0 : 4,
+                  elevation: theme.isDark ? 0 : 5,
                 },
               ]}>
-                {Platform.OS === 'ios' ? (
-                  <BlurView intensity={theme.isDark ? 20 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card }]} />
+                {/* BlurView only for dark mode */}
+                {theme.isDark && (
+                  Platform.OS === 'ios' ? (
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                  )
                 )}
                 <View style={styles.xpContent}>
                   <View style={styles.xpLeft}>

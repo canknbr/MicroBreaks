@@ -30,7 +30,7 @@ interface WeeklyInsightsProps {
   delay?: number;
 }
 
-export default function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsProps) {
+function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsProps) {
   const theme = useTheme();
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
@@ -107,6 +107,8 @@ export default function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsPr
     </Animated.View>
   );
 }
+
+export default React.memo(WeeklyInsights);
 
 const styles = StyleSheet.create({
   container: {

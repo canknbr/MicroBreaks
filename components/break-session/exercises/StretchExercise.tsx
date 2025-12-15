@@ -16,6 +16,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimationType } from '@/data/exercises';
+import { useTheme } from '@/hooks/useTheme';
 
 interface StretchExerciseProps {
   animation: AnimationType;
@@ -30,6 +31,7 @@ export default function StretchExercise({
   color,
   visualGuide,
 }: StretchExerciseProps) {
+  const theme = useTheme();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const rotate = useSharedValue(0);
@@ -256,20 +258,20 @@ export default function StretchExercise({
 
       {/* Hold indicator */}
       {isHolding && (
-        <View style={styles.holdIndicator}>
+        <View style={[styles.holdIndicator, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
           <Ionicons name="pause" size={20} color={color} />
           <Text style={[styles.holdText, { color }]}>Hold Position</Text>
         </View>
       )}
 
       {/* Instruction */}
-      <Text style={styles.instruction}>{instruction}</Text>
+      <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
 
       {/* Tips */}
       {!isHolding && (
         <View style={styles.tipContainer}>
-          <Ionicons name="information-circle" size={16} color="rgba(255, 255, 255, 0.4)" />
-          <Text style={styles.tipText}>Breathe steadily while stretching</Text>
+          <Ionicons name="information-circle" size={16} color={theme.text.muted} />
+          <Text style={[styles.tipText, { color: theme.text.muted }]}>Breathe steadily while stretching</Text>
         </View>
       )}
     </View>

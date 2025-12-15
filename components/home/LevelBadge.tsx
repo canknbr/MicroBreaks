@@ -33,7 +33,7 @@ const LEVEL_COLORS: Record<number, [string, string]> = {
   5: ['#FFD166', '#FFAA00'], // Gold - Master
 };
 
-export default function LevelBadge({
+function LevelBadge({
   level,
   currentXP,
   nextLevelXP,
@@ -125,6 +125,8 @@ export default function LevelBadge({
     </Animated.View>
   );
 }
+
+export default React.memo(LevelBadge);
 
 const styles = StyleSheet.create({
   container: {

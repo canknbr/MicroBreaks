@@ -29,7 +29,7 @@ interface MotivationalQuoteProps {
   delay?: number;
 }
 
-export default function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
+function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
   const theme = useTheme();
   const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   const opacity = useSharedValue(0);
@@ -53,6 +53,8 @@ export default function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps)
     </Animated.View>
   );
 }
+
+export default React.memo(MotivationalQuote);
 
 const styles = StyleSheet.create({
   container: {

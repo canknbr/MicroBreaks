@@ -4,7 +4,7 @@
  * Uses real data from AsyncStorage and Zustand stores
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   getTodayBreaks,
   getWeekBreaks,
@@ -204,7 +204,10 @@ export function useHomeData(): UseHomeDataReturn {
   const [error, setError] = useState<Error | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [celebration, setCelebration] = useState<UseHomeDataReturn['shouldCelebrate']>(null);
-  const [previousData, setPreviousData] = useState<HomeData | null>(null);
+
+  // Use refs to avoid unnecessary callback recreations
+  const dataRef = useRef<HomeData | null>(null);
+  const previousDataRef = useRef<HomeData | null>(null);
 
   // Get user profile from store
   const userProfile = useUserStore((state) => state.profile);
@@ -221,35 +224,38 @@ export function useHomeData(): UseHomeDataReturn {
       const newData = await generateHomeData(userProfile.name, userProfile.avatar);
 
       // Check for celebrations (only on refresh, not initial load)
-      if (previousData && isRefresh) {
+      const prevData = previousDataRef.current;
+      if (prevData && isRefresh) {
         // Goal complete celebration
         if (
           newData.dailyProgress.breaksTaken >= newData.dailyProgress.breaksGoal &&
-          previousData.dailyProgress.breaksTaken < previousData.dailyProgress.breaksGoal
+          prevData.dailyProgress.breaksTaken < prevData.dailyProgress.breaksGoal
         ) {
           setCelebration('goal_complete');
         }
         // Level up celebration
-        else if (newData.user.level > previousData.user.level) {
+        else if (newData.user.level > prevData.user.level) {
           setCelebration('new_level');
         }
         // Streak milestone (7, 14, 30, 60, 100 days)
         else if (
           [7, 14, 30, 60, 100].includes(newData.streak.current) &&
-          !([7, 14, 30, 60, 100].includes(previousData.streak.current))
+          !([7, 14, 30, 60, 100].includes(prevData.streak.current))
         ) {
           setCelebration('streak_milestone');
         }
         // First break of the day
         else if (
           newData.dailyProgress.breaksTaken === 1 &&
-          previousData.dailyProgress.breaksTaken === 0
+          prevData.dailyProgress.breaksTaken === 0
         ) {
           setCelebration('first_break');
         }
       }
 
-      setPreviousData(data);
+      // Update refs before setting state
+      previousDataRef.current = dataRef.current;
+      dataRef.current = newData;
       setData(newData);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch data'));
@@ -257,7 +263,7 @@ export function useHomeData(): UseHomeDataReturn {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [data, previousData, userProfile.name, userProfile.avatar]);
+  }, [userProfile.name, userProfile.avatar]);
 
   useEffect(() => {
     fetchData();

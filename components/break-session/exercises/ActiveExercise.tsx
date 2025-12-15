@@ -16,6 +16,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimationType } from '@/data/exercises';
+import { useTheme } from '@/hooks/useTheme';
 
 const MOTIVATIONAL_MESSAGES = [
   'Keep going!',
@@ -43,6 +44,7 @@ export default function ActiveExercise({
   visualGuide,
   timeRemaining,
 }: ActiveExerciseProps) {
+  const theme = useTheme();
   const [motivationIndex, setMotivationIndex] = useState(0);
   const bounceY = useSharedValue(0);
   const pulseScale = useSharedValue(1);
@@ -144,7 +146,7 @@ export default function ActiveExercise({
       {/* Timer display */}
       <View style={styles.timerContainer}>
         <Text style={[styles.timer, { color }]}>{formatTime(timeRemaining)}</Text>
-        <Text style={styles.timerLabel}>remaining</Text>
+        <Text style={[styles.timerLabel, { color: theme.text.muted }]}>remaining</Text>
       </View>
 
       {/* Motivational message */}
@@ -158,7 +160,7 @@ export default function ActiveExercise({
       )}
 
       {/* Instruction */}
-      <Text style={styles.instruction}>{instruction}</Text>
+      <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
 
       {/* Activity indicator dots */}
       {(isWalking || isActive) && (

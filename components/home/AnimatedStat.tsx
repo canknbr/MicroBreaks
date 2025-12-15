@@ -30,7 +30,7 @@ interface AnimatedStatProps {
   };
 }
 
-export default function AnimatedStat({
+function AnimatedStat({
   value,
   suffix = '',
   label,
@@ -99,6 +99,8 @@ export default function AnimatedStat({
     </Animated.View>
   );
 }
+
+export default React.memo(AnimatedStat);
 
 const styles = StyleSheet.create({
   container: {
