@@ -1,0 +1,190 @@
+/**
+ * Notifications Hook
+ * Manages notification state, permissions, and settings
+ */
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
+import { router } from 'expo-router';
+import {
+  NotificationSettings,
+  DEFAULT_NOTIFICATION_SETTINGS,
+  initializeNotifications,
+  requestNotificationPermissions,
+  getNotificationSettings,
+  saveNotificationSettings,
+  scheduleAllNotifications,
+  scheduleBreakReminder,
+  cancelAllNotifications,
+  addNotificationResponseListener,
+  addNotificationReceivedListener,
+} from '@/services/notifications';
+import * as Notifications from 'expo-notifications';
+
+interface UseNotificationsReturn {
+  // State
+  settings: NotificationSettings;
+  isLoading: boolean;
+  hasPermission: boolean | null;
+
+  // Actions
+  requestPermission: () => Promise<boolean>;
+  updateSettings: (settings: Partial<NotificationSettings>) => Promise<void>;
+  toggleNotifications: () => Promise<void>;
+  toggleBreakReminders: () => Promise<void>;
+  toggleStreakAlerts: () => Promise<void>;
+  toggleGoalNotifications: () => Promise<void>;
+  setReminderInterval: (minutes: number) => Promise<void>;
+  toggleQuietHours: () => Promise<void>;
+  setQuietHours: (start: number, end: number) => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+export function useNotifications(): UseNotificationsReturn {
+  const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const appState = useRef(AppState.currentState);
+
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+    initializeNotifications();
+    checkPermission();
+
+    // Set up notification response listener
+    const responseSubscription = addNotificationResponseListener((response) => {
+      const data = response.notification.request.content.data;
+
+      // Navigate based on notification type
+      if (data?.type === 'break_reminder') {
+        router.push('/breaks');
+      } else if (data?.type === 'streak_protection') {
+        router.push('/breaks');
+      } else if (data?.type === 'daily_goal') {
+        router.push('/stats');
+      }
+    });
+
+    // Set up foreground notification listener
+    const receivedSubscription = addNotificationReceivedListener((notification) => {
+      console.log('Notification received in foreground:', notification);
+    });
+
+    // Handle app state changes to reschedule notifications
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      responseSubscription.remove();
+      receivedSubscription.remove();
+      subscription.remove();
+    };
+  }, []);
+
+  const handleAppStateChange = useCallback(async (nextAppState: AppStateStatus) => {
+    if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+      // App has come to foreground, reschedule break reminder
+      await scheduleBreakReminder();
+    }
+    appState.current = nextAppState;
+  }, []);
+
+  const loadSettings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const savedSettings = await getNotificationSettings();
+      setSettings(savedSettings);
+    } catch (error) {
+      console.error('Error loading notification settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const checkPermission = useCallback(async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    setHasPermission(status === 'granted');
+  }, []);
+
+  const requestPermission = useCallback(async () => {
+    const granted = await requestNotificationPermissions();
+    setHasPermission(granted);
+
+    if (granted) {
+      await scheduleAllNotifications();
+    }
+
+    return granted;
+  }, []);
+
+  const updateSettings = useCallback(async (newSettings: Partial<NotificationSettings>) => {
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
+    await saveNotificationSettings(updatedSettings);
+  }, [settings]);
+
+  const toggleNotifications = useCallback(async () => {
+    const newEnabled = !settings.enabled;
+
+    if (newEnabled && !hasPermission) {
+      const granted = await requestPermission();
+      if (!granted) return;
+    }
+
+    await updateSettings({ enabled: newEnabled });
+
+    if (!newEnabled) {
+      await cancelAllNotifications();
+    }
+  }, [settings.enabled, hasPermission, requestPermission, updateSettings]);
+
+  const toggleBreakReminders = useCallback(async () => {
+    await updateSettings({ breakReminders: !settings.breakReminders });
+  }, [settings.breakReminders, updateSettings]);
+
+  const toggleStreakAlerts = useCallback(async () => {
+    await updateSettings({ streakAlerts: !settings.streakAlerts });
+  }, [settings.streakAlerts, updateSettings]);
+
+  const toggleGoalNotifications = useCallback(async () => {
+    await updateSettings({ goalNotifications: !settings.goalNotifications });
+  }, [settings.goalNotifications, updateSettings]);
+
+  const setReminderInterval = useCallback(async (minutes: number) => {
+    await updateSettings({ reminderIntervalMinutes: minutes });
+  }, [updateSettings]);
+
+  const toggleQuietHours = useCallback(async () => {
+    await updateSettings({ quietHoursEnabled: !settings.quietHoursEnabled });
+  }, [settings.quietHoursEnabled, updateSettings]);
+
+  const setQuietHours = useCallback(async (start: number, end: number) => {
+    await updateSettings({
+      quietHoursStart: start,
+      quietHoursEnd: end,
+    });
+  }, [updateSettings]);
+
+  const refresh = useCallback(async () => {
+    await loadSettings();
+    await checkPermission();
+  }, [loadSettings, checkPermission]);
+
+  return {
+    settings,
+    isLoading,
+    hasPermission,
+    requestPermission,
+    updateSettings,
+    toggleNotifications,
+    toggleBreakReminders,
+    toggleStreakAlerts,
+    toggleGoalNotifications,
+    setReminderInterval,
+    toggleQuietHours,
+    setQuietHours,
+    refresh,
+  };
+}
+
+export default useNotifications;

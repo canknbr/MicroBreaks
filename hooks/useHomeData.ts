@@ -1,9 +1,17 @@
 /**
  * Home Screen Data Hook
  * Manages state, loading, and data fetching for home screen
+ * Uses real data from AsyncStorage
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  getTodayBreaks,
+  getWeekBreaks,
+  getStreakData,
+  getUserStats,
+  getRecentBreaks,
+} from '@/services/breakHistory';
 
 export interface UserData {
   name: string;
@@ -57,49 +65,135 @@ interface UseHomeDataReturn {
   clearCelebration: () => void;
 }
 
-// Simulated API delay
-const simulateApiCall = <T>(data: T, delay = 1000): Promise<T> => {
-  return new Promise((resolve) => setTimeout(() => resolve(data), delay));
+// Level titles based on level
+const LEVEL_TITLES: Record<number, string> = {
+  1: 'Wellness Beginner',
+  2: 'Break Enthusiast',
+  3: 'Committed Breaker',
+  4: 'Wellness Warrior',
+  5: 'Break Master',
+  6: 'Zen Apprentice',
+  7: 'Mindfulness Pro',
+  8: 'Wellness Champion',
+  9: 'Break Legend',
+  10: 'Zen Master',
 };
 
-// Mock data generator
-const generateMockData = (): HomeData => {
-  const hour = new Date().getHours();
-  const dayOfWeek = new Date().getDay();
+// Calculate last break minutes ago
+function calculateLastBreakMinutes(completedAt: string | undefined): number {
+  if (!completedAt) return 999; // No breaks taken yet
+  const lastBreakTime = new Date(completedAt);
+  const now = new Date();
+  return Math.floor((now.getTime() - lastBreakTime.getTime()) / (1000 * 60));
+}
 
-  // Simulate different states based on time
-  const breaksTaken = Math.min(Math.floor(hour / 2.5), 8);
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+// Calculate weekly completed days
+function calculateWeeklyDays(streakHistory: { date: string; count: number }[]): boolean[] {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+
+  const completedDays: boolean[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    const dateStr = day.toISOString().split('T')[0];
+    const hasBreaks = streakHistory.some((h) => h.date === dateStr && h.count > 0);
+    completedDays.push(hasBreaks);
+  }
+
+  return completedDays;
+}
+
+// Generate home data from stored data
+async function generateHomeData(): Promise<HomeData> {
+  const [todayBreaks, weekBreaks, storedStreak, userStats, recentBreaks] = await Promise.all([
+    getTodayBreaks(),
+    getWeekBreaks(),
+    getStreakData(),
+    getUserStats(),
+    getRecentBreaks(1),
+  ]);
+
+  const dayOfWeek = new Date().getDay();
+  const currentDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+  // Calculate minutes invested today
+  const minutesInvested = todayBreaks.reduce(
+    (sum, b) => sum + Math.round(b.duration / 60),
+    0
+  );
+
+  // Calculate last break time
+  const lastBreakMinutesAgo = recentBreaks.length > 0
+    ? calculateLastBreakMinutes(recentBreaks[0].completedAt)
+    : 999;
+
+  // Calculate weekly insights
+  const weekBreaksCount = weekBreaks.length;
+  const weekMinutes = weekBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
+
+  // Get level title
+  const levelTitle = LEVEL_TITLES[Math.min(userStats.level, 10)] || LEVEL_TITLES[10];
 
   return {
     user: {
-      name: 'Can',
-      level: 3,
-      currentXP: 280,
-      nextLevelXP: 500,
-      levelTitle: 'Committed Breaker',
+      name: 'Can', // This could come from a user profile in the future
+      level: userStats.level,
+      currentXP: userStats.totalXP % 100,
+      nextLevelXP: 100,
+      levelTitle,
     },
     dailyProgress: {
-      breaksTaken,
-      breaksGoal: 8,
-      minutesInvested: breaksTaken * 3,
-      lastBreakMinutesAgo: Math.floor(Math.random() * 120) + 10,
+      breaksTaken: todayBreaks.length,
+      breaksGoal: userStats.weeklyGoal > 0 ? Math.max(Math.round(userStats.weeklyGoal / 7), 3) : 8,
+      minutesInvested,
+      lastBreakMinutesAgo,
     },
     streak: {
-      current: 5,
-      longest: 12,
-      completedDays: [true, true, true, true, !isWeekend, false, false],
-      currentDayIndex: Math.min(dayOfWeek === 0 ? 6 : dayOfWeek - 1, 6),
+      current: storedStreak.currentStreak,
+      longest: storedStreak.longestStreak,
+      completedDays: calculateWeeklyDays(storedStreak.streakHistory),
+      currentDayIndex,
     },
     weeklyInsights: [
-      { icon: 'fitness', label: 'Breaks', value: '24', change: 12, color: '#06FFA5' },
-      { icon: 'time', label: 'Minutes', value: '48m', change: 8, color: '#00E5FF' },
-      { icon: 'flame', label: 'Streak', value: '5 days', change: 25, color: '#FFD166' },
-      { icon: 'trending-up', label: 'Focus', value: '+18%', change: 18, color: '#B47EFF' },
+      {
+        icon: 'fitness',
+        label: 'Breaks',
+        value: String(weekBreaksCount),
+        change: weekBreaksCount > 0 ? Math.min(Math.round((weekBreaksCount / 20) * 100), 100) : 0,
+        color: '#06FFA5',
+      },
+      {
+        icon: 'time',
+        label: 'Minutes',
+        value: `${weekMinutes}m`,
+        change: weekMinutes > 0 ? Math.min(Math.round((weekMinutes / 60) * 100), 100) : 0,
+        color: '#00E5FF',
+      },
+      {
+        icon: 'flame',
+        label: 'Streak',
+        value: `${storedStreak.currentStreak} days`,
+        change: storedStreak.currentStreak > 0
+          ? Math.min(Math.round((storedStreak.currentStreak / 7) * 100), 100)
+          : 0,
+        color: '#FFD166',
+      },
+      {
+        icon: 'trophy',
+        label: 'XP',
+        value: `${userStats.totalXP}`,
+        change: userStats.totalXP > 0 ? Math.min(Math.round((userStats.totalXP / 100) * 100), 100) : 0,
+        color: '#B47EFF',
+      },
     ],
-    nextBreakMinutes: Math.floor(Math.random() * 20) + 5,
+    nextBreakMinutes: lastBreakMinutesAgo > 25 ? 0 : 25 - lastBreakMinutesAgo,
   };
-};
+}
 
 export function useHomeData(): UseHomeDataReturn {
   const [data, setData] = useState<HomeData | null>(null);
@@ -107,6 +201,7 @@ export function useHomeData(): UseHomeDataReturn {
   const [error, setError] = useState<Error | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [celebration, setCelebration] = useState<UseHomeDataReturn['shouldCelebrate']>(null);
+  const [previousData, setPreviousData] = useState<HomeData | null>(null);
 
   const fetchData = useCallback(async (isRefresh = false) => {
     try {
@@ -117,37 +212,38 @@ export function useHomeData(): UseHomeDataReturn {
       }
       setError(null);
 
-      const newData = await simulateApiCall(generateMockData(), isRefresh ? 500 : 1200);
+      const newData = await generateHomeData();
 
-      // Check for celebrations
-      if (data) {
+      // Check for celebrations (only on refresh, not initial load)
+      if (previousData && isRefresh) {
         // Goal complete celebration
         if (
           newData.dailyProgress.breaksTaken >= newData.dailyProgress.breaksGoal &&
-          data.dailyProgress.breaksTaken < data.dailyProgress.breaksGoal
+          previousData.dailyProgress.breaksTaken < previousData.dailyProgress.breaksGoal
         ) {
           setCelebration('goal_complete');
         }
         // Level up celebration
-        else if (newData.user.level > data.user.level) {
+        else if (newData.user.level > previousData.user.level) {
           setCelebration('new_level');
         }
         // Streak milestone (7, 14, 30, 60, 100 days)
         else if (
           [7, 14, 30, 60, 100].includes(newData.streak.current) &&
-          !([7, 14, 30, 60, 100].includes(data.streak.current))
+          !([7, 14, 30, 60, 100].includes(previousData.streak.current))
         ) {
           setCelebration('streak_milestone');
         }
         // First break of the day
         else if (
           newData.dailyProgress.breaksTaken === 1 &&
-          data.dailyProgress.breaksTaken === 0
+          previousData.dailyProgress.breaksTaken === 0
         ) {
           setCelebration('first_break');
         }
       }
 
+      setPreviousData(data);
       setData(newData);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch data'));
@@ -155,7 +251,7 @@ export function useHomeData(): UseHomeDataReturn {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [data]);
+  }, [data, previousData]);
 
   useEffect(() => {
     fetchData();
@@ -175,7 +271,7 @@ export function useHomeData(): UseHomeDataReturn {
   }, [data]);
 
   const isNewUser = useMemo(() => {
-    return data?.user.level === 1 && data?.dailyProgress.breaksTaken === 0;
+    return data?.user.level === 1 && data?.user.currentXP === 0 && data?.dailyProgress.breaksTaken === 0;
   }, [data]);
 
   const hasCompletedGoal = useMemo(() => {

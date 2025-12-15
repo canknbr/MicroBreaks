@@ -115,6 +115,78 @@ export default function StretchExercise({
         );
         break;
 
+      case 'stretch-back':
+        // Arch back motion
+        translateY.value = withRepeat(
+          withSequence(
+            withTiming(-15, { duration, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-10, { duration, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        rotate.value = withRepeat(
+          withSequence(
+            withTiming(-8, { duration, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-5, { duration, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        break;
+
+      case 'cat-cow':
+        // Alternating arch and round
+        translateY.value = withRepeat(
+          withSequence(
+            withTiming(15, { duration, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-15, { duration, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        rotate.value = withRepeat(
+          withSequence(
+            withTiming(10, { duration, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-10, { duration, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        break;
+
+      case 'seated-twist':
+        // Rotation motion
+        rotate.value = withRepeat(
+          withSequence(
+            withTiming(25, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-25, { duration: 2500, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        break;
+
+      case 'hip-opener':
+        // Gentle opening motion
+        scale.value = withRepeat(
+          withSequence(
+            withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+            withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        rotate.value = withRepeat(
+          withSequence(
+            withTiming(5, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-5, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        break;
+
       default:
         scale.value = withRepeat(
           withSequence(
@@ -145,6 +217,14 @@ export default function StretchExercise({
         return 'swap-horizontal';
       case 'stretch-forward':
         return 'arrow-down';
+      case 'stretch-back':
+        return 'arrow-up';
+      case 'cat-cow':
+        return 'sync';
+      case 'seated-twist':
+        return 'refresh';
+      case 'hip-opener':
+        return 'expand';
       case 'hold':
         return 'pause';
       default:

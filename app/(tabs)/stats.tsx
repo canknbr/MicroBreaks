@@ -1,9 +1,9 @@
 /**
  * Stats Screen - Detailed statistics, charts, and history
- * Premium analytics dashboard
+ * Premium analytics dashboard with real data
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   Platform,
   Pressable,
   Dimensions,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,37 +30,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
+import { useStatsData, StatsPeriod } from '@/hooks/useStatsData';
+import { CompletedBreak } from '@/services/storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Time period options
-const TIME_PERIODS = ['Week', 'Month', 'Year'];
-
-// Mock data
-const MOCK_STATS = {
-  totalBreaks: 156,
-  totalMinutes: 312,
-  avgPerDay: 5.2,
-  longestStreak: 12,
-  currentStreak: 5,
-  weeklyData: [3, 5, 4, 6, 5, 2, 4], // Breaks per day
-  breakTypes: [
-    { type: 'Neck', count: 42, color: '#06FFA5' },
-    { type: 'Eyes', count: 38, color: '#00E5FF' },
-    { type: 'Stretch', count: 31, color: '#B47EFF' },
-    { type: 'Walk', count: 28, color: '#FFD166' },
-    { type: 'Breathe', count: 17, color: '#4ECDC4' },
-  ],
-  recentBreaks: [
-    { id: 1, type: 'Neck Roll', duration: '2m', time: '2 hours ago', icon: '🧘' },
-    { id: 2, type: 'Eye Rest', duration: '1m', time: '4 hours ago', icon: '👁️' },
-    { id: 3, type: 'Deep Breath', duration: '1m', time: '6 hours ago', icon: '🌬️' },
-    { id: 4, type: 'Upper Body', duration: '3m', time: 'Yesterday', icon: '💪' },
-    { id: 5, type: 'Quick Walk', duration: '5m', time: 'Yesterday', icon: '🚶' },
-  ],
-};
-
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const TIME_PERIODS: { label: string; value: StatsPeriod }[] = [
+  { label: 'Week', value: 'week' },
+  { label: 'Month', value: 'month' },
+  { label: 'Year', value: 'year' },
+];
 
 // Animated Stat Card
 function StatCard({
@@ -78,12 +60,10 @@ function StatCard({
 }) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
-  const displayValue = useSharedValue(0);
 
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
     scale.value = withDelay(delay, withSpring(1));
-    displayValue.value = withDelay(delay, withTiming(value, { duration: 1000 }));
   }, [delay, value]);
 
   const containerStyle = useAnimatedStyle(() => ({
@@ -110,13 +90,19 @@ function StatCard({
 }
 
 // Bar Chart Component
-function BarChart({ data, delay }: { data: number[]; delay: number }) {
-  const maxValue = Math.max(...data);
+function BarChart({
+  data,
+  delay,
+}: {
+  data: { label: string; value: number; minutes: number }[];
+  delay: number;
+}) {
+  const maxValue = Math.max(...data.map((d) => d.value), 1);
   const barHeights = data.map(() => useSharedValue(0));
 
   useEffect(() => {
-    data.forEach((value, index) => {
-      const height = (value / maxValue) * 100;
+    data.forEach((item, index) => {
+      const height = (item.value / maxValue) * 100;
       barHeights[index].value = withDelay(
         delay + index * 50,
         withSpring(height, { damping: 15 })
@@ -124,10 +110,17 @@ function BarChart({ data, delay }: { data: number[]; delay: number }) {
     });
   }, [data, delay]);
 
+  // Show only labels that fit
+  const showLabel = (index: number) => {
+    if (data.length <= 7) return true;
+    if (data.length <= 14) return index % 2 === 0;
+    return index % 5 === 0;
+  };
+
   return (
     <View style={styles.chartContainer}>
       <View style={styles.barsContainer}>
-        {data.map((_, index) => {
+        {data.map((item, index) => {
           const barStyle = useAnimatedStyle(() => ({
             height: `${barHeights[index].value}%`,
           }));
@@ -135,8 +128,8 @@ function BarChart({ data, delay }: { data: number[]; delay: number }) {
           const isToday = index === data.length - 1;
 
           return (
-            <View key={index} style={styles.barWrapper}>
-              <View style={styles.barTrack}>
+            <View key={index} style={[styles.barWrapper, data.length > 7 && styles.barWrapperSmall]}>
+              <View style={[styles.barTrack, data.length > 7 && styles.barTrackSmall]}>
                 <Animated.View style={[styles.bar, barStyle]}>
                   <LinearGradient
                     colors={isToday ? ['#06FFA5', '#00E5FF'] : ['#3A3A4A', '#2A2A3A']}
@@ -144,9 +137,17 @@ function BarChart({ data, delay }: { data: number[]; delay: number }) {
                   />
                 </Animated.View>
               </View>
-              <Text style={[styles.barLabel, isToday && styles.barLabelActive]}>
-                {DAYS[index]}
-              </Text>
+              {showLabel(index) && (
+                <Text
+                  style={[
+                    styles.barLabel,
+                    isToday && styles.barLabelActive,
+                    data.length > 14 && styles.barLabelSmall,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              )}
             </View>
           );
         })}
@@ -158,14 +159,12 @@ function BarChart({ data, delay }: { data: number[]; delay: number }) {
 // Break Type Distribution
 function BreakTypeItem({
   item,
-  total,
   delay,
 }: {
-  item: typeof MOCK_STATS.breakTypes[0];
-  total: number;
+  item: { category: string; count: number; percentage: number; color: string };
   delay: number;
 }) {
-  const percentage = (item.count / total) * 100;
+  const percentage = item.percentage;
   const width = useSharedValue(0);
   const opacity = useSharedValue(0);
 
@@ -187,7 +186,7 @@ function BreakTypeItem({
       <View style={styles.typeHeader}>
         <View style={styles.typeInfo}>
           <View style={[styles.typeDot, { backgroundColor: item.color }]} />
-          <Text style={styles.typeName}>{item.type}</Text>
+          <Text style={styles.typeName}>{item.category}</Text>
         </View>
         <Text style={styles.typeCount}>{item.count} breaks</Text>
       </View>
@@ -203,7 +202,7 @@ function RecentBreakItem({
   item,
   index,
 }: {
-  item: typeof MOCK_STATS.recentBreaks[0];
+  item: CompletedBreak;
   index: number;
 }) {
   const opacity = useSharedValue(0);
@@ -219,23 +218,60 @@ function RecentBreakItem({
     transform: [{ translateX: translateX.value }],
   }));
 
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) return `${secs}s`;
+    return `${mins}m`;
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
   return (
     <Animated.View style={[styles.recentItem, style]}>
       <View style={styles.recentIcon}>
         <Text style={styles.recentIconText}>{item.icon}</Text>
       </View>
       <View style={styles.recentInfo}>
-        <Text style={styles.recentType}>{item.type}</Text>
-        <Text style={styles.recentTime}>{item.time}</Text>
+        <Text style={styles.recentType}>{item.title}</Text>
+        <Text style={styles.recentTime}>{formatTime(item.completedAt)}</Text>
       </View>
-      <Text style={styles.recentDuration}>{item.duration}</Text>
+      <Text style={styles.recentDuration}>{formatDuration(item.duration)}</Text>
     </Animated.View>
   );
 }
 
+// Empty State Component
+function EmptyState() {
+  return (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateEmoji}>📊</Text>
+      <Text style={styles.emptyStateTitle}>No Data Yet</Text>
+      <Text style={styles.emptyStateText}>
+        Complete your first break to start tracking your progress
+      </Text>
+    </View>
+  );
+}
+
 export default function StatsScreen() {
-  const [selectedPeriod, setSelectedPeriod] = useState('Week');
+  const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('week');
+  const [refreshing, setRefreshing] = useState(false);
   const headerOpacity = useSharedValue(0);
+
+  const stats = useStatsData(selectedPeriod);
 
   useEffect(() => {
     headerOpacity.value = withTiming(1, { duration: 600 });
@@ -246,12 +282,18 @@ export default function StatsScreen() {
     transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [20, 0]) }],
   }));
 
-  const handlePeriodChange = (period: string) => {
+  const handlePeriodChange = (period: StatsPeriod) => {
     Haptics.selectionAsync();
     setSelectedPeriod(period);
   };
 
-  const totalBreakTypes = MOCK_STATS.breakTypes.reduce((sum, t) => sum + t.count, 0);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await stats.refresh();
+    setRefreshing(false);
+  }, [stats.refresh]);
+
+    const hasData = stats.totalBreaks > 0;
 
   return (
     <View style={styles.container}>
@@ -264,6 +306,13 @@ export default function StatsScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#06FFA5"
+            />
+          }
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
@@ -275,100 +324,149 @@ export default function StatsScreen() {
           <View style={styles.periodSelector}>
             {TIME_PERIODS.map((period) => (
               <Pressable
-                key={period}
+                key={period.value}
                 style={[
                   styles.periodButton,
-                  selectedPeriod === period && styles.periodButtonActive,
+                  selectedPeriod === period.value && styles.periodButtonActive,
                 ]}
-                onPress={() => handlePeriodChange(period)}
+                onPress={() => handlePeriodChange(period.value)}
               >
                 <Text
                   style={[
                     styles.periodText,
-                    selectedPeriod === period && styles.periodTextActive,
+                    selectedPeriod === period.value && styles.periodTextActive,
                   ]}
                 >
-                  {period}
+                  {period.label}
                 </Text>
               </Pressable>
             ))}
           </View>
 
-          {/* Stats Grid */}
-          <View style={styles.statsGrid}>
-            <StatCard
-              icon="fitness"
-              label="Total Breaks"
-              value={MOCK_STATS.totalBreaks}
-              color="#06FFA5"
-              delay={200}
-            />
-            <StatCard
-              icon="time"
-              label="Minutes"
-              value={MOCK_STATS.totalMinutes}
-              color="#00E5FF"
-              delay={300}
-            />
-            <StatCard
-              icon="trending-up"
-              label="Avg/Day"
-              value={MOCK_STATS.avgPerDay}
-              suffix=""
-              color="#B47EFF"
-              delay={400}
-            />
-            <StatCard
-              icon="flame"
-              label="Best Streak"
-              value={MOCK_STATS.longestStreak}
-              suffix=" days"
-              color="#FFD166"
-              delay={500}
-            />
-          </View>
+          {stats.isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#06FFA5" />
+            </View>
+          ) : !hasData ? (
+            <EmptyState />
+          ) : (
+            <>
+              {/* Stats Grid */}
+              <View style={styles.statsGrid}>
+                <StatCard
+                  icon="fitness"
+                  label="Total Breaks"
+                  value={stats.totalBreaks}
+                  color="#06FFA5"
+                  delay={200}
+                />
+                <StatCard
+                  icon="time"
+                  label="Minutes"
+                  value={stats.totalMinutes}
+                  color="#00E5FF"
+                  delay={300}
+                />
+                <StatCard
+                  icon="flame"
+                  label="Current Streak"
+                  value={stats.currentStreak}
+                  suffix=" days"
+                  color="#FFD166"
+                  delay={400}
+                />
+                <StatCard
+                  icon="trophy"
+                  label="Best Streak"
+                  value={stats.longestStreak}
+                  suffix=" days"
+                  color="#B47EFF"
+                  delay={500}
+                />
+              </View>
 
-          {/* Weekly Chart */}
-          <View style={styles.chartCard}>
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
-            )}
-            <Text style={styles.chartTitle}>This Week</Text>
-            <BarChart data={MOCK_STATS.weeklyData} delay={400} />
-          </View>
+              {/* Chart */}
+              {stats.chartData.length > 0 && (
+                <View style={styles.chartCard}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                  )}
+                  <Text style={styles.chartTitle}>
+                    {selectedPeriod === 'week'
+                      ? 'This Week'
+                      : selectedPeriod === 'month'
+                      ? 'Last 30 Days'
+                      : 'This Year'}
+                  </Text>
+                  <BarChart data={stats.chartData} delay={400} />
+                </View>
+              )}
 
-          {/* Break Types Distribution */}
-          <View style={styles.sectionCard}>
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
-            )}
-            <Text style={styles.sectionTitle}>Break Types</Text>
-            {MOCK_STATS.breakTypes.map((item, index) => (
-              <BreakTypeItem
-                key={item.type}
-                item={item}
-                total={totalBreakTypes}
-                delay={500 + index * 100}
-              />
-            ))}
-          </View>
+              {/* Break Types Distribution */}
+              {stats.breakTypes.length > 0 && (
+                <View style={styles.sectionCard}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                  )}
+                  <Text style={styles.sectionTitle}>Break Types</Text>
+                  {stats.breakTypes.map((item, index) => (
+                    <BreakTypeItem
+                      key={item.category}
+                      item={item}
+                      delay={500 + index * 100}
+                    />
+                  ))}
+                </View>
+              )}
 
-          {/* Recent Activity */}
-          <View style={styles.sectionCard}>
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
-            )}
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            {MOCK_STATS.recentBreaks.map((item, index) => (
-              <RecentBreakItem key={item.id} item={item} index={index} />
-            ))}
-          </View>
+              {/* Recent Activity */}
+              {stats.recentBreaks.length > 0 && (
+                <View style={styles.sectionCard}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                  )}
+                  <Text style={styles.sectionTitle}>Recent Activity</Text>
+                  {stats.recentBreaks.map((item, index) => (
+                    <RecentBreakItem key={item.id} item={item} index={index} />
+                  ))}
+                </View>
+              )}
+
+              {/* XP & Level Card */}
+              <View style={styles.xpCard}>
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+                )}
+                <View style={styles.xpContent}>
+                  <View style={styles.xpLeft}>
+                    <Text style={styles.xpLabel}>Level {stats.level}</Text>
+                    <Text style={styles.xpValue}>{stats.xpEarned} XP</Text>
+                  </View>
+                  <View style={styles.xpRight}>
+                    <Text style={styles.xpNextLevel}>
+                      {100 - (stats.xpEarned % 100)} XP to next level
+                    </Text>
+                    <View style={styles.xpProgressTrack}>
+                      <View
+                        style={[
+                          styles.xpProgressBar,
+                          { width: `${stats.xpEarned % 100}%` },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </>
+          )}
 
           {/* Bottom Spacing */}
           <View style={styles.bottomSpacer} />
@@ -449,6 +547,31 @@ const styles = StyleSheet.create({
   periodTextActive: {
     color: '#06FFA5',
   },
+  loadingContainer: {
+    flex: 1,
+    paddingVertical: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateEmoji: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -512,6 +635,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  barWrapperSmall: {
+    paddingHorizontal: 1,
+  },
   barTrack: {
     width: 24,
     height: 120,
@@ -519,6 +645,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     justifyContent: 'flex-end',
+  },
+  barTrackSmall: {
+    width: 8,
+    borderRadius: 4,
   },
   bar: {
     width: '100%',
@@ -533,6 +663,9 @@ const styles = StyleSheet.create({
   barLabelActive: {
     color: '#06FFA5',
     fontWeight: '600',
+  },
+  barLabelSmall: {
+    fontSize: 9,
   },
   sectionCard: {
     borderRadius: 20,
@@ -621,6 +754,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#06FFA5',
+  },
+  xpCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: Spacing.lg,
+  },
+  xpContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  xpLeft: {
+    marginRight: 20,
+  },
+  xpLabel: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 4,
+  },
+  xpValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#06FFA5',
+  },
+  xpRight: {
+    flex: 1,
+  },
+  xpNextLevel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 8,
+  },
+  xpProgressTrack: {
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  xpProgressBar: {
+    height: '100%',
+    backgroundColor: '#06FFA5',
+    borderRadius: 4,
   },
   bottomSpacer: {
     height: 120,

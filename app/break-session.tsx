@@ -3,7 +3,7 @@
  * Full-screen immersive break execution experience
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,11 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useBreakSession } from '@/hooks/useBreakSession';
+import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
+import {
+  scheduleBreakReminder,
+  sendGoalCompletedNotification,
+} from '@/services/notifications';
 import {
   BreakHeader,
   BreakProgress,
@@ -31,6 +36,68 @@ export default function BreakSessionScreen() {
   const { breakId } = useLocalSearchParams<{ breakId: string }>();
 
   const { state, actions, stats, progress } = useBreakSession(breakId || 'deep-breath');
+
+  // Track if we've already saved this session
+  const savedRef = useRef(false);
+
+  // Save completed break to storage when session completes
+  useEffect(() => {
+    if (state.phase === 'completion' && state.exercise && !savedRef.current) {
+      savedRef.current = true;
+
+      const saveAndNotify = async () => {
+        // Save the completed break
+        await saveCompletedBreak({
+          breakId: state.exercise!.id,
+          title: state.exercise!.title,
+          category: state.exercise!.category,
+          icon: state.exercise!.icon,
+          color: state.exercise!.color,
+          duration: stats.totalDuration,
+          stepsCompleted: stats.stepsCompleted,
+          totalSteps: stats.totalSteps,
+          xpEarned: stats.xpEarned,
+          rating: state.feedbackRating,
+          completedAt: new Date().toISOString(),
+        });
+
+        // Schedule next break reminder
+        await scheduleBreakReminder();
+
+        // Check if daily goal is complete
+        const todayBreaks = await getTodayBreaks();
+        const userStats = await getUserStats();
+        const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), 3);
+
+        if (todayBreaks.length === dailyGoal) {
+          // Just completed daily goal
+          await sendGoalCompletedNotification();
+        }
+      };
+
+      saveAndNotify();
+    }
+  }, [state.phase, state.exercise, state.feedbackRating, stats]);
+
+  // Update rating when feedback is submitted
+  useEffect(() => {
+    if (state.phase === 'feedback' && state.feedbackRating && state.exercise) {
+      // Update the saved break with rating
+      saveCompletedBreak({
+        breakId: state.exercise.id,
+        title: state.exercise.title,
+        category: state.exercise.category,
+        icon: state.exercise.icon,
+        color: state.exercise.color,
+        duration: stats.totalDuration,
+        stepsCompleted: stats.stepsCompleted,
+        totalSteps: stats.totalSteps,
+        xpEarned: stats.xpEarned,
+        rating: state.feedbackRating,
+        completedAt: new Date().toISOString(),
+      });
+    }
+  }, [state.phase, state.feedbackRating]);
 
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -55,8 +122,10 @@ export default function BreakSessionScreen() {
       'eye-move-circle',
       'eye-move-horizontal',
       'eye-move-vertical',
+      'eye-move-figure8',
       'eye-focus-near',
       'eye-focus-far',
+      'eye-palming',
       'eye-rest',
     ];
     const neckAnimations: AnimationType[] = [

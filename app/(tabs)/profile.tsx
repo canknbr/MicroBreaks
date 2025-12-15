@@ -1,9 +1,9 @@
 /**
  * Profile Screen - Settings, notifications, and premium
- * User profile and app configuration
+ * User profile and app configuration with real notification settings
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   Platform,
   Pressable,
   Switch,
+  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,18 +30,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
-
-// Mock user data
-const USER_DATA = {
-  name: 'User',
-  level: 3,
-  title: 'Committed Breaker',
-  currentXP: 280,
-  nextLevelXP: 500,
-  totalBreaks: 156,
-  memberSince: 'Dec 2024',
-  isPremium: false,
-};
+import { useNotifications } from '@/hooks/useNotifications';
+import { getUserStats } from '@/services/breakHistory';
 
 // Level colors
 const LEVEL_COLORS: Record<number, [string, string]> = {
@@ -50,50 +42,47 @@ const LEVEL_COLORS: Record<number, [string, string]> = {
   5: ['#FFD166', '#FFAA00'],
 };
 
-// Settings sections
-const SETTINGS_SECTIONS = [
-  {
-    title: 'Reminders',
-    items: [
-      { id: 'notifications', icon: 'notifications', label: 'Push Notifications', type: 'toggle' },
-      { id: 'breakReminders', icon: 'alarm', label: 'Break Reminders', type: 'toggle' },
-      { id: 'reminderInterval', icon: 'time', label: 'Reminder Interval', type: 'value', value: '25 min' },
-      { id: 'quietHours', icon: 'moon', label: 'Quiet Hours', type: 'value', value: '10 PM - 8 AM' },
-    ],
-  },
-  {
-    title: 'Preferences',
-    items: [
-      { id: 'sounds', icon: 'volume-high', label: 'Sounds', type: 'toggle' },
-      { id: 'haptics', icon: 'phone-portrait', label: 'Haptic Feedback', type: 'toggle' },
-      { id: 'dailyGoal', icon: 'flag', label: 'Daily Goal', type: 'value', value: '8 breaks' },
-      { id: 'workSchedule', icon: 'calendar', label: 'Work Schedule', type: 'arrow' },
-    ],
-  },
-  {
-    title: 'About',
-    items: [
-      { id: 'help', icon: 'help-circle', label: 'Help & Support', type: 'arrow' },
-      { id: 'privacy', icon: 'shield-checkmark', label: 'Privacy Policy', type: 'arrow' },
-      { id: 'terms', icon: 'document-text', label: 'Terms of Service', type: 'arrow' },
-      { id: 'version', icon: 'information-circle', label: 'Version', type: 'value', value: '1.0.0' },
-    ],
-  },
+// Level titles
+const LEVEL_TITLES: Record<number, string> = {
+  1: 'Wellness Beginner',
+  2: 'Break Enthusiast',
+  3: 'Committed Breaker',
+  4: 'Wellness Warrior',
+  5: 'Break Master',
+};
+
+// Reminder interval options
+const REMINDER_INTERVALS = [
+  { label: '15 min', value: 15 },
+  { label: '25 min', value: 25 },
+  { label: '30 min', value: 30 },
+  { label: '45 min', value: 45 },
+  { label: '60 min', value: 60 },
 ];
 
 // Setting Item Component
 function SettingItem({
-  item,
-  index,
-  delay,
-  onToggle,
+  icon,
+  label,
+  type,
+  value,
   isEnabled,
+  onToggle,
+  onPress,
+  delay,
+  index,
+  disabled,
 }: {
-  item: typeof SETTINGS_SECTIONS[0]['items'][0];
-  index: number;
-  delay: number;
-  onToggle?: (id: string) => void;
+  icon: string;
+  label: string;
+  type: 'toggle' | 'value' | 'arrow';
+  value?: string;
   isEnabled?: boolean;
+  onToggle?: () => void;
+  onPress?: () => void;
+  delay: number;
+  index: number;
+  disabled?: boolean;
 }) {
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(20);
@@ -110,7 +99,7 @@ function SettingItem({
   }));
 
   const handlePressIn = () => {
-    if (item.type !== 'toggle') {
+    if (type !== 'toggle') {
       scale.value = withSpring(0.98);
     }
   };
@@ -120,8 +109,9 @@ function SettingItem({
   };
 
   const handlePress = () => {
-    if (item.type !== 'toggle') {
+    if (type !== 'toggle' && onPress) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onPress();
     }
   };
 
@@ -130,29 +120,30 @@ function SettingItem({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
-      disabled={item.type === 'toggle'}
+      disabled={type === 'toggle' || disabled}
     >
-      <Animated.View style={[styles.settingItem, animatedStyle]}>
+      <Animated.View style={[styles.settingItem, animatedStyle, disabled && styles.settingItemDisabled]}>
         <View style={styles.settingIcon}>
-          <Ionicons name={item.icon as any} size={20} color="rgba(255, 255, 255, 0.7)" />
+          <Ionicons name={icon as any} size={20} color={disabled ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.7)'} />
         </View>
-        <Text style={styles.settingLabel}>{item.label}</Text>
-        {item.type === 'toggle' && (
+        <Text style={[styles.settingLabel, disabled && styles.settingLabelDisabled]}>{label}</Text>
+        {type === 'toggle' && (
           <Switch
             value={isEnabled}
             onValueChange={() => {
               Haptics.selectionAsync();
-              onToggle?.(item.id);
+              onToggle?.();
             }}
             trackColor={{ false: 'rgba(255, 255, 255, 0.1)', true: '#06FFA5' }}
             thumbColor="#FFFFFF"
             ios_backgroundColor="rgba(255, 255, 255, 0.1)"
+            disabled={disabled}
           />
         )}
-        {item.type === 'value' && (
-          <Text style={styles.settingValue}>{item.value}</Text>
+        {type === 'value' && (
+          <Text style={styles.settingValue}>{value}</Text>
         )}
-        {item.type === 'arrow' && (
+        {type === 'arrow' && (
           <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.3)" />
         )}
       </Animated.View>
@@ -160,76 +151,108 @@ function SettingItem({
   );
 }
 
-// Settings Section Component
-function SettingsSection({
-  section,
-  delay,
-  toggleStates,
-  onToggle,
+// Interval Picker Modal
+function IntervalPickerModal({
+  visible,
+  currentValue,
+  onSelect,
+  onClose,
 }: {
-  section: typeof SETTINGS_SECTIONS[0];
-  delay: number;
-  toggleStates: Record<string, boolean>;
-  onToggle: (id: string) => void;
+  visible: boolean;
+  currentValue: number;
+  onSelect: (value: number) => void;
+  onClose: () => void;
 }) {
-  const opacity = useSharedValue(0);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
-  }, [delay]);
-
-  const headerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
   return (
-    <View style={styles.settingsSection}>
-      <Animated.Text style={[styles.sectionHeader, headerStyle]}>
-        {section.title}
-      </Animated.Text>
-      <View style={styles.sectionCard}>
-        {Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
-        )}
-        {section.items.map((item, index) => (
-          <SettingItem
-            key={item.id}
-            item={item}
-            index={index}
-            delay={delay}
-            onToggle={onToggle}
-            isEnabled={toggleStates[item.id]}
-          />
-        ))}
-      </View>
-    </View>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <View style={styles.modalContent}>
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
+          )}
+          <Text style={styles.modalTitle}>Reminder Interval</Text>
+          <Text style={styles.modalSubtitle}>How often should we remind you?</Text>
+          <View style={styles.intervalOptions}>
+            {REMINDER_INTERVALS.map((interval) => (
+              <Pressable
+                key={interval.value}
+                style={[
+                  styles.intervalOption,
+                  currentValue === interval.value && styles.intervalOptionActive,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onSelect(interval.value);
+                  onClose();
+                }}
+              >
+                <Text
+                  style={[
+                    styles.intervalOptionText,
+                    currentValue === interval.value && styles.intervalOptionTextActive,
+                  ]}
+                >
+                  {interval.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </Pressable>
+    </Modal>
   );
 }
 
 export default function ProfileScreen() {
-  const [toggleStates, setToggleStates] = useState<Record<string, boolean>>({
-    notifications: true,
-    breakReminders: true,
-    sounds: true,
-    haptics: true,
-  });
+  const {
+    settings,
+    hasPermission,
+    requestPermission,
+    toggleNotifications,
+    toggleBreakReminders,
+    toggleStreakAlerts,
+    toggleGoalNotifications,
+    setReminderInterval,
+    toggleQuietHours,
+  } = useNotifications();
+
+  const [userStats, setUserStats] = useState({ level: 1, totalXP: 0, totalBreaks: 0 });
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const [showIntervalPicker, setShowIntervalPicker] = useState(false);
 
   const headerOpacity = useSharedValue(0);
   const profileScale = useSharedValue(0.9);
   const profileOpacity = useSharedValue(0);
   const premiumPulse = useSharedValue(1);
 
-  const levelColors = LEVEL_COLORS[Math.min(USER_DATA.level, 5)] || LEVEL_COLORS[1];
-  const progress = (USER_DATA.currentXP / USER_DATA.nextLevelXP) * 100;
+  const level = Math.min(userStats.level, 5);
+  const levelColors = LEVEL_COLORS[level] || LEVEL_COLORS[1];
+  const levelTitle = LEVEL_TITLES[level] || LEVEL_TITLES[1];
+  const currentXP = userStats.totalXP % 100;
+  const progress = currentXP;
+
+  // Load user stats
+  useEffect(() => {
+    loadUserStats();
+  }, []);
+
+  const loadUserStats = async () => {
+    const stats = await getUserStats();
+    setUserStats({
+      level: stats.level,
+      totalXP: stats.totalXP,
+      totalBreaks: stats.totalBreaks,
+    });
+  };
 
   useEffect(() => {
     headerOpacity.value = withTiming(1, { duration: 600 });
     profileOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
     profileScale.value = withDelay(200, withSpring(1));
 
-    // Premium card pulse
     premiumPulse.value = withDelay(
       1000,
       withSequence(
@@ -253,14 +276,37 @@ export default function ProfileScreen() {
     transform: [{ scale: premiumPulse.value }],
   }));
 
-  const handleToggle = (id: string) => {
-    setToggleStates((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  const handleNotificationToggle = useCallback(async () => {
+    if (!settings.enabled && !hasPermission) {
+      const granted = await requestPermission();
+      if (!granted) {
+        Alert.alert(
+          'Notifications Disabled',
+          'Please enable notifications in your device settings to receive break reminders.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+    await toggleNotifications();
+  }, [settings.enabled, hasPermission, requestPermission, toggleNotifications]);
 
   const handlePremiumPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     console.log('Open premium');
   };
+
+  const formatQuietHours = () => {
+    const formatHour = (hour: number) => {
+      if (hour === 0) return '12 AM';
+      if (hour === 12) return '12 PM';
+      if (hour < 12) return `${hour} AM`;
+      return `${hour - 12} PM`;
+    };
+    return `${formatHour(settings.quietHoursStart)} - ${formatHour(settings.quietHoursEnd)}`;
+  };
+
+  const notificationsDisabled = !settings.enabled;
 
   return (
     <View style={styles.container}>
@@ -301,21 +347,21 @@ export default function ProfileScreen() {
                   end={{ x: 1, y: 1 }}
                 />
                 <View style={styles.avatarInner}>
-                  <Text style={styles.avatarText}>{USER_DATA.name[0]}</Text>
+                  <Text style={styles.avatarText}>C</Text>
                 </View>
                 <View style={styles.levelBadge}>
                   <LinearGradient
                     colors={levelColors}
                     style={StyleSheet.absoluteFill}
                   />
-                  <Text style={styles.levelText}>{USER_DATA.level}</Text>
+                  <Text style={styles.levelText}>{level}</Text>
                 </View>
               </View>
 
               {/* User Info */}
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>{USER_DATA.name}</Text>
-                <Text style={styles.userTitle}>{USER_DATA.title}</Text>
+                <Text style={styles.userName}>Can</Text>
+                <Text style={styles.userTitle}>{levelTitle}</Text>
 
                 {/* XP Progress */}
                 <View style={styles.xpContainer}>
@@ -330,7 +376,7 @@ export default function ProfileScreen() {
                     </View>
                   </View>
                   <Text style={styles.xpText}>
-                    {USER_DATA.currentXP}/{USER_DATA.nextLevelXP} XP
+                    {currentXP}/100 XP
                   </Text>
                 </View>
               </View>
@@ -339,53 +385,189 @@ export default function ProfileScreen() {
             {/* Stats Row */}
             <View style={styles.profileStats}>
               <View style={styles.profileStatItem}>
-                <Text style={styles.profileStatValue}>{USER_DATA.totalBreaks}</Text>
+                <Text style={styles.profileStatValue}>{userStats.totalBreaks}</Text>
                 <Text style={styles.profileStatLabel}>Total Breaks</Text>
               </View>
               <View style={styles.profileStatDivider} />
               <View style={styles.profileStatItem}>
-                <Text style={styles.profileStatValue}>{USER_DATA.memberSince}</Text>
-                <Text style={styles.profileStatLabel}>Member Since</Text>
+                <Text style={styles.profileStatValue}>{userStats.totalXP}</Text>
+                <Text style={styles.profileStatLabel}>Total XP</Text>
               </View>
             </View>
           </Animated.View>
 
           {/* Premium Card */}
-          {!USER_DATA.isPremium && (
-            <Pressable onPress={handlePremiumPress}>
-              <Animated.View style={[styles.premiumCard, premiumStyle]}>
-                <LinearGradient
-                  colors={['#FFD166', '#FF9500']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.premiumContent}>
-                  <View style={styles.premiumIcon}>
-                    <Ionicons name="star" size={24} color="#000" />
-                  </View>
-                  <View style={styles.premiumInfo}>
-                    <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-                    <Text style={styles.premiumDescription}>
-                      Unlock all breaks, advanced stats & more
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={24} color="#000" />
+          <Pressable onPress={handlePremiumPress}>
+            <Animated.View style={[styles.premiumCard, premiumStyle]}>
+              <LinearGradient
+                colors={['#FFD166', '#FF9500']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.premiumContent}>
+                <View style={styles.premiumIcon}>
+                  <Ionicons name="star" size={24} color="#000" />
                 </View>
-              </Animated.View>
-            </Pressable>
-          )}
+                <View style={styles.premiumInfo}>
+                  <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+                  <Text style={styles.premiumDescription}>
+                    Unlock all breaks, advanced stats & more
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#000" />
+              </View>
+            </Animated.View>
+          </Pressable>
 
-          {/* Settings Sections */}
-          {SETTINGS_SECTIONS.map((section, index) => (
-            <SettingsSection
-              key={section.title}
-              section={section}
-              delay={400 + index * 100}
-              toggleStates={toggleStates}
-              onToggle={handleToggle}
-            />
-          ))}
+          {/* Notifications Section */}
+          <View style={styles.settingsSection}>
+            <Text style={styles.sectionHeader}>NOTIFICATIONS</Text>
+            <View style={styles.sectionCard}>
+              {Platform.OS === 'ios' ? (
+                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+              )}
+              <SettingItem
+                icon="notifications"
+                label="Push Notifications"
+                type="toggle"
+                isEnabled={settings.enabled}
+                onToggle={handleNotificationToggle}
+                delay={400}
+                index={0}
+              />
+              <SettingItem
+                icon="alarm"
+                label="Break Reminders"
+                type="toggle"
+                isEnabled={settings.breakReminders}
+                onToggle={toggleBreakReminders}
+                delay={400}
+                index={1}
+                disabled={notificationsDisabled}
+              />
+              <SettingItem
+                icon="time"
+                label="Reminder Interval"
+                type="value"
+                value={`${settings.reminderIntervalMinutes} min`}
+                onPress={() => setShowIntervalPicker(true)}
+                delay={400}
+                index={2}
+                disabled={notificationsDisabled || !settings.breakReminders}
+              />
+              <SettingItem
+                icon="flame"
+                label="Streak Alerts"
+                type="toggle"
+                isEnabled={settings.streakAlerts}
+                onToggle={toggleStreakAlerts}
+                delay={400}
+                index={3}
+                disabled={notificationsDisabled}
+              />
+              <SettingItem
+                icon="flag"
+                label="Goal Notifications"
+                type="toggle"
+                isEnabled={settings.goalNotifications}
+                onToggle={toggleGoalNotifications}
+                delay={400}
+                index={4}
+                disabled={notificationsDisabled}
+              />
+              <SettingItem
+                icon="moon"
+                label="Quiet Hours"
+                type="toggle"
+                isEnabled={settings.quietHoursEnabled}
+                onToggle={toggleQuietHours}
+                delay={400}
+                index={5}
+                disabled={notificationsDisabled}
+              />
+              {settings.quietHoursEnabled && !notificationsDisabled && (
+                <View style={styles.quietHoursInfo}>
+                  <Text style={styles.quietHoursText}>
+                    No notifications {formatQuietHours()}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Preferences Section */}
+          <View style={styles.settingsSection}>
+            <Text style={styles.sectionHeader}>PREFERENCES</Text>
+            <View style={styles.sectionCard}>
+              {Platform.OS === 'ios' ? (
+                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+              )}
+              <SettingItem
+                icon="volume-high"
+                label="Sounds"
+                type="toggle"
+                isEnabled={soundEnabled}
+                onToggle={() => setSoundEnabled(!soundEnabled)}
+                delay={500}
+                index={0}
+              />
+              <SettingItem
+                icon="phone-portrait"
+                label="Haptic Feedback"
+                type="toggle"
+                isEnabled={hapticsEnabled}
+                onToggle={() => setHapticsEnabled(!hapticsEnabled)}
+                delay={500}
+                index={1}
+              />
+            </View>
+          </View>
+
+          {/* About Section */}
+          <View style={styles.settingsSection}>
+            <Text style={styles.sectionHeader}>ABOUT</Text>
+            <View style={styles.sectionCard}>
+              {Platform.OS === 'ios' ? (
+                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, styles.androidCardFallback]} />
+              )}
+              <SettingItem
+                icon="help-circle"
+                label="Help & Support"
+                type="arrow"
+                delay={600}
+                index={0}
+              />
+              <SettingItem
+                icon="shield-checkmark"
+                label="Privacy Policy"
+                type="arrow"
+                delay={600}
+                index={1}
+              />
+              <SettingItem
+                icon="document-text"
+                label="Terms of Service"
+                type="arrow"
+                delay={600}
+                index={2}
+              />
+              <SettingItem
+                icon="information-circle"
+                label="Version"
+                type="value"
+                value="1.0.0"
+                delay={600}
+                index={3}
+              />
+            </View>
+          </View>
 
           {/* Sign Out Button */}
           <Pressable style={styles.signOutButton}>
@@ -396,6 +578,14 @@ export default function ProfileScreen() {
           <View style={styles.bottomSpacer} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* Interval Picker Modal */}
+      <IntervalPickerModal
+        visible={showIntervalPicker}
+        currentValue={settings.reminderIntervalMinutes}
+        onSelect={setReminderInterval}
+        onClose={() => setShowIntervalPicker(false)}
+      />
     </View>
   );
 }
@@ -628,6 +818,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
+  settingItemDisabled: {
+    opacity: 0.5,
+  },
   settingIcon: {
     width: 32,
     height: 32,
@@ -642,9 +835,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#FFFFFF',
   },
+  settingLabelDisabled: {
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
   settingValue: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.5)',
+  },
+  quietHoursInfo: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  quietHoursText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.4)',
+    textAlign: 'center',
   },
   signOutButton: {
     alignItems: 'center',
@@ -658,5 +864,59 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 120,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: Spacing.lg,
+  },
+  androidModalFallback: {
+    backgroundColor: 'rgba(30, 30, 40, 0.98)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  intervalOptions: {
+    gap: 10,
+  },
+  intervalOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+  },
+  intervalOptionActive: {
+    backgroundColor: 'rgba(6, 255, 165, 0.2)',
+    borderWidth: 1,
+    borderColor: '#06FFA5',
+  },
+  intervalOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  intervalOptionTextActive: {
+    color: '#06FFA5',
   },
 });

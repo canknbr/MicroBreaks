@@ -128,6 +128,44 @@ export default function EyeExercise({
         );
         break;
 
+      case 'eye-move-figure8':
+        // Figure-8 movement pattern
+        const figure8Duration = 3000;
+        dotX.value = withRepeat(
+          withSequence(
+            withTiming(DOT_TRAVEL / 2, { duration: figure8Duration / 4, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-DOT_TRAVEL / 2, { duration: figure8Duration / 2, easing: Easing.inOut(Easing.ease) }),
+            withTiming(DOT_TRAVEL / 2, { duration: figure8Duration / 2, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0, { duration: figure8Duration / 4, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1
+        );
+        dotY.value = withRepeat(
+          withSequence(
+            withTiming(-DOT_TRAVEL / 3, { duration: figure8Duration / 4, easing: Easing.inOut(Easing.ease) }),
+            withTiming(DOT_TRAVEL / 3, { duration: figure8Duration / 2, easing: Easing.inOut(Easing.ease) }),
+            withTiming(-DOT_TRAVEL / 3, { duration: figure8Duration / 2, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0, { duration: figure8Duration / 4, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1
+        );
+        break;
+
+      case 'eye-palming':
+        // Calm dark mode for palming
+        dotX.value = withTiming(0, { duration: 100 });
+        dotY.value = withTiming(0, { duration: 100 });
+        dotScale.value = withTiming(3, { duration: 1000 });
+        dotOpacity.value = withRepeat(
+          withSequence(
+            withTiming(0.1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.3, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+        break;
+
       default:
         dotX.value = withTiming(0, { duration: 100 });
         dotY.value = withTiming(0, { duration: 100 });
@@ -152,12 +190,16 @@ export default function EyeExercise({
         return '🏔️';
       case 'eye-focus-near':
         return '📱';
+      case 'eye-move-figure8':
+        return '♾️';
+      case 'eye-palming':
+        return '🙌';
       default:
         return '👁️';
     }
   };
 
-  const isResting = animation === 'eye-rest';
+  const isResting = animation === 'eye-rest' || animation === 'eye-palming';
 
   return (
     <View style={styles.container}>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
@@ -10,6 +10,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { SplashScreen } from '@/components/splash';
+import {
+  initializeNotifications,
+  scheduleAllNotifications,
+  scheduleBreakReminder,
+} from '@/services/notifications';
 
 // Prevent the native splash screen from auto-hiding
 ExpoSplashScreen.preventAutoHideAsync();
@@ -35,14 +40,15 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [showSplash, setShowSplash] = useState(true);
   const [appIsReady, setAppIsReady] = useState(false);
-  const router = useRouter();
-  const segments = useSegments();
 
   useEffect(() => {
     async function prepare() {
       try {
-        // Pre-load fonts, make API calls, etc.
-        // await Font.loadAsync({ ... });
+        // Initialize notifications
+        await initializeNotifications();
+
+        // Schedule notifications
+        await scheduleAllNotifications();
 
         // Artificial delay to ensure smooth experience
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -54,6 +60,18 @@ export default function RootLayout() {
     }
 
     prepare();
+  }, []);
+
+  // Handle app state changes to reschedule break reminders
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // App came to foreground, reschedule break reminder
+        await scheduleBreakReminder();
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
 
   useEffect(() => {
