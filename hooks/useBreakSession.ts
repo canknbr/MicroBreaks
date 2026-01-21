@@ -7,6 +7,13 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Exercise, ExerciseStep, getExerciseById } from '@/data/exercises';
 import { useVoiceGuidance } from './useVoiceGuidance';
+import {
+  PREPARATION_DURATION,
+  INSTRUCTION_DURATION,
+  TRANSITION_DURATION,
+  XP_PER_SECOND,
+  XP_PER_STEP,
+} from '@/constants/config';
 
 export type SessionPhase =
   | 'loading'
@@ -55,9 +62,7 @@ interface UseBreakSessionReturn {
   progress: number; // 0-100
 }
 
-const PREPARATION_DURATION = 3; // seconds
-const INSTRUCTION_DURATION = 4; // seconds
-const TRANSITION_DURATION = 1; // seconds
+// Phase durations are imported from constants/config.ts
 
 export function useBreakSession(breakId: string): UseBreakSessionReturn {
   const { speak, stop: stopSpeech } = useVoiceGuidance();
@@ -101,7 +106,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     const stepsCompleted = phase === 'completion' || phase === 'feedback'
       ? exercise.steps.length
       : currentStepIndex;
-    const xpEarned = Math.round(totalTimeElapsed / 10) + stepsCompleted * 2;
+    const xpEarned = Math.round(totalTimeElapsed * XP_PER_SECOND) + stepsCompleted * XP_PER_STEP;
     return {
       totalDuration: totalTimeElapsed,
       stepsCompleted,
@@ -165,12 +170,13 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         break;
 
       case 'transition':
-        setCurrentStepIndex((prev) => prev + 1);
+        const nextStepIndex = currentStepIndex + 1;
+        const nextStepData = exercise.steps[nextStepIndex];
+        setCurrentStepIndex(nextStepIndex);
         setPhase('instruction');
         setTimeRemaining(INSTRUCTION_DURATION);
-        const nextStep = exercise.steps[currentStepIndex + 1];
-        if (nextStep) {
-          speakInstruction(nextStep.voiceInstruction || nextStep.instruction);
+        if (nextStepData) {
+          speakInstruction(nextStepData.voiceInstruction || nextStepData.instruction);
         }
         break;
 
@@ -244,12 +250,13 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (currentStepIndex < exercise.steps.length - 1) {
-      setCurrentStepIndex((prev) => prev + 1);
+      const newStepIndex = currentStepIndex + 1;
+      const nextStepToPlay = exercise.steps[newStepIndex];
+      setCurrentStepIndex(newStepIndex);
       setPhase('instruction');
-      const nextStep = exercise.steps[currentStepIndex + 1];
       setTimeRemaining(INSTRUCTION_DURATION);
-      if (nextStep) {
-        speakInstruction(nextStep.voiceInstruction || nextStep.instruction);
+      if (nextStepToPlay) {
+        speakInstruction(nextStepToPlay.voiceInstruction || nextStepToPlay.instruction);
       }
     } else {
       setPhase('completion');

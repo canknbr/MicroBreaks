@@ -85,15 +85,7 @@ export default function RootLayout() {
 
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
-
-    // Navigate to onboarding (or check if onboarding is complete)
-    // TODO: Check onboarding status from store
-    // const isOnboardingComplete = useOnboardingStore.getState().isComplete;
-    // if (isOnboardingComplete) {
-    //   router.replace('/(tabs)');
-    // } else {
-    //   router.replace('/(onboarding)/welcome');
-    // }
+    // Onboarding navigation is handled by app/index.tsx using useOnboardingStore
   }, []);
 
   // Don't render anything until app is ready

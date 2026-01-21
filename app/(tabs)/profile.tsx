@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '@/types/icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -84,7 +85,7 @@ function SettingItem({
   disabled,
   theme,
 }: {
-  icon: string;
+  icon: IoniconsName;
   label: string;
   type: 'toggle' | 'value' | 'arrow';
   value?: string;
@@ -141,7 +142,7 @@ function SettingItem({
         disabled && styles.settingItemDisabled,
       ]}>
         <View style={[styles.settingIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
-          <Ionicons name={icon as any} size={20} color={disabled ? theme.text.muted : theme.text.secondary} />
+          <Ionicons name={icon} size={20} color={disabled ? theme.text.muted : theme.text.secondary} />
         </View>
         <Text style={[styles.settingLabel, { color: theme.text.primary }, disabled && { color: theme.text.muted }]}>{label}</Text>
         {type === 'toggle' && (
@@ -341,7 +342,7 @@ function ThemePickerModal({
   onSelect: (value: 'dark' | 'light' | 'system') => void;
   onClose: () => void;
 }) {
-  const themeIcons: Record<string, string> = {
+  const themeIcons: Record<string, IoniconsName> = {
     dark: 'moon',
     light: 'sunny',
     system: 'phone-portrait',
@@ -374,7 +375,7 @@ function ThemePickerModal({
                 }}
               >
                 <Ionicons
-                  name={themeIcons[option.value] as any}
+                  name={themeIcons[option.value]}
                   size={20}
                   color={currentValue === option.value ? '#06FFA5' : 'rgba(255, 255, 255, 0.6)'}
                   style={styles.themeOptionIcon}
@@ -482,7 +483,7 @@ export default function ProfileScreen() {
 
   const handlePremiumPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    console.log('Open premium');
+    // TODO: Implement premium screen navigation
   };
 
   const formatQuietHours = () => {

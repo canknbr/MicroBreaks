@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MicroBreaks - Smart screen break reminders with guided exercises for eyes, posture, and wellness. Take care of your health while working on screens.">
+    <meta name="keywords" content="break reminder, screen break, eye strain, posture, wellness, productivity, health app">
+    <meta name="author" content="Can Kanbur">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://microbreaks.app/">
+    <meta property="og:title" content="MicroBreaks - Smart Screen Break Reminders">
+    <meta property="og:description" content="Take care of your eyes, body, and mind with intelligent break reminders and guided exercises.">
+    <meta property="og:image" content="https://microbreaks.app/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://microbreaks.app/">
+    <meta property="twitter:title" content="MicroBreaks - Smart Screen Break Reminders">
+    <meta property="twitter:description" content="Take care of your eyes, body, and mind with intelligent break reminders and guided exercises.">
+    <meta property="twitter:image" content="https://microbreaks.app/og-image.png">
+
+    <title>MicroBreaks - Smart Screen Break Reminders</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4A90D9;
+            --primary-dark: #3A7BC8;
+            --secondary: #34C4B5;
+            --bg-light: #E6F4FE;
+            --bg-dark: #1A1A2E;
+            --text-primary: #1A1A2E;
+            --text-secondary: #6B7280;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--white);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        nav a {
+            margin-left: 30px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 0 100px;
+            background: linear-gradient(180deg, var(--bg-light) 0%, var(--white) 100%);
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .store-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .store-btn {
+            display: inline-block;
+            height: 54px;
+        }
+
+        .store-btn img {
+            height: 100%;
+        }
+
+        .hero-image {
+            margin-top: 60px;
+            max-width: 100%;
+        }
+
+        .hero-image img {
+            max-width: 800px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-title p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+
+        /* Exercises Section */
+        .exercises {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+
+        .exercise-categories {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .exercise-category {
+            background: var(--white);
+            padding: 24px 32px;
+            border-radius: 16px;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .exercise-category .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .exercise-category h4 {
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 80px 0;
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat h3 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Privacy Section */
+        .privacy {
+            padding: 100px 0;
+        }
+
+        .privacy-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .privacy-text h2 {
+            font-size: 40px;
+            margin-bottom: 24px;
+        }
+
+        .privacy-text p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .privacy-features {
+            list-style: none;
+        }
+
+        .privacy-features li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .privacy-features li::before {
+            content: "✓";
+            color: var(--secondary);
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 0;
+            background: var(--bg-dark);
+            color: var(--white);
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 40px;
+            margin-bottom: 24px;
+        }
+
+        .cta p {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-bottom: 40px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 0 40px;
+            background: var(--text-primary);
+            color: var(--white);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand p {
+            opacity: 0.7;
+            margin-top: 16px;
+        }
+
+        .footer-links h4 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .footer-links a {
+            display: block;
+            color: var(--white);
+            text-decoration: none;
+            opacity: 0.7;
+            margin-bottom: 12px;
+            transition: opacity 0.2s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            opacity: 0.5;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .privacy-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+
+            nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="/" class="logo">MicroBreaks</a>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="#exercises">Exercises</a>
+                <a href="/faq">FAQ</a>
+                <a href="/support">Support</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Smart Breaks for<br>Healthier Screen Time</h1>
+            <p>Take care of your eyes, body, and mind with intelligent break reminders and 50+ guided exercises.</p>
+
+            <div class="store-buttons">
+                <a href="#" class="store-btn">
+                    <img src="/images/app-store-badge.svg" alt="Download on the App Store">
+                </a>
+                <a href="#" class="store-btn">
+                    <img src="/images/google-play-badge.svg" alt="Get it on Google Play">
+                </a>
+            </div>
+
+            <div class="hero-image">
+                <img src="/images/hero-screenshot.png" alt="MicroBreaks App Screenshot">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Everything You Need</h2>
+                <p>MicroBreaks helps you build healthier screen habits with smart features.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⏰</div>
+                    <h3>Smart Reminders</h3>
+                    <p>Customizable break intervals that adapt to your work schedule. Never miss a break again.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧘</div>
+                    <h3>Guided Exercises</h3>
+                    <p>50+ exercises designed by wellness experts for eyes, neck, back, wrists, and breathing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Track Progress</h3>
+                    <p>Build healthy habits with streaks, achievements, and personalized insights.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <h3>Focus Mode</h3>
+                    <p>Do Not Disturb integration for focused work sessions when you need it.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Works Offline</h3>
+                    <p>No internet required. All features work completely offline.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Beautiful Design</h3>
+                    <p>Clean, calming interface that doesn't distract from your work.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Exercises Section -->
+    <section class="exercises" id="exercises">
+        <div class="container">
+            <div class="section-title">
+                <h2>5 Exercise Categories</h2>
+                <p>Comprehensive exercises for every part of your body affected by screen time.</p>
+            </div>
+
+            <div class="exercise-categories">
+                <div class="exercise-category">
+                    <div class="icon">👁️</div>
+                    <h4>Eyes</h4>
+                </div>
+                <div class="exercise-category">
+                    <div class="icon">🧣</div>
+                    <h4>Neck</h4>
+                </div>
+                <div class="exercise-category">
+                    <div class="icon">🪑</div>
+                    <h4>Back</h4>
+                </div>
+                <div class="exercise-category">
+                    <div class="icon">✋</div>
+                    <h4>Wrists</h4>
+                </div>
+                <div class="exercise-category">
+                    <div class="icon">🌬️</div>
+                    <h4>Breathing</h4>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat">
+                    <h3>50+</h3>
+                    <p>Guided Exercises</p>
+                </div>
+                <div class="stat">
+                    <h3>5</h3>
+                    <p>Exercise Categories</p>
+                </div>
+                <div class="stat">
+                    <h3>100%</h3>
+                    <p>Free Forever</p>
+                </div>
+                <div class="stat">
+                    <h3>0</h3>
+                    <p>Data Collected</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Privacy Section -->
+    <section class="privacy">
+        <div class="container">
+            <div class="privacy-content">
+                <div class="privacy-text">
+                    <h2>Privacy First</h2>
+                    <p>Your health data is personal. That's why we built MicroBreaks with privacy at its core.</p>
+                    <ul class="privacy-features">
+                        <li>All data stored locally on your device</li>
+                        <li>No account required</li>
+                        <li>No cloud sync</li>
+                        <li>No tracking or analytics</li>
+                        <li>GDPR and KVKK compliant</li>
+                    </ul>
+                </div>
+                <div class="privacy-image">
+                    <img src="/images/privacy-illustration.png" alt="Privacy First" style="max-width: 100%;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Start Taking Better Breaks</h2>
+            <p>Download MicroBreaks today and build healthier screen habits.</p>
+            <div class="store-buttons">
+                <a href="#" class="store-btn">
+                    <img src="/images/app-store-badge.svg" alt="Download on the App Store">
+                </a>
+                <a href="#" class="store-btn">
+                    <img src="/images/google-play-badge.svg" alt="Get it on Google Play">
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">MicroBreaks</div>
+                    <p>Smart screen break reminders for healthier you.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#exercises">Exercises</a>
+                    <a href="/faq">FAQ</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Connect</h4>
+                    <a href="mailto:support@microbreaks.app">Support</a>
+                    <a href="https://twitter.com/MicroBreaksApp">Twitter</a>
+                    <a href="https://instagram.com/microbreaks.app">Instagram</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 MicroBreaks. All rights reserved.</p>
+                <p>Made with ❤️ in Istanbul</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Analytics (placeholder) -->
+    <script>
+        // Add your analytics code here
+        // Example: Mixpanel, Amplitude, Google Analytics
+    </script>
+</body>
+</html>

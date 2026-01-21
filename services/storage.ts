@@ -13,14 +13,49 @@ export const STORAGE_KEYS = {
   SETTINGS: '@microbreaks/settings',
 } as const;
 
-// Generic storage operations
+// Error types for better error handling
+export class StorageError extends Error {
+  constructor(
+    message: string,
+    public readonly key: string,
+    public readonly operation: 'read' | 'write' | 'remove' | 'clear',
+    public readonly originalError?: unknown
+  ) {
+    super(message);
+    this.name = 'StorageError';
+  }
+}
+
+// Result type for operations that need to distinguish between null and error
+export interface StorageResult<T> {
+  data: T | null;
+  error: StorageError | null;
+}
+
+// Generic storage operations with improved error handling
 export async function getItem<T>(key: string): Promise<T | null> {
   try {
     const value = await AsyncStorage.getItem(key);
     return value ? JSON.parse(value) : null;
   } catch (error) {
-    console.error(`Error reading ${key}:`, error);
+    // Log for debugging but don't expose to user - caller should handle gracefully
+    if (__DEV__) {
+      console.error(`Storage read error for ${key}:`, error);
+    }
     return null;
+  }
+}
+
+// Get item with explicit error handling
+export async function getItemWithError<T>(key: string): Promise<StorageResult<T>> {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    return { data: value ? JSON.parse(value) : null, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: new StorageError(`Failed to read ${key}`, key, 'read', error),
+    };
   }
 }
 
@@ -29,8 +64,20 @@ export async function setItem<T>(key: string, value: T): Promise<boolean> {
     await AsyncStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
-    console.error(`Error saving ${key}:`, error);
+    if (__DEV__) {
+      console.error(`Storage write error for ${key}:`, error);
+    }
     return false;
+  }
+}
+
+// Set item with explicit error handling
+export async function setItemWithError<T>(key: string, value: T): Promise<StorageError | null> {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+    return null;
+  } catch (error) {
+    return new StorageError(`Failed to save ${key}`, key, 'write', error);
   }
 }
 
@@ -39,7 +86,9 @@ export async function removeItem(key: string): Promise<boolean> {
     await AsyncStorage.removeItem(key);
     return true;
   } catch (error) {
-    console.error(`Error removing ${key}:`, error);
+    if (__DEV__) {
+      console.error(`Storage remove error for ${key}:`, error);
+    }
     return false;
   }
 }
@@ -50,7 +99,9 @@ export async function clearAll(): Promise<boolean> {
     await AsyncStorage.multiRemove(keys);
     return true;
   } catch (error) {
-    console.error('Error clearing storage:', error);
+    if (__DEV__) {
+      console.error('Storage clear error:', error);
+    }
     return false;
   }
 }

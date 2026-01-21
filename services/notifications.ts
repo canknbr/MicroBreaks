@@ -8,6 +8,11 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from './storage';
 import { getTodayBreaks, getStreakData, getUserStats } from './breakHistory';
+import {
+  STREAK_REMINDER_HOUR,
+  GOAL_REMINDER_HOUR,
+  MIN_DAILY_GOAL,
+} from '@/constants/config';
 
 // Notification channel IDs
 export const NOTIFICATION_CHANNELS = {
@@ -124,7 +129,7 @@ export async function initializeNotifications(): Promise<void> {
 // Request notification permissions
 export async function requestNotificationPermissions(): Promise<boolean> {
   if (!Device.isDevice) {
-    console.log('Notifications require a physical device');
+    // Notifications require a physical device - silently return false in simulator
     return false;
   }
 
@@ -137,7 +142,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Notification permission not granted');
+    // Permission not granted - silently return false
     return false;
   }
 
@@ -275,10 +280,10 @@ export async function scheduleStreakProtection(): Promise<string | null> {
     return null; // No streak to protect
   }
 
-  // Schedule for 7 PM if no breaks taken
+  // Schedule for streak reminder hour if no breaks taken
   const now = new Date();
   const reminderTime = new Date(now);
-  reminderTime.setHours(19, 0, 0, 0); // 7 PM
+  reminderTime.setHours(STREAK_REMINDER_HOUR, 0, 0, 0);
 
   // If it's already past 7 PM, schedule for tomorrow
   if (now >= reminderTime) {
@@ -316,7 +321,7 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
 
   const todayBreaks = await getTodayBreaks();
   const userStats = await getUserStats();
-  const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), 3);
+  const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), MIN_DAILY_GOAL);
 
   // If already met goal, don't remind
   if (todayBreaks.length >= dailyGoal) {
@@ -326,12 +331,12 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
   // Calculate remaining breaks
   const remaining = dailyGoal - todayBreaks.length;
 
-  // Schedule for 5 PM
+  // Schedule for goal reminder hour
   const now = new Date();
   const reminderTime = new Date(now);
-  reminderTime.setHours(17, 0, 0, 0);
+  reminderTime.setHours(GOAL_REMINDER_HOUR, 0, 0, 0);
 
-  // If past 5 PM, don't schedule
+  // If past the reminder hour, don't schedule
   if (now >= reminderTime) {
     return null;
   }

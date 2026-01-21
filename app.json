@@ -8,9 +8,27 @@
     "scheme": "microbreaks",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "owner": "cankanbur",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cankanbur.MicroBreaks"
+      "bundleIdentifier": "com.cankanbur.MicroBreaks",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MicroBreaks uses the camera for future AR exercise features.",
+        "UIBackgroundModes": ["fetch", "remote-notification"],
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +39,14 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.cankanbur.MicroBreaks"
+      "package": "com.cankanbur.MicroBreaks",
+      "versionCode": 1,
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "output": "static",
@@ -33,15 +58,43 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 120,
+          "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "backgroundColor": "#E6F4FE",
+          "dark": {
+            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#1A1A2E"
+          }
         }
-      ]
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#4A90D9",
+          "sounds": ["./assets/sounds/notification.wav"]
+        }
+      ],
+      "@sentry/react-native/expo"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/your-project-id"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "locales": {
+      "en": "./i18n/locales/en.json",
+      "tr": "./i18n/locales/tr.json"
     }
   }
 }

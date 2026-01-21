@@ -67,8 +67,8 @@ export function useNotifications(): UseNotificationsReturn {
     });
 
     // Set up foreground notification listener
-    const receivedSubscription = addNotificationReceivedListener((notification) => {
-      console.log('Notification received in foreground:', notification);
+    const receivedSubscription = addNotificationReceivedListener((_notification) => {
+      // Notification received in foreground - handled silently
     });
 
     // Handle app state changes to reschedule notifications

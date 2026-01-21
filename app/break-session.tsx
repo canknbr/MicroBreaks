@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
 import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
+import { STREAK_MILESTONES, MIN_DAILY_GOAL } from '@/constants/config';
 import {
   scheduleBreakReminder,
   sendGoalCompletedNotification,
@@ -72,7 +73,7 @@ export default function BreakSessionScreen() {
 
       const saveAndNotify = async () => {
         // Save the completed break to history
-        await saveCompletedBreak({
+        const saveResult = await saveCompletedBreak({
           breakId: state.exercise!.id,
           title: state.exercise!.title,
           category: state.exercise!.category,
@@ -85,6 +86,10 @@ export default function BreakSessionScreen() {
           rating: state.feedbackRating,
           completedAt: new Date().toISOString(),
         });
+
+        if (!saveResult.success && __DEV__) {
+          console.warn('Failed to save break to history:', saveResult.error);
+        }
 
         // Sync with user store
         incrementBreaks(); // Increment total breaks
@@ -101,7 +106,7 @@ export default function BreakSessionScreen() {
         // Check if daily goal is complete
         const todayBreaks = await getTodayBreaks();
         const userStats = await getUserStats();
-        const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), 3);
+        const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), MIN_DAILY_GOAL);
 
         if (todayBreaks.length === dailyGoal) {
           // Just completed daily goal - create in-app notification
@@ -109,9 +114,8 @@ export default function BreakSessionScreen() {
           await sendGoalCompletedNotification();
         }
 
-        // Check for streak milestones (7, 14, 30, 60, 100 days)
-        const streakMilestones = [7, 14, 30, 60, 100];
-        if (streakMilestones.includes(currentStreak)) {
+        // Check for streak milestones
+        if (STREAK_MILESTONES.includes(currentStreak as typeof STREAK_MILESTONES[number])) {
           addNotification(createStreakNotification(currentStreak));
         }
       };
@@ -145,7 +149,7 @@ export default function BreakSessionScreen() {
   // Update rating when feedback is submitted
   useEffect(() => {
     if (state.phase === 'feedback' && state.feedbackRating && state.exercise) {
-      // Update the saved break with rating
+      // Update the saved break with rating (fire and forget - errors handled gracefully)
       saveCompletedBreak({
         breakId: state.exercise.id,
         title: state.exercise.title,
@@ -158,6 +162,8 @@ export default function BreakSessionScreen() {
         xpEarned: stats.xpEarned,
         rating: state.feedbackRating,
         completedAt: new Date().toISOString(),
+      }).catch(() => {
+        // Silently handle save error - user experience not impacted
       });
     }
   }, [state.phase, state.feedbackRating]);

@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '@/types/icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,7 +32,7 @@ interface SmartInsightProps {
   delay?: number;
 }
 
-const INSIGHT_CONFIG: Record<InsightType, { icon: string; colors: [string, string]; iconColor: string }> = {
+const INSIGHT_CONFIG: Record<InsightType, { icon: IoniconsName; colors: [string, string]; iconColor: string }> = {
   warning: {
     icon: 'alert-circle',
     colors: ['rgba(255, 107, 107, 0.15)', 'rgba(255, 107, 107, 0.05)'],
@@ -135,7 +136,7 @@ function SmartInsight({
 
       <View style={styles.content}>
         <Animated.View style={[styles.iconContainer, { backgroundColor: `${config.iconColor}20` }, iconStyle]}>
-          <Ionicons name={config.icon as any} size={20} color={config.iconColor} />
+          <Ionicons name={config.icon} size={20} color={config.iconColor} />
         </Animated.View>
 
         <View style={styles.textContainer}>

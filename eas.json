@@ -1,0 +1,64 @@
+{
+  "$schema": "https://eas.expo.dev/eas-json.schema.json",
+  "cli": {
+    "version": ">= 14.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "development"
+      },
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "preview"
+      },
+      "channel": "preview"
+    },
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "APP_ENV": "production"
+      },
+      "channel": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "${APPLE_ID}",
+        "ascAppId": "${ASC_APP_ID}",
+        "appleTeamId": "${APPLE_TEAM_ID}"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
+  }
+}

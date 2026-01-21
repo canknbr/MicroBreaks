@@ -7,12 +7,45 @@ import {
   STORAGE_KEYS,
   getItem,
   setItem,
+  setItemWithError,
   CompletedBreak,
   StreakData,
   UserStats,
   DEFAULT_STREAK_DATA,
   DEFAULT_USER_STATS,
+  StorageError,
 } from './storage';
+import {
+  MAX_BREAK_HISTORY,
+  MAX_STREAK_HISTORY_DAYS,
+} from '@/constants/config';
+import { validateBreakDuration, validateXP } from '@/utils/validation';
+
+// Result type for save operations
+export interface SaveBreakResult {
+  success: boolean;
+  error?: StorageError;
+}
+
+/**
+ * Get local date string in YYYY-MM-DD format
+ * This ensures consistent date handling regardless of timezone
+ */
+function getLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Get the start of day in local timezone
+ */
+function getLocalStartOfDay(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
 
 // Get all completed breaks
 export async function getBreakHistory(): Promise<CompletedBreak[]> {
@@ -62,22 +95,34 @@ export async function getMonthBreaks(): Promise<CompletedBreak[]> {
 }
 
 // Save a completed break
-export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>): Promise<boolean> {
+export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>): Promise<SaveBreakResult> {
   try {
     const history = await getBreakHistory();
+
+    // Validate and sanitize input data
+    const validatedDuration = validateBreakDuration(breakData.duration);
+    const validatedXP = validateXP(breakData.xpEarned);
+
     const newBreak: CompletedBreak = {
       ...breakData,
       id: `break_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      duration: validatedDuration.value,
+      xpEarned: validatedXP,
+      stepsCompleted: Math.max(0, Math.round(breakData.stepsCompleted)),
+      totalSteps: Math.max(1, Math.round(breakData.totalSteps)),
     };
 
     history.unshift(newBreak); // Add to beginning
 
-    // Keep only last 500 breaks to manage storage
-    if (history.length > 500) {
-      history.length = 500;
+    // Keep only last N breaks to manage storage
+    if (history.length > MAX_BREAK_HISTORY) {
+      history.length = MAX_BREAK_HISTORY;
     }
 
-    await setItem(STORAGE_KEYS.BREAK_HISTORY, history);
+    const saveError = await setItemWithError(STORAGE_KEYS.BREAK_HISTORY, history);
+    if (saveError) {
+      return { success: false, error: saveError };
+    }
 
     // Update streak
     await updateStreak();
@@ -85,10 +130,12 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
     // Update user stats
     await updateUserStats(newBreak);
 
-    return true;
+    return { success: true };
   } catch (error) {
-    console.error('Error saving break:', error);
-    return false;
+    if (__DEV__) {
+      console.error('Error saving break:', error);
+    }
+    return { success: false };
   }
 }
 
@@ -101,9 +148,8 @@ export async function getStreakData(): Promise<StreakData> {
 // Update streak based on break history
 async function updateStreak(): Promise<void> {
   const streakData = await getStreakData();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
+  const today = getLocalStartOfDay(new Date());
+  const todayStr = getLocalDateString(today);
 
   const lastBreakDate = streakData.lastBreakDate;
 
@@ -113,8 +159,11 @@ async function updateStreak(): Promise<void> {
     streakData.longestStreak = 1;
     streakData.lastBreakDate = todayStr;
   } else {
-    const lastDate = new Date(lastBreakDate);
+    // Parse the stored date string as local date (YYYY-MM-DD format)
+    const [year, month, day] = lastBreakDate.split('-').map(Number);
+    const lastDate = new Date(year, month - 1, day);
     lastDate.setHours(0, 0, 0, 0);
+
     const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
@@ -138,9 +187,9 @@ async function updateStreak(): Promise<void> {
     historyEntry.count += 1;
   } else {
     streakData.streakHistory.unshift({ date: todayStr, count: 1 });
-    // Keep only last 90 days
-    if (streakData.streakHistory.length > 90) {
-      streakData.streakHistory.length = 90;
+    // Keep only last N days
+    if (streakData.streakHistory.length > MAX_STREAK_HISTORY_DAYS) {
+      streakData.streakHistory.length = MAX_STREAK_HISTORY_DAYS;
     }
   }
 
@@ -294,13 +343,18 @@ export async function checkStreakStatus(): Promise<{
     return { isAtRisk: false, hoursUntilReset: 0 };
   }
 
-  const lastBreak = new Date(streakData.lastBreakDate);
-  const now = new Date();
-  const tomorrow = new Date(lastBreak);
-  tomorrow.setDate(tomorrow.getDate() + 2);
-  tomorrow.setHours(0, 0, 0, 0);
+  // Parse the stored date string as local date (YYYY-MM-DD format)
+  const [year, month, day] = streakData.lastBreakDate.split('-').map(Number);
+  const lastBreak = new Date(year, month - 1, day);
 
-  const hoursRemaining = Math.max(0, (tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60));
+  const now = new Date();
+
+  // Calculate when the streak would reset (end of the day after lastBreak)
+  const streakResetTime = new Date(lastBreak);
+  streakResetTime.setDate(streakResetTime.getDate() + 2);
+  streakResetTime.setHours(0, 0, 0, 0);
+
+  const hoursRemaining = Math.max(0, (streakResetTime.getTime() - now.getTime()) / (1000 * 60 * 60));
 
   return {
     isAtRisk: hoursRemaining > 0 && hoursRemaining < 6,

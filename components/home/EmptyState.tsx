@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '@/types/icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,7 +29,7 @@ interface EmptyStateProps {
 }
 
 const EMPTY_STATE_CONFIG: Record<EmptyStateType, {
-  icon: string;
+  icon: IoniconsName;
   title: string;
   message: string;
   actionLabel: string;
@@ -138,7 +139,7 @@ export default function EmptyState({ type, onAction }: EmptyStateProps) {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         />
-        <Ionicons name={config.icon as any} size={32} color="#000" />
+        <Ionicons name={config.icon} size={32} color="#000" />
       </Animated.View>
 
       <Text style={[styles.title, { color: theme.text.primary }]}>{config.title}</Text>
