@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '@/types/icons';
 
 import Animated, {
   useSharedValue,
@@ -97,7 +98,7 @@ function StatCard({
         )
       )}
       <View style={[styles.statIconContainer, { backgroundColor: `${color}12` }]}>
-        <Ionicons name={icon as any} size={20} color={color} />
+        <Ionicons name={icon as IoniconsName} size={20} color={color} />
       </View>
       <Text style={[styles.statValue, { color: theme.text.primary }]}>
         {Math.round(value)}{suffix}
@@ -410,14 +411,18 @@ export default function StatsScreen() {
           </Animated.View>
 
           {/* Period Selector */}
-          <View style={[styles.periodSelector, {
-            backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: theme.isDark ? 0 : 0.05,
-            shadowRadius: 8,
-            elevation: theme.isDark ? 0 : 2,
-          }]}>
+          <View
+            style={[styles.periodSelector, {
+              backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: theme.isDark ? 0 : 0.05,
+              shadowRadius: 8,
+              elevation: theme.isDark ? 0 : 2,
+            }]}
+            accessibilityRole="tablist"
+            accessibilityLabel="Statistics time period selector"
+          >
             {TIME_PERIODS.map((period) => (
               <Pressable
                 key={period.value}
@@ -429,6 +434,9 @@ export default function StatsScreen() {
                   ],
                 ]}
                 onPress={() => handlePeriodChange(period.value)}
+                accessibilityRole="tab"
+                accessibilityLabel={`View ${period.label.toLowerCase()} statistics`}
+                accessibilityState={{ selected: selectedPeriod === period.value }}
               >
                 <Text
                   style={[

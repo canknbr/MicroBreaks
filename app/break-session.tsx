@@ -15,6 +15,7 @@ import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
 import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
 import { STREAK_MILESTONES, MIN_DAILY_GOAL } from '@/constants/config';
+import { getLevelTitle } from '@/constants/levels';
 import {
   scheduleBreakReminder,
   sendGoalCompletedNotification,
@@ -27,6 +28,7 @@ import {
   createLevelUpNotification,
 } from '@/store';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/i18n/hooks';
 import {
   BreakHeader,
   BreakProgress,
@@ -44,6 +46,7 @@ import { AnimationType } from '@/data/exercises';
 export default function BreakSessionScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { breakId } = useLocalSearchParams<{ breakId: string }>();
 
   const { state, actions, stats, progress } = useBreakSession(breakId || 'deep-breath');
@@ -100,18 +103,37 @@ export default function BreakSessionScreen() {
         // Check for new achievements
         checkAndUnlockAchievements();
 
-        // Schedule next break reminder
-        await scheduleBreakReminder();
+        // Schedule next break reminder with error handling
+        try {
+          await scheduleBreakReminder();
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('Failed to schedule break reminder:', error);
+          }
+          // Non-blocking - continue with the rest of the flow
+        }
 
-        // Check if daily goal is complete
-        const todayBreaks = await getTodayBreaks();
-        const userStats = await getUserStats();
-        const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), MIN_DAILY_GOAL);
+        // Check if daily goal is complete with error handling
+        try {
+          const todayBreaks = await getTodayBreaks();
+          const userStats = await getUserStats();
+          const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), MIN_DAILY_GOAL);
 
-        if (todayBreaks.length === dailyGoal) {
-          // Just completed daily goal - create in-app notification
-          addNotification(createGoalNotification());
-          await sendGoalCompletedNotification();
+          if (todayBreaks.length === dailyGoal) {
+            // Just completed daily goal - create in-app notification
+            addNotification(createGoalNotification());
+            try {
+              await sendGoalCompletedNotification();
+            } catch (notifError) {
+              if (__DEV__) {
+                console.warn('Failed to send goal notification:', notifError);
+              }
+            }
+          }
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('Failed to check daily goal:', error);
+          }
         }
 
         // Check for streak milestones
@@ -120,7 +142,11 @@ export default function BreakSessionScreen() {
         }
       };
 
-      saveAndNotify();
+      saveAndNotify().catch((error) => {
+        if (__DEV__) {
+          console.error('Error in saveAndNotify:', error);
+        }
+      });
     }
   }, [state.phase, state.exercise, state.feedbackRating, stats, incrementBreaks, addXP, trackBreakCompletion, addRecentBreak, checkAndUnlockAchievements, addNotification, currentStreak, currentLevel]);
 
@@ -128,19 +154,7 @@ export default function BreakSessionScreen() {
   useEffect(() => {
     if (currentLevel > previousLevelRef.current) {
       // User leveled up!
-      const levelTitles: Record<number, string> = {
-        1: 'Wellness Beginner',
-        2: 'Break Enthusiast',
-        3: 'Committed Breaker',
-        4: 'Wellness Warrior',
-        5: 'Break Master',
-        6: 'Zen Apprentice',
-        7: 'Mindfulness Pro',
-        8: 'Wellness Champion',
-        9: 'Break Legend',
-        10: 'Zen Master',
-      };
-      const title = levelTitles[Math.min(currentLevel, 10)] || levelTitles[10];
+      const title = getLevelTitle(currentLevel);
       addNotification(createLevelUpNotification(currentLevel, title));
       previousLevelRef.current = currentLevel;
     }
@@ -267,7 +281,7 @@ export default function BreakSessionScreen() {
     if (!exercise) {
       return (
         <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: theme.text.secondary }]}>Loading...</Text>
+          <Text style={[styles.loadingText, { color: theme.text.secondary }]}>{t('common.loading')}</Text>
         </View>
       );
     }
@@ -276,7 +290,7 @@ export default function BreakSessionScreen() {
       case 'loading':
         return (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: theme.text.secondary }]}>Preparing...</Text>
+            <Text style={[styles.loadingText, { color: theme.text.secondary }]}>{t('common.loading')}</Text>
           </View>
         );
 
@@ -287,7 +301,7 @@ export default function BreakSessionScreen() {
             exiting={FadeOut.duration(200)}
             style={styles.preparationContainer}
           >
-            <Text style={[styles.preparationTitle, { color: theme.text.secondary }]}>Get Ready</Text>
+            <Text style={[styles.preparationTitle, { color: theme.text.secondary }]}>{t('breakSession.preparation.title')}</Text>
             <View style={[styles.preparationIconContainer, { borderColor: exercise.color, backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }]}>
               <Text style={styles.preparationIcon}>{exercise.icon}</Text>
             </View>
@@ -355,8 +369,10 @@ export default function BreakSessionScreen() {
             <Pressable
               style={[styles.doneButton, { backgroundColor: exercise.color }]}
               onPress={handleFinish}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.done')}
             >
-              <Text style={styles.doneButtonText}>Done</Text>
+              <Text style={styles.doneButtonText}>{t('common.done')}</Text>
             </Pressable>
           </Animated.View>
         );
@@ -368,10 +384,10 @@ export default function BreakSessionScreen() {
             style={styles.completionContainer}
           >
             <View style={styles.feedbackComplete}>
-              <Text style={styles.feedbackCompleteEmoji}>🙏</Text>
-              <Text style={[styles.feedbackCompleteTitle, { color: theme.text.primary }]}>Thank you!</Text>
+              <Text style={styles.feedbackCompleteEmoji} accessibilityElementsHidden>🙏</Text>
+              <Text style={[styles.feedbackCompleteTitle, { color: theme.text.primary }]}>{t('breakSession.feedback.thankYou', { defaultValue: 'Thank you!' })}</Text>
               <Text style={[styles.feedbackCompleteText, { color: theme.text.secondary }]}>
-                Your feedback helps us improve
+                {t('breakSession.feedback.subtitle')}
               </Text>
             </View>
 
@@ -379,8 +395,10 @@ export default function BreakSessionScreen() {
             <Pressable
               style={[styles.doneButton, { backgroundColor: exercise.color }]}
               onPress={handleFinish}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.continue')}
             >
-              <Text style={styles.doneButtonText}>Continue</Text>
+              <Text style={styles.doneButtonText}>{t('common.continue')}</Text>
             </Pressable>
           </Animated.View>
         );

@@ -103,20 +103,32 @@ function SmartInsight({
     onAction?.();
   };
 
+  const accessibilityTypeMap: Record<InsightType, string> = {
+    warning: 'Alert',
+    suggestion: 'Tip',
+    achievement: 'Achievement',
+    motivation: 'Motivation',
+  };
+
   return (
-    <Animated.View style={[
-      styles.container,
-      {
-        borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: theme.isDark ? 0 : 0.08,
-        shadowRadius: 8,
-        elevation: theme.isDark ? 0 : 4,
-      },
-      containerStyle,
-    ]}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+          backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: theme.isDark ? 0 : 0.08,
+          shadowRadius: 8,
+          elevation: theme.isDark ? 0 : 4,
+        },
+        containerStyle,
+      ]}
+      accessible
+      accessibilityRole={type === 'warning' ? 'alert' : 'text'}
+      accessibilityLabel={`${accessibilityTypeMap[type]}: ${title}. ${message}`}
+    >
       {/* BlurView only for dark mode */}
       {theme.isDark && (
         Platform.OS === 'ios' ? (
@@ -135,7 +147,7 @@ function SmartInsight({
       />
 
       <View style={styles.content}>
-        <Animated.View style={[styles.iconContainer, { backgroundColor: `${config.iconColor}20` }, iconStyle]}>
+        <Animated.View style={[styles.iconContainer, { backgroundColor: `${config.iconColor}20` }, iconStyle]} accessibilityElementsHidden>
           <Ionicons name={config.icon} size={20} color={config.iconColor} />
         </Animated.View>
 
@@ -145,7 +157,13 @@ function SmartInsight({
         </View>
 
         {actionLabel && (
-          <Pressable style={styles.actionButton} onPress={handlePress}>
+          <Pressable
+            style={styles.actionButton}
+            onPress={handlePress}
+            accessibilityRole="button"
+            accessibilityLabel={actionLabel}
+            accessibilityHint="Takes action based on the insight"
+          >
             <Text style={[styles.actionLabel, { color: config.iconColor }]}>{actionLabel}</Text>
             <Ionicons name="chevron-forward" size={16} color={config.iconColor} />
           </Pressable>

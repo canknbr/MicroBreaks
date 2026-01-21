@@ -40,37 +40,40 @@ export function useVoiceGuidance(
     };
   }, []);
 
+  // Use iterative approach instead of recursion to avoid stack overflow
   const processQueue = useCallback(async () => {
     if (isProcessingRef.current || queueRef.current.length === 0) {
       return;
     }
 
     isProcessingRef.current = true;
-    const text = queueRef.current.shift();
 
-    if (text && isMountedRef.current) {
-      try {
-        await new Promise<void>((resolve, reject) => {
-          Speech.speak(text, {
-            language: mergedOptions.language,
-            pitch: mergedOptions.pitch,
-            rate: mergedOptions.rate,
-            onDone: () => resolve(),
-            onError: (error) => reject(error),
-            onStopped: () => resolve(),
+    // Process all items in queue using iteration instead of recursion
+    while (queueRef.current.length > 0 && isMountedRef.current) {
+      const text = queueRef.current.shift();
+
+      if (text && isMountedRef.current) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            Speech.speak(text, {
+              language: mergedOptions.language,
+              pitch: mergedOptions.pitch,
+              rate: mergedOptions.rate,
+              onDone: () => resolve(),
+              onError: (error) => reject(error),
+              onStopped: () => resolve(),
+            });
           });
-        });
-      } catch (error) {
-        console.warn('Speech error:', error);
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('Speech error:', error);
+          }
+          // Continue processing queue even if one item fails
+        }
       }
     }
 
     isProcessingRef.current = false;
-
-    // Process next item in queue
-    if (queueRef.current.length > 0 && isMountedRef.current) {
-      processQueue();
-    }
   }, [mergedOptions.language, mergedOptions.pitch, mergedOptions.rate]);
 
   const speak = useCallback(

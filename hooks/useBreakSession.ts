@@ -79,6 +79,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
   // Refs for timer management
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
+  const isTransitioningRef = useRef<boolean>(false); // Prevent race conditions during phase transitions
 
   // Load exercise
   const exercise = useMemo(() => getExerciseById(breakId) || null, [breakId]);
@@ -135,8 +136,9 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
 
   // Move to next phase/step
   const moveToNextPhase = useCallback(() => {
-    if (!exercise) return;
+    if (!exercise || isTransitioningRef.current) return;
 
+    isTransitioningRef.current = true;
     clearTimer();
 
     switch (phase) {
@@ -146,6 +148,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         if (currentStep) {
           speakInstruction(currentStep.voiceInstruction || currentStep.instruction);
         }
+        isTransitioningRef.current = false;
         break;
 
       case 'instruction':
@@ -153,6 +156,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         if (currentStep) {
           setTimeRemaining(currentStep.duration);
         }
+        isTransitioningRef.current = false;
         break;
 
       case 'execution':
@@ -167,6 +171,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           speakInstruction('Great job! You completed the exercise.');
         }
+        isTransitioningRef.current = false;
         break;
 
       case 'transition':
@@ -178,9 +183,11 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         if (nextStepData) {
           speakInstruction(nextStepData.voiceInstruction || nextStepData.instruction);
         }
+        isTransitioningRef.current = false;
         break;
 
       default:
+        isTransitioningRef.current = false;
         break;
     }
   }, [phase, exercise, currentStep, currentStepIndex, clearTimer, speakInstruction]);
@@ -244,8 +251,11 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
   }, []);
 
   const skipStep = useCallback(() => {
-    if (!exercise || phase === 'completion' || phase === 'feedback') return;
+    // Prevent race condition with timer-based transitions
+    if (!exercise || phase === 'completion' || phase === 'feedback' || isTransitioningRef.current) return;
 
+    isTransitioningRef.current = true;
+    clearTimer();
     stopSpeech();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -262,7 +272,8 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
       setPhase('completion');
       speakInstruction('Exercise complete!');
     }
-  }, [exercise, phase, currentStepIndex, stopSpeech, speakInstruction]);
+    isTransitioningRef.current = false;
+  }, [exercise, phase, currentStepIndex, clearTimer, stopSpeech, speakInstruction]);
 
   const endSession = useCallback(() => {
     clearTimer();

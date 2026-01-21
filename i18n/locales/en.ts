@@ -155,6 +155,7 @@ export default {
     feedback: {
       title: 'How was this break?',
       subtitle: 'Your feedback helps us improve',
+      thankYou: 'Thank you!',
       ratings: {
         1: 'Poor',
         2: 'Fair',

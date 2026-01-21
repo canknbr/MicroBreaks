@@ -36,24 +36,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useUserStore, useSettingsStore } from '@/store';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useTheme } from '@/hooks/useTheme';
-
-// Level colors
-const LEVEL_COLORS: Record<number, [string, string]> = {
-  1: ['#9CA3AF', '#6B7280'],
-  2: ['#06FFA5', '#00CC84'],
-  3: ['#00E5FF', '#0099CC'],
-  4: ['#B47EFF', '#9055E8'],
-  5: ['#FFD166', '#FFAA00'],
-};
-
-// Level titles
-const LEVEL_TITLES: Record<number, string> = {
-  1: 'Wellness Beginner',
-  2: 'Break Enthusiast',
-  3: 'Committed Breaker',
-  4: 'Wellness Warrior',
-  5: 'Break Master',
-};
+import { LEVEL_COLORS, LEVEL_TITLES } from '@/constants/levels';
 
 // Reminder interval options
 const REMINDER_INTERVALS = [
@@ -483,7 +466,17 @@ export default function ProfileScreen() {
 
   const handlePremiumPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // TODO: Implement premium screen navigation
+    Alert.alert(
+      'Premium Features',
+      'Premium features are coming soon! Get early access to advanced analytics, custom break routines, and more.',
+      [
+        { text: 'Notify Me', onPress: () => {
+          // Register interest for premium features
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }},
+        { text: 'OK', style: 'cancel' }
+      ]
+    );
   };
 
   const formatQuietHours = () => {

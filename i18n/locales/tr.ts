@@ -155,6 +155,7 @@ export default {
     feedback: {
       title: 'Bu mola nasild?',
       subtitle: 'Geri bildiriminiz gelistirmemize yardimci olur',
+      thankYou: 'Tesekkurler!',
       ratings: {
         1: 'Kotu',
         2: 'Orta',

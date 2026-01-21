@@ -81,10 +81,15 @@ export function useNotifications(): UseNotificationsReturn {
     };
   }, []);
 
-  const handleAppStateChange = useCallback(async (nextAppState: AppStateStatus) => {
+  const handleAppStateChange = useCallback((nextAppState: AppStateStatus) => {
     if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
       // App has come to foreground, reschedule break reminder
-      await scheduleBreakReminder();
+      // Using void to explicitly handle the promise without await in event handler
+      void scheduleBreakReminder().catch((error) => {
+        if (__DEV__) {
+          console.warn('Failed to reschedule break reminder:', error);
+        }
+      });
     }
     appState.current = nextAppState;
   }, []);

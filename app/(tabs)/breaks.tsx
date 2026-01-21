@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import type { IoniconsName } from '@/types/icons';
 import { useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -154,7 +155,14 @@ function BreakCard({
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.title}, ${item.duration}, ${item.description}`}
+      accessibilityHint="Double tap to start this break exercise"
+    >
       <Animated.View style={[
         styles.breakCard,
         {
@@ -178,7 +186,7 @@ function BreakCard({
         )}
         <View style={styles.breakCardContent}>
           <View style={[styles.breakIconContainer, { backgroundColor: `${categoryColor}15` }]}>
-            <Text style={styles.breakIcon}>{item.icon}</Text>
+            <Text style={styles.breakIcon} accessibilityElementsHidden>{item.icon}</Text>
           </View>
           <View style={styles.breakInfo}>
             <Text style={[styles.breakTitle, { color: theme.text.primary }]}>{item.title}</Text>
@@ -189,6 +197,9 @@ function BreakCard({
               style={styles.favoriteButton}
               onPress={handleFavoritePress}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={isFavorite ? `Remove ${item.title} from favorites` : `Add ${item.title} to favorites`}
+              accessibilityState={{ selected: isFavorite }}
             >
               <Ionicons
                 name={isFavorite ? 'heart' : 'heart-outline'}
@@ -196,8 +207,8 @@ function BreakCard({
                 color={isFavorite ? '#FF6B6B' : theme.text.muted}
               />
             </Pressable>
-            <Text style={[styles.durationText, { color: categoryColor }]}>{item.duration}</Text>
-            <Ionicons name="play-circle" size={24} color={categoryColor} />
+            <Text style={[styles.durationText, { color: categoryColor }]} accessibilityLabel={`Duration: ${item.duration}`}>{item.duration}</Text>
+            <Ionicons name="play-circle" size={24} color={categoryColor} accessibilityElementsHidden />
           </View>
         </View>
       </Animated.View>
@@ -238,7 +249,7 @@ function CategorySection({
     <View style={styles.categorySection}>
       <Animated.View style={[styles.categoryHeader, headerStyle]}>
         <View style={[styles.categoryIconContainer, { backgroundColor: `${category.color}20` }]}>
-          <Ionicons name={category.icon as any} size={20} color={category.color} />
+          <Ionicons name={category.icon as IoniconsName} size={20} color={category.color} />
         </View>
         <View>
           <Text style={[styles.categoryTitle, { color: theme.text.primary }]}>{category.title}</Text>
@@ -414,7 +425,7 @@ function FilterChips({
             }}
           >
             <Ionicons
-              name={cat.icon as any}
+              name={cat.icon as IoniconsName}
               size={14}
               color={selectedCategory === cat.id ? cat.color : theme.text.muted}
               style={{ marginRight: 4 }}

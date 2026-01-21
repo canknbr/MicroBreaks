@@ -101,28 +101,35 @@ Notifications.setNotificationHandler({
 // Initialize notification channels (Android)
 export async function initializeNotifications(): Promise<void> {
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.BREAK_REMINDERS, {
-      name: 'Break Reminders',
-      description: 'Reminders to take breaks during work',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#06FFA5',
-    });
+    try {
+      await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.BREAK_REMINDERS, {
+        name: 'Break Reminders',
+        description: 'Reminders to take breaks during work',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#06FFA5',
+      });
 
-    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.STREAK_ALERTS, {
-      name: 'Streak Alerts',
-      description: 'Alerts to protect your daily streak',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FFD166',
-    });
+      await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.STREAK_ALERTS, {
+        name: 'Streak Alerts',
+        description: 'Alerts to protect your daily streak',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FFD166',
+      });
 
-    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.GOALS, {
-      name: 'Goal Notifications',
-      description: 'Updates about your daily goals',
-      importance: Notifications.AndroidImportance.DEFAULT,
-      lightColor: '#00E5FF',
-    });
+      await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.GOALS, {
+        name: 'Goal Notifications',
+        description: 'Updates about your daily goals',
+        importance: Notifications.AndroidImportance.DEFAULT,
+        lightColor: '#00E5FF',
+      });
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to initialize notification channels:', error);
+      }
+      // Non-blocking - notifications may still work without custom channels
+    }
   }
 }
 
@@ -155,12 +162,52 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
   return settings || DEFAULT_NOTIFICATION_SETTINGS;
 }
 
+/**
+ * Validate quiet hours value (must be 0-23)
+ */
+function validateQuietHour(hour: number | undefined, defaultValue: number): number {
+  if (hour === undefined) return defaultValue;
+  if (typeof hour !== 'number' || isNaN(hour)) return defaultValue;
+  return Math.max(0, Math.min(23, Math.round(hour)));
+}
+
+/**
+ * Validate notification settings before saving
+ */
+function validateNotificationSettings(settings: Partial<NotificationSettings>): Partial<NotificationSettings> {
+  const validated = { ...settings };
+
+  // Validate quiet hours (0-23)
+  if (validated.quietHoursStart !== undefined) {
+    validated.quietHoursStart = validateQuietHour(validated.quietHoursStart, DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart);
+  }
+  if (validated.quietHoursEnd !== undefined) {
+    validated.quietHoursEnd = validateQuietHour(validated.quietHoursEnd, DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd);
+  }
+
+  // Validate reminder interval (minimum 5 minutes, maximum 120 minutes)
+  if (validated.reminderIntervalMinutes !== undefined) {
+    validated.reminderIntervalMinutes = Math.max(5, Math.min(120, Math.round(validated.reminderIntervalMinutes)));
+  }
+
+  // Validate work days array
+  if (validated.workDays !== undefined) {
+    validated.workDays = validated.workDays.filter(day => day >= 0 && day <= 6);
+    if (validated.workDays.length === 0) {
+      validated.workDays = DEFAULT_NOTIFICATION_SETTINGS.workDays;
+    }
+  }
+
+  return validated;
+}
+
 // Save notification settings
 export async function saveNotificationSettings(
   settings: Partial<NotificationSettings>
 ): Promise<void> {
   const currentSettings = await getNotificationSettings();
-  const newSettings = { ...currentSettings, ...settings };
+  const validatedSettings = validateNotificationSettings(settings);
+  const newSettings = { ...currentSettings, ...validatedSettings };
   await setItem(STORAGE_KEYS.SETTINGS, newSettings);
 
   // Reschedule notifications based on new settings

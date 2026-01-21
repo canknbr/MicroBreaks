@@ -355,5 +355,28 @@ export const ColorAccessibility = {
   touchTargetMinSize: 44, // iOS HIG minimum
 } as const;
 
+/**
+ * WCAG-compliant text colors
+ * All colors meet WCAG AA contrast ratio requirements
+ */
+export const AccessibleText = {
+  // For dark backgrounds (e.g., black #000000)
+  onDark: {
+    primary: 'rgba(255, 255, 255, 1)', // White - 21:1 ratio
+    secondary: 'rgba(255, 255, 255, 0.85)', // ~14:1 ratio - replaces 0.7
+    tertiary: 'rgba(255, 255, 255, 0.7)', // ~9:1 ratio - replaces 0.5
+    muted: 'rgba(255, 255, 255, 0.6)', // ~5:1 ratio - replaces 0.4, meets AA for normal text
+    disabled: 'rgba(255, 255, 255, 0.45)', // ~3.3:1 ratio - AA for large text/decorative
+  },
+  // For light backgrounds (e.g., white #FFFFFF)
+  onLight: {
+    primary: 'rgba(0, 0, 0, 1)', // Black - 21:1 ratio
+    secondary: 'rgba(0, 0, 0, 0.85)', // ~14:1 ratio
+    tertiary: 'rgba(0, 0, 0, 0.7)', // ~9:1 ratio
+    muted: 'rgba(0, 0, 0, 0.6)', // ~5:1 ratio
+    disabled: 'rgba(0, 0, 0, 0.45)', // ~3.3:1 ratio
+  },
+} as const;
+
 export type ThemeMode = 'light' | 'dark';
 export type ColorScheme = typeof Colors.light;

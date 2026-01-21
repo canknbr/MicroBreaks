@@ -3,7 +3,7 @@
  * Provides real statistics from break history
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getWeeklyChartData,
   getMonthlyChartData,
@@ -130,7 +130,10 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
       const patterns = await getTimePatterns(period === 'year' ? 'all' : period);
       setTimePatterns(patterns);
     } catch (error) {
-      console.error('Error loading stats:', error);
+      if (__DEV__) {
+        console.error('Error loading stats:', error);
+      }
+      // Keep previous data on error - don't reset state
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +143,8 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
     loadData();
   }, [loadData]);
 
-  return {
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     totalBreaks: userStats?.totalBreaks || 0,
     totalMinutes: userStats?.totalMinutes || 0,
     currentStreak: streakData?.currentStreak || 0,
@@ -157,7 +161,7 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
     recentBreaks,
     isLoading,
     refresh: loadData,
-  };
+  }), [userStats, streakData, todayCount, weekCount, chartData, breakTypes, timePatterns, recentBreaks, isLoading, loadData]);
 }
 
 export default useStatsData;
