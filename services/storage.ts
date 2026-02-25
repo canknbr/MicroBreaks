@@ -151,6 +151,6 @@ export const DEFAULT_USER_STATS: UserStats = {
   totalMinutes: 0,
   totalXP: 0,
   level: 1,
-  weeklyGoal: 20,
+  weeklyGoal: 35,
   weeklyProgress: 0,
 };

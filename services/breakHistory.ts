@@ -97,8 +97,17 @@ export async function getMonthBreaks(): Promise<CompletedBreak[]> {
   return getBreaksByDateRange(firstDay, lastDay);
 }
 
+// Simple mutex for concurrent save protection
+let saveLock: Promise<void> = Promise.resolve();
+
 // Save a completed break
 export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>): Promise<SaveBreakResult> {
+  // Wait for any in-progress save to complete
+  await saveLock;
+
+  let resolve: () => void;
+  saveLock = new Promise<void>((r) => { resolve = r; });
+
   try {
     const history = await getBreakHistory();
 
@@ -143,6 +152,8 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
       console.error('Error saving break:', error);
     }
     return { success: false };
+  } finally {
+    resolve!();
   }
 }
 

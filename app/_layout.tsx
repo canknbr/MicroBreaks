@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
@@ -51,6 +51,7 @@ export default function RootLayout() {
   const { i18n } = useTranslation();
   const [showSplash, setShowSplash] = useState(true);
   const [appIsReady, setAppIsReady] = useState(false);
+  const tokenRefreshUnsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     async function prepare() {
@@ -68,8 +69,13 @@ export default function RootLayout() {
         const user = await initializeAuth();
         if (user) {
           await syncService.initialize(user.uid);
-          registerForPushNotifications(user.uid);
-          onTokenRefresh(user.uid);
+          try {
+            await registerForPushNotifications(user.uid);
+          } catch (e) {
+            if (__DEV__) console.warn('Failed to register for push notifications:', e);
+          }
+          const unsubTokenRefresh = onTokenRefresh(user.uid);
+          tokenRefreshUnsubRef.current = unsubTokenRefresh;
         }
 
         // Initialize notifications
@@ -96,6 +102,10 @@ export default function RootLayout() {
       // Cleanup sync and analytics on unmount
       syncService.shutdown();
       analytics.shutdown();
+      if (tokenRefreshUnsubRef.current) {
+        tokenRefreshUnsubRef.current();
+        tokenRefreshUnsubRef.current = null;
+      }
     };
   }, []);
 
@@ -137,7 +147,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.container} accessibilityLanguage={i18n.language}>
       <SafeAreaProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? MicroBreaksDarkTheme : DefaultTheme}>
+        <ThemeProvider value={effectiveTheme === 'dark' ? MicroBreaksDarkTheme : DefaultTheme}>
           <View style={styles.container}>
             {/* Main Navigation Stack */}
             <Stack screenOptions={{ headerShown: false }}>
@@ -174,7 +184,7 @@ export default function RootLayout() {
             {showSplash && (
               <SplashScreen
                 onAnimationComplete={handleSplashComplete}
-                minimumDuration={2800}
+                minimumDuration={1200}
               />
             )}
           </View>

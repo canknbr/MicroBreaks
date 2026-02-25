@@ -14,6 +14,7 @@ export interface UserProfile {
   avatar: string | null; // emoji or image URI
   email: string | null;
   joinedAt: string;
+  updatedAt?: number;
 }
 
 export interface UserProgress {
@@ -151,23 +152,29 @@ export const useUserStore = create<UserState>()(
       // Profile Actions
       updateProfile: (data) => {
         set((state) => ({
-          profile: { ...state.profile, ...data },
+          profile: { ...state.profile, ...data, updatedAt: Date.now() },
         }));
-        syncService.queueDataChange('profile');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('profile');
+        }
       },
 
       setName: (name) => {
         set((state) => ({
-          profile: { ...state.profile, name },
+          profile: { ...state.profile, name, updatedAt: Date.now() },
         }));
-        syncService.queueDataChange('profile');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('profile');
+        }
       },
 
       setAvatar: (avatar) => {
         set((state) => ({
-          profile: { ...state.profile, avatar },
+          profile: { ...state.profile, avatar, updatedAt: Date.now() },
         }));
-        syncService.queueDataChange('profile');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('profile');
+        }
       },
 
       // Progress Actions
@@ -188,8 +195,8 @@ export const useUserStore = create<UserState>()(
 
       addXP: (amount) => {
         set((state) => {
-          const newTotalXP = state.progress.totalXP + amount;
-          const newLevel = Math.floor(newTotalXP / 100) + 1;
+          const newTotalXP = Math.max(0, state.progress.totalXP + amount);
+          const newLevel = Math.max(1, Math.floor(newTotalXP / 100) + 1);
           return {
             progress: {
               ...state.progress,
@@ -198,7 +205,9 @@ export const useUserStore = create<UserState>()(
             },
           };
         });
-        syncService.queueDataChange('progress');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('progress');
+        }
       },
 
       incrementBreaks: () => {
@@ -208,7 +217,9 @@ export const useUserStore = create<UserState>()(
             totalBreaks: state.progress.totalBreaks + 1,
           },
         }));
-        syncService.queueDataChange('progress');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('progress');
+        }
       },
 
       updateStreak: (streak) => {
@@ -219,7 +230,9 @@ export const useUserStore = create<UserState>()(
             longestStreak: Math.max(state.progress.longestStreak, streak),
           },
         }));
-        syncService.queueDataChange('progress');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('progress');
+        }
       },
 
       resetProgress: () =>
@@ -250,14 +263,16 @@ export const useUserStore = create<UserState>()(
             },
           };
         });
-        syncService.queueDataChange('preferences');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('preferences');
+        }
       },
 
       isFavorite: (breakId) => {
         return get().preferences.favoriteBreaks.includes(breakId);
       },
 
-      addRecentBreak: (breakId) =>
+      addRecentBreak: (breakId) => {
         set((state) => {
           const recents = state.preferences.recentBreaks.filter((id) => id !== breakId);
           return {
@@ -266,26 +281,29 @@ export const useUserStore = create<UserState>()(
               recentBreaks: [breakId, ...recents].slice(0, 10), // Keep only last 10
             },
           };
-        }),
+        });
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('preferences');
+        }
+      },
 
       // Achievement Actions
       unlockAchievement: (achievementId) => {
-        set((state) => {
-          if (state.achievements.unlockedIds.includes(achievementId)) {
-            return state; // Already unlocked
-          }
-          return {
-            achievements: {
-              ...state.achievements,
-              unlockedIds: [...state.achievements.unlockedIds, achievementId],
-              unlockedAt: {
-                ...state.achievements.unlockedAt,
-                [achievementId]: new Date().toISOString(),
-              },
+        const alreadyUnlocked = get().achievements.unlockedIds.includes(achievementId);
+        if (alreadyUnlocked) return;
+        set((state) => ({
+          achievements: {
+            ...state.achievements,
+            unlockedIds: [...state.achievements.unlockedIds, achievementId],
+            unlockedAt: {
+              ...state.achievements.unlockedAt,
+              [achievementId]: new Date().toISOString(),
             },
-          };
-        });
-        syncService.queueDataChange('achievements');
+          },
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('achievements');
+        }
       },
 
       isAchievementUnlocked: (achievementId) => {
@@ -306,7 +324,9 @@ export const useUserStore = create<UserState>()(
             },
           };
         });
-        syncService.queueDataChange('achievements');
+        if (!syncService.isSyncPulling()) {
+          syncService.queueDataChange('achievements');
+        }
       },
     }),
     {

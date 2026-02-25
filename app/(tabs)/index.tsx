@@ -225,7 +225,9 @@ export default function HomeScreen() {
   // Progress percentage
   const progress = useMemo(() => {
     if (!data) return 0;
-    return (data.dailyProgress.breaksTaken / data.dailyProgress.breaksGoal) * 100;
+    return data.dailyProgress.breaksGoal > 0
+      ? (data.dailyProgress.breaksTaken / data.dailyProgress.breaksGoal) * 100
+      : 0;
   }, [data]);
 
   // Scroll handler for parallax

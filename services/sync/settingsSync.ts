@@ -40,9 +40,10 @@ export async function pushSettings(userId: string): Promise<void> {
 
 /**
  * Pull settings from Firestore and merge only syncable keys
+ * Accepts an optional pre-fetched document to avoid redundant Firestore reads
  */
-export async function pullSettings(userId: string): Promise<void> {
-  const doc = await getUserDoc(userId).get();
+export async function pullSettings(userId: string, prefetchedDoc?: any): Promise<void> {
+  const doc = prefetchedDoc ?? await getUserDoc(userId).get();
 
   if (!doc.exists) return;
 
@@ -50,6 +51,12 @@ export async function pullSettings(userId: string): Promise<void> {
   const remoteSettings = data?.settings as (SyncableSettings & { updatedAt?: number }) | undefined;
 
   if (!remoteSettings) return;
+
+  // Compare timestamps: only apply remote if newer than local
+  const localUpdatedAt = useSettingsStore.getState().settingsUpdatedAt ?? 0;
+  const remoteUpdatedAt = remoteSettings.updatedAt ?? 0;
+
+  if (remoteUpdatedAt <= localUpdatedAt) return;
 
   // Only apply syncable keys, preserving local-only settings
   const updates: Partial<AppSettings> = {};
@@ -60,7 +67,10 @@ export async function pullSettings(userId: string): Promise<void> {
   }
 
   if (Object.keys(updates).length > 0) {
-    useSettingsStore.getState().updateSettings(updates);
+    // Use setState directly to avoid triggering sync hooks
+    useSettingsStore.setState((state) => ({
+      settings: { ...state.settings, ...updates },
+    }));
   }
 
   if (__DEV__) {

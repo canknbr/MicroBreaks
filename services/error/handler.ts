@@ -90,8 +90,10 @@ class GlobalErrorHandler {
     // Convert to AppError if needed
     const appError = ErrorFactory.fromUnknown(error, context);
 
-    // Add to queue
-    this.errorQueue.push(appError);
+    // Add to queue (cap at 50 to prevent memory leaks)
+    if (this.errorQueue.length < 50) {
+      this.errorQueue.push(appError);
+    }
 
     // Process queue
     this.processQueue();
@@ -130,14 +132,23 @@ class GlobalErrorHandler {
 
     this.isProcessing = true;
 
-    while (this.errorQueue.length > 0) {
-      const error = this.errorQueue.shift();
-      if (error) {
-        await this.processError(error);
+    try {
+      while (this.errorQueue.length > 0) {
+        const error = this.errorQueue.shift();
+        if (error) {
+          try {
+            await this.processError(error);
+          } catch (e) {
+            // Prevent processError failure from blocking future errors
+            if (__DEV__) {
+              console.warn('[ErrorHandler] processError failed:', e);
+            }
+          }
+        }
       }
+    } finally {
+      this.isProcessing = false;
     }
-
-    this.isProcessing = false;
   }
 
   /**

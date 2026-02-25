@@ -43,6 +43,7 @@ export interface AppSettings {
 
 interface SettingsState {
   settings: AppSettings;
+  settingsUpdatedAt: number;
 
   // Actions
   updateSettings: (settings: Partial<AppSettings>) => void;
@@ -121,77 +122,134 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       settings: defaultSettings,
+      settingsUpdatedAt: 0,
 
       updateSettings: (newSettings) => {
         set((state) => ({
           settings: { ...state.settings, ...newSettings },
+          settingsUpdatedAt: Date.now(),
         }));
-        syncService.queueSettingsChange();
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
       },
 
-      toggleSound: () =>
+      toggleSound: () => {
         set((state) => ({
           settings: { ...state.settings, soundEnabled: !state.settings.soundEnabled },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleHaptics: () =>
+      toggleHaptics: () => {
         set((state) => ({
           settings: { ...state.settings, hapticsEnabled: !state.settings.hapticsEnabled },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleVoiceGuidance: () =>
+      toggleVoiceGuidance: () => {
         set((state) => ({
           settings: { ...state.settings, voiceGuidanceEnabled: !state.settings.voiceGuidanceEnabled },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleNotifications: () =>
+      toggleNotifications: () => {
         set((state) => ({
           settings: { ...state.settings, notificationsEnabled: !state.settings.notificationsEnabled },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleBreakReminders: () =>
+      toggleBreakReminders: () => {
         set((state) => ({
           settings: { ...state.settings, breakReminders: !state.settings.breakReminders },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleStreakAlerts: () =>
+      toggleStreakAlerts: () => {
         set((state) => ({
           settings: { ...state.settings, streakAlerts: !state.settings.streakAlerts },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleGoalNotifications: () =>
+      toggleGoalNotifications: () => {
         set((state) => ({
           settings: { ...state.settings, goalNotifications: !state.settings.goalNotifications },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      toggleQuietHours: () =>
+      toggleQuietHours: () => {
         set((state) => ({
           settings: { ...state.settings, quietHoursEnabled: !state.settings.quietHoursEnabled },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      setReminderInterval: (minutes) =>
+      setReminderInterval: (minutes) => {
         set((state) => ({
           settings: { ...state.settings, reminderIntervalMinutes: Math.max(5, Math.min(120, Math.round(minutes))) },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
-      setQuietHours: (start, end) =>
+      setQuietHours: (start, end) => {
         set((state) => ({
           settings: {
             ...state.settings,
             quietHoursStart: Math.max(0, Math.min(23, Math.round(start))),
             quietHoursEnd: Math.max(0, Math.min(23, Math.round(end))),
           },
-        })),
+          settingsUpdatedAt: Date.now(),
+        }));
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
 
       setTheme: (theme) => {
         set((state) => ({
           settings: { ...state.settings, theme },
+          settingsUpdatedAt: Date.now(),
         }));
-        syncService.queueSettingsChange();
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
       },
 
       resetSettings: () =>
-        set({ settings: defaultSettings }),
+        set({ settings: defaultSettings, settingsUpdatedAt: Date.now() }),
     }),
     {
       name: 'microbreaks-settings',

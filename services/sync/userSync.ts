@@ -37,9 +37,10 @@ export async function pushUserProfile(userId: string): Promise<void> {
 
 /**
  * Pull remote user data and merge with local
+ * Accepts an optional pre-fetched document to avoid redundant Firestore reads
  */
-export async function pullUserProfile(userId: string): Promise<void> {
-  const doc = await getUserDoc(userId).get();
+export async function pullUserProfile(userId: string, prefetchedDoc?: any): Promise<void> {
+  const doc = prefetchedDoc ?? await getUserDoc(userId).get();
 
   if (!doc.exists) {
     // No remote data yet - push local data
@@ -53,44 +54,36 @@ export async function pullUserProfile(userId: string): Promise<void> {
   const state = useUserStore.getState();
 
   // Merge each section with appropriate strategy
+  // Use setState directly to avoid triggering sync hooks
   if (remote.profile) {
     const mergedProfile = mergeProfiles(
-      { ...state.profile, updatedAt: 0 },
+      { ...state.profile, updatedAt: state.profile.updatedAt ?? 0 },
       remote.profile
     );
-    state.updateProfile(mergedProfile);
+    useUserStore.setState({
+      profile: { ...mergedProfile },
+    });
   }
 
   if (remote.progress) {
     const mergedProgress = mergeProgress(state.progress, remote.progress);
-    state.updateProgress(mergedProgress);
+    useUserStore.setState({
+      progress: mergedProgress,
+    });
   }
 
   if (remote.preferences) {
     const mergedPreferences = mergePreferences(state.preferences, remote.preferences);
-    // Update favorites and recents
-    const currentPrefs = useUserStore.getState().preferences;
-    if (
-      JSON.stringify(currentPrefs.favoriteBreaks) !== JSON.stringify(mergedPreferences.favoriteBreaks) ||
-      JSON.stringify(currentPrefs.recentBreaks) !== JSON.stringify(mergedPreferences.recentBreaks)
-    ) {
-      // Apply merged favorites by toggling as needed
-      for (const breakId of mergedPreferences.favoriteBreaks) {
-        if (!currentPrefs.favoriteBreaks.includes(breakId)) {
-          useUserStore.getState().toggleFavorite(breakId);
-        }
-      }
-    }
+    useUserStore.setState({
+      preferences: mergedPreferences,
+    });
   }
 
   if (remote.achievements) {
     const mergedAchievements = mergeAchievements(state.achievements, remote.achievements);
-    // Unlock any new achievements from remote
-    for (const id of mergedAchievements.unlockedIds) {
-      if (!state.achievements.unlockedIds.includes(id)) {
-        useUserStore.getState().unlockAchievement(id);
-      }
-    }
+    useUserStore.setState({
+      achievements: mergedAchievements,
+    });
   }
 
   if (__DEV__) {

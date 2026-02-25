@@ -11,7 +11,7 @@ import {
   ScrollView,
   Platform,
   Pressable,
-  Dimensions,
+  useWindowDimensions,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
@@ -35,8 +35,6 @@ import { useStatsData, StatsPeriod } from '@/hooks/useStatsData';
 import { CompletedBreak } from '@/services/storage';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 // Time period options
 const TIME_PERIODS: { label: string; value: StatsPeriod }[] = [
   { label: 'Week', value: 'week' },
@@ -53,6 +51,7 @@ function StatCard({
   color,
   delay,
   theme,
+  screenWidth,
 }: {
   icon: string;
   label: string;
@@ -61,6 +60,7 @@ function StatCard({
   color: string;
   delay: number;
   theme: ThemeColors;
+  screenWidth: number;
 }) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
@@ -82,6 +82,7 @@ function StatCard({
       style={[
       styles.statCard,
       {
+        width: (screenWidth - Spacing.lg * 2 - 12) / 2,
         borderColor: theme.isDark ? theme.border.subtle : 'transparent',
         backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
         shadowColor: '#000',
@@ -111,6 +112,66 @@ function StatCard({
   );
 }
 
+// Single Animated Bar - extracted to avoid hooks-in-loop violation
+function AnimatedBar({
+  item,
+  maxValue,
+  delay,
+  index,
+  isToday,
+  dataLength,
+  showLabel,
+  theme,
+}: {
+  item: { label: string; value: number; minutes: number };
+  maxValue: number;
+  delay: number;
+  index: number;
+  isToday: boolean;
+  dataLength: number;
+  showLabel: boolean;
+  theme: ThemeColors;
+}) {
+  const barHeight = useSharedValue(0);
+
+  useEffect(() => {
+    const height = (item.value / maxValue) * 100;
+    barHeight.value = withDelay(
+      delay + index * 50,
+      withSpring(height, { damping: 15 })
+    );
+  }, [item.value, maxValue, delay, index]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    height: `${barHeight.value}%`,
+  }));
+
+  return (
+    <View style={[styles.barWrapper, dataLength > 7 && styles.barWrapperSmall]} accessibilityLabel={`${item.label}: ${item.value} breaks, ${item.minutes} minutes`}>
+      <View style={[styles.barTrack, dataLength > 7 && styles.barTrackSmall, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : theme.border.subtle }]}>
+        <Animated.View style={[styles.bar, barStyle]}>
+          <LinearGradient
+            colors={isToday ? (theme.isDark ? ['#06FFA5', '#00E5FF'] : [theme.accent.primary, theme.accent.secondary]) : (theme.isDark ? ['#3A3A4A', '#2A2A3A'] : [theme.border.strong, theme.border.medium])}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      </View>
+      {showLabel && (
+        <Text
+          style={[
+            styles.barLabel,
+            { color: theme.text.muted },
+            isToday && [styles.barLabelActive, { color: theme.accent.primary }],
+            dataLength > 14 && styles.barLabelSmall,
+          ]}
+        >
+          {item.label}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 // Bar Chart Component
 function BarChart({
   data,
@@ -122,20 +183,9 @@ function BarChart({
   theme: ThemeColors;
 }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
-  const barHeights = data.map(() => useSharedValue(0));
 
-  useEffect(() => {
-    data.forEach((item, index) => {
-      const height = (item.value / maxValue) * 100;
-      barHeights[index].value = withDelay(
-        delay + index * 50,
-        withSpring(height, { damping: 15 })
-      );
-    });
-  }, [data, delay]);
-
-  // Show only labels that fit
-  const showLabel = (index: number) => {
+  // Determine which labels to show based on data density
+  const shouldShowLabel = (index: number) => {
     if (data.length <= 7) return true;
     if (data.length <= 14) return index % 2 === 0;
     return index % 5 === 0;
@@ -144,38 +194,19 @@ function BarChart({
   return (
     <View style={styles.chartContainer}>
       <View style={styles.barsContainer}>
-        {data.map((item, index) => {
-          const barStyle = useAnimatedStyle(() => ({
-            height: `${barHeights[index].value}%`,
-          }));
-
-          const isToday = index === data.length - 1;
-
-          return (
-            <View key={index} style={[styles.barWrapper, data.length > 7 && styles.barWrapperSmall]} accessibilityLabel={`${item.label}: ${item.value} breaks, ${item.minutes} minutes`}>
-              <View style={[styles.barTrack, data.length > 7 && styles.barTrackSmall, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : theme.border.subtle }]}>
-                <Animated.View style={[styles.bar, barStyle]}>
-                  <LinearGradient
-                    colors={isToday ? (theme.isDark ? ['#06FFA5', '#00E5FF'] : [theme.accent.primary, theme.accent.secondary]) : (theme.isDark ? ['#3A3A4A', '#2A2A3A'] : [theme.border.strong, theme.border.medium])}
-                    style={StyleSheet.absoluteFill}
-                  />
-                </Animated.View>
-              </View>
-              {showLabel(index) && (
-                <Text
-                  style={[
-                    styles.barLabel,
-                    { color: theme.text.muted },
-                    isToday && [styles.barLabelActive, { color: theme.accent.primary }],
-                    data.length > 14 && styles.barLabelSmall,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-              )}
-            </View>
-          );
-        })}
+        {data.map((item, index) => (
+          <AnimatedBar
+            key={`${index}-${item.label}`}
+            item={item}
+            maxValue={maxValue}
+            delay={delay}
+            index={index}
+            isToday={index === data.length - 1}
+            dataLength={data.length}
+            showLabel={shouldShowLabel(index)}
+            theme={theme}
+          />
+        ))}
       </View>
     </View>
   );
@@ -360,6 +391,7 @@ function EmptyState({ theme }: { theme: ThemeColors }) {
 
 export default function StatsScreen() {
   const theme = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('week');
   const [refreshing, setRefreshing] = useState(false);
   const headerOpacity = useSharedValue(0);
@@ -471,6 +503,7 @@ export default function StatsScreen() {
                   color="#06FFA5"
                   delay={200}
                   theme={theme}
+                  screenWidth={screenWidth}
                 />
                 <StatCard
                   icon="time"
@@ -479,6 +512,7 @@ export default function StatsScreen() {
                   color="#00E5FF"
                   delay={300}
                   theme={theme}
+                  screenWidth={screenWidth}
                 />
                 <StatCard
                   icon="flame"
@@ -488,6 +522,7 @@ export default function StatsScreen() {
                   color="#FFD166"
                   delay={400}
                   theme={theme}
+                  screenWidth={screenWidth}
                 />
                 <StatCard
                   icon="trophy"
@@ -497,6 +532,7 @@ export default function StatsScreen() {
                   color="#B47EFF"
                   delay={500}
                   theme={theme}
+                  screenWidth={screenWidth}
                 />
               </View>
 
@@ -789,7 +825,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   statCard: {
-    width: (SCREEN_WIDTH - Spacing.lg * 2 - 12) / 2,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,

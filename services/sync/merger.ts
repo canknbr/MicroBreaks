@@ -24,9 +24,10 @@ export function mergeProfiles(
  * Always takes the higher value for cumulative stats
  */
 export function mergeProgress(local: UserProgress, remote: UserProgress): UserProgress {
+  const totalXP = Math.max(local.totalXP, remote.totalXP);
   return {
-    level: Math.max(local.level, remote.level),
-    totalXP: Math.max(local.totalXP, remote.totalXP),
+    level: Math.floor(totalXP / 100) + 1,
+    totalXP,
     totalBreaks: Math.max(local.totalBreaks, remote.totalBreaks),
     currentStreak: Math.max(local.currentStreak, remote.currentStreak),
     longestStreak: Math.max(local.longestStreak, remote.longestStreak),

@@ -7,6 +7,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { generateId } from '@/utils/generateId';
 import { getItem, setItem } from '@/services/storage';
+import { getUserDoc } from '@/services/firebase/firestore';
 import { pushUserProfile, pullUserProfile } from './userSync';
 import { pushBreakHistory, pullBreakHistory, pushSingleBreak } from './breakSync';
 import { pushSettings, pullSettings } from './settingsSync';
@@ -15,6 +16,7 @@ import { DEFAULT_SYNC_METADATA } from './types';
 import type { CompletedBreak } from '@/services/storage';
 
 const SYNC_METADATA_KEY = '@microbreaks/sync_metadata';
+const PENDING_QUEUE_KEY = '@microbreaks/sync_pending_queue';
 const SETTINGS_DEBOUNCE_MS = 3000;
 
 class SyncService {
@@ -24,13 +26,46 @@ class SyncService {
   private appStateSubscription: { remove: () => void } | null = null;
   private settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private isSyncing = false;
+  private isInitialized = false;
+  private _isSyncPulling = false;
   private pendingQueue: Array<{ type: SyncDataType; data?: unknown }> = [];
+
+  /**
+   * Whether the sync service is currently pulling remote data into stores.
+   * Used by stores to avoid re-queuing sync pushes during a pull.
+   */
+  isSyncPulling(): boolean {
+    return this._isSyncPulling;
+  }
+
+  /**
+   * Load pending queue from persistent storage
+   */
+  private async loadPendingQueue(): Promise<void> {
+    const stored = await getItem<Array<{ type: SyncDataType; data?: unknown }>>(PENDING_QUEUE_KEY);
+    if (stored && Array.isArray(stored)) {
+      this.pendingQueue = stored;
+    }
+  }
+
+  /**
+   * Save pending queue to persistent storage
+   */
+  private async savePendingQueue(): Promise<void> {
+    await setItem(PENDING_QUEUE_KEY, this.pendingQueue);
+  }
 
   /**
    * Initialize sync service after authentication
    */
   async initialize(userId: string): Promise<void> {
+    if (this.isInitialized) return;
+
     this.userId = userId;
+    this.isInitialized = true;
+
+    // Load pending queue from storage
+    await this.loadPendingQueue();
 
     // Load sync metadata
     const stored = await getItem<SyncMetadata>(SYNC_METADATA_KEY);
@@ -69,9 +104,16 @@ class SyncService {
 
     try {
       // Pull first (to get latest remote data)
-      await pullUserProfile(this.userId);
-      await pullBreakHistory(this.userId, this.metadata.lastPullAt);
-      await pullSettings(this.userId);
+      // Fetch user doc once and share with both pull functions to avoid duplicate reads
+      const userDoc = await getUserDoc(this.userId).get();
+      this._isSyncPulling = true;
+      try {
+        await pullUserProfile(this.userId, userDoc);
+        await pullBreakHistory(this.userId, this.metadata.lastPullAt);
+        await pullSettings(this.userId, userDoc);
+      } finally {
+        this._isSyncPulling = false;
+      }
 
       this.metadata.lastPullAt = Date.now();
 
@@ -106,9 +148,16 @@ class SyncService {
     this.isSyncing = true;
 
     try {
-      await pullUserProfile(this.userId);
-      await pullBreakHistory(this.userId, this.metadata.lastPullAt);
-      await pullSettings(this.userId);
+      // Fetch user doc once and share with both pull functions to avoid duplicate reads
+      const userDoc = await getUserDoc(this.userId).get();
+      this._isSyncPulling = true;
+      try {
+        await pullUserProfile(this.userId, userDoc);
+        await pullBreakHistory(this.userId, this.metadata.lastPullAt);
+        await pullSettings(this.userId, userDoc);
+      } finally {
+        this._isSyncPulling = false;
+      }
 
       this.metadata.lastPullAt = Date.now();
       this.metadata.lastSyncedAt = Date.now();
@@ -138,6 +187,7 @@ class SyncService {
 
     if (!netState.isConnected) {
       this.pendingQueue.push({ type: dataType, data });
+      await this.savePendingQueue();
       return;
     }
 
@@ -146,6 +196,7 @@ class SyncService {
     } catch (error) {
       // Failed to push - queue for retry
       this.pendingQueue.push({ type: dataType, data });
+      await this.savePendingQueue();
       if (__DEV__) {
         console.warn('[SyncService] Push failed, queued for retry:', dataType);
       }
@@ -203,9 +254,11 @@ class SyncService {
     const queue = [...this.pendingQueue];
     this.pendingQueue = [];
 
-    // Deduplicate by type (only push latest of each type)
+    // Deduplicate by type (only push latest of each type),
+    // but never deduplicate 'break' items since each break is unique data
     const seen = new Set<SyncDataType>();
     const deduped = queue.reverse().filter((item) => {
+      if (item.type === 'break') return true; // Never deduplicate breaks
       if (seen.has(item.type)) return false;
       seen.add(item.type);
       return true;
@@ -219,6 +272,8 @@ class SyncService {
         this.pendingQueue.push(item);
       }
     }
+
+    await this.savePendingQueue();
   }
 
   /**
@@ -267,6 +322,7 @@ class SyncService {
     }
     this.userId = null;
     this.isSyncing = false;
+    this.isInitialized = false;
 
     if (__DEV__) {
       console.log('[SyncService] Shutdown');
