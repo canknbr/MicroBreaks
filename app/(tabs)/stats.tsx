@@ -832,9 +832,6 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
-  androidCardFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-  },
   statIconContainer: {
     width: 40,
     height: 40,

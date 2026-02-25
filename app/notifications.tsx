@@ -418,9 +418,6 @@ const styles = StyleSheet.create({
   notificationItemUnread: {
     borderColor: 'rgba(6, 255, 165, 0.2)',
   },
-  androidCardFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-  },
   unreadDot: {
     position: 'absolute',
     top: 16,

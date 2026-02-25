@@ -1096,9 +1096,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: Spacing.lg,
   },
-  androidCardFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-  },
   cardHighlight: {
     position: 'absolute',
     top: 0,

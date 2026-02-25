@@ -845,9 +845,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  androidCardFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-  },
   breakCardContent: {
     flexDirection: 'row',
     alignItems: 'center',

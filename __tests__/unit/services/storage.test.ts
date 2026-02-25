@@ -53,7 +53,7 @@ describe('Storage Service', () => {
       expect(DEFAULT_USER_STATS.totalMinutes).toBe(0);
       expect(DEFAULT_USER_STATS.totalXP).toBe(0);
       expect(DEFAULT_USER_STATS.level).toBe(1);
-      expect(DEFAULT_USER_STATS.weeklyGoal).toBe(20);
+      expect(DEFAULT_USER_STATS.weeklyGoal).toBe(35);
       expect(DEFAULT_USER_STATS.weeklyProgress).toBe(0);
     });
   });

@@ -27,7 +27,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 // Helper to create mock break data
 function createMockBreak(overrides: Partial<CompletedBreak> = {}): CompletedBreak {
   return {
-    id: overrides.id || `break_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: overrides.id || `break_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
     breakId: overrides.breakId || 'eye-rest',
     title: overrides.title || 'Eye Rest',
     category: overrides.category || 'quick',

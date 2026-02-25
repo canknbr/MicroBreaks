@@ -44,7 +44,7 @@ function createMockBreak(overrides: Partial<{
   completedAt: string;
 }> = {}) {
   return {
-    id: overrides.id || `break_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: overrides.id || `break_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
     breakId: overrides.breakId || 'eye-rest',
     title: overrides.title || 'Eye Rest',
     category: overrides.category || 'quick',

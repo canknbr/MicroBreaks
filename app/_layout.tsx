@@ -8,7 +8,7 @@ import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useEffectiveTheme } from '@/hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { SplashScreen } from '@/components/splash';
