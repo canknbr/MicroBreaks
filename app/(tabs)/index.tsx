@@ -451,7 +451,7 @@ export default function HomeScreen() {
                     style={styles.seeAllButton}
                     onPress={handleSeeAllBreaks}
                   >
-                    <Text style={[styles.seeAllText, { color: theme.accent.primary }]}>See All</Text>
+                    <Text style={[styles.seeAllText, { color: theme.accent.primary }]}>{t('common.seeAll')}</Text>
                     <Ionicons name="chevron-forward" size={14} color={theme.accent.primary} />
                   </Pressable>
                 </View>

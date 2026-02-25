@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { AppState, AppStateStatus } from 'react-native';
 import { generateId } from '@/utils/generateId';
+import { captureMessage } from '@/services/firebase/crashlytics-adapter';
 
 // Queue item types
 export type QueueItemType =
@@ -211,6 +212,7 @@ async function processQueueInternal(): Promise<void> {
       // Remove items without processors that have been queued too long (> 1 hour)
       const ageMs = Date.now() - new Date(item.createdAt).getTime();
       if (ageMs > 60 * 60 * 1000) {
+        captureMessage(`Orphan queue item removed: type=${item.type} id=${item.id}`, 'warning');
         queueState.items = queueState.items.filter(i => i.id !== item.id);
       }
       continue;

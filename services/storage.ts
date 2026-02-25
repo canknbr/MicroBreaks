@@ -4,6 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { captureError } from '@/services/firebase/crashlytics-adapter';
 
 // Storage keys
 export const STORAGE_KEYS = {
@@ -38,10 +39,10 @@ export async function getItem<T>(key: string): Promise<T | null> {
     const value = await AsyncStorage.getItem(key);
     return value ? JSON.parse(value) : null;
   } catch (error) {
-    // Log for debugging but don't expose to user - caller should handle gracefully
     if (__DEV__) {
       console.error(`Storage read error for ${key}:`, error);
     }
+    captureError(error instanceof Error ? error : new Error(`Storage read error for ${key}`));
     return null;
   }
 }

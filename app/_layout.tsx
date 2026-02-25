@@ -101,7 +101,7 @@ export default function RootLayout() {
     return () => {
       // Cleanup sync and analytics on unmount
       syncService.shutdown();
-      analytics.shutdown();
+      void analytics.shutdown();
       if (tokenRefreshUnsubRef.current) {
         tokenRefreshUnsubRef.current();
         tokenRefreshUnsubRef.current = null;

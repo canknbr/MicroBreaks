@@ -299,6 +299,7 @@ class AnalyticsService {
   async shutdown(): Promise<void> {
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
+      this.flushTimer = null;
     }
 
     await this.flush();

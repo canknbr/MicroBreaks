@@ -3,6 +3,7 @@
  * Centralized error handling with recovery strategies
  */
 
+import { useCallback } from 'react';
 import { Alert, Platform } from 'react-native';
 import {
   AppError,
@@ -364,8 +365,6 @@ export const errorHandler = new GlobalErrorHandler();
 // ============================================
 // React Hook for Error Handling
 // ============================================
-
-import { useCallback } from 'react';
 
 export function useErrorHandler(context?: ErrorContext) {
   const handle = useCallback(
