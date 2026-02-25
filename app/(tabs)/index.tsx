@@ -63,6 +63,7 @@ import {
 } from '@/hooks/useHomeData';
 import { useNotificationStore } from '@/store';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
+import { useTranslation } from '@/i18n/hooks';
 
 // Break types data - IDs match exercise IDs in data/exercises.ts
 const BREAK_TYPES = [
@@ -183,6 +184,7 @@ function useSmartInsight(
 export default function HomeScreen() {
   // Theme
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Data hook
   const {
@@ -437,10 +439,10 @@ export default function HomeScreen() {
                       style={[styles.sectionTitle, { color: theme.text.primary }]}
                       accessibilityRole="header"
                     >
-                      Take a Break
+                      {t('home.takeABreak')}
                     </Text>
                     <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
-                      Tap to start a quick exercise
+                      {t('home.tapToStart')}
                     </Text>
                   </View>
                   <Pressable

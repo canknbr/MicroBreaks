@@ -14,7 +14,7 @@ import {
   StorageError,
   ValidationError,
 } from './types';
-import { captureError, addBreadcrumb } from './sentry';
+import { captureError, addBreadcrumb } from '../firebase/crashlytics-adapter';
 
 // ============================================
 // Error Handler Configuration

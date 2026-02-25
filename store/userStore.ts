@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { syncService } from '@/services/sync';
 
 export interface UserProfile {
   name: string;
@@ -148,20 +149,26 @@ export const useUserStore = create<UserState>()(
       isAuthenticated: false,
 
       // Profile Actions
-      updateProfile: (data) =>
+      updateProfile: (data) => {
         set((state) => ({
           profile: { ...state.profile, ...data },
-        })),
+        }));
+        syncService.queueDataChange('profile');
+      },
 
-      setName: (name) =>
+      setName: (name) => {
         set((state) => ({
           profile: { ...state.profile, name },
-        })),
+        }));
+        syncService.queueDataChange('profile');
+      },
 
-      setAvatar: (avatar) =>
+      setAvatar: (avatar) => {
         set((state) => ({
           profile: { ...state.profile, avatar },
-        })),
+        }));
+        syncService.queueDataChange('profile');
+      },
 
       // Progress Actions
       updateProgress: (data) =>
@@ -179,7 +186,7 @@ export const useUserStore = create<UserState>()(
           progress: { ...state.progress, dailyGoal: goal },
         })),
 
-      addXP: (amount) =>
+      addXP: (amount) => {
         set((state) => {
           const newTotalXP = state.progress.totalXP + amount;
           const newLevel = Math.floor(newTotalXP / 100) + 1;
@@ -190,24 +197,30 @@ export const useUserStore = create<UserState>()(
               level: newLevel,
             },
           };
-        }),
+        });
+        syncService.queueDataChange('progress');
+      },
 
-      incrementBreaks: () =>
+      incrementBreaks: () => {
         set((state) => ({
           progress: {
             ...state.progress,
             totalBreaks: state.progress.totalBreaks + 1,
           },
-        })),
+        }));
+        syncService.queueDataChange('progress');
+      },
 
-      updateStreak: (streak) =>
+      updateStreak: (streak) => {
         set((state) => ({
           progress: {
             ...state.progress,
             currentStreak: streak,
             longestStreak: Math.max(state.progress.longestStreak, streak),
           },
-        })),
+        }));
+        syncService.queueDataChange('progress');
+      },
 
       resetProgress: () =>
         set({
@@ -224,7 +237,7 @@ export const useUserStore = create<UserState>()(
         }),
 
       // Favorites Actions
-      toggleFavorite: (breakId) =>
+      toggleFavorite: (breakId) => {
         set((state) => {
           const favorites = state.preferences.favoriteBreaks;
           const isFav = favorites.includes(breakId);
@@ -236,7 +249,9 @@ export const useUserStore = create<UserState>()(
                 : [...favorites, breakId],
             },
           };
-        }),
+        });
+        syncService.queueDataChange('preferences');
+      },
 
       isFavorite: (breakId) => {
         return get().preferences.favoriteBreaks.includes(breakId);
@@ -254,7 +269,7 @@ export const useUserStore = create<UserState>()(
         }),
 
       // Achievement Actions
-      unlockAchievement: (achievementId) =>
+      unlockAchievement: (achievementId) => {
         set((state) => {
           if (state.achievements.unlockedIds.includes(achievementId)) {
             return state; // Already unlocked
@@ -269,13 +284,15 @@ export const useUserStore = create<UserState>()(
               },
             },
           };
-        }),
+        });
+        syncService.queueDataChange('achievements');
+      },
 
       isAchievementUnlocked: (achievementId) => {
         return get().achievements.unlockedIds.includes(achievementId);
       },
 
-      trackBreakCompletion: (category, durationMinutes) =>
+      trackBreakCompletion: (category, durationMinutes) => {
         set((state) => {
           const categoryBreaks = state.achievements.categoryBreaks;
           return {
@@ -288,7 +305,9 @@ export const useUserStore = create<UserState>()(
               totalMinutes: state.achievements.totalMinutes + durationMinutes,
             },
           };
-        }),
+        });
+        syncService.queueDataChange('achievements');
+      },
     }),
     {
       name: 'microbreaks-user',

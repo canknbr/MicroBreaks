@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { syncService } from '@/services/sync';
 
 export interface AppSettings {
   // Appearance
@@ -121,10 +122,12 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       settings: defaultSettings,
 
-      updateSettings: (newSettings) =>
+      updateSettings: (newSettings) => {
         set((state) => ({
           settings: { ...state.settings, ...newSettings },
-        })),
+        }));
+        syncService.queueSettingsChange();
+      },
 
       toggleSound: () =>
         set((state) => ({
@@ -180,10 +183,12 @@ export const useSettingsStore = create<SettingsState>()(
           },
         })),
 
-      setTheme: (theme) =>
+      setTheme: (theme) => {
         set((state) => ({
           settings: { ...state.settings, theme },
-        })),
+        }));
+        syncService.queueSettingsChange();
+      },
 
       resetSettings: () =>
         set({ settings: defaultSettings }),

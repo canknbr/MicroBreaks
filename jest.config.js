@@ -78,8 +78,8 @@ module.exports = {
   // Clear mocks between tests
   clearMocks: true,
 
-  // Restore mocks after each test
-  restoreMocks: true,
+  // Note: restoreMocks removed - it breaks jest.fn(impl) mocks like AsyncStorage
+  // Use jest.restoreAllMocks() explicitly in tests that need it
 
   // Maximum workers
   maxWorkers: '50%',

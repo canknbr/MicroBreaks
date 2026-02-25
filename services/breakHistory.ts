@@ -3,6 +3,7 @@
  * Manages completed breaks, statistics, and streaks
  */
 
+import { generateId } from '@/utils/generateId';
 import {
   STORAGE_KEYS,
   getItem,
@@ -20,6 +21,7 @@ import {
   MAX_STREAK_HISTORY_DAYS,
 } from '@/constants/config';
 import { validateBreakDuration, validateXP } from '@/utils/validation';
+import { syncService } from '@/services/sync';
 
 // Result type for save operations
 export interface SaveBreakResult {
@@ -104,7 +106,7 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
     const validatedDuration = validateBreakDuration(breakData.duration);
     const validatedXP = validateXP(breakData.xpEarned);
 
-    const breakId = `break_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const breakId = generateId('break');
     const newBreak: CompletedBreak = {
       ...breakData,
       id: breakId,
@@ -131,6 +133,9 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
 
     // Update user stats
     await updateUserStats(newBreak);
+
+    // Sync new break to cloud
+    syncService.queueDataChange('break', newBreak);
 
     return { success: true, breakId };
   } catch (error) {

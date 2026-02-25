@@ -7,9 +7,14 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import * as Speech from 'expo-speech';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 
-// Mock expo-speech
+// Mock expo-speech - call onDone immediately so processQueue resolves
 jest.mock('expo-speech', () => ({
-  speak: jest.fn(),
+  speak: jest.fn((_text: string, options?: { onDone?: () => void }) => {
+    // Simulate immediate speech completion
+    if (options?.onDone) {
+      options.onDone();
+    }
+  }),
   stop: jest.fn().mockResolvedValue(undefined),
   isSpeakingAsync: jest.fn().mockResolvedValue(false),
 }));
@@ -36,12 +41,12 @@ describe('useVoiceGuidance Hook', () => {
       expect(typeof result.current.isSpeaking).toBe('function');
     });
 
-    it('should use default options when none provided', () => {
+    it('should use default options when none provided', async () => {
       const { result } = renderHook(() => useVoiceGuidance());
 
       // Trigger speak to verify default options
-      act(() => {
-        result.current.speak('Test message');
+      await act(async () => {
+        await result.current.speak('Test message');
       });
 
       expect(Speech.speak).toHaveBeenCalledWith(
@@ -54,7 +59,7 @@ describe('useVoiceGuidance Hook', () => {
       );
     });
 
-    it('should merge custom options with defaults', () => {
+    it('should merge custom options with defaults', async () => {
       const { result } = renderHook(() =>
         useVoiceGuidance({
           language: 'tr-TR',
@@ -62,8 +67,8 @@ describe('useVoiceGuidance Hook', () => {
         })
       );
 
-      act(() => {
-        result.current.speak('Test message');
+      await act(async () => {
+        await result.current.speak('Test message');
       });
 
       expect(Speech.speak).toHaveBeenCalledWith(
@@ -254,12 +259,12 @@ describe('useVoiceGuidance Hook', () => {
       expect(Speech.stop).toHaveBeenCalled();
     });
 
-    it('should reset processing state', () => {
+    it('should reset processing state', async () => {
       const { result } = renderHook(() => useVoiceGuidance());
 
       // Start speaking
-      act(() => {
-        result.current.speak('Message');
+      await act(async () => {
+        await result.current.speak('Message');
       });
 
       // Stop
@@ -268,8 +273,8 @@ describe('useVoiceGuidance Hook', () => {
       });
 
       // Should be able to speak again
-      act(() => {
-        result.current.speak('New message');
+      await act(async () => {
+        await result.current.speak('New message');
       });
 
       expect(Speech.speak).toHaveBeenCalledTimes(2);
@@ -381,13 +386,13 @@ describe('useVoiceGuidance Hook', () => {
   });
 
   describe('custom options', () => {
-    it('should use custom language', () => {
+    it('should use custom language', async () => {
       const { result } = renderHook(() =>
         useVoiceGuidance({ language: 'de-DE' })
       );
 
-      act(() => {
-        result.current.speak('Hallo');
+      await act(async () => {
+        await result.current.speak('Hallo');
       });
 
       expect(Speech.speak).toHaveBeenCalledWith(
@@ -396,13 +401,13 @@ describe('useVoiceGuidance Hook', () => {
       );
     });
 
-    it('should use custom pitch', () => {
+    it('should use custom pitch', async () => {
       const { result } = renderHook(() =>
         useVoiceGuidance({ pitch: 1.5 })
       );
 
-      act(() => {
-        result.current.speak('Test');
+      await act(async () => {
+        await result.current.speak('Test');
       });
 
       expect(Speech.speak).toHaveBeenCalledWith(
@@ -411,13 +416,13 @@ describe('useVoiceGuidance Hook', () => {
       );
     });
 
-    it('should use custom rate', () => {
+    it('should use custom rate', async () => {
       const { result } = renderHook(() =>
         useVoiceGuidance({ rate: 0.5 })
       );
 
-      act(() => {
-        result.current.speak('Slow speech');
+      await act(async () => {
+        await result.current.speak('Slow speech');
       });
 
       expect(Speech.speak).toHaveBeenCalledWith(
@@ -426,7 +431,7 @@ describe('useVoiceGuidance Hook', () => {
       );
     });
 
-    it('should handle all options together', () => {
+    it('should handle all options together', async () => {
       const { result } = renderHook(() =>
         useVoiceGuidance({
           language: 'fr-FR',
@@ -435,8 +440,8 @@ describe('useVoiceGuidance Hook', () => {
         })
       );
 
-      act(() => {
-        result.current.speak('Bonjour');
+      await act(async () => {
+        await result.current.speak('Bonjour');
       });
 
       expect(Speech.speak).toHaveBeenCalledWith(
@@ -485,10 +490,11 @@ describe('useVoiceGuidance Hook', () => {
       const { result } = renderHook(() => useVoiceGuidance());
 
       await act(async () => {
-        result.current.speak('');
+        await result.current.speak('');
       });
 
-      expect(Speech.speak).toHaveBeenCalledWith('', expect.any(Object));
+      // Empty string is falsy, so Speech.speak should not be called
+      expect(Speech.speak).not.toHaveBeenCalled();
     });
 
     it('should handle very long text', async () => {

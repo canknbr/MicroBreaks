@@ -122,7 +122,7 @@ describe('Storage Service', () => {
 
       expect(result).toBeNull();
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error reading'),
+        expect.stringContaining('Storage read error'),
         expect.any(Error)
       );
       consoleSpy.mockRestore();
@@ -234,7 +234,7 @@ describe('Storage Service', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error saving'),
+        expect.stringContaining('Storage write error'),
         expect.any(Error)
       );
       consoleSpy.mockRestore();
@@ -300,7 +300,7 @@ describe('Storage Service', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error removing'),
+        expect.stringContaining('Storage remove error'),
         expect.any(Error)
       );
       consoleSpy.mockRestore();
@@ -349,7 +349,7 @@ describe('Storage Service', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error clearing'),
+        expect.stringContaining('Storage clear error'),
         expect.any(Error)
       );
       consoleSpy.mockRestore();

@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { generateId } from '@/utils/generateId';
 
 export type NotificationType =
   | 'achievement'
@@ -42,10 +43,7 @@ interface NotificationState {
   getUnreadNotifications: () => AppNotification[];
 }
 
-// Generate unique ID
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
+// generateId imported from @/utils/generateId
 
 export const useNotificationStore = create<NotificationState>()(
   persist(

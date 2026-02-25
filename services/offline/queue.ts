@@ -7,13 +7,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { AppState, AppStateStatus } from 'react-native';
+import { generateId } from '@/utils/generateId';
 
 // Queue item types
 export type QueueItemType =
   | 'notification'
   | 'analytics'
   | 'break_save'
-  | 'stats_sync';
+  | 'stats_sync'
+  | 'firestore_sync';
 
 export interface QueueItem<T = unknown> {
   id: string;
@@ -106,7 +108,7 @@ export async function enqueue<T>(
   payload: T,
   maxRetries: number = DEFAULT_MAX_RETRIES
 ): Promise<string> {
-  const id = `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  const id = generateId(type);
 
   const item: QueueItem<T> = {
     id,

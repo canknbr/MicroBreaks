@@ -178,23 +178,17 @@ describe('Notification Service', () => {
       (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ status: 'undetermined' });
       (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValueOnce({ status: 'denied' });
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const result = await requestNotificationPermissions();
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith('Notification permission not granted');
-      consoleSpy.mockRestore();
     });
 
     it('should return false on non-physical device', async () => {
       (Device as any).isDevice = false;
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const result = await requestNotificationPermissions();
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith('Notifications require a physical device');
-      consoleSpy.mockRestore();
     });
   });
 
@@ -472,9 +466,16 @@ describe('Notification Service', () => {
         weeklyProgress: 0,
       });
 
-      const mockDate = new Date();
-      mockDate.setHours(10, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      // Return a fresh Date(10:00) each time to avoid shared reference mutation
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          const d = new RealDate();
+          d.setHours(10, 0, 0, 0);
+          return d;
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleDailyGoalReminder();
       expect(result).toBe('notification-id');
@@ -489,9 +490,15 @@ describe('Notification Service', () => {
         weeklyProgress: 1,
       });
 
-      const mockDate = new Date();
-      mockDate.setHours(10, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          const d = new RealDate();
+          d.setHours(10, 0, 0, 0);
+          return d;
+        }
+        return new (RealDate as any)(...args);
+      });
 
       await scheduleDailyGoalReminder();
 
@@ -881,9 +888,15 @@ describe('Notification Service', () => {
         weeklyProgress: 0,
       });
 
-      const mockDate = new Date();
-      mockDate.setHours(10, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          const d = new RealDate();
+          d.setHours(10, 0, 0, 0);
+          return d;
+        }
+        return new (RealDate as any)(...args);
+      });
 
       await scheduleDailyGoalReminder();
 

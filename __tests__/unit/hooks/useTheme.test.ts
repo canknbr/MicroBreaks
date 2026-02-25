@@ -8,14 +8,10 @@ import { useTheme, useEffectiveTheme, useIsDarkMode } from '@/hooks/useTheme';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useColorScheme } from 'react-native';
 
-// Mock react-native's useColorScheme
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  return {
-    ...RN,
-    useColorScheme: jest.fn(() => 'dark'),
-  };
-});
+// Mock useColorScheme at the react-native internal module level
+jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
+  default: jest.fn(() => 'dark'),
+}));
 
 describe('useTheme Hook', () => {
   beforeEach(() => {

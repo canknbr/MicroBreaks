@@ -4,6 +4,8 @@
  */
 
 import Constants from 'expo-constants';
+import firebaseAnalytics from '@react-native-firebase/analytics';
+import { generateId } from '@/utils/generateId';
 
 // ============================================
 // Analytics Events
@@ -164,7 +166,7 @@ class AnalyticsService {
    * Generate unique session ID
    */
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    return generateId('session');
   }
 
   /**
@@ -182,14 +184,29 @@ class AnalyticsService {
   setUserId(userId: string | null): void {
     this.userId = userId;
     this.log(`User ID set: ${userId}`);
+
+    try {
+      firebaseAnalytics().setUserId(userId);
+    } catch (error) {
+      this.log('Failed to set Firebase user ID', error);
+    }
   }
 
   /**
    * Set user properties
    */
   setUserProperties(properties: Record<string, unknown>): void {
-    // In a real implementation, this would send to analytics provider
     this.log('User properties set', properties);
+
+    try {
+      const stringProps: Record<string, string | null> = {};
+      for (const [key, value] of Object.entries(properties)) {
+        stringProps[key] = value != null ? String(value) : null;
+      }
+      firebaseAnalytics().setUserProperties(stringProps);
+    } catch (error) {
+      this.log('Failed to set Firebase user properties', error);
+    }
   }
 
   /**
@@ -230,6 +247,16 @@ class AnalyticsService {
       screen_name: screenName,
       ...properties,
     });
+
+    // Also log to Firebase's built-in screen tracking
+    try {
+      firebaseAnalytics().logScreenView({
+        screen_name: screenName,
+        screen_class: screenName,
+      });
+    } catch (error) {
+      this.log('Failed to log Firebase screen view', error);
+    }
   }
 
   /**
@@ -244,11 +271,21 @@ class AnalyticsService {
     this.eventQueue = [];
 
     try {
-      // In a real implementation, send events to analytics provider
-      // await mixpanel.track(events);
-      // await amplitude.logEvents(events);
+      const fbAnalytics = firebaseAnalytics();
+      for (const { event, properties } of events) {
+        // Firebase Analytics params must be string/number values
+        const params: Record<string, string | number> = {};
+        for (const [key, value] of Object.entries(properties)) {
+          if (typeof value === 'string' || typeof value === 'number') {
+            params[key] = value;
+          } else if (value != null) {
+            params[key] = String(value);
+          }
+        }
+        await fbAnalytics.logEvent(event, params);
+      }
 
-      this.log(`Flushed ${events.length} events`);
+      this.log(`Flushed ${events.length} events to Firebase`);
     } catch (error) {
       // Put events back in queue on failure
       this.eventQueue = [...events, ...this.eventQueue];

@@ -125,7 +125,11 @@ export default function ProgressRing({
   }));
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View
+      style={[styles.container, { width: size, height: size }]}
+      accessibilityLabel={`Progress: ${Math.round(progress)} percent`}
+      accessibilityRole="progressbar"
+    >
       {/* Pulse glow effect */}
       {showPulse && (
         <Animated.View

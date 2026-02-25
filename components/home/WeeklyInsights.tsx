@@ -82,7 +82,7 @@ function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsProps) {
 
       <View style={styles.insightsGrid}>
         {insights.map((insight, index) => (
-          <View key={index} style={styles.insightItem}>
+          <View key={index} style={styles.insightItem} accessibilityLabel={`${insight.label}: ${insight.value}, ${insight.change >= 0 ? 'up' : 'down'} ${Math.abs(insight.change)} percent`}>
             <View style={[styles.insightIcon, { backgroundColor: `${insight.color}15` }]}>
               <Ionicons name={insight.icon as any} size={18} color={insight.color} />
             </View>

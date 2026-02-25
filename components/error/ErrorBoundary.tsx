@@ -21,7 +21,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { captureError, addBreadcrumb } from '@/services/error/sentry';
+import { captureError, addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
 import { RenderError, ErrorSeverity, ErrorCategory } from '@/services/error/types';
 
 // ============================================

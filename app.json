@@ -75,7 +75,12 @@
           "sounds": ["./assets/sounds/notification.wav"]
         }
       ],
-      "@sentry/react-native/expo"
+      "@react-native-firebase/app",
+      "@react-native-firebase/analytics",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/firestore",
+      "@react-native-firebase/messaging"
     ],
     "experiments": {
       "typedRoutes": true,

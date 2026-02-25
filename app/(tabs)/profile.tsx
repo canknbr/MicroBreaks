@@ -111,12 +111,35 @@ function SettingItem({
     }
   };
 
+  const accessibilityProps = (() => {
+    switch (type) {
+      case 'toggle':
+        return {
+          accessibilityRole: 'switch' as const,
+          accessibilityState: { checked: isEnabled },
+          accessibilityLabel: label,
+        };
+      case 'value':
+        return {
+          accessibilityRole: 'button' as const,
+          accessibilityLabel: `${label}, current value ${value}`,
+        };
+      case 'arrow':
+        return {
+          accessibilityRole: 'button' as const,
+          accessibilityLabel: label,
+          accessibilityHint: 'Opens settings page',
+        };
+    }
+  })();
+
   return (
     <Pressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
       disabled={type === 'toggle' || disabled}
+      {...accessibilityProps}
     >
       <Animated.View style={[
         styles.settingItem,
@@ -190,7 +213,7 @@ function EditProfileModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.editModalContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.editModalContent} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal={true}>
           {Platform.OS === 'ios' ? (
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
@@ -274,7 +297,7 @@ function IntervalPickerModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <View style={styles.modalContent}>
+        <View style={styles.modalContent} accessibilityViewIsModal={true}>
           {Platform.OS === 'ios' ? (
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
@@ -334,7 +357,7 @@ function ThemePickerModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <View style={styles.modalContent}>
+        <View style={styles.modalContent} accessibilityViewIsModal={true}>
           {Platform.OS === 'ios' ? (
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
@@ -517,7 +540,10 @@ export default function ProfileScreen() {
           </Animated.View>
 
           {/* Profile Card */}
-          <Animated.View style={[
+          <Animated.View
+            accessibilityRole="summary"
+            accessibilityLabel={`${profile.name}, ${levelTitle}, Level ${level}, ${currentXP} of 100 XP`}
+            style={[
             styles.profileCard,
             {
               borderColor: theme.isDark ? theme.border.subtle : 'transparent',
@@ -603,17 +629,17 @@ export default function ProfileScreen() {
 
             {/* Stats Row */}
             <View style={[styles.profileStats, { borderTopColor: theme.border.subtle }]}>
-              <View style={styles.profileStatItem}>
+              <View style={styles.profileStatItem} accessibilityRole="text" accessibilityLabel={`${progress.totalBreaks} Total Breaks`}>
                 <Text style={[styles.profileStatValue, { color: theme.text.primary }]}>{progress.totalBreaks}</Text>
                 <Text style={[styles.profileStatLabel, { color: theme.text.muted }]}>Total Breaks</Text>
               </View>
               <View style={[styles.profileStatDivider, { backgroundColor: theme.border.subtle }]} />
-              <View style={styles.profileStatItem}>
+              <View style={styles.profileStatItem} accessibilityRole="text" accessibilityLabel={`${progress.totalXP} Total XP`}>
                 <Text style={[styles.profileStatValue, { color: theme.text.primary }]}>{progress.totalXP}</Text>
                 <Text style={[styles.profileStatLabel, { color: theme.text.muted }]}>Total XP</Text>
               </View>
               <View style={[styles.profileStatDivider, { backgroundColor: theme.border.subtle }]} />
-              <View style={styles.profileStatItem}>
+              <View style={styles.profileStatItem} accessibilityRole="text" accessibilityLabel={`${progress.currentStreak} Day Streak`}>
                 <Text style={[styles.profileStatValue, { color: theme.text.primary }]}>{progress.currentStreak}</Text>
                 <Text style={[styles.profileStatLabel, { color: theme.text.muted }]}>Day Streak</Text>
               </View>
@@ -623,7 +649,7 @@ export default function ProfileScreen() {
           {/* Achievements Section */}
           <View style={styles.settingsSection}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>ACHIEVEMENTS</Text>
+              <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">ACHIEVEMENTS</Text>
               <Text style={[styles.achievementProgress, { color: theme.accent.primary }]}>
                 {achievementStats.unlocked}/{achievementStats.total}
               </Text>
@@ -658,7 +684,7 @@ export default function ProfileScreen() {
                   contentContainerStyle={styles.achievementsList}
                 >
                   {unlockedAchievements.slice(0, 5).map((achievement) => (
-                    <View key={achievement.id} style={styles.achievementBadge}>
+                    <View key={achievement.id} style={styles.achievementBadge} accessibilityRole="image" accessibilityLabel={`Achievement: ${achievement.title}`}>
                       <View style={[styles.achievementIcon, { backgroundColor: `${achievement.color}20` }]}>
                         <Text style={styles.achievementEmoji}>{achievement.icon}</Text>
                       </View>
@@ -711,7 +737,7 @@ export default function ProfileScreen() {
           </View>
 
           {/* Premium Card */}
-          <Pressable onPress={handlePremiumPress}>
+          <Pressable onPress={handlePremiumPress} accessibilityRole="button" accessibilityLabel="Upgrade to Premium. Unlock all breaks, advanced stats and more">
             <Animated.View style={[styles.premiumCard, premiumStyle]}>
               <LinearGradient
                 colors={['#FFD166', '#FF9500']}
@@ -736,7 +762,7 @@ export default function ProfileScreen() {
 
           {/* Notifications Section */}
           <View style={styles.settingsSection}>
-            <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>NOTIFICATIONS</Text>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">NOTIFICATIONS</Text>
             <View style={[
               styles.sectionCard,
               {
@@ -835,7 +861,7 @@ export default function ProfileScreen() {
 
           {/* Preferences Section */}
           <View style={styles.settingsSection}>
-            <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>PREFERENCES</Text>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">PREFERENCES</Text>
             <View style={[
               styles.sectionCard,
               {
@@ -902,7 +928,7 @@ export default function ProfileScreen() {
 
           {/* About Section */}
           <View style={styles.settingsSection}>
-            <Text style={[styles.sectionHeader, { color: theme.text.muted }]}>ABOUT</Text>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">ABOUT</Text>
             <View style={[
               styles.sectionCard,
               {
@@ -963,6 +989,8 @@ export default function ProfileScreen() {
           {/* Sign Out Button */}
           <Pressable
             style={styles.signOutButton}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
             onPress={() => {
               Alert.alert(
                 'Sign Out',

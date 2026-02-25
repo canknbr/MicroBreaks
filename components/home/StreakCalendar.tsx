@@ -22,6 +22,7 @@ interface StreakCalendarProps {
 }
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 // Separate component to avoid hook violations - memoized for performance
 const DayItem = React.memo(function DayItem({
@@ -58,7 +59,10 @@ const DayItem = React.memo(function DayItem({
   }));
 
   return (
-    <Animated.View style={[styles.dayContainer, animatedStyle]}>
+    <Animated.View
+      style={[styles.dayContainer, animatedStyle]}
+      accessibilityLabel={`${FULL_DAYS[index]}, ${isCompleted ? 'completed' : isToday ? 'today, not completed' : 'upcoming'}`}
+    >
       <Text style={[styles.dayLabel, { color: theme.text.muted }, isToday && { color: theme.accent.primary, fontWeight: '700' }]}>
         {day}
       </Text>
@@ -107,8 +111,8 @@ function StreakCalendar({
   return (
     <View style={styles.container}>
       {/* Streak Badge */}
-      <Animated.View style={[styles.streakBadge, streakBadgeStyle]}>
-        <Text style={styles.fireIcon}>🔥</Text>
+      <Animated.View style={[styles.streakBadge, streakBadgeStyle]} accessibilityLabel={`${streak} day streak`}>
+        <Text style={styles.fireIcon} accessibilityElementsHidden={true}>🔥</Text>
         <Text style={[styles.streakCount, { color: theme.accent.warning }]}>{streak}</Text>
       </Animated.View>
 

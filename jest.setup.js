@@ -9,19 +9,14 @@ import '@testing-library/react-native/extend-expect';
 // React Native Core Mocks
 // ============================================
 
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+// Note: NativeAnimatedHelper mock removed - not needed with RN 0.81+
 
-// Mock Appearance API
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  return {
-    ...RN,
-    Appearance: {
-      getColorScheme: jest.fn(() => 'dark'),
-      addChangeListener: jest.fn(() => ({ remove: jest.fn() })),
-    },
-  };
-});
+// Mock Appearance module directly instead of spreading all of react-native
+jest.mock('react-native/Libraries/Utilities/Appearance', () => ({
+  getColorScheme: jest.fn(() => 'dark'),
+  addChangeListener: jest.fn(() => ({ remove: jest.fn() })),
+  setColorScheme: jest.fn(),
+}));
 
 // ============================================
 // Expo Module Mocks
@@ -134,6 +129,138 @@ jest.mock('expo-blur', () => ({
 // Expo Image
 jest.mock('expo-image', () => ({
   Image: 'Image',
+}));
+
+// Expo Crypto
+let mockCryptoCounter = 0;
+jest.mock('expo-crypto', () => ({
+  randomUUID: jest.fn(() => {
+    mockCryptoCounter++;
+    return `00000000-0000-4000-a000-${String(mockCryptoCounter).padStart(12, '0')}`;
+  }),
+  digestStringAsync: jest.fn(),
+  CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+}));
+
+// ============================================
+// Firebase Mocks
+// ============================================
+
+jest.mock('@react-native-firebase/app', () => ({
+  __esModule: true,
+  default: {
+    apps: ['[DEFAULT]'],
+    app: jest.fn(() => ({
+      name: '[DEFAULT]',
+    })),
+  },
+}));
+
+jest.mock('@react-native-firebase/analytics', () => {
+  const mockAnalytics = {
+    logEvent: jest.fn(() => Promise.resolve()),
+    logScreenView: jest.fn(() => Promise.resolve()),
+    setUserId: jest.fn(() => Promise.resolve()),
+    setUserProperties: jest.fn(() => Promise.resolve()),
+    setAnalyticsCollectionEnabled: jest.fn(() => Promise.resolve()),
+  };
+  return {
+    __esModule: true,
+    default: jest.fn(() => mockAnalytics),
+  };
+});
+
+jest.mock('@react-native-firebase/crashlytics', () => {
+  const mockCrashlytics = {
+    log: jest.fn(),
+    recordError: jest.fn(),
+    setAttribute: jest.fn(() => Promise.resolve()),
+    setUserId: jest.fn(() => Promise.resolve()),
+    setCrashlyticsCollectionEnabled: jest.fn(() => Promise.resolve()),
+    crash: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: jest.fn(() => mockCrashlytics),
+  };
+});
+
+jest.mock('@react-native-firebase/auth', () => {
+  const mockAuth = {
+    signInAnonymously: jest.fn(() => Promise.resolve({ user: { uid: 'test-uid' } })),
+    currentUser: null,
+    onAuthStateChanged: jest.fn(() => jest.fn()),
+    signOut: jest.fn(() => Promise.resolve()),
+  };
+  return {
+    __esModule: true,
+    default: jest.fn(() => mockAuth),
+  };
+});
+
+jest.mock('@react-native-firebase/firestore', () => {
+  const mockDoc = {
+    set: jest.fn(() => Promise.resolve()),
+    get: jest.fn(() => Promise.resolve({ exists: false, data: () => null })),
+    update: jest.fn(() => Promise.resolve()),
+    delete: jest.fn(() => Promise.resolve()),
+  };
+  const mockCollection = {
+    doc: jest.fn(() => mockDoc),
+    add: jest.fn(() => Promise.resolve(mockDoc)),
+    get: jest.fn(() => Promise.resolve({ empty: true, docs: [] })),
+    where: jest.fn(() => mockCollection),
+    orderBy: jest.fn(() => mockCollection),
+    limit: jest.fn(() => mockCollection),
+  };
+  const mockBatch = {
+    set: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    commit: jest.fn(() => Promise.resolve()),
+  };
+  const mockFirestore = {
+    collection: jest.fn(() => mockCollection),
+    doc: jest.fn(() => mockDoc),
+    batch: jest.fn(() => mockBatch),
+    settings: jest.fn(() => Promise.resolve()),
+  };
+  mockFirestore.CACHE_SIZE_UNLIMITED = -1;
+  const fn = jest.fn(() => mockFirestore);
+  fn.CACHE_SIZE_UNLIMITED = -1;
+  return {
+    __esModule: true,
+    default: fn,
+  };
+});
+
+jest.mock('@react-native-firebase/messaging', () => {
+  const mockMessaging = {
+    requestPermission: jest.fn(() => Promise.resolve(1)), // AUTHORIZED
+    getToken: jest.fn(() => Promise.resolve('mock-fcm-token')),
+    onTokenRefresh: jest.fn(() => jest.fn()),
+    onMessage: jest.fn(() => jest.fn()),
+    setBackgroundMessageHandler: jest.fn(),
+  };
+  const fn = jest.fn(() => mockMessaging);
+  fn.AuthorizationStatus = {
+    NOT_DETERMINED: -1,
+    DENIED: 0,
+    AUTHORIZED: 1,
+    PROVISIONAL: 2,
+  };
+  return {
+    __esModule: true,
+    default: fn,
+  };
+});
+
+// NetInfo
+jest.mock('@react-native-community/netinfo', () => ({
+  addEventListener: jest.fn(() => jest.fn()),
+  fetch: jest.fn(() => Promise.resolve({ isConnected: true, isInternetReachable: true })),
+  refresh: jest.fn(() => Promise.resolve({ isConnected: true, isInternetReachable: true })),
+  configure: jest.fn(),
 }));
 
 // ============================================

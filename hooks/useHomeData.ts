@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from '@/i18n/hooks';
 import {
   getTodayBreaks,
   getWeekBreaks,
@@ -307,35 +308,40 @@ export function useHomeData(): UseHomeDataReturn {
 
 // Dynamic greeting based on time and context
 export function useGreeting(userName?: string): { greeting: string; subtitle: string } {
+  const { t } = useTranslation();
+
   return useMemo(() => {
     const hour = new Date().getHours();
     const name = userName ? `, ${userName}` : '';
 
-    let greeting: string;
-    let subtitle: string;
+    let greetingKey: string;
+    let subtitleKey: string;
 
     if (hour < 5) {
-      greeting = `Good night${name}`;
-      subtitle = 'Rest well, breaks can wait';
+      greetingKey = 'home.greeting.night';
+      subtitleKey = 'home.greetingSubtitle.night';
     } else if (hour < 12) {
-      greeting = `Good morning${name}`;
-      subtitle = 'Start your day with a stretch';
+      greetingKey = 'home.greeting.morning';
+      subtitleKey = 'home.greetingSubtitle.morning';
     } else if (hour < 14) {
-      greeting = `Good afternoon${name}`;
-      subtitle = 'Perfect time for a midday break';
+      greetingKey = 'home.greeting.afternoon';
+      subtitleKey = 'home.greetingSubtitle.earlyAfternoon';
     } else if (hour < 17) {
-      greeting = `Good afternoon${name}`;
-      subtitle = 'Keep the momentum going';
+      greetingKey = 'home.greeting.afternoon';
+      subtitleKey = 'home.greetingSubtitle.lateAfternoon';
     } else if (hour < 21) {
-      greeting = `Good evening${name}`;
-      subtitle = 'Wind down with a gentle break';
+      greetingKey = 'home.greeting.evening';
+      subtitleKey = 'home.greetingSubtitle.evening';
     } else {
-      greeting = `Good evening${name}`;
-      subtitle = 'One more break before rest';
+      greetingKey = 'home.greeting.evening';
+      subtitleKey = 'home.greetingSubtitle.lateEvening';
     }
 
-    return { greeting, subtitle };
-  }, [userName]);
+    return {
+      greeting: `${t(greetingKey)}${name}`,
+      subtitle: t(subtitleKey),
+    };
+  }, [userName, t]);
 }
 
 // Hook to get current hour, updating when it changes

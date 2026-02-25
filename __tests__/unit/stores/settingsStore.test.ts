@@ -350,15 +350,16 @@ describe('SettingsStore', () => {
 
   describe('Edge Cases', () => {
     it('should handle extreme reminder intervals', () => {
+      // Values are clamped to 5-120 range
       act(() => {
         useSettingsStore.getState().setReminderInterval(1);
       });
-      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(1);
+      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(5);
 
       act(() => {
         useSettingsStore.getState().setReminderInterval(180);
       });
-      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(180);
+      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(120);
     });
 
     it('should handle overnight quiet hours', () => {
@@ -382,11 +383,12 @@ describe('SettingsStore', () => {
     });
 
     it('should handle zero reminder interval', () => {
+      // 0 is clamped to minimum of 5
       act(() => {
         useSettingsStore.getState().setReminderInterval(0);
       });
 
-      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(0);
+      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(5);
     });
 
     it('should handle boundary quiet hours values', () => {
@@ -501,11 +503,12 @@ describe('SettingsStore', () => {
     });
 
     it('should handle very large reminder interval', () => {
+      // Large values are clamped to maximum of 120
       act(() => {
         useSettingsStore.getState().setReminderInterval(9999);
       });
 
-      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(9999);
+      expect(useSettingsStore.getState().settings.reminderIntervalMinutes).toBe(120);
     });
 
     it('should handle empty work days array', () => {

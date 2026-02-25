@@ -18,16 +18,16 @@ export {
   type ErrorContext,
 } from './types';
 
-// Sentry Integration
+// Crashlytics Integration (replaced Sentry)
 export {
-  sentryService,
-  initializeSentry,
+  crashlyticsService as sentryService,
+  initializeCrashlytics as initializeSentry,
   captureError,
   captureMessage,
   addBreadcrumb,
   setUser,
   setContext,
-} from './sentry';
+} from '../firebase/crashlytics-adapter';
 
 // Global Error Handler
 export {

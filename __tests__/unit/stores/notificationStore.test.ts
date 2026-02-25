@@ -56,7 +56,7 @@ describe('NotificationStore', () => {
       const notifications = useNotificationStore.getState().notifications;
       expect(notifications).toHaveLength(1);
       expect(notifications[0].id).toBeDefined();
-      expect(notifications[0].id).toMatch(/^\d+-[a-z0-9]+$/);
+      expect(notifications[0].id).toMatch(/^[0-9a-f-]+$/);
       expect(notifications[0].createdAt).toBeDefined();
       expect(notifications[0].read).toBe(false);
       expect(notifications[0].title).toBe('Test Title');

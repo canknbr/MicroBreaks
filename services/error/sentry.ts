@@ -5,6 +5,7 @@
 
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { generateId } from '@/utils/generateId';
 import {
   AppError,
   ErrorSeverity,
@@ -163,7 +164,7 @@ class SentryService {
    * Generate unique session ID
    */
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    return generateId('session');
   }
 
   /**

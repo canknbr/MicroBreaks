@@ -76,7 +76,10 @@ function StatCard({
   }));
 
   return (
-    <Animated.View style={[
+    <Animated.View
+      accessibilityRole="text"
+      accessibilityLabel={`${label}: ${Math.round(value)}${suffix || ''}`}
+      style={[
       styles.statCard,
       {
         borderColor: theme.isDark ? theme.border.subtle : 'transparent',
@@ -149,7 +152,7 @@ function BarChart({
           const isToday = index === data.length - 1;
 
           return (
-            <View key={index} style={[styles.barWrapper, data.length > 7 && styles.barWrapperSmall]}>
+            <View key={index} style={[styles.barWrapper, data.length > 7 && styles.barWrapperSmall]} accessibilityLabel={`${item.label}: ${item.value} breaks, ${item.minutes} minutes`}>
               <View style={[styles.barTrack, data.length > 7 && styles.barTrackSmall, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : theme.border.subtle }]}>
                 <Animated.View style={[styles.bar, barStyle]}>
                   <LinearGradient
@@ -206,7 +209,7 @@ function BreakTypeItem({
   }));
 
   return (
-    <Animated.View style={[styles.typeItem, containerStyle]}>
+    <Animated.View style={[styles.typeItem, containerStyle]} accessibilityLabel={`${item.category}: ${item.count} breaks, ${item.percentage} percent`}>
       <View style={styles.typeHeader}>
         <View style={styles.typeInfo}>
           <View style={[styles.typeDot, { backgroundColor: item.color }]} />
@@ -250,7 +253,7 @@ function TimePatternItem({
   }));
 
   return (
-    <Animated.View style={[styles.timePatternItem, containerStyle]}>
+    <Animated.View style={[styles.timePatternItem, containerStyle]} accessibilityLabel={`${item.label} ${item.timeRange}: ${item.count} breaks, ${item.percentage} percent${isTop ? ', most active time' : ''}`}>
       <View style={styles.timePatternHeader}>
         <View style={styles.timePatternInfo}>
           <Text style={styles.timePatternIcon}>{item.icon}</Text>
@@ -329,7 +332,7 @@ function RecentBreakItem({
   };
 
   return (
-    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.medium }, style]}>
+    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.medium }, style]} accessibilityLabel={`${item.title}, ${formatDuration(item.duration)}, ${formatTime(item.completedAt)}`}>
       <View style={[styles.recentIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
         <Text style={styles.recentIconText}>{item.icon}</Text>
       </View>
