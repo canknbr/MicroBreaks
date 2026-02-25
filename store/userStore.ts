@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface UserProfile {
@@ -119,8 +120,8 @@ export const useUserAvatar = () => useUserStore((state) => state.profile.avatar)
 export const useFavoriteBreaks = () => useUserStore((state) => state.preferences.favoriteBreaks);
 export const useRecentBreaks = () => useUserStore((state) => state.preferences.recentBreaks);
 
-// Action selectors (stable references)
-export const useUserActions = () => useUserStore((state) => ({
+// Action selectors (stable references via useShallow)
+export const useUserActions = () => useUserStore(useShallow((state) => ({
   updateProfile: state.updateProfile,
   updateProgress: state.updateProgress,
   setName: state.setName,
@@ -134,7 +135,7 @@ export const useUserActions = () => useUserStore((state) => ({
   addRecentBreak: state.addRecentBreak,
   unlockAchievement: state.unlockAchievement,
   trackBreakCompletion: state.trackBreakCompletion,
-}));
+})));
 
 export const useUserStore = create<UserState>()(
   persist(

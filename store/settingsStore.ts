@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface AppSettings {
@@ -103,8 +104,8 @@ export const useNotificationsEnabled = () => useSettingsStore((state) => state.s
 export const useBreakReminders = () => useSettingsStore((state) => state.settings.breakReminders);
 export const useReminderInterval = () => useSettingsStore((state) => state.settings.reminderIntervalMinutes);
 
-// Action selectors (stable references)
-export const useSettingsActions = () => useSettingsStore((state) => ({
+// Action selectors (stable references via useShallow)
+export const useSettingsActions = () => useSettingsStore(useShallow((state) => ({
   updateSettings: state.updateSettings,
   toggleSound: state.toggleSound,
   toggleHaptics: state.toggleHaptics,
@@ -113,7 +114,7 @@ export const useSettingsActions = () => useSettingsStore((state) => ({
   toggleBreakReminders: state.toggleBreakReminders,
   setReminderInterval: state.setReminderInterval,
   setTheme: state.setTheme,
-}));
+})));
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
@@ -167,12 +168,16 @@ export const useSettingsStore = create<SettingsState>()(
 
       setReminderInterval: (minutes) =>
         set((state) => ({
-          settings: { ...state.settings, reminderIntervalMinutes: minutes },
+          settings: { ...state.settings, reminderIntervalMinutes: Math.max(5, Math.min(120, Math.round(minutes))) },
         })),
 
       setQuietHours: (start, end) =>
         set((state) => ({
-          settings: { ...state.settings, quietHoursStart: start, quietHoursEnd: end },
+          settings: {
+            ...state.settings,
+            quietHoursStart: Math.max(0, Math.min(23, Math.round(start))),
+            quietHoursEnd: Math.max(0, Math.min(23, Math.round(end))),
+          },
         })),
 
       setTheme: (theme) =>

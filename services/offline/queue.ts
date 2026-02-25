@@ -106,7 +106,7 @@ export async function enqueue<T>(
   payload: T,
   maxRetries: number = DEFAULT_MAX_RETRIES
 ): Promise<string> {
-  const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const id = `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
   const item: QueueItem<T> = {
     id,
@@ -165,10 +165,27 @@ export async function clearQueue(): Promise<void> {
   await saveQueue();
 }
 
+// Mutex to prevent concurrent processQueue calls
+let processQueuePromise: Promise<void> | null = null;
+
 /**
- * Process the queue
+ * Process the queue (debounced via mutex to prevent duplicate processing)
  */
 async function processQueue(): Promise<void> {
+  // If already processing, wait for the existing run instead of starting a new one
+  if (processQueuePromise) {
+    return processQueuePromise;
+  }
+
+  processQueuePromise = processQueueInternal();
+  try {
+    await processQueuePromise;
+  } finally {
+    processQueuePromise = null;
+  }
+}
+
+async function processQueueInternal(): Promise<void> {
   if (queueState.isProcessing || queueState.items.length === 0) {
     return;
   }
@@ -188,6 +205,11 @@ async function processQueue(): Promise<void> {
     if (!processor) {
       if (__DEV__) {
         console.warn(`No processor registered for queue item type: ${item.type}`);
+      }
+      // Remove items without processors that have been queued too long (> 1 hour)
+      const ageMs = Date.now() - new Date(item.createdAt).getTime();
+      if (ageMs > 60 * 60 * 1000) {
+        queueState.items = queueState.items.filter(i => i.id !== item.id);
       }
       continue;
     }

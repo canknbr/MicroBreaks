@@ -24,6 +24,7 @@ import { validateBreakDuration, validateXP } from '@/utils/validation';
 // Result type for save operations
 export interface SaveBreakResult {
   success: boolean;
+  breakId?: string;
   error?: StorageError;
 }
 
@@ -103,9 +104,10 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
     const validatedDuration = validateBreakDuration(breakData.duration);
     const validatedXP = validateXP(breakData.xpEarned);
 
+    const breakId = `break_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     const newBreak: CompletedBreak = {
       ...breakData,
-      id: `break_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: breakId,
       duration: validatedDuration.value,
       xpEarned: validatedXP,
       stepsCompleted: Math.max(0, Math.round(breakData.stepsCompleted)),
@@ -130,13 +132,26 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
     // Update user stats
     await updateUserStats(newBreak);
 
-    return { success: true };
+    return { success: true, breakId };
   } catch (error) {
     if (__DEV__) {
       console.error('Error saving break:', error);
     }
     return { success: false };
   }
+}
+
+// Update the rating on an existing break
+export async function updateBreakRating(
+  breakId: string,
+  rating: CompletedBreak['rating']
+): Promise<void> {
+  const history = await getBreakHistory();
+  const breakEntry = history.find((b) => b.id === breakId);
+  if (!breakEntry) return;
+
+  breakEntry.rating = rating;
+  await setItem(STORAGE_KEYS.BREAK_HISTORY, history);
 }
 
 // Get streak data
@@ -231,6 +246,16 @@ export async function getWeeklyChartData(): Promise<{ day: string; count: number
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
   monday.setHours(0, 0, 0, 0);
 
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 7);
+
+  // Read history once, then filter in-memory
+  const allBreaks = await getBreakHistory();
+  const weekBreaks = allBreaks.filter((b) => {
+    const breakDate = new Date(b.completedAt);
+    return breakDate >= monday && breakDate <= sunday;
+  });
+
   const result: { day: string; count: number; minutes: number }[] = [];
 
   for (let i = 0; i < 7; i++) {
@@ -239,12 +264,15 @@ export async function getWeeklyChartData(): Promise<{ day: string; count: number
     const dayEnd = new Date(dayStart);
     dayEnd.setDate(dayStart.getDate() + 1);
 
-    const breaks = await getBreaksByDateRange(dayStart, dayEnd);
-    const totalMinutes = breaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
+    const dayBreaks = weekBreaks.filter((b) => {
+      const breakDate = new Date(b.completedAt);
+      return breakDate >= dayStart && breakDate < dayEnd;
+    });
+    const totalMinutes = dayBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
 
     result.push({
       day: days[i],
-      count: breaks.length,
+      count: dayBreaks.length,
       minutes: totalMinutes,
     });
   }
@@ -254,8 +282,24 @@ export async function getWeeklyChartData(): Promise<{ day: string; count: number
 
 // Get monthly data for chart (last 30 days)
 export async function getMonthlyChartData(): Promise<{ date: string; count: number; minutes: number }[]> {
-  const result: { date: string; count: number; minutes: number }[] = [];
   const today = new Date();
+
+  const rangeStart = new Date(today);
+  rangeStart.setDate(today.getDate() - 29);
+  rangeStart.setHours(0, 0, 0, 0);
+
+  const rangeEnd = new Date(today);
+  rangeEnd.setDate(today.getDate() + 1);
+  rangeEnd.setHours(0, 0, 0, 0);
+
+  // Read history once, then filter in-memory
+  const allBreaks = await getBreakHistory();
+  const monthBreaks = allBreaks.filter((b) => {
+    const breakDate = new Date(b.completedAt);
+    return breakDate >= rangeStart && breakDate < rangeEnd;
+  });
+
+  const result: { date: string; count: number; minutes: number }[] = [];
 
   for (let i = 29; i >= 0; i--) {
     const dayStart = new Date(today);
@@ -264,12 +308,15 @@ export async function getMonthlyChartData(): Promise<{ date: string; count: numb
     const dayEnd = new Date(dayStart);
     dayEnd.setDate(dayStart.getDate() + 1);
 
-    const breaks = await getBreaksByDateRange(dayStart, dayEnd);
-    const totalMinutes = breaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
+    const dayBreaks = monthBreaks.filter((b) => {
+      const breakDate = new Date(b.completedAt);
+      return breakDate >= dayStart && breakDate < dayEnd;
+    });
+    const totalMinutes = dayBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
 
     result.push({
       date: `${dayStart.getMonth() + 1}/${dayStart.getDate()}`,
-      count: breaks.length,
+      count: dayBreaks.length,
       minutes: totalMinutes,
     });
   }

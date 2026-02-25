@@ -157,7 +157,29 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 }
 
 // Get notification settings
+// Reads from both the settingsStore persistence key and the legacy STORAGE_KEYS.SETTINGS,
+// preferring the settingsStore data to maintain a single source of truth.
 export async function getNotificationSettings(): Promise<NotificationSettings> {
+  // Try to read from settingsStore's persistence key first (single source of truth)
+  const storeData = await getItem<{ state?: { settings?: Record<string, unknown> } }>('microbreaks-settings');
+  const storeSettings = storeData?.state?.settings;
+  if (storeSettings) {
+    return {
+      enabled: (storeSettings.notificationsEnabled as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.enabled,
+      breakReminders: (storeSettings.breakReminders as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.breakReminders,
+      reminderIntervalMinutes: (storeSettings.reminderIntervalMinutes as number) ?? DEFAULT_NOTIFICATION_SETTINGS.reminderIntervalMinutes,
+      streakAlerts: (storeSettings.streakAlerts as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.streakAlerts,
+      goalNotifications: (storeSettings.goalNotifications as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.goalNotifications,
+      soundEnabled: (storeSettings.soundEnabled as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.soundEnabled,
+      quietHoursEnabled: (storeSettings.quietHoursEnabled as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnabled,
+      quietHoursStart: (storeSettings.quietHoursStart as number) ?? DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart,
+      quietHoursEnd: (storeSettings.quietHoursEnd as number) ?? DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd,
+      workDaysOnly: (storeSettings.workDaysOnly as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.workDaysOnly,
+      workDays: (storeSettings.workDays as number[]) ?? DEFAULT_NOTIFICATION_SETTINGS.workDays,
+    };
+  }
+
+  // Fallback to legacy storage key
   const settings = await getItem<NotificationSettings>(STORAGE_KEYS.SETTINGS);
   return settings || DEFAULT_NOTIFICATION_SETTINGS;
 }

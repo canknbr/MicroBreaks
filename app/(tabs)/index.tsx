@@ -163,7 +163,8 @@ function useSmartInsight(
       };
     }
 
-    // Default: Pro tip
+    // Default: Pro tip - use a stable index derived from breaksTaken to avoid
+    // random tip changes on re-render
     const tips = [
       'Short breaks every 25 minutes boost productivity by 30%.',
       'Eye breaks reduce digital eye strain significantly.',
@@ -173,7 +174,7 @@ function useSmartInsight(
     return {
       type: 'suggestion' as const,
       title: 'Pro tip',
-      message: tips[Math.floor(Math.random() * tips.length)],
+      message: tips[breaksTaken % tips.length],
       actionLabel: 'Learn more',
     };
   }, [breaksTaken, breaksGoal, lastBreakMinutesAgo, streak]);
@@ -301,7 +302,7 @@ export default function HomeScreen() {
   const handleSettingsPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/profile');
-  }, []);
+  }, [router]);
 
   const handleEmptyStateAction = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -791,10 +792,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 36,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  androidCardFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-    borderRadius: 20,
   },
   cardHighlight: {
     position: 'absolute',

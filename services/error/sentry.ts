@@ -30,6 +30,13 @@ interface SentryScope {
   }) => void;
 }
 
+export interface SentryTransaction {
+  finish: () => void;
+  setData: (key: string, value: unknown) => void;
+  setTag: (key: string, value: string) => void;
+  startChild: (options?: { op?: string; description?: string }) => { finish: () => void };
+}
+
 interface SentryHub {
   captureException: (error: Error, options?: { contexts?: Record<string, unknown> }) => string;
   captureMessage: (message: string, level?: string) => string;
@@ -156,7 +163,7 @@ class SentryService {
    * Generate unique session ID
    */
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
@@ -313,7 +320,7 @@ class SentryService {
   /**
    * Start a performance transaction
    */
-  startTransaction(name: string, op: string): unknown {
+  startTransaction(_name: string, _op: string): SentryTransaction | null {
     if (!this.sentry) {
       return null;
     }

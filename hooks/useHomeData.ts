@@ -267,7 +267,7 @@ export function useHomeData(): UseHomeDataReturn {
 
   useEffect(() => {
     fetchData();
-  }, [userProfile.name, userProfile.avatar]);
+  }, [fetchData]);
 
   const refresh = useCallback(async () => {
     await fetchData(true);
@@ -338,64 +338,80 @@ export function useGreeting(userName?: string): { greeting: string; subtitle: st
   }, [userName]);
 }
 
+// Hook to get current hour, updating when it changes
+function useCurrentHour(): number {
+  const [hour, setHour] = useState(() => new Date().getHours());
+
+  useEffect(() => {
+    // Check every minute if the hour has changed
+    const interval = setInterval(() => {
+      const currentHour = new Date().getHours();
+      setHour((prev) => (prev !== currentHour ? currentHour : prev));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return hour;
+}
+
 // Time-aware ambient colors
 export function useAmbientColors(): {
   primary: string;
   secondary: string;
   gradient: [string, string];
 } {
-  return useMemo(() => {
-    const hour = new Date().getHours();
+  const hour = useCurrentHour();
 
+  return useMemo(() => {
     if (hour < 6) {
       // Night - deep blues
       return {
         primary: '#1a1a3e',
         secondary: '#0d0d2b',
-        gradient: ['#1a1a3e', '#0d0d2b'],
+        gradient: ['#1a1a3e', '#0d0d2b'] as [string, string],
       };
     } else if (hour < 10) {
       // Morning - fresh greens
       return {
         primary: '#06FFA5',
         secondary: '#00E5FF',
-        gradient: ['#06FFA5', '#00E5FF'],
+        gradient: ['#06FFA5', '#00E5FF'] as [string, string],
       };
     } else if (hour < 14) {
       // Midday - energetic cyan
       return {
         primary: '#00E5FF',
         secondary: '#06FFA5',
-        gradient: ['#00E5FF', '#06FFA5'],
+        gradient: ['#00E5FF', '#06FFA5'] as [string, string],
       };
     } else if (hour < 17) {
       // Afternoon - focused purple
       return {
         primary: '#B47EFF',
         secondary: '#06FFA5',
-        gradient: ['#B47EFF', '#06FFA5'],
+        gradient: ['#B47EFF', '#06FFA5'] as [string, string],
       };
     } else if (hour < 20) {
       // Evening - warm gold
       return {
         primary: '#FFD166',
         secondary: '#B47EFF',
-        gradient: ['#FFD166', '#B47EFF'],
+        gradient: ['#FFD166', '#B47EFF'] as [string, string],
       };
     } else {
       // Night - calming purple
       return {
         primary: '#B47EFF',
         secondary: '#1a1a3e',
-        gradient: ['#B47EFF', '#1a1a3e'],
+        gradient: ['#B47EFF', '#1a1a3e'] as [string, string],
       };
     }
-  }, []);
+  }, [hour]);
 }
 
 // Format current date
 export function useFormattedDate(): string {
-  return useMemo(() => {
+  const [dateStr, setDateStr] = useState(() => {
     const date = new Date();
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
@@ -403,5 +419,22 @@ export function useFormattedDate(): string {
       day: 'numeric',
     };
     return date.toLocaleDateString('en-US', options);
+  });
+
+  useEffect(() => {
+    // Check every minute if the date has changed
+    const interval = setInterval(() => {
+      const date = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      };
+      const newDateStr = date.toLocaleDateString('en-US', options);
+      setDateStr((prev) => (prev !== newDateStr ? newDateStr : prev));
+    }, 60_000);
+    return () => clearInterval(interval);
   }, []);
+
+  return dateStr;
 }

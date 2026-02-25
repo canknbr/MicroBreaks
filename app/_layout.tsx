@@ -16,6 +16,7 @@ import {
   scheduleAllNotifications,
   scheduleBreakReminder,
 } from '@/services/notifications';
+import { analytics } from '@/services/analytics';
 
 // Prevent the native splash screen from auto-hiding
 ExpoSplashScreen.preventAutoHideAsync();
@@ -52,6 +53,9 @@ export default function RootLayout() {
         // Schedule notifications
         await scheduleAllNotifications();
 
+        // Initialize analytics
+        await analytics.initialize();
+
         // Artificial delay to ensure smooth experience
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (e) {
@@ -62,6 +66,11 @@ export default function RootLayout() {
     }
 
     prepare();
+
+    return () => {
+      // Cleanup analytics on unmount
+      analytics.shutdown();
+    };
   }, []);
 
   // Handle app state changes to reschedule break reminders
@@ -69,7 +78,13 @@ export default function RootLayout() {
     const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
         // App came to foreground, reschedule break reminder
-        await scheduleBreakReminder();
+        try {
+          await scheduleBreakReminder();
+        } catch (error) {
+          if (__DEV__) {
+            console.warn('Failed to schedule break reminder on foreground:', error);
+          }
+        }
       }
     });
 

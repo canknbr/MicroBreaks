@@ -186,11 +186,18 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         isTransitioningRef.current = false;
         break;
 
-      default:
+      case 'loading':
+      case 'completion':
+      case 'feedback':
+        // These phases don't transition via moveToNextPhase
         isTransitioningRef.current = false;
         break;
     }
   }, [phase, exercise, currentStep, currentStepIndex, clearTimer, speakInstruction]);
+
+  // Keep a ref to the latest moveToNextPhase to avoid stale closure in setInterval
+  const moveToNextPhaseRef = useRef(moveToNextPhase);
+  moveToNextPhaseRef.current = moveToNextPhase;
 
   // Timer effect
   useEffect(() => {
@@ -201,7 +208,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          moveToNextPhase();
+          moveToNextPhaseRef.current();
           return 0;
         }
         return prev - 1;
@@ -210,7 +217,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     }, 1000);
 
     return () => clearTimer();
-  }, [phase, isPaused, moveToNextPhase, clearTimer]);
+  }, [phase, isPaused, clearTimer]);
 
   // Initialize session when exercise loads
   useEffect(() => {

@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
-import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
+import { saveCompletedBreak, updateBreakRating, getTodayBreaks, getUserStats } from '@/services/breakHistory';
 import { STREAK_MILESTONES, MIN_DAILY_GOAL } from '@/constants/config';
 import { getLevelTitle } from '@/constants/levels';
 import {
@@ -42,8 +42,9 @@ import {
   ActiveExercise,
 } from '@/components/break-session';
 import { AnimationType } from '@/data/exercises';
+import { ScreenErrorBoundary } from '@/components/error';
 
-export default function BreakSessionScreen() {
+function BreakSessionScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { t } = useTranslation();
@@ -69,19 +70,25 @@ export default function BreakSessionScreen() {
   const savedRef = useRef(false);
   const previousLevelRef = useRef(currentLevel);
 
+  // Track the saved break ID so we can update it with rating later
+  const savedBreakIdRef = useRef<string | null>(null);
+
   // Save completed break to storage when session completes
   useEffect(() => {
     if (state.phase === 'completion' && state.exercise && !savedRef.current) {
       savedRef.current = true;
 
+      // Capture exercise in a local const to avoid stale references in async code
+      const exercise = state.exercise;
+
       const saveAndNotify = async () => {
         // Save the completed break to history
         const saveResult = await saveCompletedBreak({
-          breakId: state.exercise!.id,
-          title: state.exercise!.title,
-          category: state.exercise!.category,
-          icon: state.exercise!.icon,
-          color: state.exercise!.color,
+          breakId: exercise.id,
+          title: exercise.title,
+          category: exercise.category,
+          icon: exercise.icon,
+          color: exercise.color,
           duration: stats.totalDuration,
           stepsCompleted: stats.stepsCompleted,
           totalSteps: stats.totalSteps,
@@ -94,11 +101,16 @@ export default function BreakSessionScreen() {
           console.warn('Failed to save break to history:', saveResult.error);
         }
 
+        // Store the saved break ID for later rating update
+        if (saveResult.success && saveResult.breakId) {
+          savedBreakIdRef.current = saveResult.breakId;
+        }
+
         // Sync with user store
         incrementBreaks(); // Increment total breaks
         addXP(stats.xpEarned); // Add XP to user profile
-        trackBreakCompletion(state.exercise!.category, Math.round(stats.totalDuration / 60)); // Track for achievements
-        addRecentBreak(state.exercise!.id); // Add to recent breaks
+        trackBreakCompletion(exercise.category, Math.round(stats.totalDuration / 60)); // Track for achievements
+        addRecentBreak(exercise.id); // Add to recent breaks
 
         // Check for new achievements
         checkAndUnlockAchievements();
@@ -160,24 +172,12 @@ export default function BreakSessionScreen() {
     }
   }, [currentLevel, addNotification]);
 
-  // Update rating when feedback is submitted
+  // Update rating on the already-saved break when feedback is submitted
   useEffect(() => {
-    if (state.phase === 'feedback' && state.feedbackRating && state.exercise) {
-      // Update the saved break with rating (fire and forget - errors handled gracefully)
-      saveCompletedBreak({
-        breakId: state.exercise.id,
-        title: state.exercise.title,
-        category: state.exercise.category,
-        icon: state.exercise.icon,
-        color: state.exercise.color,
-        duration: stats.totalDuration,
-        stepsCompleted: stats.stepsCompleted,
-        totalSteps: stats.totalSteps,
-        xpEarned: stats.xpEarned,
-        rating: state.feedbackRating,
-        completedAt: new Date().toISOString(),
-      }).catch(() => {
-        // Silently handle save error - user experience not impacted
+    if (state.phase === 'feedback' && state.feedbackRating && savedBreakIdRef.current) {
+      // Only update the rating on the existing break, don't create a new one
+      updateBreakRating(savedBreakIdRef.current, state.feedbackRating).catch(() => {
+        // Silently handle update error - user experience not impacted
       });
     }
   }, [state.phase, state.feedbackRating]);
@@ -566,3 +566,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
   },
 });
+
+export default function BreakSessionWithErrorBoundary() {
+  return (
+    <ScreenErrorBoundary screenName="BreakSession">
+      <BreakSessionScreen />
+    </ScreenErrorBoundary>
+  );
+}
