@@ -21,11 +21,15 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import { HeadlineText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
-import { TESTIMONIALS } from '@/constants/onboarding';
+const APP_HIGHLIGHTS = [
+  { title: '40+ Guided Exercises', description: 'For eyes, neck, back, wrists & more' },
+  { title: 'Smart Focus Timer', description: 'Pomodoro, deep work, or your own rhythm' },
+  { title: 'Track Your Progress', description: 'Streaks, achievements & daily insights' },
+];
 
 export default function SocialProofScreen() {
   const router = useRouter();
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [currentHighlight, setCurrentHighlight] = useState(0);
 
   // Animation values
   const metricScale = useSharedValue(0.9);
@@ -48,15 +52,15 @@ export default function SocialProofScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  const advanceTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
+  const advanceHighlight = () => {
+    setCurrentHighlight((prev) => (prev + 1) % APP_HIGHLIGHTS.length);
   };
 
   useEffect(() => {
     // Rotate testimonials every 3 seconds
     const interval = setInterval(() => {
       testimonialOpacity.value = withTiming(0, { duration: 200 }, () => {
-        runOnJS(advanceTestimonial)();
+        runOnJS(advanceHighlight)();
         testimonialOpacity.value = withTiming(1, { duration: 300 });
       });
     }, 3000);
@@ -86,7 +90,7 @@ export default function SocialProofScreen() {
     <OnboardingLayout currentStep={2} ambientColor="purple">
       <View style={styles.container}>
         <HeadlineText delay={0}>
-          Backed by science, loved by users
+          Wellness-focused, designed for you
         </HeadlineText>
 
         {/* Authority Badges */}
@@ -100,8 +104,8 @@ export default function SocialProofScreen() {
             <View style={styles.badgeIconContainer}>
               <Text style={styles.badgeIcon}>⭐</Text>
             </View>
-            <Text style={styles.badgeText}>4.8 stars</Text>
-            <Text style={styles.badgeSubtext}>10K+ reviews</Text>
+            <Text style={styles.badgeText}>Thoughtful design</Text>
+            <Text style={styles.badgeSubtext}>Built for daily use</Text>
           </View>
           <View style={styles.badge}>
             {Platform.OS === 'ios' ? (
@@ -110,10 +114,10 @@ export default function SocialProofScreen() {
               <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
             )}
             <View style={styles.badgeIconContainer}>
-              <Text style={styles.badgeIcon}>🏥</Text>
+              <Text style={styles.badgeIcon}>🧘</Text>
             </View>
-            <Text style={styles.badgeText}>Expert-designed</Text>
-            <Text style={styles.badgeSubtext}>By physiotherapists</Text>
+            <Text style={styles.badgeText}>Wellness-focused</Text>
+            <Text style={styles.badgeSubtext}>Gentle guided exercises</Text>
           </View>
         </Animated.View>
 
@@ -123,41 +127,41 @@ export default function SocialProofScreen() {
             colors={[ZenColors.primary.glow, 'transparent']}
             style={styles.metricGlow}
           />
-          <Text style={styles.metricValue}>89%</Text>
-          <Text style={styles.metricLabel}>report less pain in 7 days</Text>
+          <Text style={styles.metricValue}>40+</Text>
+          <Text style={styles.metricLabel}>guided exercises for eyes, neck, back & more</Text>
         </Animated.View>
 
-        {/* Testimonial Carousel */}
+        {/* Feature Highlights Carousel */}
         <Animated.View style={[styles.testimonialContainer, testimonialAnimatedStyle]}>
           {Platform.OS === 'ios' ? (
             <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
           )}
-          <Text style={styles.testimonialQuote}>
-            "{TESTIMONIALS[currentTestimonial].quote}"
+          <Text style={styles.highlightTitle}>
+            {APP_HIGHLIGHTS[currentHighlight].title}
           </Text>
-          <Text style={styles.testimonialAuthor}>
-            — {TESTIMONIALS[currentTestimonial].author}
+          <Text style={styles.highlightDescription}>
+            {APP_HIGHLIGHTS[currentHighlight].description}
           </Text>
           <View style={styles.dotsContainer}>
-            {TESTIMONIALS.map((_, index) => (
+            {APP_HIGHLIGHTS.map((_, index) => (
               <View
                 key={index}
                 style={[
                   styles.dot,
-                  index === currentTestimonial && styles.dotActive,
+                  index === currentHighlight && styles.dotActive,
                 ]}
               />
             ))}
           </View>
         </Animated.View>
 
-        {/* Real-time counter */}
+        {/* Encouragement text */}
         <View style={styles.liveCounter}>
           <View style={styles.liveDot} />
           <Text style={styles.liveCounterText}>
-            2,847 breaks taken today
+            Your personalized break plan is almost ready
           </Text>
         </View>
 
@@ -253,15 +257,15 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.12)',
     overflow: 'hidden',
   },
-  testimonialQuote: {
+  highlightTitle: {
     ...ZenTypography.body.large,
     color: ZenColors.text.primary,
-    fontStyle: 'italic',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: ZenSpacing.sm,
     lineHeight: 26,
   },
-  testimonialAuthor: {
+  highlightDescription: {
     ...ZenTypography.body.medium,
     color: ZenColors.text.secondary,
     textAlign: 'center',

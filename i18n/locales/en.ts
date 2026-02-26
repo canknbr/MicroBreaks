@@ -139,6 +139,7 @@ export default {
       title: 'Get Ready',
       subtitle: 'Find a comfortable position',
       starting: 'Starting in {{seconds}}...',
+      disclaimer: 'Stop if you feel pain. Consult a professional for medical concerns.',
     },
     controls: {
       pause: 'Pause',

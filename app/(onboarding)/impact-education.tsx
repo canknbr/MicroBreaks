@@ -30,20 +30,20 @@ const EDUCATION_CARDS = [
   },
   {
     icon: 'body-outline',
-    title: 'Muscle Memory',
-    description: 'Regular stretches prevent chronic tension buildup',
+    title: 'Muscle Relief',
+    description: 'Regular stretches may help reduce tension buildup',
     color: ZenColors.secondary.main,
   },
   {
     icon: 'flash-outline',
     title: 'Focus Boost',
-    description: '2-min breaks improve concentration by 23%',
+    description: 'Short breaks can help restore focus and energy',
     color: ZenColors.accent.main,
   },
   {
     icon: 'trending-up-outline',
     title: 'Compound Effect',
-    description: '10 daily breaks = 1 full yoga session',
+    description: 'Small breaks add up throughout the day',
     color: ZenColors.primary.main,
   },
 ];
@@ -97,7 +97,7 @@ export default function ImpactEducationScreen() {
     <OnboardingLayout currentStep={15} ambientColor="purple">
       <View style={styles.container}>
         <HeadlineText delay={0}>
-          The science behind micro-breaks
+          Why micro-breaks matter
         </HeadlineText>
 
         {/* Educational Card */}

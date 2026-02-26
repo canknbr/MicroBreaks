@@ -139,6 +139,7 @@ export default {
       title: 'Hazir Ol',
       subtitle: 'Rahat bir pozisyon bul',
       starting: '{{seconds}} saniye icinde basliyor...',
+      disclaimer: 'Agri hissederseniz durdurun. Tibbi endiseler icin bir uzmana danisin.',
     },
     controls: {
       pause: 'Duraklat',

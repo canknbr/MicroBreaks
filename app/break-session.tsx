@@ -309,6 +309,9 @@ function BreakSessionScreen() {
             <Text style={[styles.preparationCountdown, { color: exercise.color }]}>
               {state.timeRemaining}
             </Text>
+            <Text style={[styles.disclaimerText, { color: theme.text.muted }]}>
+              {t('breakSession.preparation.disclaimer')}
+            </Text>
           </Animated.View>
         );
 
@@ -524,6 +527,13 @@ const styles = StyleSheet.create({
   preparationCountdown: {
     fontSize: 64,
     fontWeight: '200',
+  },
+  disclaimerText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 24,
+    paddingHorizontal: 32,
+    opacity: 0.7,
   },
   exerciseContainer: {
     flex: 1,

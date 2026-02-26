@@ -168,29 +168,4 @@ export const TIMER_PRESETS = [
   },
 ] as const;
 
-export const TESTIMONIALS = [
-  {
-    quote: 'My neck pain disappeared after just one week',
-    author: 'Sarah, Developer',
-    rating: 5,
-  },
-  {
-    quote: 'Finally found an app that respects my workflow',
-    author: 'Mike, Designer',
-    rating: 5,
-  },
-  {
-    quote: 'The exercises are quick and actually work',
-    author: 'Emma, Product Manager',
-    rating: 5,
-  },
-] as const;
 
-export const PREMIUM_FEATURES = [
-  { feature: 'Basic Exercises', free: true, premium: true },
-  { feature: 'Smart Breaks', free: '3/day', premium: 'Unlimited' },
-  { feature: 'Exercise Library', free: '20', premium: '200+' },
-  { feature: 'AI Coaching', free: false, premium: true },
-  { feature: 'Progress Tracking', free: 'Basic', premium: 'Advanced' },
-  { feature: 'Custom Programs', free: false, premium: true },
-] as const;

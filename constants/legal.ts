@@ -66,6 +66,10 @@ We use the following third-party services:
 - **Firebase** (Google): Authentication, Firestore, Analytics, Crashlytics, Cloud Messaging
 - **Expo**: App framework and push notification infrastructure
 
+## 7.1 Advertising & Tracking
+
+MicroBreaks does **not** use the Identifier for Advertisers (IDFA) and does **not** track you across other apps or websites. We do not participate in ad networks or share data with advertisers. Firebase Analytics collects anonymous usage data only within our app and does not link it to your identity or activities in other apps. Because we do not engage in tracking as defined by Apple's App Tracking Transparency framework, you will not be prompted with a tracking permission request.
+
 ## 8. Children's Privacy
 
 MicroBreaks is not intended for children under 13. We do not knowingly collect data from children.

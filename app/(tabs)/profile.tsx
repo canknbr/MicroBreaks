@@ -15,6 +15,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -528,6 +529,12 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleSupportPress = useCallback(() => {
+    Linking.openURL('mailto:support@microbreaks.app?subject=MicroBreaks%20Support%20Request').catch(() => {
+      Alert.alert('Unable to Open Email', 'Please email us at support@microbreaks.app');
+    });
+  }, []);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
       {/* Ambient Background */}
@@ -1026,6 +1033,7 @@ export default function ProfileScreen() {
                 icon="help-circle"
                 label="Help & Support"
                 type="arrow"
+                onPress={handleSupportPress}
                 delay={600}
                 index={0}
                 theme={theme}

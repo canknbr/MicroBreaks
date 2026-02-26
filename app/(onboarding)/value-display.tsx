@@ -22,8 +22,8 @@ import { HeadlineText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 
 const BENEFITS = [
-  { icon: 'trending-down-outline', text: 'Reduced muscle tension by ~12%', color: ZenColors.primary.main },
-  { icon: 'pulse-outline', text: 'Increased blood flow to your neck', color: ZenColors.secondary.main },
+  { icon: 'trending-down-outline', text: 'May help relieve muscle tension', color: ZenColors.primary.main },
+  { icon: 'pulse-outline', text: 'Gentle movement for your neck', color: ZenColors.secondary.main },
   { icon: 'eye-outline', text: 'Gave your eyes a needed rest', color: ZenColors.accent.main },
 ];
 
@@ -98,7 +98,7 @@ export default function ValueDisplayScreen() {
           ))}
         </View>
 
-        {/* Social proof */}
+        {/* Encouragement */}
         <Animated.View style={[styles.socialProof, socialAnimatedStyle]}>
           <LinearGradient
             colors={[ZenColors.primary.glow, 'transparent']}
@@ -106,7 +106,7 @@ export default function ValueDisplayScreen() {
           />
           <View style={styles.socialDot} />
           <Text style={styles.socialProofText}>
-            You just joined <Text style={styles.highlight}>10,847 people</Text> taking a break right now
+            Great start! <Text style={styles.highlight}>Small breaks</Text> can make a big difference
           </Text>
         </Animated.View>
 

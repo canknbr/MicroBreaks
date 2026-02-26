@@ -74,11 +74,11 @@ export default function FirstSessionScreen() {
   }));
 
   const handleStart = () => {
-    router.push('./premium-pitch');
+    router.push('./completion');
   };
 
   const handleExplore = () => {
-    router.push('./premium-pitch');
+    router.push('./completion');
   };
 
   return (

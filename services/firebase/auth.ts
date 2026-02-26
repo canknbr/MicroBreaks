@@ -1,6 +1,6 @@
 /**
  * Firebase Auth Service
- * Handles anonymous auth with future upgrade path to email/Google sign-in
+ * Handles anonymous authentication
  */
 
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
