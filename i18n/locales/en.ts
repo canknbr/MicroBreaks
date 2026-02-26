@@ -587,4 +587,71 @@ export default {
       long: 'h:mm:ss A',
     },
   },
+  // ============================================
+  // Timer / Pomodoro
+  // ============================================
+  timer: {
+    title: 'Focus Timer',
+    presets: {
+      pomodoro: 'Pomodoro',
+      deepWork: 'Deep Work',
+      microSession: 'Micro Session',
+      custom: 'Custom',
+    },
+    phases: {
+      work: 'Focus',
+      break: 'Break',
+      longBreak: 'Long Break',
+    },
+    controls: {
+      start: 'Start Focus',
+      pause: 'Pause',
+      resume: 'Resume',
+      skip: 'Skip',
+      reset: 'Reset',
+    },
+    session: 'Session #{{number}}',
+    completed: 'Phase complete!',
+    workComplete: 'Focus session complete! Time for a break.',
+    breakComplete: 'Break over! Ready to focus?',
+    stats: {
+      todayFocus: 'Today\'s Focus',
+      totalFocus: 'Total Focus',
+      sessionsToday: 'Sessions Today',
+    },
+    settings: {
+      autoStartBreak: 'Auto-start Break',
+      autoStartWork: 'Auto-start Work',
+      sound: 'Timer Sound',
+      vibration: 'Timer Vibration',
+    },
+    presetPicker: {
+      title: 'Focus Preset',
+      subtitle: 'Choose your work rhythm',
+    },
+  },
+
+  // ============================================
+  // GDPR / Data Privacy
+  // ============================================
+  gdpr: {
+    downloadData: 'Download My Data',
+    deleteAccount: 'Delete Account',
+    deleteConfirm: {
+      title: 'Delete Account',
+      message: 'This will permanently delete all your data and cannot be undone. Are you sure?',
+      confirm: 'Delete',
+    },
+    exportFailed: 'Could not export your data. Please try again.',
+    deleteFailed: 'Could not delete account. Please try again.',
+    sectionTitle: 'DATA & PRIVACY',
+  },
+
+  // ============================================
+  // Legal
+  // ============================================
+  legal: {
+    privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+  },
 } as const;

@@ -13,6 +13,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.cankanbur.MicroBreaks",
       "buildNumber": "1",
+      "associatedDomains": ["applinks:microbreaks.app"],
       "infoPlist": {
         "NSCameraUsageDescription": "MicroBreaks uses the camera for future AR exercise features.",
         "UIBackgroundModes": ["fetch", "remote-notification"],
@@ -46,6 +47,23 @@
         "VIBRATE",
         "SCHEDULE_EXACT_ALARM",
         "POST_NOTIFICATIONS"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "microbreaks.app",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "microbreaks"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {

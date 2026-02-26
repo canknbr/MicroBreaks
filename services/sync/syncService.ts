@@ -18,6 +18,10 @@ import type { CompletedBreak } from '@/services/storage';
 const SYNC_METADATA_KEY = '@microbreaks/sync_metadata';
 const PENDING_QUEUE_KEY = '@microbreaks/sync_pending_queue';
 const SETTINGS_DEBOUNCE_MS = 3000;
+const MAX_SYNCS_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW_MS = 60000;
+const MAX_BACKOFF_MS = 30000;
+const INITIAL_BACKOFF_MS = 1000;
 
 class SyncService {
   private userId: string | null = null;
@@ -29,6 +33,8 @@ class SyncService {
   private isInitialized = false;
   private _isSyncPulling = false;
   private pendingQueue: Array<{ type: SyncDataType; data?: unknown }> = [];
+  private syncTimestamps: number[] = [];
+  private consecutiveFailures = 0;
 
   /**
    * Whether the sync service is currently pulling remote data into stores.
@@ -36,6 +42,31 @@ class SyncService {
    */
   isSyncPulling(): boolean {
     return this._isSyncPulling;
+  }
+
+  /**
+   * Check if we're within rate limits
+   */
+  private isRateLimited(): boolean {
+    const now = Date.now();
+    // Remove timestamps older than the window
+    this.syncTimestamps = this.syncTimestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+    return this.syncTimestamps.length >= MAX_SYNCS_PER_MINUTE;
+  }
+
+  /**
+   * Record a sync attempt for rate limiting
+   */
+  private recordSyncAttempt(): void {
+    this.syncTimestamps.push(Date.now());
+  }
+
+  /**
+   * Get exponential backoff delay based on consecutive failures
+   */
+  private getBackoffDelay(): number {
+    if (this.consecutiveFailures === 0) return 0;
+    return Math.min(INITIAL_BACKOFF_MS * Math.pow(2, this.consecutiveFailures - 1), MAX_BACKOFF_MS);
   }
 
   /**
@@ -99,8 +130,18 @@ class SyncService {
    */
   async performFullSync(): Promise<void> {
     if (!this.userId || this.isSyncing) return;
+    if (this.isRateLimited()) {
+      if (__DEV__) console.log('[SyncService] Rate limited, skipping full sync');
+      return;
+    }
+
+    const backoff = this.getBackoffDelay();
+    if (backoff > 0) {
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+    }
 
     this.isSyncing = true;
+    this.recordSyncAttempt();
 
     try {
       // Pull first (to get latest remote data)
@@ -127,10 +168,12 @@ class SyncService {
 
       await this.saveMetadata();
 
+      this.consecutiveFailures = 0;
       if (__DEV__) {
         console.log('[SyncService] Full sync completed');
       }
     } catch (error) {
+      this.consecutiveFailures += 1;
       if (__DEV__) {
         console.error('[SyncService] Full sync failed:', error);
       }
@@ -144,8 +187,18 @@ class SyncService {
    */
   async performIncrementalSync(): Promise<void> {
     if (!this.userId || this.isSyncing) return;
+    if (this.isRateLimited()) {
+      if (__DEV__) console.log('[SyncService] Rate limited, skipping incremental sync');
+      return;
+    }
+
+    const backoff = this.getBackoffDelay();
+    if (backoff > 0) {
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+    }
 
     this.isSyncing = true;
+    this.recordSyncAttempt();
 
     try {
       // Fetch user doc once and share with both pull functions to avoid duplicate reads
@@ -164,10 +217,12 @@ class SyncService {
 
       await this.saveMetadata();
 
+      this.consecutiveFailures = 0;
       if (__DEV__) {
         console.log('[SyncService] Incremental sync completed');
       }
     } catch (error) {
+      this.consecutiveFailures += 1;
       if (__DEV__) {
         console.error('[SyncService] Incremental sync failed:', error);
       }

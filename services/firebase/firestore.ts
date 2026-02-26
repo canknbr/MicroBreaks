@@ -49,4 +49,27 @@ export function getBreaksCollection(userId: string): FirebaseFirestoreTypes.Coll
   return firestore().collection('users').doc(userId).collection('breaks');
 }
 
+/**
+ * Delete all user data from Firestore (GDPR compliance)
+ */
+export async function deleteAllUserData(userId: string): Promise<void> {
+  const db = firestore();
+
+  // Delete subcollections first (breaks)
+  const breaksRef = getBreaksCollection(userId);
+  const breaksSnapshot = await breaksRef.get();
+  const batch = db.batch();
+  breaksSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+  await batch.commit();
+
+  // Delete the user document
+  await getUserDoc(userId).delete();
+
+  if (__DEV__) {
+    console.log('[Firestore] Deleted all data for user:', userId);
+  }
+}
+
 export { firestore };

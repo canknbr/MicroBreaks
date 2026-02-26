@@ -20,16 +20,20 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
-
-const PLAN_ITEMS = [
-  { icon: 'flag-outline', label: 'Primary concern', value: 'Neck & shoulder pain' },
-  { icon: 'fitness-outline', label: 'Recommended focus', value: 'Posture exercises' },
-  { icon: 'time-outline', label: 'Optimal schedule', value: '25-min work, 2-min breaks' },
-  { icon: 'trophy-outline', label: 'First week goal', value: 'Build consistency' },
-];
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { generatePersonalizedPlan } from '@/services/recommendations/engine';
 
 export default function RecommendationScreen() {
   const router = useRouter();
+  const onboardingData = useOnboardingStore((state) => state.data);
+  const plan = generatePersonalizedPlan(onboardingData);
+
+  const PLAN_ITEMS = [
+    { icon: 'flag-outline', label: 'Primary concern', value: plan.primaryConcern },
+    { icon: 'fitness-outline', label: 'Recommended focus', value: plan.recommendedFocus },
+    { icon: 'time-outline', label: 'Optimal schedule', value: plan.optimalSchedule },
+    { icon: 'trophy-outline', label: 'First week goal', value: plan.weekGoal },
+  ];
 
   // Animation values
   const badgeScale = useSharedValue(0.9);
@@ -103,7 +107,7 @@ export default function RecommendationScreen() {
               colors={[ZenColors.primary.glow, 'transparent']}
               style={styles.matchInnerGlow}
             />
-            <Text style={styles.matchValue}>87%</Text>
+            <Text style={styles.matchValue}>{plan.matchScore}%</Text>
             <Text style={styles.matchLabel}>match score</Text>
           </Animated.View>
 

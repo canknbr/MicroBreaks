@@ -8,7 +8,6 @@ import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { useEffectiveTheme } from '@/hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { SplashScreen } from '@/components/splash';
@@ -24,6 +23,8 @@ import { initializeAuth } from '@/services/firebase/auth';
 import { initializeFirestore } from '@/services/firebase/firestore';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
+import { initializeTimerService, shutdownTimerService } from '@/services/timerService';
+import OfflineBanner from '@/components/common/OfflineBanner';
 
 // Prevent the native splash screen from auto-hiding
 ExpoSplashScreen.preventAutoHideAsync();
@@ -46,7 +47,6 @@ const MicroBreaksDarkTheme = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const effectiveTheme = useEffectiveTheme();
   const { i18n } = useTranslation();
   const [showSplash, setShowSplash] = useState(true);
@@ -87,6 +87,9 @@ export default function RootLayout() {
         // Initialize analytics (now sends to Firebase Analytics)
         await analytics.initialize();
 
+        // Initialize timer service (foreground tick + AppState handler)
+        initializeTimerService();
+
         // Artificial delay to ensure smooth experience
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (e) {
@@ -99,9 +102,10 @@ export default function RootLayout() {
     prepare();
 
     return () => {
-      // Cleanup sync and analytics on unmount
+      // Cleanup sync, analytics, and timer on unmount
       syncService.shutdown();
       void analytics.shutdown();
+      shutdownTimerService();
       if (tokenRefreshUnsubRef.current) {
         tokenRefreshUnsubRef.current();
         tokenRefreshUnsubRef.current = null;
@@ -171,6 +175,22 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="privacy-policy"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_right',
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="terms-of-service"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_right',
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
                 name="modal"
                 options={{
                   presentation: 'modal',
@@ -188,6 +208,7 @@ export default function RootLayout() {
               />
             )}
           </View>
+          <OfflineBanner />
           <StatusBar style={effectiveTheme === 'dark' ? 'light' : 'dark'} />
         </ThemeProvider>
       </SafeAreaProvider>

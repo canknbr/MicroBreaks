@@ -32,8 +32,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
+import { router } from 'expo-router';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useUserStore, useSettingsStore } from '@/store';
+import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useTheme } from '@/hooks/useTheme';
 import { LEVEL_COLORS, LEVEL_TITLES } from '@/constants/levels';
@@ -429,6 +431,10 @@ export default function ProfileScreen() {
   // Achievements
   const { unlockedAchievements, stats: achievementStats, nextToUnlock } = useAchievements();
 
+  // Timer preferences
+  const timerPreferences = useTimerPreferences();
+  const timerAct = useTimerActions();
+
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
@@ -760,6 +766,72 @@ export default function ProfileScreen() {
             </Animated.View>
           </Pressable>
 
+          {/* Timer Settings Section */}
+          <View style={styles.settingsSection}>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">FOCUS TIMER</Text>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
+              )}
+              <SettingItem
+                icon="play-circle"
+                label="Auto-start Break"
+                type="toggle"
+                isEnabled={timerPreferences.autoStartBreak}
+                onToggle={() => timerAct.toggleAutoStartBreak()}
+                delay={400}
+                index={0}
+                theme={theme}
+              />
+              <SettingItem
+                icon="refresh-circle"
+                label="Auto-start Work"
+                type="toggle"
+                isEnabled={timerPreferences.autoStartWork}
+                onToggle={() => timerAct.toggleAutoStartWork()}
+                delay={400}
+                index={1}
+                theme={theme}
+              />
+              <SettingItem
+                icon="volume-high"
+                label="Timer Sound"
+                type="toggle"
+                isEnabled={timerPreferences.soundEnabled}
+                onToggle={() => timerAct.toggleTimerSound()}
+                delay={400}
+                index={2}
+                theme={theme}
+              />
+              <SettingItem
+                icon="phone-portrait"
+                label="Timer Vibration"
+                type="toggle"
+                isEnabled={timerPreferences.vibrationEnabled}
+                onToggle={() => timerAct.toggleTimerVibration()}
+                delay={400}
+                index={3}
+                theme={theme}
+              />
+            </View>
+          </View>
+
           {/* Notifications Section */}
           <View style={styles.settingsSection}>
             <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">NOTIFICATIONS</Text>
@@ -962,6 +1034,7 @@ export default function ProfileScreen() {
                 icon="shield-checkmark"
                 label="Privacy Policy"
                 type="arrow"
+                onPress={() => router.push('/privacy-policy' as any)}
                 delay={600}
                 index={1}
                 theme={theme}
@@ -970,6 +1043,7 @@ export default function ProfileScreen() {
                 icon="document-text"
                 label="Terms of Service"
                 type="arrow"
+                onPress={() => router.push('/terms-of-service' as any)}
                 delay={600}
                 index={2}
                 theme={theme}
@@ -981,6 +1055,84 @@ export default function ProfileScreen() {
                 value="1.0.0"
                 delay={600}
                 index={3}
+                theme={theme}
+              />
+            </View>
+          </View>
+
+          {/* Data & Privacy Section */}
+          <View style={styles.settingsSection}>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">DATA & PRIVACY</Text>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
+              )}
+              <SettingItem
+                icon="download"
+                label="Download My Data"
+                type="arrow"
+                onPress={async () => {
+                  try {
+                    const { exportUserData } = await import('@/services/data-export');
+                    await exportUserData();
+                  } catch (error) {
+                    Alert.alert('Export Failed', 'Could not export your data. Please try again.');
+                  }
+                }}
+                delay={600}
+                index={0}
+                theme={theme}
+              />
+              <SettingItem
+                icon="trash"
+                label="Delete Account"
+                type="arrow"
+                onPress={() => {
+                  Alert.alert(
+                    'Delete Account',
+                    'This will permanently delete all your data and cannot be undone. Are you sure?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: async () => {
+                          try {
+                            const { getCurrentUserId } = await import('@/services/firebase/auth');
+                            const { deleteAllUserData } = await import('@/services/firebase/firestore');
+                            const { deleteAuthAccount } = await import('@/services/firebase/auth');
+                            const userId = getCurrentUserId();
+                            if (userId) {
+                              await deleteAllUserData(userId);
+                            }
+                            await deleteAuthAccount();
+                            signOut();
+                          } catch (error) {
+                            Alert.alert('Error', 'Could not delete account. Please try again.');
+                          }
+                        },
+                      },
+                    ]
+                  );
+                }}
+                delay={600}
+                index={1}
                 theme={theme}
               />
             </View>

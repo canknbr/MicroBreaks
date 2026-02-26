@@ -20,6 +20,7 @@ export const NOTIFICATION_CHANNELS = {
   STREAK_ALERTS: 'streak-alerts',
   GOALS: 'goals',
   GENERAL: 'general',
+  TIMER_ALERTS: 'timer-alerts',
 } as const;
 
 // Notification identifiers for scheduled notifications
@@ -28,6 +29,7 @@ export const NOTIFICATION_IDS = {
   STREAK_PROTECTION: 'streak-protection',
   DAILY_GOAL: 'daily-goal',
   MORNING_MOTIVATION: 'morning-motivation',
+  POMODORO_TIMER_END: 'pomodoro-timer-end',
 } as const;
 
 // Notification settings interface

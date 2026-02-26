@@ -70,3 +70,25 @@ export async function signOut(): Promise<void> {
     console.error('[Auth] Failed to sign out:', error);
   }
 }
+
+/**
+ * Delete the current user's Firebase Auth account.
+ * Caller should delete Firestore data and clear local storage before this.
+ */
+export async function deleteAuthAccount(): Promise<void> {
+  const user = auth().currentUser;
+  if (!user) {
+    throw new Error('No authenticated user to delete');
+  }
+
+  try {
+    await user.delete();
+    currentUser = null;
+    if (__DEV__) {
+      console.log('[Auth] Account deleted');
+    }
+  } catch (error) {
+    console.error('[Auth] Failed to delete account:', error);
+    throw error;
+  }
+}

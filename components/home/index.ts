@@ -14,3 +14,5 @@ export { default as WeeklyInsights } from './WeeklyInsights';
 export { default as HomeScreenSkeleton } from './HomeScreenSkeleton';
 export { default as EmptyState } from './EmptyState';
 export { default as CelebrationOverlay } from './CelebrationOverlay';
+export { default as TimerWidget } from './TimerWidget';
+export { default as PresetPicker } from './PresetPicker';

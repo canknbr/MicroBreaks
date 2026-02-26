@@ -28,12 +28,21 @@ declare module '@react-native-community/netinfo' {
   export function addEventListener(
     listener: (state: NetInfoState) => void
   ): () => void;
+  export function useNetInfo(
+    configuration?: Partial<NetInfoConfiguration>
+  ): NetInfoState;
+  export function useNetInfoInstance(
+    isPaused?: boolean,
+    configuration?: Partial<NetInfoConfiguration>
+  ): { netInfo: NetInfoState; refresh: () => void };
 
   const NetInfo: {
     configure: typeof configure;
     fetch: typeof fetch;
     refresh: typeof refresh;
     addEventListener: typeof addEventListener;
+    useNetInfo: typeof useNetInfo;
+    useNetInfoInstance: typeof useNetInfoInstance;
   };
 
   export default NetInfo;

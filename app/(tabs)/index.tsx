@@ -14,7 +14,7 @@
  * - Performance optimized with memoization
  */
 
-import React, { useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useEffect, useMemo, useCallback, memo, useState } from 'react';
 import {
   View,
   Text,
@@ -46,7 +46,7 @@ import {
   ProgressRing,
   QuickBreakCard,
   StreakCalendar,
-  CountdownTimer,
+  // CountdownTimer replaced by TimerWidget
   SmartInsight,
   MotivationalQuote,
   LevelBadge,
@@ -54,6 +54,8 @@ import {
   HomeScreenSkeleton,
   EmptyState,
   CelebrationOverlay,
+  TimerWidget,
+  PresetPicker,
 } from '@/components/home';
 import {
   useHomeData,
@@ -62,6 +64,7 @@ import {
   useFormattedDate,
 } from '@/hooks/useHomeData';
 import { useNotificationStore } from '@/store';
+import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
 import { useTranslation } from '@/i18n/hooks';
 
@@ -202,6 +205,11 @@ export default function HomeScreen() {
 
   // Notification count from store
   const unreadCount = useNotificationStore((state) => state.notifications.filter((n) => !n.read).length);
+
+  // Timer state
+  const timerPreferences = useTimerPreferences();
+  const timerActions = useTimerActions();
+  const [showPresetPicker, setShowPresetPicker] = useState(false);
 
   // Dynamic content hooks
   const { greeting, subtitle: dynamicSubtitle } = useGreeting(data?.user.name);
@@ -551,17 +559,8 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Countdown Timer */}
-              {data && data.nextBreakMinutes > 0 && (
-                <View style={styles.section}>
-                  <CountdownTimer
-                    targetMinutes={data.nextBreakMinutes}
-                    onComplete={() => {
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    }}
-                  />
-                </View>
-              )}
+              {/* Focus Timer Widget */}
+              <TimerWidget onPresetPress={() => setShowPresetPicker(true)} />
 
               {/* Level Badge - Gamification */}
               {data && (
@@ -645,6 +644,14 @@ export default function HomeScreen() {
           <View style={styles.bottomSpacer} />
         </Animated.ScrollView>
       </SafeAreaView>
+
+      {/* Preset Picker Modal */}
+      <PresetPicker
+        visible={showPresetPicker}
+        currentPresetId={timerPreferences.selectedPresetId}
+        onSelect={timerActions.setPreset}
+        onClose={() => setShowPresetPicker(false)}
+      />
     </View>
   );
 }

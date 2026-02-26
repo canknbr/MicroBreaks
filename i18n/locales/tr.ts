@@ -587,4 +587,71 @@ export default {
       long: 'HH:mm:ss',
     },
   },
+  // ============================================
+  // Timer / Pomodoro
+  // ============================================
+  timer: {
+    title: 'Odak Zamanlayici',
+    presets: {
+      pomodoro: 'Pomodoro',
+      deepWork: 'Derin Calisma',
+      microSession: 'Mikro Oturum',
+      custom: 'Ozel',
+    },
+    phases: {
+      work: 'Odak',
+      break: 'Mola',
+      longBreak: 'Uzun Mola',
+    },
+    controls: {
+      start: 'Odaklanmaya Basla',
+      pause: 'Duraklat',
+      resume: 'Devam Et',
+      skip: 'Atla',
+      reset: 'Sifirla',
+    },
+    session: 'Oturum #{{number}}',
+    completed: 'Faz tamamlandi!',
+    workComplete: 'Odak oturumu tamamlandi! Mola zamani.',
+    breakComplete: 'Mola bitti! Odaklanmaya hazir misin?',
+    stats: {
+      todayFocus: 'Bugunun Odagi',
+      totalFocus: 'Toplam Odak',
+      sessionsToday: 'Bugunun Oturumlari',
+    },
+    settings: {
+      autoStartBreak: 'Molayi Otomatik Baslat',
+      autoStartWork: 'Calismyi Otomatik Baslat',
+      sound: 'Zamanlayici Sesi',
+      vibration: 'Zamanlayici Titresim',
+    },
+    presetPicker: {
+      title: 'Odak On Ayari',
+      subtitle: 'Calisma ritminizi secin',
+    },
+  },
+
+  // ============================================
+  // GDPR / Data Privacy
+  // ============================================
+  gdpr: {
+    downloadData: 'Verilerimi Indir',
+    deleteAccount: 'Hesabi Sil',
+    deleteConfirm: {
+      title: 'Hesabi Sil',
+      message: 'Bu islem tum verilerinizi kalici olarak silecek ve geri alinamaz. Emin misiniz?',
+      confirm: 'Sil',
+    },
+    exportFailed: 'Verileriniz disari aktarilamadi. Lutfen tekrar deneyin.',
+    deleteFailed: 'Hesap silinemedi. Lutfen tekrar deneyin.',
+    sectionTitle: 'VERI VE GIZLILIK',
+  },
+
+  // ============================================
+  // Legal
+  // ============================================
+  legal: {
+    privacyPolicy: 'Gizlilik Politikasi',
+    termsOfService: 'Kullanim Kosullari',
+  },
 } as const;

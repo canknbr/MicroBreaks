@@ -14,3 +14,5 @@ export type { AppSettings } from './settingsStore';
 
 export { useNotificationStore, createAchievementNotification, createStreakNotification, createGoalNotification, createLevelUpNotification } from './notificationStore';
 export type { AppNotification, NotificationType } from './notificationStore';
+
+export { useTimerStore } from './timerStore';
