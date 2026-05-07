@@ -41,7 +41,7 @@ export default function BreakStyleScreen() {
         </HeadlineText>
 
         <SubheadText delay={100}>
-          Select one or more styles you'd enjoy
+          Select one or more styles you&apos;d enjoy
         </SubheadText>
 
         <ScrollView

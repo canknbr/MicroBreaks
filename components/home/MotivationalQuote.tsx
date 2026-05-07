@@ -38,7 +38,7 @@ function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) }));
     translateY.value = withDelay(delay, withTiming(0, { duration: 800, easing: Easing.out(Easing.cubic) }));
-  }, [delay]);
+  }, [delay, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -47,7 +47,7 @@ function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <Text style={[styles.quoteIcon, { color: `${theme.accent.primary}50` }]}>"</Text>
+      <Text style={[styles.quoteIcon, { color: `${theme.accent.primary}50` }]}>&quot;</Text>
       <Text style={[styles.quoteText, { color: theme.text.secondary }]}>{quote.text}</Text>
       <Text style={[styles.author, { color: theme.text.muted }]}>— {quote.author}</Text>
     </Animated.View>

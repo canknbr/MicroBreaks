@@ -59,7 +59,7 @@ export function RefreshableScrollView({
       setRefreshing(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [onRefresh]);
+  }, [onRefresh, rotation]);
 
   const bgColor = backgroundColor || theme.background.primary;
 
@@ -150,7 +150,7 @@ export function CustomRefreshIndicator({ refreshing }: { refreshing: boolean }) 
       cancelAnimation(rotation);
       rotation.value = 0;
     }
-  }, [refreshing]);
+  }, [refreshing, rotation, scale]);
 
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -209,7 +209,7 @@ export function PulsingDotsIndicator({ active }: { active: boolean }) {
       dot2Scale.value = withTiming(1);
       dot3Scale.value = withTiming(1);
     }
-  }, [active]);
+  }, [active, dot1Scale, dot2Scale, dot3Scale]);
 
   const dot1Style = useAnimatedStyle(() => ({
     transform: [{ scale: dot1Scale.value }],
@@ -239,24 +239,6 @@ export function PulsingDotsIndicator({ active }: { active: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  customIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-  },
-  indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  indicatorDot2: {
-    transform: [{ rotate: '120deg' }],
-  },
-  indicatorDot3: {
-    transform: [{ rotate: '240deg' }],
-  },
   refreshContainer: {
     alignItems: 'center',
     justifyContent: 'center',

@@ -50,10 +50,34 @@ function getLocalStartOfDay(date: Date): Date {
   return result;
 }
 
+function createDefaultStreakData(): StreakData {
+  return {
+    ...DEFAULT_STREAK_DATA,
+    streakHistory: [],
+  };
+}
+
+function createDefaultUserStats(): UserStats {
+  return {
+    ...DEFAULT_USER_STATS,
+  };
+}
+
 // Get all completed breaks
 export async function getBreakHistory(): Promise<CompletedBreak[]> {
   const history = await getItem<CompletedBreak[]>(STORAGE_KEYS.BREAK_HISTORY);
   return history || [];
+}
+
+export function getBreaksByDateRangeFromHistory(
+  history: CompletedBreak[],
+  startDate: Date,
+  endDate: Date
+): CompletedBreak[] {
+  return history.filter((b) => {
+    const breakDate = new Date(b.completedAt);
+    return breakDate >= startDate && breakDate <= endDate;
+  });
 }
 
 // Get breaks within a date range
@@ -62,23 +86,24 @@ export async function getBreaksByDateRange(
   endDate: Date
 ): Promise<CompletedBreak[]> {
   const history = await getBreakHistory();
-  return history.filter((b) => {
-    const breakDate = new Date(b.completedAt);
-    return breakDate >= startDate && breakDate <= endDate;
-  });
+  return getBreaksByDateRangeFromHistory(history, startDate, endDate);
 }
 
-// Get breaks for today
-export async function getTodayBreaks(): Promise<CompletedBreak[]> {
+export function getTodayBreaksFromHistory(history: CompletedBreak[]): CompletedBreak[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return getBreaksByDateRange(today, tomorrow);
+  return getBreaksByDateRangeFromHistory(history, today, tomorrow);
 }
 
-// Get breaks for current week (Monday to Sunday)
-export async function getWeekBreaks(): Promise<CompletedBreak[]> {
+// Get breaks for today
+export async function getTodayBreaks(): Promise<CompletedBreak[]> {
+  const history = await getBreakHistory();
+  return getTodayBreaksFromHistory(history);
+}
+
+export function getWeekBreaksFromHistory(history: CompletedBreak[]): CompletedBreak[] {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const monday = new Date(today);
@@ -86,75 +111,87 @@ export async function getWeekBreaks(): Promise<CompletedBreak[]> {
   monday.setHours(0, 0, 0, 0);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 7);
-  return getBreaksByDateRange(monday, sunday);
+  return getBreaksByDateRangeFromHistory(history, monday, sunday);
+}
+
+// Get breaks for current week (Monday to Sunday)
+export async function getWeekBreaks(): Promise<CompletedBreak[]> {
+  const history = await getBreakHistory();
+  return getWeekBreaksFromHistory(history);
+}
+
+export function getMonthBreaksFromHistory(history: CompletedBreak[]): CompletedBreak[] {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+  return getBreaksByDateRangeFromHistory(history, firstDay, lastDay);
 }
 
 // Get breaks for current month
 export async function getMonthBreaks(): Promise<CompletedBreak[]> {
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
-  return getBreaksByDateRange(firstDay, lastDay);
+  const history = await getBreakHistory();
+  return getMonthBreaksFromHistory(history);
 }
 
-// Simple mutex for concurrent save protection
-let saveLock: Promise<void> = Promise.resolve();
+// Serialize writes so concurrent completions cannot interleave history/stat updates.
+let saveQueue: Promise<unknown> = Promise.resolve();
 
 // Save a completed break
 export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>): Promise<SaveBreakResult> {
-  // Wait for any in-progress save to complete
-  await saveLock;
+  const runSave = saveQueue.then<SaveBreakResult>(async () => {
+    try {
+      const history = await getBreakHistory();
 
-  let resolve: () => void;
-  saveLock = new Promise<void>((r) => { resolve = r; });
+      // Validate and sanitize input data
+      const validatedDuration = validateBreakDuration(breakData.duration);
+      const validatedXP = validateXP(breakData.xpEarned);
 
-  try {
-    const history = await getBreakHistory();
+      const breakId = generateId('break');
+      const newBreak: CompletedBreak = {
+        ...breakData,
+        id: breakId,
+        duration: validatedDuration.value,
+        xpEarned: validatedXP,
+        stepsCompleted: Math.max(0, Math.round(breakData.stepsCompleted)),
+        totalSteps: Math.max(1, Math.round(breakData.totalSteps)),
+      };
 
-    // Validate and sanitize input data
-    const validatedDuration = validateBreakDuration(breakData.duration);
-    const validatedXP = validateXP(breakData.xpEarned);
+      history.unshift(newBreak); // Add to beginning
 
-    const breakId = generateId('break');
-    const newBreak: CompletedBreak = {
-      ...breakData,
-      id: breakId,
-      duration: validatedDuration.value,
-      xpEarned: validatedXP,
-      stepsCompleted: Math.max(0, Math.round(breakData.stepsCompleted)),
-      totalSteps: Math.max(1, Math.round(breakData.totalSteps)),
-    };
+      // Keep only last N breaks to manage storage
+      if (history.length > MAX_BREAK_HISTORY) {
+        history.length = MAX_BREAK_HISTORY;
+      }
 
-    history.unshift(newBreak); // Add to beginning
+      const saveError = await setItemWithError(STORAGE_KEYS.BREAK_HISTORY, history);
+      if (saveError) {
+        return { success: false, error: saveError };
+      }
 
-    // Keep only last N breaks to manage storage
-    if (history.length > MAX_BREAK_HISTORY) {
-      history.length = MAX_BREAK_HISTORY;
+      // Update streak
+      await updateStreak();
+
+      // Update user stats
+      await updateUserStats(newBreak);
+
+      // Sync new break to cloud
+      syncService.queueDataChange('break', newBreak);
+
+      return { success: true, breakId };
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error saving break:', error);
+      }
+      return { success: false };
     }
+  });
 
-    const saveError = await setItemWithError(STORAGE_KEYS.BREAK_HISTORY, history);
-    if (saveError) {
-      return { success: false, error: saveError };
-    }
+  saveQueue = runSave.then(
+    () => undefined,
+    () => undefined
+  );
 
-    // Update streak
-    await updateStreak();
-
-    // Update user stats
-    await updateUserStats(newBreak);
-
-    // Sync new break to cloud
-    syncService.queueDataChange('break', newBreak);
-
-    return { success: true, breakId };
-  } catch (error) {
-    if (__DEV__) {
-      console.error('Error saving break:', error);
-    }
-    return { success: false };
-  } finally {
-    resolve!();
-  }
+  return runSave;
 }
 
 // Update the rating on an existing break
@@ -173,7 +210,7 @@ export async function updateBreakRating(
 // Get streak data
 export async function getStreakData(): Promise<StreakData> {
   const data = await getItem<StreakData>(STORAGE_KEYS.STREAK_DATA);
-  return data || DEFAULT_STREAK_DATA;
+  return data || createDefaultStreakData();
 }
 
 // Update streak based on break history
@@ -230,7 +267,7 @@ async function updateStreak(): Promise<void> {
 // Get user stats
 export async function getUserStats(): Promise<UserStats> {
   const stats = await getItem<UserStats>(STORAGE_KEYS.USER_STATS);
-  return stats || DEFAULT_USER_STATS;
+  return stats || createDefaultUserStats();
 }
 
 // Update user stats after completing a break
@@ -253,6 +290,13 @@ async function updateUserStats(breakData: CompletedBreak): Promise<void> {
 
 // Get weekly data for chart (last 7 days)
 export async function getWeeklyChartData(): Promise<{ day: string; count: number; minutes: number }[]> {
+  const history = await getBreakHistory();
+  return getWeeklyChartDataFromHistory(history);
+}
+
+export function getWeeklyChartDataFromHistory(
+  history: CompletedBreak[]
+): { day: string; count: number; minutes: number }[] {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -265,12 +309,7 @@ export async function getWeeklyChartData(): Promise<{ day: string; count: number
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 7);
 
-  // Read history once, then filter in-memory
-  const allBreaks = await getBreakHistory();
-  const weekBreaks = allBreaks.filter((b) => {
-    const breakDate = new Date(b.completedAt);
-    return breakDate >= monday && breakDate <= sunday;
-  });
+  const weekBreaks = getBreaksByDateRangeFromHistory(history, monday, sunday);
 
   const result: { day: string; count: number; minutes: number }[] = [];
 
@@ -298,6 +337,13 @@ export async function getWeeklyChartData(): Promise<{ day: string; count: number
 
 // Get monthly data for chart (last 30 days)
 export async function getMonthlyChartData(): Promise<{ date: string; count: number; minutes: number }[]> {
+  const history = await getBreakHistory();
+  return getMonthlyChartDataFromHistory(history);
+}
+
+export function getMonthlyChartDataFromHistory(
+  history: CompletedBreak[]
+): { date: string; count: number; minutes: number }[] {
   const today = new Date();
 
   const rangeStart = new Date(today);
@@ -308,12 +354,7 @@ export async function getMonthlyChartData(): Promise<{ date: string; count: numb
   rangeEnd.setDate(today.getDate() + 1);
   rangeEnd.setHours(0, 0, 0, 0);
 
-  // Read history once, then filter in-memory
-  const allBreaks = await getBreakHistory();
-  const monthBreaks = allBreaks.filter((b) => {
-    const breakDate = new Date(b.completedAt);
-    return breakDate >= rangeStart && breakDate < rangeEnd;
-  });
+  const monthBreaks = getBreaksByDateRangeFromHistory(history, rangeStart, rangeEnd);
 
   const result: { date: string; count: number; minutes: number }[] = [];
 
@@ -340,25 +381,13 @@ export async function getMonthlyChartData(): Promise<{ date: string; count: numb
   return result;
 }
 
-// Get break type distribution
-export async function getBreakTypeDistribution(
-  period: 'week' | 'month' | 'all'
-): Promise<{ category: string; count: number; percentage: number; color: string }[]> {
-  let breaks: CompletedBreak[];
-
-  if (period === 'week') {
-    breaks = await getWeekBreaks();
-  } else if (period === 'month') {
-    breaks = await getMonthBreaks();
-  } else {
-    breaks = await getBreakHistory();
-  }
-
+export function getBreakTypeDistributionFromBreaks(
+  breaks: CompletedBreak[]
+): { category: string; count: number; percentage: number; color: string }[] {
   if (breaks.length === 0) {
     return [];
   }
 
-  // Group by category
   const categoryMap = new Map<string, { count: number; color: string }>();
 
   breaks.forEach((b) => {
@@ -370,7 +399,6 @@ export async function getBreakTypeDistribution(
     }
   });
 
-  // Convert to array and calculate percentages
   const total = breaks.length;
   const result: { category: string; count: number; percentage: number; color: string }[] = [];
 
@@ -383,15 +411,39 @@ export async function getBreakTypeDistribution(
     });
   });
 
-  // Sort by count descending
   result.sort((a, b) => b.count - a.count);
 
   return result;
 }
 
+// Get break type distribution
+export async function getBreakTypeDistribution(
+  period: 'week' | 'month' | 'all'
+): Promise<{ category: string; count: number; percentage: number; color: string }[]> {
+  const history = await getBreakHistory();
+  let breaks: CompletedBreak[];
+
+  if (period === 'week') {
+    breaks = getWeekBreaksFromHistory(history);
+  } else if (period === 'month') {
+    breaks = getMonthBreaksFromHistory(history);
+  } else {
+    breaks = history;
+  }
+
+  return getBreakTypeDistributionFromBreaks(breaks);
+}
+
 // Get recent breaks (last N)
 export async function getRecentBreaks(limit: number = 10): Promise<CompletedBreak[]> {
   const history = await getBreakHistory();
+  return getRecentBreaksFromHistory(history, limit);
+}
+
+export function getRecentBreaksFromHistory(
+  history: CompletedBreak[],
+  limit: number = 10
+): CompletedBreak[] {
   return history.slice(0, limit);
 }
 
@@ -440,16 +492,23 @@ export interface TimePatternData {
 export async function getTimePatterns(
   period: 'week' | 'month' | 'all' = 'week'
 ): Promise<TimePatternData[]> {
+  const history = await getBreakHistory();
   let breaks: CompletedBreak[];
 
   if (period === 'week') {
-    breaks = await getWeekBreaks();
+    breaks = getWeekBreaksFromHistory(history);
   } else if (period === 'month') {
-    breaks = await getMonthBreaks();
+    breaks = getMonthBreaksFromHistory(history);
   } else {
-    breaks = await getBreakHistory();
+    breaks = history;
   }
 
+  return getTimePatternsFromBreaks(breaks);
+}
+
+export function getTimePatternsFromBreaks(
+  breaks: CompletedBreak[]
+): TimePatternData[] {
   if (breaks.length === 0) {
     return [];
   }

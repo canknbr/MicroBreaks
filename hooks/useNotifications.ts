@@ -20,6 +20,8 @@ import {
   addNotificationReceivedListener,
 } from '@/services/notifications';
 import * as Notifications from 'expo-notifications';
+import { getCurrentUserId } from '@/services/firebase/auth';
+import { registerForPushNotifications } from '@/services/firebase/messaging';
 
 interface UseNotificationsReturn {
   // State
@@ -45,41 +47,6 @@ export function useNotifications(): UseNotificationsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const appState = useRef(AppState.currentState);
-
-  // Load settings on mount
-  useEffect(() => {
-    loadSettings();
-    initializeNotifications();
-    checkPermission();
-
-    // Set up notification response listener
-    const responseSubscription = addNotificationResponseListener((response) => {
-      const data = response.notification.request.content.data;
-
-      // Navigate based on notification type
-      if (data?.type === 'break_reminder') {
-        router.push('/breaks');
-      } else if (data?.type === 'streak_protection') {
-        router.push('/breaks');
-      } else if (data?.type === 'daily_goal') {
-        router.push('/stats');
-      }
-    });
-
-    // Set up foreground notification listener
-    const receivedSubscription = addNotificationReceivedListener((_notification) => {
-      // Notification received in foreground - handled silently
-    });
-
-    // Handle app state changes to reschedule notifications
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-    return () => {
-      responseSubscription.remove();
-      receivedSubscription.remove();
-      subscription.remove();
-    };
-  }, []);
 
   const handleAppStateChange = useCallback((nextAppState: AppStateStatus) => {
     if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
@@ -111,11 +78,50 @@ export function useNotifications(): UseNotificationsReturn {
     setHasPermission(status === 'granted');
   }, []);
 
+  // Load settings on mount
+  useEffect(() => {
+    void loadSettings();
+    void initializeNotifications();
+    void checkPermission();
+
+    // Set up notification response listener
+    const responseSubscription = addNotificationResponseListener((response) => {
+      const data = response.notification.request.content.data;
+
+      // Navigate based on notification type
+      if (data?.type === 'break_reminder') {
+        router.push('/breaks');
+      } else if (data?.type === 'streak_protection') {
+        router.push('/breaks');
+      } else if (data?.type === 'daily_goal') {
+        router.push('/stats');
+      }
+    });
+
+    // Set up foreground notification listener
+    const receivedSubscription = addNotificationReceivedListener((_notification) => {
+      // Notification received in foreground - handled silently
+    });
+
+    // Handle app state changes to reschedule notifications
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      responseSubscription.remove();
+      receivedSubscription.remove();
+      subscription.remove();
+    };
+  }, [checkPermission, handleAppStateChange, loadSettings]);
+
   const requestPermission = useCallback(async () => {
     const granted = await requestNotificationPermissions();
     setHasPermission(granted);
 
     if (granted) {
+      const userId = getCurrentUserId();
+      if (userId) {
+        await registerForPushNotifications(userId);
+      }
       await scheduleAllNotifications();
     }
 

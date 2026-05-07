@@ -58,7 +58,7 @@ function LevelBadge({
       )
     );
     progressWidth.value = withDelay(delay + 300, withTiming(progress, { duration: 800, easing: Easing.out(Easing.cubic) }));
-  }, [delay, progress]);
+  }, [delay, opacity, progress, progressWidth, scale]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

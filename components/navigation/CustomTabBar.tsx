@@ -42,7 +42,7 @@ function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress, th
       duration: 250,
       easing: Easing.out(Easing.cubic),
     });
-  }, [isFocused]);
+  }, [animatedFocus, isFocused]);
 
   const handlePressIn = () => {
     scale.value = withTiming(0.9, { duration: 100 });
@@ -229,10 +229,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  androidFallback: {
-    backgroundColor: 'rgba(15, 15, 20, 0.95)',
-    borderRadius: 28,
-  },
   borderHighlight: {
     position: 'absolute',
     top: 0,
@@ -269,8 +265,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 4,
-  },
-  labelFocused: {
-    color: '#06FFA5',
   },
 });

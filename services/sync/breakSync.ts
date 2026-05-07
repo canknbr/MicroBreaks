@@ -3,12 +3,14 @@
  * Syncs completed breaks with Firestore subcollection
  */
 
-import { getBreaksCollection } from '@/services/firebase/firestore';
-import { firestore } from '@/services/firebase/firestore';
+import { firestore, getBreaksCollection } from '@/services/firebase/firestore';
+import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { getBreakHistory } from '@/services/breakHistory';
 import { mergeBreakHistories } from './merger';
 import { STORAGE_KEYS, setItem } from '@/services/storage';
 import type { CompletedBreak } from '@/services/storage';
+
+const BREAK_PULL_PAGE_SIZE = 500;
 
 /**
  * Push local break history to Firestore
@@ -50,24 +52,39 @@ export async function pushBreakHistory(userId: string, lastPushAt: number | null
  */
 export async function pullBreakHistory(userId: string, lastPullAt: number | null): Promise<void> {
   const breaksRef = getBreaksCollection(userId);
+  const remoteBreaks: CompletedBreak[] = [];
+  const lastPullDate = lastPullAt ? new Date(lastPullAt).toISOString() : null;
+  let lastDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot | null = null;
 
-  let query = breaksRef.orderBy('completedAt', 'desc').limit(500);
+  while (true) {
+    let query: FirebaseFirestoreTypes.Query = lastPullDate
+      ? breaksRef
+          .where('completedAt', '>', lastPullDate)
+          .orderBy('completedAt', 'desc')
+          .limit(BREAK_PULL_PAGE_SIZE)
+      : breaksRef.orderBy('completedAt', 'desc').limit(BREAK_PULL_PAGE_SIZE);
 
-  if (lastPullAt) {
-    const lastPullDate = new Date(lastPullAt).toISOString();
-    query = breaksRef
-      .where('completedAt', '>', lastPullDate)
-      .orderBy('completedAt', 'desc')
-      .limit(500);
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      break;
+    }
+
+    remoteBreaks.push(
+      ...snapshot.docs.map((doc) => doc.data() as CompletedBreak)
+    );
+
+    if (snapshot.docs.length < BREAK_PULL_PAGE_SIZE) {
+      break;
+    }
+
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
   }
 
-  const snapshot = await query.get();
-
-  if (snapshot.empty) return;
-
-  const remoteBreaks: CompletedBreak[] = snapshot.docs.map(
-    (doc) => doc.data() as CompletedBreak
-  );
+  if (remoteBreaks.length === 0) return;
 
   // Merge with local
   const localBreaks = await getBreakHistory();

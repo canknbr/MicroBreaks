@@ -36,7 +36,7 @@ export default function WorkPatternScreen() {
         </HeadlineText>
 
         <SubheadText delay={100}>
-          We'll optimize your breaks for your work style
+          We&apos;ll optimize your breaks for your work style
         </SubheadText>
 
         <ScrollView

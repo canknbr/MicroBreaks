@@ -42,7 +42,7 @@ Smart screen break reminders with guided exercises
 
 ### Description (260 characters max)
 ```
-MicroBreaks reminds you to take regular breaks from screens with 50+ guided exercises for your eyes, neck, back, and more. 100% free, works offline, and your data never leaves your device. Build healthier screen habits today.
+MicroBreaks helps screen-heavy workers take better breaks with guided exercises, smart reminders, and progress tracking. Core routines work offline, and privacy-first sync keeps your progress available across devices when you want it.
 ```
 
 ### Maker Comment
@@ -60,10 +60,10 @@ So I built MicroBreaks.
 **What makes it different:**
 
 🎯 **Smart reminders** that fit your work schedule
-🧘 **50+ guided exercises** for eyes, neck, back, wrists, and breathing
+🧘 **Guided exercises** for eyes, neck, back, wrists, and breathing
 📊 **Progress tracking** with streaks and achievements
-🔒 **Privacy first** - all data stays on your device
-💰 **100% free** - no subscriptions, no ads
+🔒 **Privacy first** - local-first data with optional sync
+💰 **Free to start** - core features are available today
 
 I built this as a tool I needed myself, and now I'm excited to share it with the PH community.
 
@@ -200,11 +200,11 @@ We just launched on @ProductHunt! 🚀
 MicroBreaks helps you take smarter breaks from screens with:
 
 🎯 Smart reminders
-🧘 50+ guided exercises
+🧘 Guided exercises
 📊 Progress tracking
-🔒 100% privacy
+🔒 Privacy-first design
 
-100% free, no ads, works offline.
+Core features are free to start, and core routines work offline.
 
 Would love your support! 🙏
 
@@ -221,9 +221,9 @@ After years of struggling with screen-related eye strain and neck pain, I built 
 
 MicroBreaks features:
 ✅ Smart break reminders
-✅ 50+ guided exercises
+✅ Guided exercises
 ✅ Progress tracking with streaks
-✅ 100% free with no data collection
+✅ Privacy-first local-first data handling
 
 If you're someone who spends hours on screens, I'd love your feedback.
 

@@ -14,14 +14,6 @@ function measureTime(fn: () => void): number {
   return end - start;
 }
 
-// Helper to measure async execution time
-async function measureTimeAsync(fn: () => Promise<void>): Promise<number> {
-  const start = performance.now();
-  await fn();
-  const end = performance.now();
-  return end - start;
-}
-
 describe('Performance Benchmarks', () => {
   beforeEach(() => {
     act(() => {

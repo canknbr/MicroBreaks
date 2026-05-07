@@ -45,7 +45,7 @@ export function SkeletonBox({
         true
       )
     );
-  }, [delay]);
+  }, [delay, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

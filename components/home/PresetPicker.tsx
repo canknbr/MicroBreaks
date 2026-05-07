@@ -13,7 +13,7 @@ import { Spacing } from '@/theme';
 interface PresetPickerProps {
   visible: boolean;
   currentPresetId: string;
-  onSelect: (presetId: string) => void;
+  onSelect: (_presetId: string) => void;
   onClose: () => void;
 }
 

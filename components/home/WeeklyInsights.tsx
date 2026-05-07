@@ -38,7 +38,7 @@ function WeeklyInsights({ insights, delay = 0 }: WeeklyInsightsProps) {
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
     translateY.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-  }, [delay]);
+  }, [delay, opacity, translateY]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -117,9 +117,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: 16,
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(20, 20, 30, 0.9)',
   },
   headerGradient: {
     position: 'absolute',

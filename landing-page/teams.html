@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MicroBreaks for Teams helps remote and hybrid teams reduce screen strain, tight shoulders, posture fatigue, and focus drop with guided desk-recovery routines and weekly recovery visibility.">
+    <meta name="keywords" content="employee wellness,desk recovery,remote team wellness,corporate wellness,screen strain,neck pain,focus recovery">
+    <meta name="author" content="Can Kanbur">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://microbreaks.app/teams">
+    <meta property="og:title" content="MicroBreaks for Teams - Desk Recovery for Remote & Hybrid Teams">
+    <meta property="og:description" content="A pilot-ready desk recovery program for teams dealing with screen strain, tight shoulders, posture fatigue, and focus drop.">
+    <meta property="og:image" content="https://microbreaks.app/og-image.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://microbreaks.app/teams">
+    <meta property="twitter:title" content="MicroBreaks for Teams - Desk Recovery for Remote & Hybrid Teams">
+    <meta property="twitter:description" content="A pilot-ready desk recovery program for teams dealing with screen strain, tight shoulders, posture fatigue, and focus drop.">
+    <meta property="twitter:image" content="https://microbreaks.app/og-image.png">
+
+    <title>MicroBreaks for Teams - Desk Recovery for Remote & Hybrid Teams</title>
+
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0F766E;
+            --primary-dark: #115E59;
+            --secondary: #F59E0B;
+            --bg-dark: #10211D;
+            --bg-soft: #EDF7F3;
+            --surface: #FFFFFF;
+            --surface-strong: #F7FAF9;
+            --text-primary: #10211D;
+            --text-secondary: #5B6B66;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background:
+                radial-gradient(circle at 0 0, rgba(15, 118, 110, 0.12), transparent 30%),
+                linear-gradient(180deg, #F7FBF9 0%, #FFFFFF 42%, #F3F8F6 100%);
+        }
+
+        .container {
+            width: min(1180px, calc(100% - 40px));
+            margin: 0 auto;
+        }
+
+        header {
+            position: fixed;
+            inset: 0 0 auto 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 78px;
+        }
+
+        .logo {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 16px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .hero {
+            padding: 146px 0 86px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+            gap: 46px;
+            align-items: center;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            letter-spacing: -0.04em;
+        }
+
+        .hero-copy h1 {
+            font-size: 58px;
+            line-height: 1.02;
+            margin-bottom: 20px;
+        }
+
+        .hero-copy p {
+            font-size: 19px;
+            color: var(--text-secondary);
+            max-width: 620px;
+            margin-bottom: 28px;
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 54px;
+            padding: 0 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .cta:hover {
+            transform: translateY(-1px);
+        }
+
+        .cta-primary {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 18px 36px rgba(15, 118, 110, 0.18);
+        }
+
+        .cta-secondary {
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--text-primary);
+            border: 1px solid rgba(16, 33, 29, 0.1);
+        }
+
+        .hero-note {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .hero-side {
+            position: relative;
+        }
+
+        .hero-image {
+            width: 100%;
+            border-radius: 30px;
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 32px 70px rgba(16, 33, 29, 0.15);
+        }
+
+        .pilot-card {
+            position: absolute;
+            right: -8px;
+            bottom: 24px;
+            max-width: 260px;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 12px 28px rgba(16, 33, 29, 0.12);
+        }
+
+        .pilot-card strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .pilot-card p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .signal-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 30px;
+        }
+
+        .signal-card {
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .signal-card strong {
+            display: block;
+            font-size: 26px;
+            margin-bottom: 4px;
+        }
+
+        .signal-card span {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        section {
+            padding: 88px 0;
+        }
+
+        .section-head {
+            max-width: 760px;
+            margin-bottom: 46px;
+        }
+
+        .section-head h2 {
+            font-size: 42px;
+            margin-bottom: 16px;
+        }
+
+        .section-head p {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .outcomes-grid,
+        .ops-grid,
+        .pilot-grid,
+        .faq-grid {
+            display: grid;
+            gap: 22px;
+        }
+
+        .outcomes-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ops-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pilot-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .faq-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .card {
+            padding: 28px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+            box-shadow: 0 12px 28px rgba(16, 33, 29, 0.05);
+        }
+
+        .card .eyebrow-mini {
+            display: inline-flex;
+            align-items: center;
+            min-height: 30px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .card h3 {
+            font-size: 24px;
+            line-height: 1.08;
+            margin-bottom: 10px;
+        }
+
+        .card p,
+        .card li {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .card ul {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .card li::before {
+            content: "•";
+            color: var(--secondary);
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .timeline {
+            display: grid;
+            gap: 16px;
+        }
+
+        .timeline-step {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .timeline-index {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .timeline-copy strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .pricing {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--bg-dark) 100%);
+            color: var(--white);
+        }
+
+        .roi-section {
+            background:
+                linear-gradient(180deg, rgba(15, 118, 110, 0.06) 0%, rgba(255, 255, 255, 0.92) 24%, rgba(255, 255, 255, 0.96) 100%);
+        }
+
+        .roi-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        .roi-copy p {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 18px;
+            max-width: 620px;
+        }
+
+        .roi-points {
+            display: grid;
+            gap: 14px;
+            margin-top: 26px;
+        }
+
+        .roi-point {
+            padding: 18px 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .roi-point strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .roi-point span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .roi-surface {
+            padding: 30px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 24px 48px rgba(16, 33, 29, 0.08);
+        }
+
+        .roi-surface h3 {
+            font-size: 30px;
+            line-height: 1.02;
+            margin-bottom: 10px;
+        }
+
+        .roi-surface > p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            max-width: 620px;
+        }
+
+        .roi-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px 20px;
+            margin-top: 26px;
+        }
+
+        .roi-field {
+            display: grid;
+            gap: 10px;
+        }
+
+        .roi-field label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .roi-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .roi-range {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .roi-number {
+            width: 100%;
+            min-height: 50px;
+            padding: 0 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 29, 0.12);
+            background: var(--white);
+            color: var(--text-primary);
+            font: inherit;
+        }
+
+        .roi-output-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .roi-output {
+            padding: 18px;
+            border-radius: 22px;
+            background: var(--surface-strong);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .roi-output span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .roi-output strong {
+            display: block;
+            font-size: 28px;
+            line-height: 1.05;
+        }
+
+        .roi-plan-row {
+            display: grid;
+            grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr);
+            gap: 16px;
+            margin-top: 22px;
+        }
+
+        .roi-plan-card,
+        .roi-break-even {
+            padding: 18px 20px;
+            border-radius: 22px;
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            background: rgba(15, 118, 110, 0.04);
+        }
+
+        .roi-plan-card strong,
+        .roi-break-even strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .roi-plan-card p,
+        .roi-break-even p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .roi-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .roi-disclaimer {
+            margin-top: 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .pricing .section-head p,
+        .pricing-card p,
+        .pricing-card li {
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 24px;
+        }
+
+        .pricing-card {
+            padding: 30px;
+            border-radius: 26px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(14px);
+        }
+
+        .price-line {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin: 16px 0 10px;
+        }
+
+        .price-line strong {
+            font-size: 42px;
+            line-height: 1;
+        }
+
+        .price-line span {
+            opacity: 0.74;
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .pricing-card li::before {
+            content: "✓";
+            color: #FCD34D;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .intake-section {
+            background: linear-gradient(180deg, rgba(16, 33, 29, 0.02) 0%, rgba(255, 255, 255, 0.96) 100%);
+        }
+
+        .intake-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        .intake-surface {
+            padding: 30px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 24px 48px rgba(16, 33, 29, 0.08);
+        }
+
+        .intake-surface h3 {
+            font-size: 30px;
+            line-height: 1.04;
+            margin-bottom: 10px;
+        }
+
+        .intake-surface > p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .intake-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px 20px;
+            margin-top: 24px;
+        }
+
+        .intake-field {
+            display: grid;
+            gap: 10px;
+        }
+
+        .intake-field-full {
+            grid-column: 1 / -1;
+        }
+
+        .intake-field label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .intake-field select,
+        .intake-field textarea {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 29, 0.12);
+            background: var(--white);
+            color: var(--text-primary);
+            font: inherit;
+        }
+
+        .intake-field select {
+            min-height: 50px;
+            padding: 0 16px;
+        }
+
+        .intake-field textarea {
+            min-height: 112px;
+            padding: 14px 16px;
+            resize: vertical;
+        }
+
+        .intake-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .intake-summary {
+            padding: 18px;
+            border-radius: 22px;
+            background: var(--surface-strong);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .intake-summary span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .intake-summary strong {
+            display: block;
+            font-size: 19px;
+            line-height: 1.15;
+        }
+
+        .intake-side {
+            display: grid;
+            gap: 18px;
+        }
+
+        .intake-side .card {
+            background: rgba(255, 255, 255, 0.84);
+        }
+
+        .intake-side ul {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .intake-side li {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .intake-side li::before {
+            content: "•";
+            color: var(--secondary);
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .intake-cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .intake-note {
+            margin-top: 14px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .final-cta {
+            text-align: center;
+            background: var(--bg-dark);
+            color: var(--white);
+        }
+
+        .final-cta p {
+            color: rgba(255, 255, 255, 0.76);
+            max-width: 720px;
+            margin: 0 auto 28px;
+            font-size: 18px;
+        }
+
+        footer {
+            padding: 54px 0 34px;
+            background: #0C1917;
+            color: var(--white);
+        }
+
+        .footer-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            align-items: flex-end;
+        }
+
+        .footer-copy p {
+            margin-top: 12px;
+            color: rgba(255, 255, 255, 0.64);
+            max-width: 420px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.72);
+            text-decoration: none;
+        }
+
+        @media (max-width: 960px) {
+            .hero-grid,
+            .roi-grid,
+            .pricing-grid,
+            .intake-grid,
+            .outcomes-grid,
+            .ops-grid,
+            .pilot-grid,
+            .faq-grid,
+            .signal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .roi-form,
+            .roi-output-grid,
+            .roi-plan-row,
+            .intake-form,
+            .intake-summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pilot-card {
+                position: static;
+                max-width: none;
+                margin-top: 18px;
+            }
+
+            .footer-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header .container {
+                min-height: 70px;
+            }
+
+            nav {
+                display: none;
+            }
+
+            .hero {
+                padding-top: 122px;
+            }
+
+            .hero-copy h1,
+            .section-head h2 {
+                font-size: 38px;
+            }
+
+            .hero-copy p,
+            .section-head p,
+            .final-cta p {
+                font-size: 17px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo">MicroBreaks</a>
+            <nav>
+                <a href="#outcomes">Outcomes</a>
+                <a href="#roi">ROI</a>
+                <a href="#operations">Ops view</a>
+                <a href="#pricing">Pilot</a>
+                <a href="#pilot-brief">Brief</a>
+                <a href="index.html">Consumer app</a>
+                <a href="mailto:support@microbreaks.app?subject=MicroBreaks%20Teams%20Pilot" class="nav-cta">Request pilot</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero" data-analytics-section="teams_hero">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-copy">
+                    <div class="eyebrow" id="teams-hero-eyebrow">Pilot-ready desk recovery for remote and hybrid teams</div>
+                    <h1 id="teams-hero-title">Help your team recover from screen-heavy work without killing focus.</h1>
+                    <p id="teams-hero-body">MicroBreaks for Teams is the B2B layer on top of the desk-recovery product: guided resets for strain, plus weekly recovery visibility for people, ops, and team leads.</p>
+
+                    <div class="cta-row">
+                        <a href="mailto:support@microbreaks.app?subject=MicroBreaks%20Teams%20Pilot%20Request" class="cta cta-primary" data-analytics-event="teams_hero_cta_clicked" data-analytics-label="request_pilot">Request a pilot</a>
+                        <a href="#pricing" class="cta cta-secondary" data-analytics-event="teams_hero_cta_clicked" data-analytics-label="see_pilot_model">See pilot model</a>
+                    </div>
+                    <p class="hero-note">This page describes the pilot direction and buying model. Team controls and admin surfaces are being developed progressively.</p>
+
+                    <div class="signal-grid">
+                        <div class="signal-card">
+                            <strong>2-5m</strong>
+                            <span>guided desk resets that fit real work blocks</span>
+                        </div>
+                        <div class="signal-card">
+                            <strong>38</strong>
+                            <span>guided routines already in the current library</span>
+                        </div>
+                        <div class="signal-card">
+                            <strong>3 steps</strong>
+                            <span>discover strain, start a pilot, review the weekly rhythm</span>
+                        </div>
+                        <div class="signal-card">
+                            <strong>Pilot-first</strong>
+                            <span>honest rollout instead of pretending enterprise is already live</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-side">
+                    <img src="/images/hero-screenshot.png" alt="MicroBreaks interface showing desk recovery guidance and weekly recovery analytics" class="hero-image">
+                    <div class="pilot-card">
+                        <strong>What teams are buying</strong>
+                        <p>Not another wellness feed. A small workday tool that reduces strain, nudges recovery, and gives leaders a weekly signal on adoption and rhythm.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="outcomes" data-analytics-section="teams_outcomes_section">
+        <div class="container">
+            <div class="section-head">
+                <h2>Designed around outcomes a team can actually care about</h2>
+                <p>The product is strongest when it solves real workday symptoms first, then translates that into a repeatable team habit.</p>
+            </div>
+
+            <div class="outcomes-grid">
+                <div class="card">
+                    <div class="eyebrow-mini">Employees</div>
+                    <h3>Less eye strain, tighter shoulders, and posture fatigue</h3>
+                    <p>Guided resets help team members recover before discomfort turns into the default shape of the day.</p>
+                </div>
+                <div class="card">
+                    <div class="eyebrow-mini">Managers</div>
+                    <h3>A simple rhythm layer that does not interrupt deep work</h3>
+                    <p>The product is meant to fit between meetings and focus blocks instead of acting like a loud productivity toy.</p>
+                </div>
+                <div class="card">
+                    <div class="eyebrow-mini">People Ops</div>
+                    <h3>A lightweight wellness program with visible weekly usage</h3>
+                    <p>Leads can review adoption and rhythm instead of guessing whether the wellness budget turned into any real behavior.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="operations" data-analytics-section="teams_operations_section">
+        <div class="container">
+            <div class="section-head">
+                <h2>The team layer should stay operational, not fluffy</h2>
+                <p>The current product direction favors a tight admin surface and a pilot model that can prove value before heavier enterprise work begins.</p>
+            </div>
+
+            <div class="ops-grid">
+                <div class="card">
+                    <div class="eyebrow-mini">Pilot surfaces</div>
+                    <h3>What a team pilot is meant to include</h3>
+                    <ul>
+                        <li>Team invitation flow and pilot onboarding</li>
+                        <li>Weekly team recovery digest</li>
+                        <li>Shared reset recommendations for screen-heavy roles</li>
+                        <li>Manager-facing usage summary and adoption trends</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="eyebrow-mini">Later surfaces</div>
+                    <h3>What should come after the pilot is working</h3>
+                    <ul>
+                        <li>Slack or calendar-aware recovery prompts</li>
+                        <li>Policy controls for work hours and quiet hours</li>
+                        <li>Team-level recovery mix and timing patterns</li>
+                        <li>Deeper reporting or admin exports if real demand appears</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section data-analytics-section="teams_pilot_process_section">
+        <div class="container">
+            <div class="section-head">
+                <h2>How the first pilot should run</h2>
+                <p>Keep it tight. Sell a specific recovery program to a real team, not a broad enterprise promise.</p>
+            </div>
+
+            <div class="pilot-grid">
+                <div class="card">
+                    <div class="timeline">
+                        <div class="timeline-step">
+                            <div class="timeline-index">1</div>
+                            <div class="timeline-copy">
+                                <strong>Pick the team and the symptom mix</strong>
+                                <p>Start with remote or hybrid teams where screen-heavy work, meetings, and long focus blocks are the normal day.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="timeline">
+                        <div class="timeline-step">
+                            <div class="timeline-index">2</div>
+                            <div class="timeline-copy">
+                                <strong>Run a 2-week or 4-week pilot</strong>
+                                <p>Measure adoption, resets per person, active days, and whether the weekly recovery story starts stabilizing.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="timeline">
+                        <div class="timeline-step">
+                            <div class="timeline-index">3</div>
+                            <div class="timeline-copy">
+                                <strong>Review the rhythm, then expand or stop</strong>
+                                <p>If the team is actually using it, expand. If not, learn fast and avoid fake “enterprise readiness” theater.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="roi" class="roi-section" data-analytics-section="teams_roi_section">
+        <div class="container">
+            <div class="roi-grid">
+                <div class="roi-copy">
+                    <div class="section-head" style="margin-bottom: 0;">
+                        <h2>Show the buyer a conservative value model before asking for a pilot</h2>
+                        <p>Decision-makers do not need a fake wellness ROI spreadsheet. They need a quick, believable way to see whether a pilot can pay for itself with a very small shift in the workday.</p>
+                    </div>
+
+                    <div class="roi-points">
+                        <div class="roi-point">
+                            <strong>Start with recovered minutes, not giant savings claims</strong>
+                            <span>This model only counts weekly recovered focus minutes across the employees who actually participate.</span>
+                        </div>
+                        <div class="roi-point">
+                            <strong>Use it as a qualification tool</strong>
+                            <span>If the math only works with aggressive assumptions, the pilot is not tight enough yet.</span>
+                        </div>
+                        <div class="roi-point">
+                            <strong>Then sell the smallest credible commercial shape</strong>
+                            <span>The right next step is usually the `$499/mo` team pilot, not a seat-by-seat enterprise quote.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="roi-surface">
+                    <div class="eyebrow-mini">Directional model</div>
+                    <h3>Estimate whether a pilot pays for itself</h3>
+                    <p>Keep the inputs realistic. This is meant to help a buyer decide whether the first team should test the product, not to pretend savings are guaranteed.</p>
+
+                    <div class="roi-form">
+                        <div class="roi-field">
+                            <label for="roi-team-size">Team size</label>
+                            <input id="roi-team-size" class="roi-range" type="range" min="15" max="250" step="5" value="40">
+                            <div class="roi-meta">
+                                <span id="roi-team-size-value">40 people</span>
+                                <span>15-250 people</span>
+                            </div>
+                        </div>
+
+                        <div class="roi-field">
+                            <label for="roi-participation-rate">Expected weekly participation</label>
+                            <input id="roi-participation-rate" class="roi-range" type="range" min="25" max="90" step="5" value="55">
+                            <div class="roi-meta">
+                                <span id="roi-participation-rate-value">55%</span>
+                                <span>participating teammates</span>
+                            </div>
+                        </div>
+
+                        <div class="roi-field">
+                            <label for="roi-recovered-minutes">Recovered focus minutes per active teammate each week</label>
+                            <input id="roi-recovered-minutes" class="roi-range" type="range" min="4" max="30" step="1" value="8">
+                            <div class="roi-meta">
+                                <span id="roi-recovered-minutes-value">8 minutes</span>
+                                <span>small habit, not heroic change</span>
+                            </div>
+                        </div>
+
+                        <div class="roi-field">
+                            <label for="roi-hourly-cost">Loaded hourly cost</label>
+                            <input id="roi-hourly-cost" class="roi-number" type="number" min="20" max="250" step="1" value="45" inputmode="numeric">
+                            <div class="roi-meta">
+                                <span id="roi-hourly-cost-value">$45/hour</span>
+                                <span>salary + overhead estimate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roi-output-grid">
+                        <div class="roi-output">
+                            <span>Active participants</span>
+                            <strong id="roi-active-participants">22 teammates</strong>
+                        </div>
+                        <div class="roi-output">
+                            <span>Recovered hours per month</span>
+                            <strong id="roi-recovered-hours">12.7 hours</strong>
+                        </div>
+                        <div class="roi-output">
+                            <span>Implied monthly work value</span>
+                            <strong id="roi-monthly-value">$572</strong>
+                        </div>
+                        <div class="roi-output">
+                            <span>Value vs plan cost</span>
+                            <strong id="roi-payback-multiple">1.1x</strong>
+                        </div>
+                    </div>
+
+                    <div class="roi-plan-row">
+                        <div class="roi-plan-card">
+                            <strong>Suggested commercial shape</strong>
+                            <p id="roi-plan-summary">Team Pilot · $499/mo · up to 50 seats</p>
+                        </div>
+                        <div class="roi-break-even">
+                            <strong>Break-even threshold</strong>
+                            <p id="roi-break-even-note">The team needs roughly 7.0 recovered minutes per active teammate each week to cover the pilot.</p>
+                        </div>
+                    </div>
+
+                    <div class="roi-cta-row">
+                        <a id="roi-pilot-cta" href="mailto:support@microbreaks.app?subject=MicroBreaks%20Teams%20ROI%20Model" class="cta cta-primary" data-analytics-event="teams_roi_cta_clicked" data-analytics-label="request_pilot_from_roi">Build a pilot around this model</a>
+                        <a href="#pricing" class="cta cta-secondary" data-analytics-event="teams_roi_cta_clicked" data-analytics-label="compare_pilot_plans">Compare pilot plans</a>
+                    </div>
+                    <p class="roi-disclaimer">Directional estimate only. It assumes some recovered focus minutes translate into useful work capacity. It does not include retention, absenteeism, or health-cost effects, and it does not guarantee savings.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="pricing" data-analytics-section="teams_pricing_section">
+        <div class="container">
+            <div class="section-head">
+                <h2>Pilot-first pricing, not pretend enterprise pricing</h2>
+                <p>These are the recommended commercial shapes for early teams. Final billing and admin tooling can mature after pilots prove the need.</p>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="eyebrow-mini" style="background: rgba(255,255,255,0.12); color: #FCD34D;">Recommended first offer</div>
+                    <h3>Team Pilot</h3>
+                    <div class="price-line">
+                        <strong>$499/mo</strong>
+                        <span>up to 50 seats</span>
+                    </div>
+                    <p>A clean way to start with one team, prove usage, and collect the first retention and ROI signals without overbuilding.</p>
+                    <ul>
+                        <li>2-month minimum so the rhythm has time to form</li>
+                        <li>Shared rollout guidance and pilot setup</li>
+                        <li>Weekly summary for team lead or people owner</li>
+                        <li>Direct line for pilot feedback and iteration</li>
+                    </ul>
+                </div>
+                <div class="pricing-card">
+                    <div class="eyebrow-mini" style="background: rgba(255,255,255,0.12); color: #FCD34D;">Next step</div>
+                    <h3>Growth Team</h3>
+                    <div class="price-line">
+                        <strong>$1,499/mo</strong>
+                        <span>up to 250 seats</span>
+                    </div>
+                    <p>Use this once the team pilot has evidence and the org wants broader rollout, more admin control, and stronger reporting.</p>
+                    <ul>
+                        <li>Team policy controls as they become available</li>
+                        <li>Deeper recovery pattern review for leads</li>
+                        <li>Priority roadmap input from active customers</li>
+                        <li>Commercial path toward future enterprise features if they prove necessary</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section data-analytics-section="teams_faq_section">
+        <div class="container">
+            <div class="section-head">
+                <h2>Questions a serious buyer will ask</h2>
+                <p>Answer them directly. This page should help filter for teams that want a practical pilot, not vague wellness storytelling.</p>
+            </div>
+
+            <div class="faq-grid">
+                <div class="card">
+                    <h3>Is the team layer fully live today?</h3>
+                    <p>No. The product is in pilot-first positioning. The consumer app and recovery system are real; the team admin and rollout layer are being shaped honestly around pilot demand.</p>
+                </div>
+                <div class="card">
+                    <h3>Who should buy first?</h3>
+                    <p>Remote-first startups, agencies, product teams, engineering orgs, and support-heavy teams with long screen sessions are the clearest early buyers.</p>
+                </div>
+                <div class="card">
+                    <h3>What proves the pilot worked?</h3>
+                    <p>Active days, resets per person, repeat usage after week one, and a recovery story that becomes more stable instead of more sporadic.</p>
+                </div>
+                <div class="card">
+                    <h3>Why not sell per seat immediately?</h3>
+                    <p>Because a flat pilot price is easier to buy early, easier to deliver honestly, and better aligned with a product that is still learning its B2B shape.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pilot-brief" class="intake-section" data-analytics-section="teams_intake_section">
+        <div class="container">
+            <div class="section-head">
+                <h2>Turn interest into a qualified pilot brief</h2>
+                <p>A short brief is better than an unstructured “tell me more” email. Capture the buyer, the strain pattern, the likely team, and the urgency in one pass.</p>
+            </div>
+
+            <div class="intake-grid">
+                <div class="intake-surface">
+                    <div class="eyebrow-mini">Qualification-first</div>
+                    <h3>Build the first pilot brief</h3>
+                    <p>This does not create a fake CRM flow. It creates a cleaner handoff for the first sales conversation and keeps the pilot scoped to a real problem.</p>
+
+                    <div class="intake-form">
+                        <div class="intake-field">
+                            <label for="pilot-buyer-role">Buyer role</label>
+                            <select id="pilot-buyer-role">
+                                <option value="people_ops">People Ops / HR</option>
+                                <option value="founder_ops">Founder / Operations</option>
+                                <option value="team_manager">Team manager</option>
+                                <option value="it_workplace">IT / Workplace</option>
+                            </select>
+                        </div>
+
+                        <div class="intake-field">
+                            <label for="pilot-work-style">Work style</label>
+                            <select id="pilot-work-style">
+                                <option value="remote">Remote-first</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="distributed_shift">Distributed shift team</option>
+                                <option value="office_heavy">Office-heavy</option>
+                            </select>
+                        </div>
+
+                        <div class="intake-field">
+                            <label for="pilot-seat-band">Pilot team size</label>
+                            <select id="pilot-seat-band">
+                                <option value="15_30">15-30 people</option>
+                                <option value="31_50" selected>31-50 people</option>
+                                <option value="51_120">51-120 people</option>
+                                <option value="121_250">121-250 people</option>
+                            </select>
+                        </div>
+
+                        <div class="intake-field">
+                            <label for="pilot-strain-pattern">Main strain pattern</label>
+                            <select id="pilot-strain-pattern">
+                                <option value="eye_strain">Eye strain</option>
+                                <option value="neck_shoulders">Neck and shoulder tension</option>
+                                <option value="posture_fatigue">Posture fatigue</option>
+                                <option value="focus_drop">Focus drop</option>
+                            </select>
+                        </div>
+
+                        <div class="intake-field">
+                            <label for="pilot-timeline">Pilot timeline</label>
+                            <select id="pilot-timeline">
+                                <option value="within_2_weeks">Within 2 weeks</option>
+                                <option value="this_month">This month</option>
+                                <option value="this_quarter">This quarter</option>
+                                <option value="exploratory">Exploratory only</option>
+                            </select>
+                        </div>
+
+                        <div class="intake-field">
+                            <label for="pilot-owner">Internal owner</label>
+                            <select id="pilot-owner">
+                                <option value="clear_owner">Clear owner identified</option>
+                                <option value="shared_owner">Shared between manager and ops</option>
+                                <option value="needs_owner">Still needs an owner</option>
+                            </select>
+                        </div>
+
+                        <div class="intake-field intake-field-full">
+                            <label for="pilot-context">What is happening in the workday?</label>
+                            <textarea id="pilot-context" placeholder="Example: Engineers are in back-to-back meetings before long coding blocks, and eye strain plus tight shoulders show up late in the day."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="intake-summary-grid">
+                        <div class="intake-summary">
+                            <span>Suggested pilot shape</span>
+                            <strong id="pilot-plan-summary">Team Pilot · $499/mo · up to 50 seats</strong>
+                        </div>
+                        <div class="intake-summary">
+                            <span>Qualification signal</span>
+                            <strong id="pilot-fit-summary">Good early-fit pilot</strong>
+                        </div>
+                        <div class="intake-summary">
+                            <span>Lead with this problem</span>
+                            <strong id="pilot-problem-summary">Screen-heavy eye strain recovery</strong>
+                        </div>
+                        <div class="intake-summary">
+                            <span>Suggested pilot length</span>
+                            <strong id="pilot-length-summary">Start with a 2-week pilot</strong>
+                        </div>
+                    </div>
+
+                    <div class="intake-cta-row">
+                        <a id="pilot-brief-cta" href="mailto:support@microbreaks.app?subject=MicroBreaks%20Teams%20Pilot%20Brief" class="cta cta-primary" data-analytics-event="teams_intake_cta_clicked" data-analytics-label="send_pilot_brief">Send this pilot brief</a>
+                        <a href="#roi" class="cta cta-secondary" data-analytics-event="teams_intake_cta_clicked" data-analytics-label="back_to_roi_model">Back to ROI model</a>
+                    </div>
+                    <p class="intake-note">This stays lightweight on purpose. The goal is to start a high-signal pilot conversation, not to recreate a heavyweight sales form before the product earns it.</p>
+                </div>
+
+                <div class="intake-side">
+                    <div class="card">
+                        <div class="eyebrow-mini">What this helps with</div>
+                        <h3>Better leads, shorter calls, cleaner scope</h3>
+                        <ul>
+                            <li>Clarifies whether the buyer actually has a real strain problem</li>
+                            <li>Reduces vague inbound where nobody owns the pilot</li>
+                            <li>Keeps the first proposal tied to one team and one work pattern</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="eyebrow-mini">What to avoid</div>
+                        <h3>Do not let the brief drift into “wellness for everyone”</h3>
+                        <ul>
+                            <li>If the buyer cannot name the team or the symptom, do not over-qualify the lead</li>
+                            <li>If the owner is unclear, frame the call around pilot ownership first</li>
+                            <li>If the timeline is exploratory, keep the next step educational, not commercial</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="final-cta" data-analytics-section="teams_final_cta_section">
+        <div class="container">
+            <div class="section-head" style="max-width: 820px; margin: 0 auto 24px;">
+                <h2>Want to pilot MicroBreaks with a real team?</h2>
+            </div>
+            <p>Email the team size, work style, and main strain pattern you want to address. That is enough to start the conversation without wasting cycles on fake enterprise funnels.</p>
+            <div class="cta-row" style="justify-content: center;">
+                <a href="#pilot-brief" class="cta cta-primary" data-analytics-event="teams_final_cta_clicked" data-analytics-label="build_team_pilot_brief">Build a team pilot brief</a>
+                <a href="index.html" class="cta cta-secondary" data-analytics-event="teams_final_cta_clicked" data-analytics-label="back_to_consumer_app">Back to consumer app</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-row">
+                <div class="footer-copy">
+                    <a href="index.html" class="logo">MicroBreaks</a>
+                    <p>Desk recovery for remote and hybrid teams dealing with eye strain, tight shoulders, posture fatigue, and focus drops.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="index.html">Consumer app</a>
+                    <a href="#pricing">Pilot model</a>
+                    <a href="/faq">FAQ</a>
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="analytics-config.js"></script>
+    <script src="web-analytics.js"></script>
+    <script src="experiments-config.js"></script>
+    <script src="web-experiments.js"></script>
+    <script src="teams-roi-calculator.js"></script>
+    <script src="teams-pilot-brief.js"></script>
+    <script>
+        window.MicroBreaksWebAnalytics.init({
+            pageType: 'teams',
+            pageViewEvent: 'teams_page_viewed',
+            sectionViewEvent: 'teams_section_viewed'
+        });
+        window.MicroBreaksWebExperiments.init({
+            pageType: 'teams'
+        });
+    </script>
+</body>
+</html>

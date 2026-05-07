@@ -3,7 +3,7 @@
  * Rich celebration effects with multiple particle types
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Text, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -158,7 +158,19 @@ function ConfettiParticle({ index, color, startDelay, type }: ConfettiParticlePr
       delay + duration * 0.7,
       withTiming(0, { duration: duration * 0.3 })
     );
-  }, []);
+  }, [
+    duration,
+    horizontalDrift,
+    index,
+    opacity,
+    rotation,
+    rotationSpeed,
+    scale,
+    startDelay,
+    translateX,
+    translateY,
+    wobble,
+  ]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -239,7 +251,7 @@ function StarburstRay({ index, color, delay }: { index: number; color: string; d
         withTiming(0, { duration: 400 })
       )
     );
-  }, []);
+  }, [delay, opacity, scale]);
 
   const style = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -301,6 +313,14 @@ export default function ConfettiCelebration({
       type: types[i % types.length],
     }));
   }, [config]);
+
+  const handleDismiss = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    overlayOpacity.value = withTiming(0, { duration: 300 });
+    contentOpacity.value = withTiming(0, { duration: 200 });
+    contentScale.value = withTiming(0.8, { duration: 300 });
+    setTimeout(onDismiss, 300);
+  }, [contentOpacity, contentScale, onDismiss, overlayOpacity]);
 
   useEffect(() => {
     // Trigger haptic
@@ -370,15 +390,19 @@ export default function ConfettiCelebration({
       return () => clearTimeout(timeout);
     }
     return undefined;
-  }, []);
-
-  const handleDismiss = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    overlayOpacity.value = withTiming(0, { duration: 300 });
-    contentOpacity.value = withTiming(0, { duration: 200 });
-    contentScale.value = withTiming(0.8, { duration: 300 });
-    setTimeout(onDismiss, 300);
-  };
+  }, [
+    autoHide,
+    autoHideDelay,
+    contentOpacity,
+    contentScale,
+    emojiScale,
+    glowPulse,
+    handleDismiss,
+    iconScale,
+    overlayOpacity,
+    ringScale,
+    textTranslateY,
+  ]);
 
   // Animated styles
   const overlayStyle = useAnimatedStyle(() => ({
@@ -534,7 +558,7 @@ export function MiniCelebration({
       return () => clearTimeout(timeout);
     }
     return undefined;
-  }, [visible]);
+  }, [onHide, opacity, translateY, visible]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

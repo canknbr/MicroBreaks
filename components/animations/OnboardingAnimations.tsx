@@ -64,7 +64,7 @@ export function WelcomeAnimation({ size = 200 }: { size?: number }) {
       -1,
       true
     );
-  }, []);
+  }, [breathScale, glowOpacity, particleOffset, ringRotation]);
 
   const breathStyle = useAnimatedStyle(() => ({
     transform: [{ scale: breathScale.value }],
@@ -162,7 +162,7 @@ function FloatingParticle({ delay, size, color }: { delay: number; size: number;
         true
       )
     );
-  }, []);
+  }, [delay, opacity, scale, size, translateY]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -228,7 +228,7 @@ export function StretchAnimation({ size = 200 }: { size?: number }) {
       -1,
       true
     );
-  }, []);
+  }, [armRotation, bodyStretch, pulse]);
 
   const leftArmStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${-45 + armRotation.value}deg` }],
@@ -326,7 +326,7 @@ export function TimerAnimation({ size = 200 }: { size?: number }) {
       -1,
       true
     );
-  }, []);
+  }, [glow, pulse, secondHand]);
 
   const handStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${secondHand.value}deg` }],
@@ -427,7 +427,7 @@ export function SuccessAnimation({ size = 200 }: { size?: number }) {
         true
       )
     );
-  }, []);
+  }, [checkOpacity, checkScale, ringScale, sparkleOpacity]);
 
   const checkStyle = useAnimatedStyle(() => ({
     transform: [{ scale: checkScale.value }],

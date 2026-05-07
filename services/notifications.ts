@@ -8,6 +8,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from './storage';
 import { getTodayBreaks, getStreakData, getUserStats } from './breakHistory';
+import { useSettingsStore } from '@/store/settingsStore';
 import {
   STREAK_REMINDER_HOUR,
   GOAL_REMINDER_HOUR,
@@ -61,6 +62,26 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   workDaysOnly: true,
   workDays: [1, 2, 3, 4, 5], // Monday-Friday
 };
+
+const SETTINGS_STORE_PERSIST_KEY = 'microbreaks-settings';
+
+function mapNotificationSettingsToAppSettings(
+  settings: NotificationSettings
+): Partial<ReturnType<typeof useSettingsStore.getState>['settings']> {
+  return {
+    notificationsEnabled: settings.enabled,
+    breakReminders: settings.breakReminders,
+    reminderIntervalMinutes: settings.reminderIntervalMinutes,
+    streakAlerts: settings.streakAlerts,
+    goalNotifications: settings.goalNotifications,
+    soundEnabled: settings.soundEnabled,
+    quietHoursEnabled: settings.quietHoursEnabled,
+    quietHoursStart: settings.quietHoursStart,
+    quietHoursEnd: settings.quietHoursEnd,
+    workDaysOnly: settings.workDaysOnly,
+    workDays: settings.workDays,
+  };
+}
 
 // Break reminder messages (rotated)
 const BREAK_REMINDER_MESSAGES = [
@@ -163,7 +184,9 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 // preferring the settingsStore data to maintain a single source of truth.
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   // Try to read from settingsStore's persistence key first (single source of truth)
-  const storeData = await getItem<{ state?: { settings?: Record<string, unknown> } }>('microbreaks-settings');
+  const storeData = await getItem<{ state?: { settings?: Record<string, unknown> } }>(
+    SETTINGS_STORE_PERSIST_KEY
+  );
   const storeSettings = storeData?.state?.settings;
   if (storeSettings) {
     return {
@@ -232,6 +255,28 @@ export async function saveNotificationSettings(
   const currentSettings = await getNotificationSettings();
   const validatedSettings = validateNotificationSettings(settings);
   const newSettings = { ...currentSettings, ...validatedSettings };
+  const appSettings = mapNotificationSettingsToAppSettings(newSettings);
+  const persistedStoreSnapshot = await getItem<{
+    state?: {
+      settings?: Record<string, unknown>;
+      settingsUpdatedAt?: number;
+    };
+    version?: number;
+  }>(SETTINGS_STORE_PERSIST_KEY);
+
+  await setItem(SETTINGS_STORE_PERSIST_KEY, {
+    ...(persistedStoreSnapshot ?? {}),
+    state: {
+      ...(persistedStoreSnapshot?.state ?? {}),
+      settings: {
+        ...(persistedStoreSnapshot?.state?.settings ?? {}),
+        ...appSettings,
+      },
+      settingsUpdatedAt: Date.now(),
+    },
+  });
+
+  useSettingsStore.getState().updateSettings(appSettings);
   await setItem(STORAGE_KEYS.SETTINGS, newSettings);
 
   // Reschedule notifications based on new settings

@@ -1,71 +1,120 @@
-/**
- * ONB_001: Welcome & Problem Recognition
- * Premium Zen welcome screen with smooth animations
- */
-
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withDelay,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingLayout from './components/OnboardingLayout';
+import OptionCard from './components/OptionCard';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText, DisplayText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing } from './constants/design';
+import {
+  ACTIVE_ONBOARDING_TOTAL_STEPS,
+  PRIMARY_NEEDS,
+} from '@/constants/onboarding';
 import { useOnboardingStore } from '@/store';
+
+type PrimaryNeedId = (typeof PRIMARY_NEEDS)[number]['id'];
+
+const NEED_DEFAULTS: Record<
+  PrimaryNeedId,
+  {
+    painAreas: string[];
+    breakStyle: string[];
+    energyPattern?: string;
+  }
+> = {
+  eyes: {
+    painAreas: ['eyes'],
+    breakStyle: ['quick'],
+  },
+  neck: {
+    painAreas: ['neck', 'shoulders'],
+    breakStyle: ['stretch'],
+  },
+  focus: {
+    painAreas: [],
+    breakStyle: ['mindful'],
+  },
+  energy: {
+    painAreas: [],
+    breakStyle: ['active'],
+    energyPattern: 'afternoon_slump',
+  },
+};
+
+function deriveInitialNeed(
+  painAreas: string[],
+  breakStyle: string[]
+): PrimaryNeedId | null {
+  if (painAreas.includes('eyes')) return 'eyes';
+  if (painAreas.includes('neck') || painAreas.includes('shoulders')) return 'neck';
+  if (breakStyle.includes('mindful')) return 'focus';
+  if (breakStyle.includes('active')) return 'energy';
+  return null;
+}
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const skipOnboarding = useOnboardingStore((s) => s.skipOnboarding);
+  const skipOnboarding = useOnboardingStore((state) => state.skipOnboarding);
+  const onboardingData = useOnboardingStore((state) => state.data);
+  const updateData = useOnboardingStore((state) => state.updateData);
+  const [selectedNeed, setSelectedNeed] = useState<PrimaryNeedId | null>(
+    deriveInitialNeed(onboardingData.painAreas, onboardingData.breakStyle)
+  );
 
-  // Animation values
   const logoScale = useSharedValue(0.9);
   const logoOpacity = useSharedValue(0);
-  const ringScale = useSharedValue(0.8);
-  const ringOpacity = useSharedValue(0);
-  const buttonsOpacity = useSharedValue(0);
-  const buttonsTranslateY = useSharedValue(20);
+  const contentOpacity = useSharedValue(0);
+  const actionsOpacity = useSharedValue(0);
 
   useEffect(() => {
     const easing = Easing.out(Easing.cubic);
-
-    // Logo entrance - smooth timing
-    logoOpacity.value = withDelay(200, withTiming(1, { duration: 600, easing }));
-    logoScale.value = withDelay(200, withTiming(1, { duration: 700, easing }));
-
-    // Decorative ring
-    ringOpacity.value = withDelay(350, withTiming(0.5, { duration: 700, easing }));
-    ringScale.value = withDelay(350, withTiming(1, { duration: 800, easing }));
-
-    // Buttons entrance
-    buttonsOpacity.value = withDelay(600, withTiming(1, { duration: 500, easing }));
-    buttonsTranslateY.value = withDelay(600, withTiming(0, { duration: 500, easing }));
-  }, []);
+    logoOpacity.value = withDelay(120, withTiming(1, { duration: 450, easing }));
+    logoScale.value = withDelay(120, withTiming(1, { duration: 500, easing }));
+    contentOpacity.value = withDelay(220, withTiming(1, { duration: 420, easing }));
+    actionsOpacity.value = withDelay(360, withTiming(1, { duration: 420, easing }));
+  }, [actionsOpacity, contentOpacity, logoOpacity, logoScale]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,
     transform: [{ scale: logoScale.value }],
   }));
 
-  const ringAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: ringOpacity.value,
-    transform: [{ scale: ringScale.value }],
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
   }));
 
-  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: buttonsOpacity.value,
-    transform: [{ translateY: buttonsTranslateY.value }],
+  const actionsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: actionsOpacity.value,
   }));
+
+  const selectedNeedCopy = useMemo(
+    () => PRIMARY_NEEDS.find((need) => need.id === selectedNeed),
+    [selectedNeed]
+  );
 
   const handleStart = () => {
-    router.push('./social-proof');
+    if (!selectedNeed) {
+      return;
+    }
+
+    const defaults = NEED_DEFAULTS[selectedNeed];
+
+    updateData({
+      painAreas: defaults.painAreas,
+      breakStyle: defaults.breakStyle,
+      energyPattern: defaults.energyPattern ?? onboardingData.energyPattern,
+    });
+
+    router.push('./work-role');
   };
 
   const handleBrowse = () => {
@@ -76,67 +125,65 @@ export default function WelcomeScreen() {
   return (
     <OnboardingLayout
       currentStep={1}
-      scrollable={false}
+      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
       showAmbient={true}
       ambientColor="teal"
     >
       <View style={styles.container}>
-        {/* Logo Section */}
-        <View style={styles.logoSection}>
-          {/* Decorative Ring */}
-          <Animated.View style={[styles.decorativeRing, ringAnimatedStyle]}>
+        <Animated.View style={[styles.logoSection, logoAnimatedStyle]}>
+          <View style={styles.logoContainer}>
             <LinearGradient
-              colors={[ZenColors.primary.glow, 'transparent']}
-              style={styles.ringGradient}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-            />
-          </Animated.View>
+              colors={[ZenColors.primary.main, ZenColors.primary.dark]}
+              style={styles.logoGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <DisplayText style={styles.logoText}>M</DisplayText>
+            </LinearGradient>
+          </View>
+        </Animated.View>
 
-          {/* Logo Icon */}
-          <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
-            <View style={styles.logoInner}>
-              <LinearGradient
-                colors={[ZenColors.primary.main, ZenColors.primary.dark]}
-                style={styles.logoGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.logoIconContainer}>
-                  {/* Stylized M icon */}
-                  <View style={styles.logoM}>
-                    <View style={[styles.mBar, styles.mBarLeft]} />
-                    <View style={[styles.mBar, styles.mBarMiddle]} />
-                    <View style={[styles.mBar, styles.mBarRight]} />
-                  </View>
-                </View>
-              </LinearGradient>
-            </View>
-          </Animated.View>
-        </View>
-
-        {/* Text Content */}
-        <View style={styles.content}>
-          <DisplayText delay={300} style={styles.brandText}>
+        <Animated.View style={[styles.content, contentAnimatedStyle]}>
+          <DisplayText delay={0} style={styles.brandText}>
             MicroBreaks
           </DisplayText>
-
-          <HeadlineText delay={500} style={styles.headline}>
-            Your Desk Wellness Companion
+          <HeadlineText delay={80} style={styles.headline}>
+            What do you want help with first?
           </HeadlineText>
-
-          <SubheadText delay={700} style={styles.subhead}>
-            Take smart breaks throughout your day to stay energized, focused, and pain-free
+          <SubheadText delay={140} style={styles.subhead}>
+            We&apos;ll build a shorter setup around the work problem you want to fix right now.
           </SubheadText>
-        </View>
 
-        {/* Actions */}
-        <Animated.View style={[styles.actions, buttonsAnimatedStyle]}>
+          <View style={styles.options}>
+            {PRIMARY_NEEDS.map((need) => (
+              <OptionCard
+                key={need.id}
+                icon={need.icon}
+                title={need.label}
+                description={need.description}
+                selected={selectedNeed === need.id}
+                onPress={() => setSelectedNeed(need.id)}
+              />
+            ))}
+          </View>
+
+          {selectedNeedCopy && (
+            <View style={styles.selectedHint}>
+              <View style={styles.selectedHintDot} />
+              <SubheadText style={styles.selectedHintText}>
+                {`We'll start with ${selectedNeedCopy.label.toLowerCase()} and tune the rest in a few quick steps.`}
+              </SubheadText>
+            </View>
+          )}
+        </Animated.View>
+
+        <Animated.View style={[styles.actions, actionsAnimatedStyle]}>
           <PrimaryButton
-            title="Get Started"
+            title="Build My Plan"
             onPress={handleStart}
             size="large"
             variant="primary"
+            disabled={!selectedNeed}
             style={styles.primaryButton}
           />
           <SecondaryButton
@@ -154,100 +201,72 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingVertical: ZenSpacing.xl,
+    paddingVertical: ZenSpacing.lg,
   },
-  // Logo Section
   logoSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    height: 180,
-    marginTop: ZenSpacing.xl,
-  },
-  decorativeRing: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: ZenColors.primary.glow,
-  },
-  ringGradient: {
-    flex: 1,
-    borderRadius: 100,
+    marginTop: ZenSpacing.md,
   },
   logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
-    padding: 2,
+    width: 84,
+    height: 84,
+    borderRadius: 24,
+    overflow: 'hidden',
     shadowColor: ZenColors.primary.main,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  logoInner: {
-    flex: 1,
-    borderRadius: 26,
-    overflow: 'hidden',
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
   },
   logoGradient: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoIconContainer: {
-    width: 60,
-    height: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoText: {
+    color: ZenColors.text.inverse,
+    marginBottom: 0,
   },
-  logoM: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 36,
-    gap: 4,
-  },
-  mBar: {
-    width: 8,
-    backgroundColor: ZenColors.background.pure,
-    borderRadius: 4,
-  },
-  mBarLeft: {
-    height: 36,
-  },
-  mBarMiddle: {
-    height: 24,
-  },
-  mBarRight: {
-    height: 36,
-  },
-  // Content
   content: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: ZenSpacing.md,
   },
   brandText: {
     textAlign: 'center',
-    marginBottom: ZenSpacing.lg,
+    marginBottom: ZenSpacing.md,
   },
   headline: {
     textAlign: 'center',
-    marginBottom: ZenSpacing.md,
+    marginBottom: ZenSpacing.sm,
   },
   subhead: {
     textAlign: 'center',
-    maxWidth: 300,
-    lineHeight: 24,
+    marginBottom: ZenSpacing.lg,
   },
-  // Actions
+  options: {
+    marginBottom: ZenSpacing.md,
+  },
+  selectedHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ZenSpacing.xs,
+    paddingHorizontal: ZenSpacing.sm,
+  },
+  selectedHintDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: ZenColors.primary.main,
+  },
+  selectedHintText: {
+    flex: 1,
+    textAlign: 'center',
+  },
   actions: {
-    width: '100%',
-    paddingTop: ZenSpacing.lg,
+    marginTop: ZenSpacing.lg,
   },
   primaryButton: {
-    marginBottom: ZenSpacing.sm,
+    marginBottom: ZenSpacing.xs,
   },
 });

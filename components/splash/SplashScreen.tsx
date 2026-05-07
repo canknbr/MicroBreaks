@@ -3,7 +3,7 @@
  * Stable version - Using React Native Animated + Linear Gradient
  */
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, StyleSheet, Dimensions, Animated as RNAnimated } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -136,7 +136,10 @@ export function SplashScreen({
   const letter8 = useSharedValue(0);
   const letter9 = useSharedValue(0);
   const letter10 = useSharedValue(0);
-  const letterAnimations = [letter0, letter1, letter2, letter3, letter4, letter5, letter6, letter7, letter8, letter9, letter10];
+  const letterAnimations = useMemo(
+    () => [letter0, letter1, letter2, letter3, letter4, letter5, letter6, letter7, letter8, letter9, letter10],
+    [letter0, letter1, letter2, letter3, letter4, letter5, letter6, letter7, letter8, letter9, letter10]
+  );
 
   // Glow animation (RN Animated for smoother performance)
   const glowAnim = useRef(new RNAnimated.Value(0)).current;
@@ -211,7 +214,24 @@ export function SplashScreen({
       clearTimeout(exitTimer);
       glowAnim.stopAnimation();
     };
-  }, []);
+  }, [
+    centerDotScale,
+    containerOpacity,
+    containerScale,
+    glowAnim,
+    handleComplete,
+    letterAnimations,
+    logoOpacity,
+    logoScale,
+    minimumDuration,
+    progressWidth,
+    pulseScale,
+    ring1Progress,
+    ring2Progress,
+    ring3Progress,
+    taglineOpacity,
+    triggerHaptic,
+  ]);
 
   // Animated Styles
   const containerStyle = useAnimatedStyle(() => ({

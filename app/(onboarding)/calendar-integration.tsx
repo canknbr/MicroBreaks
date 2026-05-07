@@ -46,7 +46,7 @@ export default function CalendarIntegrationScreen() {
     benefitsOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
     privacyOpacity.value = withDelay(400, withTiming(1, { duration: 400 }));
     providersOpacity.value = withDelay(600, withTiming(1, { duration: 400 }));
-  }, []);
+  }, [benefitsOpacity, privacyOpacity, providersOpacity]);
 
   const benefitsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: benefitsOpacity.value,
@@ -63,11 +63,9 @@ export default function CalendarIntegrationScreen() {
   }));
 
   const handleConnect = () => {
-    if (selectedProvider) {
-      setTimeout(() => {
-        router.push('./first-session');
-      }, 1000);
-    }
+    setTimeout(() => {
+      router.push('./first-session');
+    }, 400);
   };
 
   const handleSkip = () => {
@@ -78,10 +76,10 @@ export default function CalendarIntegrationScreen() {
     <OnboardingLayout currentStep={18} ambientColor="teal">
       <View style={styles.container}>
         <HeadlineText delay={0}>
-          Breaks that respect your calendar
+          Calendar-aware timing is coming soon
         </HeadlineText>
         <SubheadText delay={100}>
-          Optional, but highly recommended
+          For now, MicroBreaks works best with reminder timing you control directly.
         </SubheadText>
 
         {/* Benefits */}
@@ -100,7 +98,7 @@ export default function CalendarIntegrationScreen() {
         <Animated.View style={[styles.privacyNote, privacyAnimatedStyle]}>
           <Ionicons name="shield-checkmark-outline" size={16} color={ZenColors.primary.main} />
           <Text style={styles.privacyText}>
-            We only check busy/free status, never read event details
+            When this ships, we will only use availability signals, not event contents
           </Text>
         </Animated.View>
 
@@ -126,9 +124,8 @@ export default function CalendarIntegrationScreen() {
         <View style={styles.spacer} />
 
         <PrimaryButton
-          title="Connect Calendar"
+          title="Continue Without Calendar"
           onPress={handleConnect}
-          disabled={!selectedProvider}
           variant="primary"
         />
         <SecondaryButton title="Skip for now" onPress={handleSkip} variant="muted" />

@@ -21,13 +21,18 @@ import * as Haptics from 'expo-haptics';
 import OnboardingLayout from './components/OnboardingLayout';
 import SecondaryButton from './components/SecondaryButton';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
+import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 
 type DemoPhase = 'preparation' | 'instruction' | 'execution' | 'feedback';
+
+const PREPARATION_DURATION_MS = 3000;
+const INSTRUCTION_DURATION_MS = 3000;
+const EXECUTION_DURATION_MS = 10000;
 
 export default function BreakDemoScreen() {
   const router = useRouter();
   const [phase, setPhase] = useState<DemoPhase>('preparation');
-  const [countdown, setCountdown] = useState(15);
+  const [countdown, setCountdown] = useState(EXECUTION_DURATION_MS / 1000);
   const [feedback, setFeedback] = useState<'good' | 'neutral' | 'bad' | null>(null);
 
   // Animation values
@@ -60,31 +65,31 @@ export default function BreakDemoScreen() {
         runOnJS(goToInstruction)();
         contentOpacity.value = withTiming(1, { duration: 300 });
       });
-    }, 5000));
+    }, PREPARATION_DURATION_MS));
     timers.push(window.setTimeout(() => {
       contentOpacity.value = withTiming(0, { duration: 200 }, () => {
         runOnJS(goToExecution)();
         contentOpacity.value = withTiming(1, { duration: 300 });
       });
-    }, 10000));
+    }, PREPARATION_DURATION_MS + INSTRUCTION_DURATION_MS));
     timers.push(window.setTimeout(() => {
       contentOpacity.value = withTiming(0, { duration: 200 }, () => {
         runOnJS(goToFeedback)();
         contentOpacity.value = withTiming(1, { duration: 300 });
       });
-    }, 25000));
+    }, PREPARATION_DURATION_MS + INSTRUCTION_DURATION_MS + EXECUTION_DURATION_MS));
 
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [contentOpacity, phase, pulseScale]);
 
   useEffect(() => {
     if (phase === 'execution') {
       ringProgress.value = withTiming(100, {
-        duration: 15000,
+        duration: EXECUTION_DURATION_MS,
         easing: Easing.linear,
       });
     }
-  }, [phase]);
+  }, [phase, ringProgress]);
 
   useEffect(() => {
     if (phase === 'execution' && countdown > 0) {
@@ -106,12 +111,12 @@ export default function BreakDemoScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setFeedback(rating);
     setTimeout(() => {
-      router.push('./value-display');
+      router.push('./notification-permission');
     }, 1000);
   };
 
   const handleSkip = () => {
-    router.push('./value-display');
+    router.push('./notification-permission');
   };
 
   const renderContent = () => {
@@ -119,7 +124,7 @@ export default function BreakDemoScreen() {
       case 'preparation':
         return (
           <Animated.View style={[styles.phaseContent, contentAnimatedStyle]}>
-            <Text style={styles.title}>Let's try a quick neck stretch</Text>
+            <Text style={styles.title}>Let&apos;s try a quick neck stretch</Text>
             <Text style={styles.subtitle}>Get ready...</Text>
             <Animated.View style={[styles.illustration, pulseAnimatedStyle]}>
               <LinearGradient
@@ -234,7 +239,11 @@ export default function BreakDemoScreen() {
   };
 
   return (
-    <OnboardingLayout currentStep={13} showProgress={false} ambientColor="teal">
+    <OnboardingLayout
+      currentStep={5}
+      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
+      ambientColor="teal"
+    >
       <View style={styles.container}>
         {renderContent()}
         <View style={styles.spacer} />

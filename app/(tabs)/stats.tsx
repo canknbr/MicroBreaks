@@ -3,7 +3,7 @@
  * Premium analytics dashboard with real data
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,14 @@ import {
   useWindowDimensions,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import type { IoniconsName } from '@/types/icons';
 
 import Animated, {
@@ -31,9 +34,27 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
-import { useStatsData, StatsPeriod } from '@/hooks/useStatsData';
+import {
+  useStatsData,
+  StatsPeriod,
+  WeeklyRecoveryReport,
+} from '@/hooks/useStatsData';
 import { CompletedBreak } from '@/services/storage';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
+import { useHasActiveSubscription, useOnboardingStore } from '@/store';
+import { PRO_STATS_HIGHLIGHTS } from '@/constants/subscription';
+import { UpgradePrompt } from '@/components/subscription';
+import {
+  RecoveryEmptyState,
+  RecoveryInsightCard,
+  RecoveryStoryCard,
+  WeeklyRecoveryReportCard,
+} from '@/components/recovery';
+import {
+  buildRecoveryStory,
+  getPrimaryNeedLabel,
+} from '@/features/recovery/statsStory';
+import { analytics } from '@/services/analytics';
 
 // Time period options
 const TIME_PERIODS: { label: string; value: StatsPeriod }[] = [
@@ -68,7 +89,7 @@ function StatCard({
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
     scale.value = withDelay(delay, withSpring(1));
-  }, [delay, value]);
+  }, [delay, opacity, scale, value]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -140,7 +161,7 @@ function AnimatedBar({
       delay + index * 50,
       withSpring(height, { damping: 15 })
     );
-  }, [item.value, maxValue, delay, index]);
+  }, [barHeight, item.value, maxValue, delay, index]);
 
   const barStyle = useAnimatedStyle(() => ({
     height: `${barHeight.value}%`,
@@ -229,7 +250,7 @@ function BreakTypeItem({
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
     width.value = withDelay(delay, withTiming(percentage, { duration: 800 }));
-  }, [delay, percentage]);
+  }, [delay, opacity, percentage, width]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -273,7 +294,7 @@ function TimePatternItem({
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
     width.value = withDelay(delay, withTiming(item.percentage, { duration: 800 }));
-  }, [delay, item.percentage]);
+  }, [delay, item.percentage, opacity, width]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -334,7 +355,7 @@ function RecentBreakItem({
   useEffect(() => {
     opacity.value = withDelay(600 + index * 100, withTiming(1, { duration: 400 }));
     translateX.value = withDelay(600 + index * 100, withTiming(0, { duration: 400 }));
-  }, [index]);
+  }, [index, opacity, translateX]);
 
   const style = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -376,31 +397,21 @@ function RecentBreakItem({
   );
 }
 
-// Empty State Component
-function EmptyState({ theme }: { theme: ThemeColors }) {
-  return (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyStateEmoji}>📊</Text>
-      <Text style={[styles.emptyStateTitle, { color: theme.text.primary }]}>No Data Yet</Text>
-      <Text style={[styles.emptyStateText, { color: theme.text.muted }]}>
-        Complete your first break to start tracking your progress
-      </Text>
-    </View>
-  );
-}
-
 export default function StatsScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const { width: screenWidth } = useWindowDimensions();
+  const onboardingData = useOnboardingStore((state) => state.data);
   const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('week');
   const [refreshing, setRefreshing] = useState(false);
   const headerOpacity = useSharedValue(0);
+  const hasActiveSubscription = useHasActiveSubscription();
 
   const stats = useStatsData(selectedPeriod);
 
   useEffect(() => {
     headerOpacity.value = withTiming(1, { duration: 600 });
-  }, []);
+  }, [headerOpacity]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -409,6 +420,13 @@ export default function StatsScreen() {
 
   const handlePeriodChange = (period: StatsPeriod) => {
     Haptics.selectionAsync();
+    if (!hasActiveSubscription && period !== 'week') {
+      router.push({
+        pathname: '/subscription',
+        params: { placement: 'stats' },
+      } as any);
+      return;
+    }
     setSelectedPeriod(period);
   };
 
@@ -416,9 +434,78 @@ export default function StatsScreen() {
     setRefreshing(true);
     await stats.refresh();
     setRefreshing(false);
-  }, [stats.refresh]);
+  }, [stats]);
 
-    const hasData = stats.totalBreaks > 0;
+  const hasData = stats.totalBreaks > 0;
+  const weeklyGoalProgress = Math.min(
+    100,
+    Math.round((stats.weeklyProgress / Math.max(stats.weeklyGoal, 1)) * 100)
+  );
+  const primaryNeedLabel = useMemo(
+    () => getPrimaryNeedLabel(onboardingData.painAreas, onboardingData.breakStyle),
+    [onboardingData.breakStyle, onboardingData.painAreas]
+  );
+  const recoveryStory = useMemo(
+    () =>
+      buildRecoveryStory({
+        report: stats.weeklyRecoveryReport,
+        weekBreaks: stats.weekBreaks,
+        todayBreaks: stats.todayBreaks,
+        totalMinutes: stats.totalMinutes,
+        currentStreak: stats.currentStreak,
+        primaryNeedLabel,
+      }),
+    [
+      stats.weeklyRecoveryReport,
+      stats.weekBreaks,
+      stats.todayBreaks,
+      stats.totalMinutes,
+      stats.currentStreak,
+      primaryNeedLabel,
+    ]
+  );
+
+  const handleUpgradePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push({
+      pathname: '/subscription',
+      params: { placement: 'stats' },
+    } as any);
+  }, [router]);
+
+  const handleShareRecoveryReport = useCallback(async (report: WeeklyRecoveryReport) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    try {
+      const result = await Share.share({
+        title: 'My Weekly Recovery Report',
+        message: report.shareMessage,
+      });
+
+      if (result.action === Share.sharedAction) {
+        analytics.track('weekly_report_shared', {
+          report_score: report.score,
+          report_active_days: report.activeDays,
+          report_completion_rate: report.completionRate,
+          share_surface: 'stats',
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown share error';
+      analytics.trackError('weekly_report_share_failed', message, {
+        share_surface: 'stats',
+      });
+      Alert.alert(
+        'Share Unavailable',
+        'Could not open the share sheet right now. Please try again.'
+      );
+    }
+  }, []);
+
+  const handleBrowseStarterResets = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/breaks');
+  }, [router]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
@@ -441,8 +528,10 @@ export default function StatsScreen() {
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
-            <Text style={[styles.title, { color: theme.text.primary }]}>Statistics</Text>
-            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>Your wellness journey</Text>
+            <Text style={[styles.title, { color: theme.text.primary }]}>Recovery</Text>
+            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
+              See whether your work rhythm is supporting recovery or letting strain build up.
+            </Text>
           </Animated.View>
 
           {/* Period Selector */}
@@ -491,14 +580,24 @@ export default function StatsScreen() {
               <ActivityIndicator size="large" color={theme.accent.primary} />
             </View>
           ) : !hasData ? (
-            <EmptyState theme={theme} />
+            <RecoveryEmptyState
+              theme={theme}
+              primaryNeedLabel={primaryNeedLabel}
+              onStart={handleBrowseStarterResets}
+            />
           ) : (
             <>
+              <RecoveryStoryCard
+                story={recoveryStory}
+                theme={theme}
+                delay={180}
+              />
+
               {/* Stats Grid */}
               <View style={styles.statsGrid}>
                 <StatCard
                   icon="fitness"
-                  label="Total Breaks"
+                  label="Guided Resets"
                   value={stats.totalBreaks}
                   color="#06FFA5"
                   delay={200}
@@ -507,7 +606,7 @@ export default function StatsScreen() {
                 />
                 <StatCard
                   icon="time"
-                  label="Minutes"
+                  label="Recovery Minutes"
                   value={stats.totalMinutes}
                   color="#00E5FF"
                   delay={300}
@@ -516,7 +615,7 @@ export default function StatsScreen() {
                 />
                 <StatCard
                   icon="flame"
-                  label="Current Streak"
+                  label="Current Rhythm"
                   value={stats.currentStreak}
                   suffix=" days"
                   color="#FFD166"
@@ -526,7 +625,7 @@ export default function StatsScreen() {
                 />
                 <StatCard
                   icon="trophy"
-                  label="Best Streak"
+                  label="Best Rhythm"
                   value={stats.longestStreak}
                   suffix=" days"
                   color="#B47EFF"
@@ -536,8 +635,99 @@ export default function StatsScreen() {
                 />
               </View>
 
+              <View style={[
+                styles.sectionCard,
+                {
+                  borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                  backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: theme.isDark ? 0 : 0.08,
+                  shadowRadius: 12,
+                  elevation: theme.isDark ? 0 : 5,
+                },
+              ]}>
+                {theme.isDark && (
+                  Platform.OS === 'ios' ? (
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                  )
+                )}
+                <View style={styles.sectionTitleRow}>
+                  <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Current Rhythm</Text>
+                  <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                    {stats.weeklyProgress}/{stats.weeklyGoal} resets logged against your weekly target
+                  </Text>
+                </View>
+                <View style={styles.goalSummaryRow}>
+                  <View style={styles.goalMetric}>
+                    <Text style={[styles.goalMetricValue, { color: theme.text.primary }]}>
+                      {stats.todayBreaks}
+                    </Text>
+                    <Text style={[styles.goalMetricLabel, { color: theme.text.muted }]}>Today</Text>
+                  </View>
+                  <View style={styles.goalMetric}>
+                    <Text style={[styles.goalMetricValue, { color: theme.text.primary }]}>
+                      {stats.weekBreaks}
+                    </Text>
+                    <Text style={[styles.goalMetricLabel, { color: theme.text.muted }]}>This Week</Text>
+                  </View>
+                  <View style={styles.goalMetric}>
+                    <Text style={[styles.goalMetricValue, { color: theme.accent.primary }]}>
+                      {weeklyGoalProgress}%
+                    </Text>
+                    <Text style={[styles.goalMetricLabel, { color: theme.text.muted }]}>Goal Pace</Text>
+                  </View>
+                </View>
+                <View style={[styles.goalProgressTrack, { backgroundColor: theme.border.subtle }]}>
+                  <View
+                    style={[
+                      styles.goalProgressBar,
+                      {
+                        width: `${weeklyGoalProgress}%`,
+                        backgroundColor: theme.accent.primary,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              {hasActiveSubscription && stats.weeklyRecoveryReport && (
+                <WeeklyRecoveryReportCard
+                  report={stats.weeklyRecoveryReport}
+                  theme={theme}
+                  delay={320}
+                  onShare={handleShareRecoveryReport}
+                />
+              )}
+
+              {hasActiveSubscription && stats.recoveryInsights.length > 0 && (
+                <>
+                  <View style={styles.insightsHeader}>
+                    <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
+                      Deeper Signals
+                    </Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                      The patterns underneath your current recovery rhythm
+                    </Text>
+                  </View>
+                  <View style={styles.recoveryInsightsGrid}>
+                    {stats.recoveryInsights.map((item, index) => (
+                      <RecoveryInsightCard
+                        key={item.id}
+                        item={item}
+                        delay={360 + index * 70}
+                        theme={theme}
+                        screenWidth={screenWidth}
+                      />
+                    ))}
+                  </View>
+                </>
+              )}
+
               {/* Chart */}
-              {stats.chartData.length > 0 && (
+              {hasActiveSubscription && stats.chartData.length > 0 && (
                 <View style={[
                   styles.chartCard,
                   {
@@ -558,53 +748,24 @@ export default function StatsScreen() {
                       <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
                     )
                   )}
-                  <Text style={[styles.chartTitle, { color: theme.text.primary }]}>
-                    {selectedPeriod === 'week'
-                      ? 'This Week'
-                      : selectedPeriod === 'month'
-                      ? 'Last 30 Days'
-                      : 'This Year'}
-                  </Text>
+                  <View style={styles.sectionTitleRow}>
+                    <Text style={[styles.chartTitle, { color: theme.text.primary }]}>
+                      Recovery Rhythm
+                    </Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                      {selectedPeriod === 'week'
+                        ? 'How often you interrupted strain this week'
+                        : selectedPeriod === 'month'
+                        ? 'How your reset habit moved across the last 30 days'
+                        : 'How your reset habit moved across the year'}
+                    </Text>
+                  </View>
                   <BarChart data={stats.chartData} delay={400} theme={theme} />
                 </View>
               )}
 
               {/* Break Types Distribution */}
-              {stats.breakTypes.length > 0 && (
-                <View style={[
-                  styles.sectionCard,
-                  {
-                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.08,
-                    shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 5,
-                  },
-                ]}>
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
-                  <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Break Types</Text>
-                  {stats.breakTypes.map((item, index) => (
-                    <BreakTypeItem
-                      key={item.category}
-                      item={item}
-                      delay={500 + index * 100}
-                      theme={theme}
-                    />
-                  ))}
-                </View>
-              )}
-
-              {/* Time Patterns */}
-              {stats.timePatterns.length > 0 && (
+              {hasActiveSubscription && stats.breakTypes.length > 0 && (
                 <View style={[
                   styles.sectionCard,
                   {
@@ -626,8 +787,49 @@ export default function StatsScreen() {
                     )
                   )}
                   <View style={styles.sectionTitleRow}>
-                    <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Time Patterns</Text>
-                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>When you take breaks</Text>
+                    <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recovery Mix</Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                      Which types of resets carried the week
+                    </Text>
+                  </View>
+                  {stats.breakTypes.map((item, index) => (
+                    <BreakTypeItem
+                      key={item.category}
+                      item={item}
+                      delay={500 + index * 100}
+                      theme={theme}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {/* Time Patterns */}
+              {hasActiveSubscription && stats.timePatterns.length > 0 && (
+                <View style={[
+                  styles.sectionCard,
+                  {
+                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: theme.isDark ? 0 : 0.08,
+                    shadowRadius: 12,
+                    elevation: theme.isDark ? 0 : 5,
+                  },
+                ]}>
+                  {/* BlurView only for dark mode */}
+                  {theme.isDark && (
+                    Platform.OS === 'ios' ? (
+                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                    )
+                  )}
+                  <View style={styles.sectionTitleRow}>
+                    <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recovery Windows</Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                      When your workday naturally makes room for resets
+                    </Text>
                   </View>
                   {stats.timePatterns.map((item, index) => (
                     <TimePatternItem
@@ -639,6 +841,18 @@ export default function StatsScreen() {
                     />
                   ))}
                 </View>
+              )}
+
+              {!hasActiveSubscription && (
+                <UpgradePrompt
+                  title="Unlock the pattern layer behind your recovery"
+                  subtitle="You can already see the weekly story. Pro opens deeper signals, rhythm trends, and mix analysis so you know what to fix next."
+                  bullets={PRO_STATS_HIGHLIGHTS}
+                  ctaLabel="Preview Pro Analytics"
+                  onPress={handleUpgradePress}
+                  icon="analytics"
+                  accentColors={['#FFD166', '#FF9500']}
+                />
               )}
 
               {/* Recent Activity */}
@@ -663,7 +877,12 @@ export default function StatsScreen() {
                       <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
                     )
                   )}
-                  <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recent Activity</Text>
+                  <View style={styles.sectionTitleRow}>
+                    <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recent Resets</Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                      Your latest completed recovery sessions
+                    </Text>
+                  </View>
                   {stats.recentBreaks.map((item, index) => (
                     <RecentBreakItem key={item.id} item={item} index={index} theme={theme} />
                   ))}
@@ -799,30 +1018,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyStateEmoji: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
-  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: Spacing.lg,
+  },
+  recoveryInsightsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: Spacing.lg,
+  },
+  insightsHeader: {
+    marginBottom: Spacing.md,
   },
   statCard: {
     borderRadius: 16,
@@ -1048,6 +1257,33 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#06FFA5',
     borderRadius: 4,
+  },
+  goalSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+  goalMetric: {
+    flex: 1,
+  },
+  goalMetricValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  goalMetricLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  goalProgressTrack: {
+    height: 10,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  goalProgressBar: {
+    height: '100%',
+    borderRadius: 999,
   },
   bottomSpacer: {
     height: 120,

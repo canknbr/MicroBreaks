@@ -1,6 +1,6 @@
 # Privacy Policy / Gizlilik Politikası
 
-**Last Updated / Son Güncelleme:** January 2025
+**Last Updated / Son Güncelleme:** May 2026
 
 ---
 
@@ -13,13 +13,14 @@ MicroBreaks ("we", "our", or "us") is committed to protecting your privacy. This
 ### Information We Collect
 
 #### Information You Provide
-- **Profile Information:** Name, email address (optional)
+- **Profile Information:** Display name and avatar (optional)
 - **Break Preferences:** Your preferred break duration, frequency, and exercise types
-- **Usage Data:** Break completion history, streaks, and achievements
+- **Usage Data:** Break completion history, streaks, achievements, and onboarding responses
 
 #### Information Collected Automatically
-- **Device Information:** Device type, operating system version, unique device identifiers
-- **Usage Statistics:** App usage patterns, feature interactions, session duration
+- **Anonymous Account ID:** A Firebase anonymous authentication identifier used for secure sync and account management
+- **Device Information:** Device type, operating system version, app version, and technical identifiers for reliability
+- **Usage Statistics:** Anonymous app usage patterns, feature interactions, and session duration
 - **Crash Reports:** Technical error logs to improve app stability
 
 ### How We Use Your Information
@@ -34,23 +35,25 @@ We use the collected information to:
 
 ### Data Storage and Security
 
-- **Local Storage:** Your personal data is primarily stored locally on your device
-- **No Cloud Sync Required:** Core functionality works offline
+- **Local Storage:** Your personal data is stored locally on your device first
+- **Optional Cloud Sync:** You can keep data available across devices using secure Firebase sync
 - **Encryption:** Sensitive data is encrypted using industry-standard methods
-- **Data Retention:** Your data remains on your device until you delete the app
+- **Data Retention:** Local data remains on your device until you delete it; synced data remains until you delete your account
 
 ### Third-Party Services
 
 We may use the following third-party services:
-- **Analytics:** Anonymous usage statistics (no personal data shared)
-- **Crash Reporting:** Sentry for error tracking (device info only)
-- **Notifications:** Expo notifications service
+- **Firebase Analytics:** Anonymous usage statistics
+- **Firebase Crashlytics:** Crash reporting and stability diagnostics
+- **Firebase Authentication / Firestore:** Anonymous account handling and optional cloud sync
+- **Expo Notifications / Firebase Messaging:** Notification delivery infrastructure
 
 ### Your Rights
 
 You have the right to:
 - Access your personal data
-- Delete your data by uninstalling the app
+- Delete local data by uninstalling the app
+- Delete synced data by using the in-app Delete Account option
 - Opt-out of notifications
 - Request data export
 

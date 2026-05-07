@@ -75,7 +75,7 @@ function CountdownTimer({
       -1,
       true
     );
-  }, [isUrgent]);
+  }, [glowOpacity, isUrgent, pulseScale]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
@@ -208,9 +208,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -1,
     marginBottom: 16,
-  },
-  timeUrgent: {
-    color: '#FFD166',
   },
   progressContainer: {
     flexDirection: 'row',

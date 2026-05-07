@@ -45,6 +45,7 @@ import { Spacing } from '@/theme';
 import {
   ProgressRing,
   QuickBreakCard,
+  HeaderActions,
   StreakCalendar,
   // CountdownTimer replaced by TimerWidget
   SmartInsight,
@@ -63,131 +64,30 @@ import {
   useAmbientColors,
   useFormattedDate,
 } from '@/hooks/useHomeData';
-import { useNotificationStore } from '@/store';
+import { getExerciseById } from '@/data/exercises';
+import {
+  BREAK_TYPES,
+  RECOVERY_STATES,
+  RecoveryStateId,
+  formatNextBreakWindow,
+  formatRelativeMinutes,
+  getDefaultRecoveryStateId,
+  getRecoveryReason,
+} from '@/features/recovery/states';
+import { useNotificationStore, useOnboardingStore } from '@/store';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
-import { useTheme, ThemeColors } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
+import { useSmartInsight } from '@/hooks/useSmartInsight';
 import { useTranslation } from '@/i18n/hooks';
-
-// Break types data - IDs match exercise IDs in data/exercises.ts
-const BREAK_TYPES = [
-  { id: 'neck-roll', icon: '🧘', title: 'Neck', duration: '2m', color: '#06FFA5' },
-  { id: 'eye-rest', icon: '👁️', title: 'Eyes', duration: '1m', color: '#00E5FF' },
-  { id: 'full-body', icon: '🙆', title: 'Stretch', duration: '5m', color: '#B47EFF' },
-  { id: 'walk', icon: '🚶', title: 'Walk', duration: '5m', color: '#FFD166' },
-  { id: 'deep-breath', icon: '🌬️', title: 'Breathe', duration: '1m', color: '#4ECDC4' },
-] as const;
 
 // Memoized Quick Break Card with accessibility
 const MemoizedQuickBreakCard = memo(QuickBreakCard);
-
-// Header Actions Component
-const HeaderActions = memo(function HeaderActions({
-  onNotificationsPress,
-  onSettingsPress,
-  notificationCount = 0,
-  theme,
-}: {
-  onNotificationsPress: () => void;
-  onSettingsPress: () => void;
-  notificationCount?: number;
-  theme: ThemeColors;
-}) {
-  return (
-    <View style={styles.headerActions}>
-      <Pressable
-        style={[styles.headerActionButton, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
-        onPress={onNotificationsPress}
-        accessibilityRole="button"
-        accessibilityLabel={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ''}`}
-      >
-        <Ionicons name="notifications-outline" size={22} color={theme.text.secondary} />
-        {notificationCount > 0 && (
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationBadgeText}>
-              {notificationCount > 9 ? '9+' : notificationCount}
-            </Text>
-          </View>
-        )}
-      </Pressable>
-      <Pressable
-        style={[styles.headerActionButton, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }]}
-        onPress={onSettingsPress}
-        accessibilityRole="button"
-        accessibilityLabel="Settings"
-      >
-        <Ionicons name="settings-outline" size={22} color={theme.text.secondary} />
-      </Pressable>
-    </View>
-  );
-});
-
-// Smart Insight Generator
-function useSmartInsight(
-  breaksTaken: number,
-  breaksGoal: number,
-  lastBreakMinutesAgo: number,
-  streak: number
-) {
-  return useMemo(() => {
-    // Priority 1: Urgent - been sitting too long
-    if (lastBreakMinutesAgo > 90) {
-      return {
-        type: 'warning' as const,
-        title: 'Time for a break!',
-        message: `You've been working for ${Math.floor(lastBreakMinutesAgo / 60)}h ${lastBreakMinutesAgo % 60}m. Your body needs movement.`,
-        actionLabel: 'Start Break',
-      };
-    }
-
-    // Priority 2: Achievement - streak milestone
-    if (streak >= 5 && streak % 5 === 0) {
-      return {
-        type: 'achievement' as const,
-        title: '🔥 Hot streak!',
-        message: `${streak} days in a row! You're building a healthy habit.`,
-      };
-    }
-
-    // Priority 3: Motivation - close to goal
-    const progress = (breaksTaken / breaksGoal) * 100;
-    if (progress >= 75 && progress < 100) {
-      return {
-        type: 'motivation' as const,
-        title: 'Almost there!',
-        message: `Just ${breaksGoal - breaksTaken} more break${breaksGoal - breaksTaken > 1 ? 's' : ''} to reach your daily goal.`,
-      };
-    }
-
-    // Priority 4: Goal complete
-    if (progress >= 100) {
-      return {
-        type: 'achievement' as const,
-        title: '🎉 Goal Complete!',
-        message: "Amazing work! You've reached your daily wellness goal.",
-      };
-    }
-
-    // Default: Pro tip - use a stable index derived from breaksTaken to avoid
-    // random tip changes on re-render
-    const tips = [
-      'Short breaks every 25 minutes boost productivity by 30%.',
-      'Eye breaks reduce digital eye strain significantly.',
-      'Standing up regularly improves posture and energy.',
-      'Deep breathing reduces stress hormones instantly.',
-    ];
-    return {
-      type: 'suggestion' as const,
-      title: 'Pro tip',
-      message: tips[breaksTaken % tips.length],
-      actionLabel: 'Learn more',
-    };
-  }, [breaksTaken, breaksGoal, lastBreakMinutesAgo, streak]);
-}
 
 export default function HomeScreen() {
   // Theme
   const theme = useTheme();
   const { t } = useTranslation();
+  const onboardingData = useOnboardingStore((state) => state.data);
 
   // Data hook
   const {
@@ -210,6 +110,9 @@ export default function HomeScreen() {
   const timerPreferences = useTimerPreferences();
   const timerActions = useTimerActions();
   const [showPresetPicker, setShowPresetPicker] = useState(false);
+  const [selectedRecoveryStateId, setSelectedRecoveryStateId] = useState<RecoveryStateId>(
+    getDefaultRecoveryStateId(onboardingData.painAreas, onboardingData.breakStyle)
+  );
 
   // Dynamic content hooks
   const { greeting, subtitle: dynamicSubtitle } = useGreeting(data?.user.name);
@@ -237,6 +140,56 @@ export default function HomeScreen() {
       ? (data.dailyProgress.breaksTaken / data.dailyProgress.breaksGoal) * 100
       : 0;
   }, [data]);
+
+  const defaultRecoveryStateId = useMemo(
+    () => getDefaultRecoveryStateId(onboardingData.painAreas, onboardingData.breakStyle),
+    [onboardingData.breakStyle, onboardingData.painAreas]
+  );
+
+  useEffect(() => {
+    setSelectedRecoveryStateId(defaultRecoveryStateId);
+  }, [defaultRecoveryStateId]);
+
+  const selectedRecoveryState = useMemo(
+    () =>
+      RECOVERY_STATES.find((state) => state.id === selectedRecoveryStateId) ??
+      RECOVERY_STATES[0],
+    [selectedRecoveryStateId]
+  );
+
+  const recommendedExercise = useMemo(
+    () => getExerciseById(selectedRecoveryState.breakId),
+    [selectedRecoveryState.breakId]
+  );
+
+  const recommendedDuration = useMemo(
+    () =>
+      recommendedExercise
+        ? `${Math.max(1, Math.round(recommendedExercise.totalDuration / 60))} min`
+        : '1 min',
+    [recommendedExercise]
+  );
+
+  const recoveryReason = useMemo(
+    () =>
+      getRecoveryReason(
+        selectedRecoveryState.id,
+        data?.dailyProgress.lastBreakMinutesAgo ?? 999,
+        data?.dailyProgress.breaksTaken ?? 0,
+        isNewUser
+      ),
+    [selectedRecoveryState.id, data?.dailyProgress.lastBreakMinutesAgo, data?.dailyProgress.breaksTaken, isNewUser]
+  );
+
+  const lastResetLabel = useMemo(
+    () => formatRelativeMinutes(data?.dailyProgress.lastBreakMinutesAgo ?? 999),
+    [data?.dailyProgress.lastBreakMinutesAgo]
+  );
+
+  const nextResetLabel = useMemo(
+    () => formatNextBreakWindow(data?.nextBreakMinutes ?? 0),
+    [data?.nextBreakMinutes]
+  );
 
   // Scroll handler for parallax
   const scrollHandler = useAnimatedScrollHandler({
@@ -268,7 +221,7 @@ export default function HomeScreen() {
         true
       );
     }
-  }, [loading, data]);
+  }, [ambientOpacity, ambientScale, data, headerOpacity, loading]);
 
   // Animated styles
   const headerStyle = useAnimatedStyle(() => ({
@@ -306,19 +259,19 @@ export default function HomeScreen() {
     router.push('/breaks');
   }, []);
 
+  const handleRecoveryStatePress = useCallback((stateId: RecoveryStateId) => {
+    Haptics.selectionAsync();
+    setSelectedRecoveryStateId(stateId);
+  }, []);
+
   const handleNotificationsPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/notifications');
-  }, [router]);
+  }, []);
 
   const handleSettingsPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/profile');
-  }, [router]);
-
-  const handleEmptyStateAction = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/breaks');
   }, []);
 
   const handleSeeAllBreaks = useCallback(() => {
@@ -334,9 +287,13 @@ export default function HomeScreen() {
   // Dynamic subtitle based on state
   const subtitle = useMemo(() => {
     if (hasCompletedGoal) return "Amazing! You've crushed your goal today";
-    if (isEmpty) return 'Start your wellness journey today';
+    if (isNewUser) return 'Choose the kind of relief you want and start with one guided reset.';
+    if (isEmpty) return 'Pick what your body or mind needs right now and take a short reset.';
+    if ((data?.dailyProgress.lastBreakMinutesAgo ?? 0) > 90) {
+      return 'You are overdue for a reset. Start with the recovery state that feels most relevant right now.';
+    }
     return dynamicSubtitle;
-  }, [hasCompletedGoal, isEmpty, dynamicSubtitle]);
+  }, [hasCompletedGoal, isEmpty, isNewUser, dynamicSubtitle, data?.dailyProgress.lastBreakMinutesAgo]);
 
   // Loading state
   if (loading) {
@@ -436,209 +393,362 @@ export default function HomeScreen() {
             </Text>
           </Animated.View>
 
-          {/* New User / Empty State */}
-          {isNewUser ? (
-            <EmptyState type="new_user" onAction={handleEmptyStateAction} />
-          ) : (
-            <>
-              {/* PRIORITY 1: Take a Break - Most Important Action */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <View>
-                    <Text
-                      style={[styles.sectionTitle, { color: theme.text.primary }]}
-                      accessibilityRole="header"
-                    >
-                      {t('home.takeABreak')}
-                    </Text>
-                    <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
-                      {t('home.tapToStart')}
-                    </Text>
-                  </View>
+          {/* Current state picker */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text
+                  style={[styles.sectionTitle, { color: theme.text.primary }]}
+                  accessibilityRole="header"
+                >
+                  What do you need right now?
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                  Pick the kind of relief you want first. We&apos;ll surface the fastest starter reset for it.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.recoveryStateGrid}>
+              {RECOVERY_STATES.map((state) => {
+                const isSelected = state.id === selectedRecoveryState.id;
+
+                return (
                   <Pressable
-                    style={styles.seeAllButton}
-                    onPress={handleSeeAllBreaks}
+                    key={state.id}
+                    style={[
+                      styles.recoveryStateChip,
+                      {
+                        borderColor: isSelected ? state.color : theme.border.subtle,
+                        backgroundColor: theme.isDark ? 'rgba(19, 19, 26, 0.92)' : theme.background.card,
+                      },
+                    ]}
+                    onPress={() => handleRecoveryStatePress(state.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${state.label}. ${state.description}`}
+                    accessibilityState={{ selected: isSelected }}
                   >
-                    <Text style={[styles.seeAllText, { color: theme.accent.primary }]}>{t('common.seeAll')}</Text>
-                    <Ionicons name="chevron-forward" size={14} color={theme.accent.primary} />
+                    <View style={[styles.recoveryStateIcon, { backgroundColor: `${state.color}18` }]}>
+                      <Text style={styles.recoveryStateEmoji}>{state.icon}</Text>
+                    </View>
+                    <View style={styles.recoveryStateText}>
+                      <Text
+                        style={[
+                          styles.recoveryStateLabel,
+                          { color: isSelected ? state.color : theme.text.primary },
+                        ]}
+                      >
+                        {state.label}
+                      </Text>
+                      <Text style={[styles.recoveryStateDescription, { color: theme.text.muted }]}>
+                        {state.description}
+                      </Text>
+                    </View>
                   </Pressable>
-                </View>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.breakTypesScroll}
-                  accessibilityRole="list"
-                >
-                  {BREAK_TYPES.map((breakType, index) => (
-                    <MemoizedQuickBreakCard
-                      key={breakType.id}
-                      icon={breakType.icon}
-                      title={breakType.title}
-                      duration={breakType.duration}
-                      color={breakType.color}
-                      onPress={() => handleBreakPress(breakType.id)}
-                      isRecommended={index === 0}
-                      accessibilityLabel={`Start ${breakType.title} break, ${breakType.duration}`}
-                      accessibilityHint="Double tap to begin this exercise"
-                    />
-                  ))}
-                </ScrollView>
-              </View>
+                );
+              })}
+            </View>
+          </View>
 
-              {/* Smart Insight - Context-aware message (only if urgent) */}
+          {/* Recommended reset */}
+          <View
+            style={[
+              styles.recommendedCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: theme.isDark ? 0 : 0.12,
+                shadowRadius: 16,
+                elevation: theme.isDark ? 0 : 6,
+              },
+            ]}
+          >
+            {theme.isDark && (
+              Platform.OS === 'ios' ? (
+                <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.92)' }]} />
+              )
+            )}
+
+            <LinearGradient
+              colors={[`${selectedRecoveryState.color}1f`, 'transparent']}
+              style={styles.recommendedGlow}
+            />
+
+            <View style={styles.recommendedHeader}>
+              <View style={[styles.recommendedBadge, { backgroundColor: `${selectedRecoveryState.color}18` }]}>
+                <Text style={[styles.recommendedBadgeText, { color: selectedRecoveryState.color }]}>
+                  RECOMMENDED NEXT
+                </Text>
+              </View>
               {smartInsight.type === 'warning' && (
-                <SmartInsight
-                  type={smartInsight.type}
-                  title={smartInsight.title}
-                  message={smartInsight.message}
-                  actionLabel={smartInsight.actionLabel}
-                  onAction={handleSmartInsightAction}
-                  delay={200}
-                />
-              )}
-
-              {/* Progress + Stats Combined Row */}
-              <View style={styles.progressStatsRow}>
-                {/* Mini Progress Ring */}
-                <View
-                  style={styles.miniProgressContainer}
-                  accessible
-                  accessibilityRole="progressbar"
-                  accessibilityLabel={`Daily progress: ${data?.dailyProgress.breaksTaken} of ${data?.dailyProgress.breaksGoal} breaks completed`}
-                >
-                  <ProgressRing
-                    progress={progress}
-                    size={100}
-                    strokeWidth={8}
-                    colors={[ambientColors.primary, ambientColors.secondary]}
-                    delay={300}
-                  >
-                    <Text style={[styles.miniProgressValue, { color: theme.text.primary }]}>{data?.dailyProgress.breaksTaken}</Text>
-                    <Text style={[styles.miniProgressLabel, { color: theme.text.muted }]}>/{data?.dailyProgress.breaksGoal}</Text>
-                  </ProgressRing>
+                <View style={[styles.urgencyBadge, { backgroundColor: `${theme.accent.warning}18` }]}>
+                  <Ionicons name="time-outline" size={12} color={theme.accent.warning} />
+                  <Text style={[styles.urgencyBadgeText, { color: theme.accent.warning }]}>
+                    Due now
+                  </Text>
                 </View>
+              )}
+            </View>
 
-                {/* Stats */}
-                <View
-                  style={[
-                    styles.compactStatsCard,
-                    {
-                      borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                      backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: theme.isDark ? 0 : 0.1,
-                      shadowRadius: 12,
-                      elevation: theme.isDark ? 0 : 5,
-                    },
-                  ]}
-                  accessible
-                  accessibilityRole="summary"
+            <View style={styles.recommendedHeroRow}>
+              <View style={[styles.recommendedIconWrap, { backgroundColor: `${selectedRecoveryState.color}18` }]}>
+                <Text style={styles.recommendedEmoji}>{selectedRecoveryState.icon}</Text>
+              </View>
+              <View style={styles.recommendedCopy}>
+                <Text style={[styles.recommendedTitle, { color: theme.text.primary }]}>
+                  {selectedRecoveryState.title}
+                </Text>
+                <Text style={[styles.recommendedMeta, { color: selectedRecoveryState.color }]}>
+                  {recommendedExercise?.title ?? selectedRecoveryState.label} • {recommendedDuration}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.recommendedReason, { color: theme.text.secondary }]}>
+              {recoveryReason}
+            </Text>
+
+            <View style={styles.rhythmRow}>
+              <View style={styles.rhythmMetric}>
+                <Text style={[styles.rhythmValue, { color: theme.text.primary }]}>{lastResetLabel}</Text>
+                <Text style={[styles.rhythmLabel, { color: theme.text.muted }]}>Last reset</Text>
+              </View>
+              <View style={[styles.rhythmDivider, { backgroundColor: theme.border.subtle }]} />
+              <View style={styles.rhythmMetric}>
+                <Text style={[styles.rhythmValue, { color: theme.text.primary }]}>{nextResetLabel}</Text>
+                <Text style={[styles.rhythmLabel, { color: theme.text.muted }]}>Next window</Text>
+              </View>
+              <View style={[styles.rhythmDivider, { backgroundColor: theme.border.subtle }]} />
+              <View style={styles.rhythmMetric}>
+                <Text style={[styles.rhythmValue, { color: theme.text.primary }]}>
+                  {data?.dailyProgress.breaksTaken ?? 0}/{data?.dailyProgress.breaksGoal ?? 0}
+                </Text>
+                <Text style={[styles.rhythmLabel, { color: theme.text.muted }]}>Today</Text>
+              </View>
+            </View>
+
+            <View style={styles.recommendedActions}>
+              <Pressable
+                style={styles.primaryResetAction}
+                onPress={() => handleBreakPress(selectedRecoveryState.breakId)}
+                accessibilityRole="button"
+                accessibilityLabel={`Start ${recommendedExercise?.title ?? selectedRecoveryState.title}`}
+              >
+                <LinearGradient
+                  colors={[selectedRecoveryState.color, ambientColors.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.primaryResetActionGradient}
                 >
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
-                  <View style={styles.compactStatsContent}>
-                    <View style={styles.compactStatItem}>
-                      <Ionicons name="time-outline" size={16} color={theme.accent.secondary} />
-                      <Text style={[styles.compactStatValue, { color: theme.text.primary }]}>{data?.dailyProgress.minutesInvested ?? 0}m</Text>
-                      <Text style={[styles.compactStatLabel, { color: theme.text.muted }]}>today</Text>
-                    </View>
-                    <View style={[styles.compactStatDivider, { backgroundColor: theme.border.subtle }]} />
-                    <View style={styles.compactStatItem}>
-                      <Ionicons name="flame" size={16} color={theme.accent.warning} />
-                      <Text style={[styles.compactStatValue, { color: theme.text.primary }]}>{data?.streak.current ?? 0}</Text>
-                      <Text style={[styles.compactStatLabel, { color: theme.text.muted }]}>streak</Text>
-                    </View>
-                  </View>
+                  <Text style={styles.primaryResetActionText}>
+                    Start {recommendedExercise?.title ?? selectedRecoveryState.label}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={16} color="#000" />
+                </LinearGradient>
+              </Pressable>
+
+              <Pressable
+                style={[styles.secondaryResetAction, { borderColor: theme.border.subtle }]}
+                onPress={handleSeeAllBreaks}
+                accessibilityRole="button"
+                accessibilityLabel="Browse all starter resets"
+              >
+                <Text style={[styles.secondaryResetActionText, { color: theme.text.primary }]}>
+                  Browse starter resets
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {(isNewUser || isEmpty) && (
+            <SmartInsight
+              type="suggestion"
+              title="Start with one quick win"
+              message="Finish one short guided reset before you browse everything else. Early relief is what makes this habit stick."
+              actionLabel="See starter resets"
+              onAction={handleSeeAllBreaks}
+              delay={160}
+            />
+          )}
+
+          {/* Momentum */}
+          <View style={styles.progressStatsRow}>
+            <View
+              style={styles.miniProgressContainer}
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel={`Daily progress: ${data?.dailyProgress.breaksTaken} of ${data?.dailyProgress.breaksGoal} breaks completed`}
+            >
+              <ProgressRing
+                progress={progress}
+                size={100}
+                strokeWidth={8}
+                colors={[ambientColors.primary, ambientColors.secondary]}
+                delay={300}
+              >
+                <Text style={[styles.miniProgressValue, { color: theme.text.primary }]}>{data?.dailyProgress.breaksTaken}</Text>
+                <Text style={[styles.miniProgressLabel, { color: theme.text.muted }]}>/{data?.dailyProgress.breaksGoal}</Text>
+              </ProgressRing>
+            </View>
+
+            <View
+              style={[
+                styles.compactStatsCard,
+                {
+                  borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                  backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: theme.isDark ? 0 : 0.1,
+                  shadowRadius: 12,
+                  elevation: theme.isDark ? 0 : 5,
+                },
+              ]}
+              accessible
+              accessibilityRole="summary"
+            >
+              {theme.isDark && (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
+              )}
+              <View style={styles.compactStatsContent}>
+                <View style={styles.compactStatItem}>
+                  <Ionicons name="time-outline" size={16} color={theme.accent.secondary} />
+                  <Text style={[styles.compactStatValue, { color: theme.text.primary }]}>{data?.dailyProgress.minutesInvested ?? 0}m</Text>
+                  <Text style={[styles.compactStatLabel, { color: theme.text.muted }]}>recovery</Text>
+                </View>
+                <View style={[styles.compactStatDivider, { backgroundColor: theme.border.subtle }]} />
+                <View style={styles.compactStatItem}>
+                  <Ionicons name="flame" size={16} color={theme.accent.warning} />
+                  <Text style={[styles.compactStatValue, { color: theme.text.primary }]}>{data?.streak.current ?? 0}</Text>
+                  <Text style={[styles.compactStatLabel, { color: theme.text.muted }]}>day streak</Text>
                 </View>
               </View>
+            </View>
+          </View>
 
-              {/* Focus Timer Widget */}
-              <TimerWidget onPresetPress={() => setShowPresetPicker(true)} />
-
-              {/* Level Badge - Gamification */}
-              {data && (
-                <LevelBadge
-                  level={data.user.level}
-                  currentXP={data.user.currentXP}
-                  nextLevelXP={data.user.nextLevelXP}
-                  title={data.user.levelTitle}
-                  delay={400}
-                />
-              )}
-
-              {/* Non-urgent Smart Insight */}
-              {smartInsight.type !== 'warning' && (
-                <SmartInsight
-                  type={smartInsight.type}
-                  title={smartInsight.title}
-                  message={smartInsight.message}
-                  actionLabel={smartInsight.actionLabel}
-                  onAction={handleSmartInsightAction}
-                  delay={500}
-                />
-              )}
-
-              {/* Weekly Insights - Analytics */}
-              {data && (
-                <WeeklyInsights
-                  insights={data.weeklyInsights}
-                  delay={700}
-                />
-              )}
-
-              {/* Streak Calendar */}
-              {data && (
-                <View
-                  style={[
-                    styles.streakCard,
-                    {
-                      borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                      backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: theme.isDark ? 0 : 0.1,
-                      shadowRadius: 12,
-                      elevation: theme.isDark ? 0 : 5,
-                    },
-                  ]}
-                  accessible
-                  accessibilityRole="summary"
-                  accessibilityLabel={`Weekly streak calendar. Current streak: ${data.streak.current} days`}
+          {/* Starter resets */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text
+                  style={[styles.sectionTitle, { color: theme.text.primary }]}
+                  accessibilityRole="header"
                 >
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
-                  {theme.isDark && (
-                    <LinearGradient
-                      colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
-                      style={styles.cardHighlight}
-                    />
-                  )}
-                  <Text style={[styles.streakTitle, { color: theme.text.primary }]}>This Week</Text>
-                  <StreakCalendar
-                    completedDays={data.streak.completedDays}
-                    currentDayIndex={data.streak.currentDayIndex}
-                    streak={data.streak.current}
-                  />
-                </View>
-              )}
+                  Starter resets
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
+                  Fast, safe defaults you can start without browsing the full library.
+                </Text>
+              </View>
+              <Pressable
+                style={styles.seeAllButton}
+                onPress={handleSeeAllBreaks}
+              >
+                <Text style={[styles.seeAllText, { color: theme.accent.primary }]}>{t('common.seeAll')}</Text>
+                <Ionicons name="chevron-forward" size={14} color={theme.accent.primary} />
+              </Pressable>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.breakTypesScroll}
+              accessibilityRole="list"
+            >
+              {BREAK_TYPES.map((breakType) => (
+                <MemoizedQuickBreakCard
+                  key={breakType.id}
+                  icon={breakType.icon}
+                  title={breakType.title}
+                  duration={breakType.duration}
+                  color={breakType.color}
+                  onPress={() => handleBreakPress(breakType.id)}
+                  isRecommended={breakType.id === selectedRecoveryState.breakId}
+                  accessibilityLabel={`Start ${breakType.title} break, ${breakType.duration}`}
+                  accessibilityHint="Double tap to begin this exercise"
+                />
+              ))}
+            </ScrollView>
+          </View>
 
-              {/* Motivational Quote */}
-              <MotivationalQuote delay={900} />
-            </>
+          <TimerWidget onPresetPress={() => setShowPresetPicker(true)} />
+
+          {smartInsight.type !== 'warning' && !isNewUser && (
+            <SmartInsight
+              type={smartInsight.type}
+              title={smartInsight.title}
+              message={smartInsight.message}
+              actionLabel={smartInsight.actionLabel}
+              onAction={handleSmartInsightAction}
+              delay={500}
+            />
           )}
+
+          {data && (
+            <WeeklyInsights
+              insights={data.weeklyInsights}
+              delay={700}
+            />
+          )}
+
+          {data && (
+            <View
+              style={[
+                styles.streakCard,
+                {
+                  borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                  backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: theme.isDark ? 0 : 0.1,
+                  shadowRadius: 12,
+                  elevation: theme.isDark ? 0 : 5,
+                },
+              ]}
+              accessible
+              accessibilityRole="summary"
+              accessibilityLabel={`Weekly streak calendar. Current streak: ${data.streak.current} days`}
+            >
+              {theme.isDark && (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
+              )}
+              {theme.isDark && (
+                <LinearGradient
+                  colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
+                  style={styles.cardHighlight}
+                />
+              )}
+              <Text style={[styles.streakTitle, { color: theme.text.primary }]}>This Week</Text>
+              <StreakCalendar
+                completedDays={data.streak.completedDays}
+                currentDayIndex={data.streak.currentDayIndex}
+                streak={data.streak.current}
+              />
+            </View>
+          )}
+
+          {data && (
+            <LevelBadge
+              level={data.user.level}
+              currentXP={data.user.currentXP}
+              nextLevelXP={data.user.nextLevelXP}
+              title={data.user.levelTitle}
+              delay={400}
+            />
+          )}
+
+          <MotivationalQuote delay={900} />
 
           {/* Bottom Spacing */}
           <View style={styles.bottomSpacer} />
@@ -706,36 +816,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     textTransform: 'uppercase',
     letterSpacing: 1,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerActionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#FF6B6B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  notificationBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   greeting: {
     fontSize: 32,
@@ -811,18 +891,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: 1,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-  },
-  statsDivider: {
-    width: 1,
-    height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
   section: {
     marginBottom: Spacing.lg,
   },
@@ -841,6 +909,175 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.5)',
+  },
+  recoveryStateGrid: {
+    gap: 10,
+  },
+  recoveryStateChip: {
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recoveryStateIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  recoveryStateEmoji: {
+    fontSize: 20,
+  },
+  recoveryStateText: {
+    flex: 1,
+  },
+  recoveryStateLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  recoveryStateDescription: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  recommendedCard: {
+    borderRadius: 26,
+    overflow: 'hidden',
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: Spacing.lg,
+  },
+  recommendedGlow: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  recommendedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  recommendedBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  recommendedBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  urgencyBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  urgencyBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  recommendedHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  recommendedIconWrap: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  recommendedEmoji: {
+    fontSize: 28,
+  },
+  recommendedCopy: {
+    flex: 1,
+  },
+  recommendedTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+    marginBottom: 4,
+  },
+  recommendedMeta: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  recommendedReason: {
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 18,
+  },
+  rhythmRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  rhythmMetric: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  rhythmValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  rhythmLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  rhythmDivider: {
+    width: 1,
+    height: 28,
+    marginHorizontal: 6,
+  },
+  recommendedActions: {
+    gap: 10,
+  },
+  primaryResetAction: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  primaryResetActionGradient: {
+    minHeight: 56,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  primaryResetActionText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#04110D',
+    flex: 1,
+    marginRight: 12,
+  },
+  secondaryResetAction: {
+    minHeight: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  secondaryResetActionText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   seeAllButton: {
     flexDirection: 'row',

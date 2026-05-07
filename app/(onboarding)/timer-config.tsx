@@ -34,7 +34,7 @@ export default function TimerConfigScreen() {
   useEffect(() => {
     bannerOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
     commitmentOpacity.value = withDelay(400, withTiming(1, { duration: 400 }));
-  }, []);
+  }, [bannerOpacity, commitmentOpacity]);
 
   const bannerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: bannerOpacity.value,

@@ -35,7 +35,7 @@ function ShimmerBox({
       -1,
       true
     );
-  }, []);
+  }, [shimmer]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(shimmer.value, [0, 0.5, 1], [0.3, 0.6, 0.3]),

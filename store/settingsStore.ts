@@ -61,7 +61,7 @@ interface SettingsState {
   resetSettings: () => void;
 }
 
-const defaultSettings: AppSettings = {
+export const defaultAppSettings: AppSettings = {
   // Appearance
   theme: 'dark',
   accentColor: '#06FFA5',
@@ -121,7 +121,7 @@ export const useSettingsActions = () => useSettingsStore(useShallow((state) => (
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      settings: defaultSettings,
+      settings: defaultAppSettings,
       settingsUpdatedAt: 0,
 
       updateSettings: (newSettings) => {
@@ -249,7 +249,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       resetSettings: () =>
-        set({ settings: defaultSettings, settingsUpdatedAt: Date.now() }),
+        set({ settings: defaultAppSettings, settingsUpdatedAt: Date.now() }),
     }),
     {
       name: 'microbreaks-settings',

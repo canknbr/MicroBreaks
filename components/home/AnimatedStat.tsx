@@ -65,7 +65,7 @@ function AnimatedStat({
       delay + 200,
       withTiming(value, { duration, easing: Easing.out(Easing.cubic) })
     );
-  }, [value, delay, duration]);
+  }, [animatedValue, delay, duration, opacity, translateY, value]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

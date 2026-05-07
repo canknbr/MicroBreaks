@@ -11,17 +11,13 @@ import {
   ScrollView,
   Platform,
   Pressable,
-  Switch,
   Alert,
-  Modal,
-  TextInput,
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import type { IoniconsName } from '@/types/icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,376 +31,15 @@ import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
 import { router } from 'expo-router';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useUserStore, useSettingsStore } from '@/store';
+import { useUserStore, useSettingsStore, useHasActiveSubscription, useSubscriptionCustomer, useSubscriptionStatus, useSubscriptionStore, useBillingDiagnostics, useEntitlementHealth } from '@/store';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useTheme } from '@/hooks/useTheme';
 import { LEVEL_COLORS, LEVEL_TITLES } from '@/constants/levels';
-
-// Reminder interval options
-const REMINDER_INTERVALS = [
-  { label: '15 min', value: 15 },
-  { label: '25 min', value: 25 },
-  { label: '30 min', value: 30 },
-  { label: '45 min', value: 45 },
-  { label: '60 min', value: 60 },
-];
-
-// Theme options
-const THEME_OPTIONS: { label: string; value: 'dark' | 'light' | 'system' }[] = [
-  { label: 'Dark', value: 'dark' },
-  { label: 'Light', value: 'light' },
-  { label: 'System', value: 'system' },
-];
-
-// Setting Item Component
-function SettingItem({
-  icon,
-  label,
-  type,
-  value,
-  isEnabled,
-  onToggle,
-  onPress,
-  delay,
-  index,
-  disabled,
-  theme,
-}: {
-  icon: IoniconsName;
-  label: string;
-  type: 'toggle' | 'value' | 'arrow';
-  value?: string;
-  isEnabled?: boolean;
-  onToggle?: () => void;
-  onPress?: () => void;
-  delay: number;
-  index: number;
-  disabled?: boolean;
-  theme: ReturnType<typeof useTheme>;
-}) {
-  const opacity = useSharedValue(0);
-  const translateX = useSharedValue(20);
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay + index * 50, withTiming(1, { duration: 400 }));
-    translateX.value = withDelay(delay + index * 50, withTiming(0, { duration: 400 }));
-  }, [delay, index]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateX: translateX.value }, { scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    if (type !== 'toggle') {
-      scale.value = withSpring(0.98);
-    }
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
-
-  const handlePress = () => {
-    if (type !== 'toggle' && onPress) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onPress();
-    }
-  };
-
-  const accessibilityProps = (() => {
-    switch (type) {
-      case 'toggle':
-        return {
-          accessibilityRole: 'switch' as const,
-          accessibilityState: { checked: isEnabled },
-          accessibilityLabel: label,
-        };
-      case 'value':
-        return {
-          accessibilityRole: 'button' as const,
-          accessibilityLabel: `${label}, current value ${value}`,
-        };
-      case 'arrow':
-        return {
-          accessibilityRole: 'button' as const,
-          accessibilityLabel: label,
-          accessibilityHint: 'Opens settings page',
-        };
-    }
-  })();
-
-  return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={handlePress}
-      disabled={type === 'toggle' || disabled}
-      {...accessibilityProps}
-    >
-      <Animated.View style={[
-        styles.settingItem,
-        { borderBottomColor: theme.border.subtle },
-        animatedStyle,
-        disabled && styles.settingItemDisabled,
-      ]}>
-        <View style={[styles.settingIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
-          <Ionicons name={icon} size={20} color={disabled ? theme.text.muted : theme.text.secondary} />
-        </View>
-        <Text style={[styles.settingLabel, { color: theme.text.primary }, disabled && { color: theme.text.muted }]}>{label}</Text>
-        {type === 'toggle' && (
-          <Switch
-            value={isEnabled}
-            onValueChange={() => {
-              Haptics.selectionAsync();
-              onToggle?.();
-            }}
-            trackColor={{ false: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium, true: theme.accent.primary }}
-            thumbColor="#FFFFFF"
-            ios_backgroundColor={theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium}
-            disabled={disabled}
-          />
-        )}
-        {type === 'value' && (
-          <Text style={[styles.settingValue, { color: theme.text.muted }]}>{value}</Text>
-        )}
-        {type === 'arrow' && (
-          <Ionicons name="chevron-forward" size={20} color={theme.text.muted} />
-        )}
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-// Avatar emoji options
-const AVATAR_EMOJIS = ['😊', '😎', '🧘', '💪', '🌟', '🔥', '🎯', '🌈', '🦋', '🌸', '🍀', '⭐'];
-
-// Edit Profile Modal
-function EditProfileModal({
-  visible,
-  currentName,
-  currentAvatar,
-  onSave,
-  onClose,
-}: {
-  visible: boolean;
-  currentName: string;
-  currentAvatar: string | null;
-  onSave: (name: string, avatar: string | null) => void;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState(currentName);
-  const [avatar, setAvatar] = useState<string | null>(currentAvatar);
-
-  useEffect(() => {
-    if (visible) {
-      setName(currentName);
-      setAvatar(currentAvatar);
-    }
-  }, [visible, currentName, currentAvatar]);
-
-  const handleSave = () => {
-    if (name.trim()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      onSave(name.trim(), avatar);
-      onClose();
-    }
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.editModalContent} onPress={(e) => e.stopPropagation()} accessibilityViewIsModal={true}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
-          <Text style={styles.modalTitle}>Edit Profile</Text>
-
-          {/* Name Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Display Name</Text>
-            <TextInput
-              style={styles.nameInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter your name"
-              placeholderTextColor="rgba(255, 255, 255, 0.3)"
-              maxLength={20}
-              autoCapitalize="words"
-            />
-          </View>
-
-          {/* Avatar Selection */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Avatar</Text>
-            <View style={styles.avatarGrid}>
-              <Pressable
-                style={[styles.avatarOption, !avatar && styles.avatarOptionActive]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setAvatar(null);
-                }}
-              >
-                <Text style={styles.avatarInitialOption}>{name.charAt(0).toUpperCase() || 'U'}</Text>
-              </Pressable>
-              {AVATAR_EMOJIS.map((emoji) => (
-                <Pressable
-                  key={emoji}
-                  style={[styles.avatarOption, avatar === emoji && styles.avatarOptionActive]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setAvatar(emoji);
-                  }}
-                >
-                  <Text style={styles.avatarEmoji}>{emoji}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          {/* Actions */}
-          <View style={styles.modalActions}>
-            <Pressable style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.saveButton, !name.trim() && styles.saveButtonDisabled]}
-              onPress={handleSave}
-              disabled={!name.trim()}
-            >
-              <Text style={styles.saveButtonText}>Save</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
-
-// Interval Picker Modal
-function IntervalPickerModal({
-  visible,
-  currentValue,
-  onSelect,
-  onClose,
-}: {
-  visible: boolean;
-  currentValue: number;
-  onSelect: (value: number) => void;
-  onClose: () => void;
-}) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <View style={styles.modalContent} accessibilityViewIsModal={true}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
-          <Text style={styles.modalTitle}>Reminder Interval</Text>
-          <Text style={styles.modalSubtitle}>How often should we remind you?</Text>
-          <View style={styles.intervalOptions}>
-            {REMINDER_INTERVALS.map((interval) => (
-              <Pressable
-                key={interval.value}
-                style={[
-                  styles.intervalOption,
-                  currentValue === interval.value && styles.intervalOptionActive,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onSelect(interval.value);
-                  onClose();
-                }}
-              >
-                <Text
-                  style={[
-                    styles.intervalOptionText,
-                    currentValue === interval.value && styles.intervalOptionTextActive,
-                  ]}
-                >
-                  {interval.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </Pressable>
-    </Modal>
-  );
-}
-
-// Theme Picker Modal
-function ThemePickerModal({
-  visible,
-  currentValue,
-  onSelect,
-  onClose,
-}: {
-  visible: boolean;
-  currentValue: 'dark' | 'light' | 'system';
-  onSelect: (value: 'dark' | 'light' | 'system') => void;
-  onClose: () => void;
-}) {
-  const themeIcons: Record<string, IoniconsName> = {
-    dark: 'moon',
-    light: 'sunny',
-    system: 'phone-portrait',
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <View style={styles.modalContent} accessibilityViewIsModal={true}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
-          <Text style={styles.modalTitle}>App Theme</Text>
-          <Text style={styles.modalSubtitle}>Choose your preferred appearance</Text>
-          <View style={styles.intervalOptions}>
-            {THEME_OPTIONS.map((option) => (
-              <Pressable
-                key={option.value}
-                style={[
-                  styles.intervalOption,
-                  styles.themeOption,
-                  currentValue === option.value && styles.intervalOptionActive,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onSelect(option.value);
-                  onClose();
-                }}
-              >
-                <Ionicons
-                  name={themeIcons[option.value]}
-                  size={20}
-                  color={currentValue === option.value ? '#06FFA5' : 'rgba(255, 255, 255, 0.6)'}
-                  style={styles.themeOptionIcon}
-                />
-                <Text
-                  style={[
-                    styles.intervalOptionText,
-                    currentValue === option.value && styles.intervalOptionTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </Pressable>
-    </Modal>
-  );
-}
+import { getPremiumHealthSummary } from '@/services/billing/healthSummary';
+import { replaceWithFreshAnonymousSession } from '@/services/account/sessionReset';
+import { setFirebaseCollectionPreferences } from '@/services/firebase/config';
+import { EditProfileModal, IntervalPickerModal, SettingItem, ThemePickerModal } from '@/components/profile';
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -424,7 +59,12 @@ export default function ProfileScreen() {
   const profile = useUserStore((state) => state.profile);
   const progress = useUserStore((state) => state.progress);
   const updateProfile = useUserStore((state) => state.updateProfile);
-  const signOut = useUserStore((state) => state.signOut);
+  const billingDiagnostics = useBillingDiagnostics();
+  const entitlementHealth = useEntitlementHealth();
+  const subscriptionLastSyncedAt = useSubscriptionStore((state) => state.lastSyncedAt);
+  const subscriptionCustomer = useSubscriptionCustomer();
+  const subscriptionStatus = useSubscriptionStatus();
+  const hasActiveSubscription = useHasActiveSubscription();
 
   // Settings store
   const settingsStore = useSettingsStore();
@@ -445,6 +85,38 @@ export default function ProfileScreen() {
   const profileOpacity = useSharedValue(0);
   const premiumPulse = useSharedValue(1);
 
+  const handleToggleAnalytics = useCallback(async () => {
+    const nextAnalyticsEnabled = !settingsStore.settings.analyticsEnabled;
+    settingsStore.updateSettings({ analyticsEnabled: nextAnalyticsEnabled });
+
+    try {
+      await setFirebaseCollectionPreferences({
+        analyticsEnabled: nextAnalyticsEnabled,
+        crashReportingEnabled: settingsStore.settings.crashReportingEnabled,
+      });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Failed to update analytics collection preference:', error);
+      }
+    }
+  }, [settingsStore]);
+
+  const handleToggleCrashReporting = useCallback(async () => {
+    const nextCrashReportingEnabled = !settingsStore.settings.crashReportingEnabled;
+    settingsStore.updateSettings({ crashReportingEnabled: nextCrashReportingEnabled });
+
+    try {
+      await setFirebaseCollectionPreferences({
+        analyticsEnabled: settingsStore.settings.analyticsEnabled,
+        crashReportingEnabled: nextCrashReportingEnabled,
+      });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Failed to update crash reporting preference:', error);
+      }
+    }
+  }, [settingsStore]);
+
   const level = Math.min(progress.level, 5);
   const levelColors = LEVEL_COLORS[level] || LEVEL_COLORS[1];
   const levelTitle = LEVEL_TITLES[level] || LEVEL_TITLES[1];
@@ -463,7 +135,7 @@ export default function ProfileScreen() {
         withTiming(1, { duration: 1000 })
       )
     );
-  }, []);
+  }, [headerOpacity, premiumPulse, profileOpacity, profileScale]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -496,18 +168,29 @@ export default function ProfileScreen() {
 
   const handlePremiumPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      'Premium Features',
-      'Premium features are coming soon! Get early access to advanced analytics, custom break routines, and more.',
-      [
-        { text: 'Notify Me', onPress: () => {
-          // Register interest for premium features
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }},
-        { text: 'OK', style: 'cancel' }
-      ]
-    );
+    router.push({
+      pathname: '/subscription',
+      params: { placement: 'profile' },
+    } as any);
   };
+
+  const premiumTitle = hasActiveSubscription
+    ? subscriptionCustomer.isPreview
+      ? 'Preview Pro Active'
+      : 'Pro Active'
+    : 'Go Pro';
+  const premiumDescription = hasActiveSubscription
+    ? subscriptionCustomer.activeOfferId === 'pro_annual'
+      ? 'Annual access is active on this device'
+      : 'Monthly access is active on this device'
+    : subscriptionStatus === 'expired'
+      ? 'Re-activate advanced insights, guided programs & more'
+      : 'Advanced insights, guided programs & more';
+  const premiumHealthSummary = getPremiumHealthSummary(
+    billingDiagnostics,
+    entitlementHealth,
+    subscriptionLastSyncedAt
+  );
 
   const formatQuietHours = () => {
     const formatHour = (hour: number) => {
@@ -750,7 +433,11 @@ export default function ProfileScreen() {
           </View>
 
           {/* Premium Card */}
-          <Pressable onPress={handlePremiumPress} accessibilityRole="button" accessibilityLabel="Upgrade to Premium. Unlock all breaks, advanced stats and more">
+          <Pressable
+            onPress={handlePremiumPress}
+            accessibilityRole="button"
+            accessibilityLabel={`${premiumTitle}. ${premiumDescription}. ${premiumHealthSummary.label}. ${premiumHealthSummary.detail}`}
+          >
             <Animated.View style={[styles.premiumCard, premiumStyle]}>
               <LinearGradient
                 colors={['#FFD166', '#FF9500']}
@@ -763,10 +450,21 @@ export default function ProfileScreen() {
                   <Ionicons name="star" size={24} color="#000" />
                 </View>
                 <View style={styles.premiumInfo}>
-                  <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+                  <Text style={styles.premiumTitle}>{premiumTitle}</Text>
                   <Text style={styles.premiumDescription}>
-                    Unlock all breaks, advanced stats & more
+                    {premiumDescription}
                   </Text>
+                  <View style={styles.premiumHealthRow}>
+                    <View style={styles.premiumHealthBadge}>
+                      <Ionicons name={premiumHealthSummary.icon} size={14} color="#000" />
+                      <Text style={styles.premiumHealthBadgeText}>
+                        {premiumHealthSummary.label}
+                      </Text>
+                    </View>
+                    <Text style={styles.premiumHealthText}>
+                      {premiumHealthSummary.detail}
+                    </Text>
+                  </View>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#000" />
               </View>
@@ -1099,12 +797,36 @@ export default function ProfileScreen() {
                   try {
                     const { exportUserData } = await import('@/services/data-export');
                     await exportUserData();
-                  } catch (error) {
+                  } catch (_error) {
                     Alert.alert('Export Failed', 'Could not export your data. Please try again.');
                   }
                 }}
                 delay={600}
                 index={0}
+                theme={theme}
+              />
+              <SettingItem
+                icon="bar-chart"
+                label="Usage Analytics"
+                type="toggle"
+                isEnabled={settingsStore.settings.analyticsEnabled}
+                onToggle={() => {
+                  void handleToggleAnalytics();
+                }}
+                delay={600}
+                index={1}
+                theme={theme}
+              />
+              <SettingItem
+                icon="shield-checkmark"
+                label="Crash Reporting"
+                type="toggle"
+                isEnabled={settingsStore.settings.crashReportingEnabled}
+                onToggle={() => {
+                  void handleToggleCrashReporting();
+                }}
+                delay={600}
+                index={2}
                 theme={theme}
               />
               <SettingItem
@@ -1122,16 +844,11 @@ export default function ProfileScreen() {
                         style: 'destructive',
                         onPress: async () => {
                           try {
-                            const { getCurrentUserId } = await import('@/services/firebase/auth');
-                            const { deleteAllUserData } = await import('@/services/firebase/firestore');
-                            const { deleteAuthAccount } = await import('@/services/firebase/auth');
-                            const userId = getCurrentUserId();
-                            if (userId) {
-                              await deleteAllUserData(userId);
-                            }
-                            await deleteAuthAccount();
-                            signOut();
-                          } catch (error) {
+                            await replaceWithFreshAnonymousSession({
+                              deleteRemoteUserData: true,
+                            });
+                            router.replace('/');
+                          } catch (_error) {
                             Alert.alert('Error', 'Could not delete account. Please try again.');
                           }
                         },
@@ -1140,7 +857,7 @@ export default function ProfileScreen() {
                   );
                 }}
                 delay={600}
-                index={1}
+                index={3}
                 theme={theme}
               />
             </View>
@@ -1160,9 +877,14 @@ export default function ProfileScreen() {
                   {
                     text: 'Sign Out',
                     style: 'destructive',
-                    onPress: () => {
+                    onPress: async () => {
                       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                      signOut();
+                      try {
+                        await replaceWithFreshAnonymousSession();
+                        router.replace('/');
+                      } catch (_error) {
+                        Alert.alert('Error', 'Could not sign out. Please try again.');
+                      }
                     },
                   },
                 ]
@@ -1407,6 +1129,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(0, 0, 0, 0.7)',
   },
+  premiumHealthRow: {
+    marginTop: 10,
+    gap: 8,
+  },
+  premiumHealthBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+  },
+  premiumHealthBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000',
+  },
+  premiumHealthText: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: 'rgba(0, 0, 0, 0.72)',
+  },
   settingsSection: {
     marginBottom: Spacing.lg,
   },
@@ -1424,37 +1170,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  settingItemDisabled: {
-    opacity: 0.5,
-  },
-  settingIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  settingLabel: {
-    flex: 1,
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
-  settingLabelDisabled: {
-    color: 'rgba(255, 255, 255, 0.5)',
-  },
-  settingValue: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
   },
   quietHoursInfo: {
     paddingHorizontal: 14,
@@ -1479,67 +1194,6 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 120,
   },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '80%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: Spacing.lg,
-  },
-  androidModalFallback: {
-    backgroundColor: 'rgba(30, 30, 40, 0.98)',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-  },
-  intervalOptions: {
-    gap: 10,
-  },
-  intervalOption: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-  },
-  intervalOptionActive: {
-    backgroundColor: 'rgba(6, 255, 165, 0.2)',
-    borderWidth: 1,
-    borderColor: '#06FFA5',
-  },
-  intervalOptionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  intervalOptionTextActive: {
-    color: '#06FFA5',
-  },
-  themeOption: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-  },
-  themeOptionIcon: {
-    marginRight: 12,
-  },
   // Edit Profile Modal styles
   editIndicator: {
     position: 'absolute',
@@ -1553,93 +1207,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#000',
-  },
-  editModalContent: {
-    width: '90%',
-    maxHeight: '80%',
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: Spacing.lg,
-  },
-  inputContainer: {
-    marginTop: Spacing.md,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 8,
-  },
-  nameInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  avatarOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  avatarOptionActive: {
-    borderColor: '#06FFA5',
-    backgroundColor: 'rgba(6, 255, 165, 0.15)',
-  },
-  avatarInitialOption: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  avatarEmoji: {
-    fontSize: 24,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: Spacing.xl,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#06FFA5',
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    backgroundColor: 'rgba(6, 255, 165, 0.3)',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000',
   },
   // Achievements styles
   sectionHeaderRow: {

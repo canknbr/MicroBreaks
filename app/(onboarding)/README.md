@@ -1,6 +1,8 @@
 # MicroBreaks Onboarding Flow
 
-This directory contains the complete 21-screen onboarding experience for MicroBreaks, designed following the comprehensive specifications in `/documentations/Onboarding_Flow_MicroBreaks_v3.md`.
+This directory contains the onboarding experience for MicroBreaks.
+
+As of May 7, 2026, the product now uses a shorter active onboarding path focused on faster value delivery. Legacy screens are still present in the directory for safe migration, experimentation, and fallback.
 
 ## Structure
 
@@ -18,7 +20,39 @@ app/(onboarding)/
 └── [screens].tsx       # Individual screen components
 ```
 
-## Flow Phases
+## Active Flow
+
+The active onboarding path is now:
+
+```
+welcome → work-role → pain-assessment → recommendation →
+break-demo → notification-permission → premium-pitch → completion → /(tabs)
+```
+
+This shorter flow is designed to:
+- reach the first relief moment faster
+- reduce explanation-heavy drop-off
+- collect only the highest-value personalization inputs
+- move users into the app before habit momentum is lost
+
+## Legacy Screens
+
+The following legacy screens are still in the codebase but are no longer part of the main path:
+- `social-proof.tsx`
+- `value-promise.tsx`
+- `screen-time.tsx`
+- `work-pattern.tsx`
+- `ergonomic-setup.tsx`
+- `notification-preference.tsx`
+- `energy-pattern.tsx`
+- `break-style.tsx`
+- `value-display.tsx`
+- `impact-education.tsx`
+- `timer-config.tsx`
+- `calendar-integration.tsx`
+- `first-session.tsx`
+
+## Legacy Flow Phases
 
 ### Phase 1: Hook (Screens 1-3)
 - **ONB_001** - `welcome.tsx`: Welcome & Problem Recognition
@@ -53,22 +87,12 @@ app/(onboarding)/
 
 ## Key Features
 
-- **Progressive Disclosure**: Information gathered gradually across 21 screens
-- **Adaptive Flow**: Can skip optional screens based on user preferences
+- **Short Active Flow**: The main path is optimized for faster activation and earlier value delivery
+- **Safe Migration**: Legacy screens remain available while the shorter flow is rolled out
 - **Analytics Integration**: Each screen tracks relevant user interactions
 - **Theme Integration**: Uses centralized theme system from `/theme`
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Accessibility**: WCAG AA compliant with proper touch targets and screen reader support
-
-## Navigation Flow
-
-```
-welcome → social-proof → value-promise → work-role → screen-time →
-pain-assessment → work-pattern → ergonomic-setup → notification-preference →
-energy-pattern → break-style → recommendation → break-demo → value-display →
-impact-education → timer-config → notification-permission → calendar-integration →
-first-session → premium-pitch → completion → /(tabs)
-```
 
 ## Usage
 
@@ -79,8 +103,8 @@ router.push('/(onboarding)');
 
 To check if onboarding is completed:
 ```typescript
-// Check AsyncStorage for onboarding_completed flag
-const isOnboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+// Read the persisted onboarding store
+const raw = await AsyncStorage.getItem('microbreaks-onboarding');
 ```
 
 ## Analytics Events

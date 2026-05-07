@@ -53,7 +53,7 @@ export default function BreakHeader({
     } else {
       pulseScale.value = withTiming(1, { duration: 200 });
     }
-  }, [isPaused]);
+  }, [isPaused, pulseScale]);
 
   const timerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],

@@ -3,7 +3,7 @@
  * 100% coverage with all edge cases
  */
 
-import { act, renderHook } from '@testing-library/react-native';
+import { act } from '@testing-library/react-native';
 import {
   useNotificationStore,
   createAchievementNotification,
@@ -11,7 +11,6 @@ import {
   createGoalNotification,
   createLevelUpNotification,
   NotificationType,
-  AppNotification,
 } from '@/store/notificationStore';
 
 describe('NotificationStore', () => {
@@ -152,7 +151,7 @@ describe('NotificationStore', () => {
         'welcome',
       ];
 
-      types.forEach((type, index) => {
+      types.forEach((type) => {
         act(() => {
           useNotificationStore.getState().addNotification({
             type,

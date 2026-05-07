@@ -36,7 +36,7 @@ function BenefitItem({ benefit, index }: { benefit: typeof BENEFITS[0]; index: n
       200 + index * 100,
       withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) })
     );
-  }, []);
+  }, [index, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -65,7 +65,7 @@ export default function ValueDisplayScreen() {
     socialOpacity.value = withDelay(500, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
     progressOpacity.value = withDelay(650, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
     buttonsOpacity.value = withDelay(800, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
-  }, []);
+  }, [buttonsOpacity, progressOpacity, socialOpacity]);
 
   const socialAnimatedStyle = useAnimatedStyle(() => ({
     opacity: socialOpacity.value,

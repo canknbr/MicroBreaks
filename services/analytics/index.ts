@@ -52,6 +52,18 @@ export enum AnalyticsEvent {
   SCREEN_VIEWED = 'screen_viewed',
   TAB_CHANGED = 'tab_changed',
 
+  // Monetization
+  PAYWALL_VIEWED = 'paywall_viewed',
+  OFFER_SELECTED = 'offer_selected',
+  TRIAL_STARTED = 'trial_started',
+  TRIAL_CONVERTED = 'trial_converted',
+  PURCHASE_COMPLETED = 'purchase_completed',
+  PURCHASE_RESTORED = 'purchase_restored',
+  SUBSCRIPTION_CANCELED = 'subscription_canceled',
+  WEB_CHECKOUT_STARTED = 'web_checkout_started',
+  WEB_CHECKOUT_COMPLETED = 'web_checkout_completed',
+  WINBACK_CLICKED = 'winback_clicked',
+
   // Errors
   ERROR_OCCURRED = 'error_occurred',
 }
@@ -87,6 +99,20 @@ export interface AnalyticsProperties {
   screen_name?: string;
   previous_screen?: string;
 
+  // Monetization properties
+  paywall_id?: string;
+  paywall_placement?: string;
+  offer_id?: string;
+  offer_type?: string;
+  billing_period?: string;
+  price?: number;
+  currency?: string;
+  entitlement_id?: string;
+  purchase_platform?: string;
+  checkout_surface?: string;
+  trial_days?: number;
+  cancel_reason?: string;
+
   // Error properties
   error_code?: string;
   error_message?: string;
@@ -104,6 +130,26 @@ interface AnalyticsConfig {
   debugMode: boolean;
   flushInterval: number;
   maxQueueSize: number;
+}
+
+interface OfferSelectionPayload {
+  paywallId: string;
+  placement: string;
+  offerId: string;
+  offerType: string;
+  billingPeriod: string;
+  price: number;
+  currency: string;
+}
+
+interface TrialStartedPayload extends OfferSelectionPayload {
+  trialDays: number;
+}
+
+interface PurchasePayload extends OfferSelectionPayload {
+  entitlementId: string;
+  purchasePlatform: string;
+  checkoutSurface?: string;
 }
 
 const getConfig = (): AnalyticsConfig => ({
@@ -372,6 +418,109 @@ class AnalyticsService {
   }
 
   /**
+   * Track monetization funnel events
+   */
+  trackPaywallViewed(paywallId: string, placement: string): void {
+    this.track(AnalyticsEvent.PAYWALL_VIEWED, {
+      paywall_id: paywallId,
+      paywall_placement: placement,
+    });
+  }
+
+  trackOfferSelected(payload: OfferSelectionPayload): void {
+    this.track(AnalyticsEvent.OFFER_SELECTED, {
+      paywall_id: payload.paywallId,
+      paywall_placement: payload.placement,
+      offer_id: payload.offerId,
+      offer_type: payload.offerType,
+      billing_period: payload.billingPeriod,
+      price: payload.price,
+      currency: payload.currency,
+    });
+  }
+
+  trackTrialStarted(payload: TrialStartedPayload): void {
+    this.track(AnalyticsEvent.TRIAL_STARTED, {
+      paywall_id: payload.paywallId,
+      paywall_placement: payload.placement,
+      offer_id: payload.offerId,
+      offer_type: payload.offerType,
+      billing_period: payload.billingPeriod,
+      price: payload.price,
+      currency: payload.currency,
+      trial_days: payload.trialDays,
+    });
+  }
+
+  trackTrialConverted(payload: PurchasePayload): void {
+    this.track(AnalyticsEvent.TRIAL_CONVERTED, {
+      paywall_id: payload.paywallId,
+      paywall_placement: payload.placement,
+      offer_id: payload.offerId,
+      offer_type: payload.offerType,
+      billing_period: payload.billingPeriod,
+      price: payload.price,
+      currency: payload.currency,
+      entitlement_id: payload.entitlementId,
+      purchase_platform: payload.purchasePlatform,
+      checkout_surface: payload.checkoutSurface,
+    });
+  }
+
+  trackPurchaseCompleted(payload: PurchasePayload): void {
+    this.track(AnalyticsEvent.PURCHASE_COMPLETED, {
+      paywall_id: payload.paywallId,
+      paywall_placement: payload.placement,
+      offer_id: payload.offerId,
+      offer_type: payload.offerType,
+      billing_period: payload.billingPeriod,
+      price: payload.price,
+      currency: payload.currency,
+      entitlement_id: payload.entitlementId,
+      purchase_platform: payload.purchasePlatform,
+      checkout_surface: payload.checkoutSurface,
+    });
+  }
+
+  trackPurchaseRestored(entitlementId: string, purchasePlatform: string): void {
+    this.track(AnalyticsEvent.PURCHASE_RESTORED, {
+      entitlement_id: entitlementId,
+      purchase_platform: purchasePlatform,
+    });
+  }
+
+  trackWebCheckoutStarted(paywallId: string, offerId: string): void {
+    this.track(AnalyticsEvent.WEB_CHECKOUT_STARTED, {
+      paywall_id: paywallId,
+      offer_id: offerId,
+      checkout_surface: 'web',
+    });
+  }
+
+  trackWebCheckoutCompleted(paywallId: string, offerId: string, entitlementId: string): void {
+    this.track(AnalyticsEvent.WEB_CHECKOUT_COMPLETED, {
+      paywall_id: paywallId,
+      offer_id: offerId,
+      entitlement_id: entitlementId,
+      checkout_surface: 'web',
+    });
+  }
+
+  trackSubscriptionCanceled(entitlementId: string, cancelReason?: string): void {
+    this.track(AnalyticsEvent.SUBSCRIPTION_CANCELED, {
+      entitlement_id: entitlementId,
+      cancel_reason: cancelReason,
+    });
+  }
+
+  trackWinbackClicked(paywallId: string, placement: string): void {
+    this.track(AnalyticsEvent.WINBACK_CLICKED, {
+      paywall_id: paywallId,
+      paywall_placement: placement,
+    });
+  }
+
+  /**
    * Track errors
    */
   trackError(errorCode: string, errorMessage: string, properties: AnalyticsProperties = {}): void {
@@ -415,6 +564,16 @@ export function useAnalytics(screenName?: string) {
     trackExerciseCompleted: analytics.trackExerciseCompleted.bind(analytics),
     trackAchievementUnlocked: analytics.trackAchievementUnlocked.bind(analytics),
     trackSettingChanged: analytics.trackSettingChanged.bind(analytics),
+    trackPaywallViewed: analytics.trackPaywallViewed.bind(analytics),
+    trackOfferSelected: analytics.trackOfferSelected.bind(analytics),
+    trackTrialStarted: analytics.trackTrialStarted.bind(analytics),
+    trackTrialConverted: analytics.trackTrialConverted.bind(analytics),
+    trackPurchaseCompleted: analytics.trackPurchaseCompleted.bind(analytics),
+    trackPurchaseRestored: analytics.trackPurchaseRestored.bind(analytics),
+    trackWebCheckoutStarted: analytics.trackWebCheckoutStarted.bind(analytics),
+    trackWebCheckoutCompleted: analytics.trackWebCheckoutCompleted.bind(analytics),
+    trackSubscriptionCanceled: analytics.trackSubscriptionCanceled.bind(analytics),
+    trackWinbackClicked: analytics.trackWinbackClicked.bind(analytics),
     trackError: analytics.trackError.bind(analytics),
   };
 }

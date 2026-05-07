@@ -70,7 +70,7 @@ export default function BreakCompletion({
       -1,
       false
     );
-  }, []);
+  }, [confettiOpacity, glowPulse, iconScale, ringRotation, statsOpacity, titleOpacity]);
 
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }],

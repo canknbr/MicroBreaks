@@ -68,6 +68,11 @@ jest.mock('expo-notifications', () => ({
     MAX: 5,
     MIN: 1,
   },
+  IosAuthorizationStatus: {
+    DENIED: 0,
+    AUTHORIZED: 2,
+    PROVISIONAL: 3,
+  },
 }));
 
 // Expo Device
@@ -96,13 +101,16 @@ jest.mock('expo-constants', () => ({
 }));
 
 // Expo Router
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  canGoBack: jest.fn(() => true),
+};
+
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-    canGoBack: jest.fn(() => true),
-  }),
+  router: mockRouter,
+  useRouter: () => mockRouter,
   useLocalSearchParams: () => ({}),
   useGlobalSearchParams: () => ({}),
   useSegments: () => [],

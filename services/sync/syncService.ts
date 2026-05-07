@@ -15,13 +15,23 @@ import type { SyncDataType, SyncMetadata } from './types';
 import { DEFAULT_SYNC_METADATA } from './types';
 import type { CompletedBreak } from '@/services/storage';
 
-const SYNC_METADATA_KEY = '@microbreaks/sync_metadata';
-const PENDING_QUEUE_KEY = '@microbreaks/sync_pending_queue';
+const LEGACY_SYNC_METADATA_KEY = '@microbreaks/sync_metadata';
+const LEGACY_PENDING_QUEUE_KEY = '@microbreaks/sync_pending_queue';
+const SYNC_METADATA_KEY_PREFIX = '@microbreaks/sync_metadata/';
+const PENDING_QUEUE_KEY_PREFIX = '@microbreaks/sync_pending_queue/';
 const SETTINGS_DEBOUNCE_MS = 3000;
 const MAX_SYNCS_PER_MINUTE = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_BACKOFF_MS = 30000;
 const INITIAL_BACKOFF_MS = 1000;
+
+function getSyncMetadataKey(userId: string): string {
+  return `${SYNC_METADATA_KEY_PREFIX}${userId}`;
+}
+
+function getPendingQueueKey(userId: string): string {
+  return `${PENDING_QUEUE_KEY_PREFIX}${userId}`;
+}
 
 class SyncService {
   private userId: string | null = null;
@@ -35,6 +45,14 @@ class SyncService {
   private pendingQueue: Array<{ type: SyncDataType; data?: unknown }> = [];
   private syncTimestamps: number[] = [];
   private consecutiveFailures = 0;
+
+  private getMetadataStorageKey(): string | null {
+    return this.userId ? getSyncMetadataKey(this.userId) : null;
+  }
+
+  private getPendingQueueStorageKey(): string | null {
+    return this.userId ? getPendingQueueKey(this.userId) : null;
+  }
 
   /**
    * Whether the sync service is currently pulling remote data into stores.
@@ -73,7 +91,14 @@ class SyncService {
    * Load pending queue from persistent storage
    */
   private async loadPendingQueue(): Promise<void> {
-    const stored = await getItem<Array<{ type: SyncDataType; data?: unknown }>>(PENDING_QUEUE_KEY);
+    const storageKey = this.getPendingQueueStorageKey();
+    this.pendingQueue = [];
+
+    if (!storageKey) {
+      return;
+    }
+
+    const stored = await getItem<Array<{ type: SyncDataType; data?: unknown }>>(storageKey);
     if (stored && Array.isArray(stored)) {
       this.pendingQueue = stored;
     }
@@ -83,14 +108,22 @@ class SyncService {
    * Save pending queue to persistent storage
    */
   private async savePendingQueue(): Promise<void> {
-    await setItem(PENDING_QUEUE_KEY, this.pendingQueue);
+    const storageKey = this.getPendingQueueStorageKey();
+    if (!storageKey) {
+      return;
+    }
+
+    await setItem(storageKey, this.pendingQueue);
   }
 
   /**
    * Initialize sync service after authentication
    */
   async initialize(userId: string): Promise<void> {
-    if (this.isInitialized) return;
+    if (this.isInitialized && this.userId === userId) return;
+    if (this.isInitialized && this.userId !== userId) {
+      this.shutdown();
+    }
 
     this.userId = userId;
     this.isInitialized = true;
@@ -99,9 +132,13 @@ class SyncService {
     await this.loadPendingQueue();
 
     // Load sync metadata
-    const stored = await getItem<SyncMetadata>(SYNC_METADATA_KEY);
-    if (stored) {
-      this.metadata = stored;
+    this.metadata = { ...DEFAULT_SYNC_METADATA };
+    const metadataKey = this.getMetadataStorageKey();
+    if (metadataKey) {
+      const stored = await getItem<SyncMetadata>(metadataKey);
+      if (stored) {
+        this.metadata = { ...DEFAULT_SYNC_METADATA, ...stored };
+      }
     }
 
     // Generate device ID if not set
@@ -356,7 +393,12 @@ class SyncService {
    * Save sync metadata to local storage
    */
   private async saveMetadata(): Promise<void> {
-    await setItem(SYNC_METADATA_KEY, this.metadata);
+    const metadataKey = this.getMetadataStorageKey();
+    if (!metadataKey) {
+      return;
+    }
+
+    await setItem(metadataKey, this.metadata);
   }
 
   /**
@@ -376,8 +418,13 @@ class SyncService {
       this.settingsDebounceTimer = null;
     }
     this.userId = null;
+    this.metadata = { ...DEFAULT_SYNC_METADATA };
+    this.pendingQueue = [];
     this.isSyncing = false;
     this.isInitialized = false;
+    this._isSyncPulling = false;
+    this.syncTimestamps = [];
+    this.consecutiveFailures = 0;
 
     if (__DEV__) {
       console.log('[SyncService] Shutdown');
@@ -386,3 +433,9 @@ class SyncService {
 }
 
 export const syncService = new SyncService();
+export const syncStorageTestUtils = {
+  getSyncMetadataKey,
+  getPendingQueueKey,
+  LEGACY_SYNC_METADATA_KEY,
+  LEGACY_PENDING_QUEUE_KEY,
+};

@@ -39,7 +39,7 @@ export default function ScreenTimeScreen() {
     characterScale.value = withDelay(200, withTiming(1, { duration: 600, easing }));
     displayScale.value = withDelay(350, withTiming(1, { duration: 600, easing }));
     sliderOpacity.value = withDelay(500, withTiming(1, { duration: 400, easing }));
-  }, []);
+  }, [characterOpacity, characterScale, displayScale, sliderOpacity]);
 
   const characterAnimatedStyle = useAnimatedStyle(() => ({
     opacity: characterOpacity.value,

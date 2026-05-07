@@ -3,7 +3,7 @@
  * 100% coverage with all edge cases
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { renderHook, act } from '@testing-library/react-native';
 import * as Speech from 'expo-speech';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 
@@ -85,7 +85,7 @@ describe('useVoiceGuidance Hook', () => {
   describe('speak', () => {
     it('should call Speech.speak with the provided text', async () => {
       // Mock speak to immediately call onDone
-      (Speech.speak as jest.Mock).mockImplementation((text, options) => {
+      (Speech.speak as jest.Mock).mockImplementation((_text, options) => {
         if (options?.onDone) {
           setTimeout(() => options.onDone(), 0);
         }
@@ -136,7 +136,7 @@ describe('useVoiceGuidance Hook', () => {
     it('should handle onDone callback', async () => {
       let doneCallback: (() => void) | null = null;
 
-      (Speech.speak as jest.Mock).mockImplementation((text, options) => {
+      (Speech.speak as jest.Mock).mockImplementation((_text, options) => {
         doneCallback = options?.onDone;
       });
 
@@ -158,7 +158,7 @@ describe('useVoiceGuidance Hook', () => {
     it('should handle onStopped callback', async () => {
       let stoppedCallback: (() => void) | null = null;
 
-      (Speech.speak as jest.Mock).mockImplementation((text, options) => {
+      (Speech.speak as jest.Mock).mockImplementation((_text, options) => {
         stoppedCallback = options?.onStopped;
       });
 
@@ -181,7 +181,7 @@ describe('useVoiceGuidance Hook', () => {
       let errorCallback: ((error: Error) => void) | null = null;
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
-      (Speech.speak as jest.Mock).mockImplementation((text, options) => {
+      (Speech.speak as jest.Mock).mockImplementation((_text, options) => {
         errorCallback = options?.onError;
       });
 
@@ -232,7 +232,7 @@ describe('useVoiceGuidance Hook', () => {
     it('should clear the queue', async () => {
       let doneCallback: (() => void) | null = null;
 
-      (Speech.speak as jest.Mock).mockImplementation((text, options) => {
+      (Speech.speak as jest.Mock).mockImplementation((_text, options) => {
         doneCallback = options?.onDone;
       });
 
@@ -345,7 +345,7 @@ describe('useVoiceGuidance Hook', () => {
     it('should not process queue if unmounted', async () => {
       let doneCallback: (() => void) | null = null;
 
-      (Speech.speak as jest.Mock).mockImplementation((text, options) => {
+      (Speech.speak as jest.Mock).mockImplementation((_text, options) => {
         doneCallback = options?.onDone;
       });
 

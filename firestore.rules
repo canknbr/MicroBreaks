@@ -1,13 +1,181 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only access their own document
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
 
-      // Subcollections (breaks, etc.)
-      match /{subcollection}/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+    function optionalString(value, maxLength) {
+      return value == null || (value is string && value.size() <= maxLength);
+    }
+
+    function requiredString(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
+    function validProfile(profile) {
+      return profile is map
+        && profile.keys().hasOnly(['name', 'avatar', 'email', 'joinedAt', 'updatedAt'])
+        && requiredString(profile.name, 80)
+        && optionalString(profile.avatar, 512)
+        && optionalString(profile.email, 254)
+        && requiredString(profile.joinedAt, 64)
+        && (!('updatedAt' in profile) || profile.updatedAt is int);
+    }
+
+    function validProgress(progress) {
+      return progress is map
+        && progress.keys().hasOnly([
+          'level',
+          'totalXP',
+          'totalBreaks',
+          'currentStreak',
+          'longestStreak',
+          'weeklyGoal',
+          'dailyGoal'
+        ])
+        && progress.level is int
+        && progress.totalXP is int
+        && progress.totalBreaks is int
+        && progress.currentStreak is int
+        && progress.longestStreak is int
+        && progress.weeklyGoal is int
+        && progress.dailyGoal is int;
+    }
+
+    function validPreferences(preferences) {
+      return preferences is map
+        && preferences.keys().hasOnly(['favoriteBreaks', 'recentBreaks'])
+        && preferences.favoriteBreaks is list
+        && preferences.recentBreaks is list
+        && preferences.favoriteBreaks.size() <= 100
+        && preferences.recentBreaks.size() <= 25;
+    }
+
+    function validAchievements(achievements) {
+      return achievements is map
+        && achievements.keys().hasOnly(['unlockedIds', 'unlockedAt', 'categoryBreaks', 'totalMinutes'])
+        && achievements.unlockedIds is list
+        && achievements.unlockedIds.size() <= 200
+        && achievements.unlockedAt is map
+        && achievements.categoryBreaks is map
+        && achievements.totalMinutes is int;
+    }
+
+    function validSettings(settings) {
+      return settings is map
+        && settings.keys().hasOnly([
+          'theme',
+          'accentColor',
+          'voiceGuidanceEnabled',
+          'quietHoursEnabled',
+          'quietHoursStart',
+          'quietHoursEnd',
+          'workDaysOnly',
+          'workDays',
+          'defaultBreakDuration',
+          'autoStartNextStep',
+          'showStepPreview',
+          'updatedAt'
+        ])
+        && settings.theme is string
+        && settings.accentColor is string
+        && settings.voiceGuidanceEnabled is bool
+        && settings.quietHoursEnabled is bool
+        && settings.quietHoursStart is int
+        && settings.quietHoursEnd is int
+        && settings.workDaysOnly is bool
+        && settings.workDays is list
+        && settings.workDays.size() <= 7
+        && settings.defaultBreakDuration is int
+        && settings.autoStartNextStep is bool
+        && settings.showStepPreview is bool
+        && settings.updatedAt is int;
+    }
+
+    function validLegacyPushFields(data) {
+      return (!('fcmToken' in data) || optionalString(data.fcmToken, 4096))
+        && (!('fcmTokenUpdatedAt' in data) || data.fcmTokenUpdatedAt is int);
+    }
+
+    function validUserDoc(data) {
+      return data.keys().hasOnly([
+          'profile',
+          'progress',
+          'preferences',
+          'achievements',
+          'settings',
+          'fcmToken',
+          'fcmTokenUpdatedAt'
+        ])
+        && (!('profile' in data) || validProfile(data.profile))
+        && (!('progress' in data) || validProgress(data.progress))
+        && (!('preferences' in data) || validPreferences(data.preferences))
+        && (!('achievements' in data) || validAchievements(data.achievements))
+        && (!('settings' in data) || validSettings(data.settings))
+        && validLegacyPushFields(data);
+    }
+
+    function validBreakDoc(docId) {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'breakId',
+          'title',
+          'category',
+          'icon',
+          'color',
+          'duration',
+          'stepsCompleted',
+          'totalSteps',
+          'xpEarned',
+          'rating',
+          'completedAt'
+        ])
+        && request.resource.data.id == docId
+        && requiredString(request.resource.data.breakId, 120)
+        && requiredString(request.resource.data.title, 160)
+        && requiredString(request.resource.data.category, 80)
+        && requiredString(request.resource.data.icon, 64)
+        && requiredString(request.resource.data.color, 32)
+        && request.resource.data.duration is int
+        && request.resource.data.stepsCompleted is int
+        && request.resource.data.totalSteps is int
+        && request.resource.data.xpEarned is int
+        && (request.resource.data.rating == null
+          || request.resource.data.rating in ['good', 'neutral', 'bad'])
+        && requiredString(request.resource.data.completedAt, 64);
+    }
+
+    function validDeviceDoc(deviceId) {
+      return request.resource.data.keys().hasOnly([
+          'installationId',
+          'token',
+          'platform',
+          'notificationsEnabled',
+          'updatedAt'
+        ])
+        && request.resource.data.installationId == deviceId
+        && requiredString(request.resource.data.token, 4096)
+        && request.resource.data.platform in ['ios', 'android']
+        && request.resource.data.notificationsEnabled is bool
+        && request.resource.data.updatedAt is int;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validUserDoc(request.resource.data);
+      allow delete: if isOwner(userId);
+
+      match /breaks/{docId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && validBreakDoc(docId);
+        allow delete: if isOwner(userId);
+      }
+
+      match /devices/{deviceId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && validDeviceDoc(deviceId);
+        allow delete: if isOwner(userId);
       }
     }
 

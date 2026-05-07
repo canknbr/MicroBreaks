@@ -91,7 +91,16 @@ export default function CompletionScreen() {
     ).start();
 
     return () => confettiAnim.stopAnimation();
-  }, []);
+  }, [
+    badgeRotate,
+    badgeScale,
+    buttonsOpacity,
+    cardsOpacity,
+    celebrationOpacity,
+    celebrationScale,
+    confettiAnim,
+    ringProgress,
+  ]);
 
   const celebrationAnimatedStyle = useAnimatedStyle(() => ({
     opacity: celebrationOpacity.value,
@@ -177,7 +186,7 @@ export default function CompletionScreen() {
           <Animated.Text style={[styles.celebration, celebrationAnimatedStyle]}>
             🎉
           </Animated.Text>
-          <Text style={styles.headline}>You're all set!</Text>
+          <Text style={styles.headline}>You&apos;re all set!</Text>
           <Text style={styles.subheadline}>Your wellness journey begins now</Text>
         </View>
 

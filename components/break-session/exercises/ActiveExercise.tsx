@@ -111,7 +111,7 @@ export default function ActiveExercise({
         );
         break;
     }
-  }, [animation]);
+  }, [animation, bounceY, pulseScale, walkingX]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -185,7 +185,7 @@ function ActivityDot({ color }: { color: string }) {
       ),
       -1
     );
-  }, []);
+  }, [opacity]);
 
   const dotStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

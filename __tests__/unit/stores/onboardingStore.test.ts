@@ -3,7 +3,8 @@
  * 100% coverage with all edge cases
  */
 
-import { act, renderHook } from '@testing-library/react-native';
+import { act } from '@testing-library/react-native';
+import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 import { useOnboardingStore } from '@/store/onboardingStore';
 
 describe('OnboardingStore', () => {
@@ -25,9 +26,9 @@ describe('OnboardingStore', () => {
       expect(state.currentStep).toBe(0);
     });
 
-    it('should have totalSteps as 21', () => {
+    it('should have the active onboarding step count', () => {
       const state = useOnboardingStore.getState();
-      expect(state.totalSteps).toBe(21);
+      expect(state.totalSteps).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
     });
 
     it('should have correct initial data values', () => {
@@ -63,12 +64,12 @@ describe('OnboardingStore', () => {
       expect(useOnboardingStore.getState().currentStep).toBe(0);
     });
 
-    it('should set current step to maximum (21)', () => {
+    it('should set current step to the active maximum', () => {
       act(() => {
-        useOnboardingStore.getState().setCurrentStep(21);
+        useOnboardingStore.getState().setCurrentStep(ACTIVE_ONBOARDING_TOTAL_STEPS);
       });
 
-      expect(useOnboardingStore.getState().currentStep).toBe(21);
+      expect(useOnboardingStore.getState().currentStep).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
     });
 
     it('should handle setting same step twice', () => {
@@ -243,13 +244,13 @@ describe('OnboardingStore', () => {
       expect(useOnboardingStore.getState().isComplete).toBe(true);
     });
 
-    it('should set currentStep to 21', () => {
+    it('should set currentStep to the active final onboarding step', () => {
       act(() => {
         useOnboardingStore.getState().setCurrentStep(5);
         useOnboardingStore.getState().completeOnboarding();
       });
 
-      expect(useOnboardingStore.getState().currentStep).toBe(21);
+      expect(useOnboardingStore.getState().currentStep).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
     });
 
     it('should preserve data when completing', () => {
@@ -273,7 +274,7 @@ describe('OnboardingStore', () => {
       });
 
       expect(useOnboardingStore.getState().isComplete).toBe(true);
-      expect(useOnboardingStore.getState().currentStep).toBe(21);
+      expect(useOnboardingStore.getState().currentStep).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
     });
   });
 
@@ -315,7 +316,6 @@ describe('OnboardingStore', () => {
     });
 
     it('should differ from completeOnboarding in currentStep', () => {
-      const store1 = { ...useOnboardingStore.getState() };
       act(() => {
         useOnboardingStore.getState().completeOnboarding();
       });
@@ -327,7 +327,7 @@ describe('OnboardingStore', () => {
       });
       const skippedStep = useOnboardingStore.getState().currentStep;
 
-      expect(completedStep).toBe(21);
+      expect(completedStep).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
       expect(skippedStep).toBe(0);
     });
   });
@@ -427,7 +427,7 @@ describe('OnboardingStore', () => {
 
       const state = useOnboardingStore.getState();
       expect(state.isComplete).toBe(true);
-      expect(state.currentStep).toBe(21);
+      expect(state.currentStep).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
       expect(state.data.workRole).toBe('developer');
       expect(state.data.screenTime).toBe(8);
       expect(state.data.painAreas).toEqual(['neck', 'eyes']);

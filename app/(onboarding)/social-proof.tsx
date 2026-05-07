@@ -3,7 +3,7 @@
  * Premium zen design with smooth animations
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -36,6 +36,9 @@ export default function SocialProofScreen() {
   const metricOpacity = useSharedValue(0);
   const badgesOpacity = useSharedValue(0);
   const testimonialOpacity = useSharedValue(1);
+  const handleContinue = useCallback(() => {
+    router.push('./value-promise');
+  }, [router]);
 
   useEffect(() => {
     const easing = Easing.out(Easing.cubic);
@@ -50,7 +53,7 @@ export default function SocialProofScreen() {
     }, 8000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [badgesOpacity, handleContinue, metricOpacity, metricScale]);
 
   const advanceHighlight = () => {
     setCurrentHighlight((prev) => (prev + 1) % APP_HIGHLIGHTS.length);
@@ -66,7 +69,7 @@ export default function SocialProofScreen() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [testimonialOpacity]);
 
   const badgesAnimatedStyle = useAnimatedStyle(() => ({
     opacity: badgesOpacity.value,
@@ -81,10 +84,6 @@ export default function SocialProofScreen() {
   const testimonialAnimatedStyle = useAnimatedStyle(() => ({
     opacity: testimonialOpacity.value,
   }));
-
-  const handleContinue = () => {
-    router.push('./value-promise');
-  };
 
   return (
     <OnboardingLayout currentStep={2} ambientColor="purple">

@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 export type FeedbackRating = 'good' | 'neutral' | 'bad';
 
 interface BreakFeedbackProps {
-  onSubmit: (rating: FeedbackRating) => void;
+  onSubmit: (_rating: FeedbackRating) => void;
   selectedRating: FeedbackRating | null;
   color: string;
 }

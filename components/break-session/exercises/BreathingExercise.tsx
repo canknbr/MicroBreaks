@@ -114,7 +114,7 @@ export default function BreathingExercise({
         );
         break;
     }
-  }, [animation]);
+  }, [animation, glowIntensity, innerScale, opacity, particleOffset, ringRotation, scale]);
 
   const outerCircleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

@@ -99,7 +99,7 @@ function Particle({
       delay + 1500,
       withTiming(0, { duration: 500 })
     );
-  }, []);
+  }, [endX, index, opacity, rotation, scale, startDelay, startX, translateX, translateY]);
 
   const style = useAnimatedStyle(() => ({
     transform: [
@@ -162,7 +162,7 @@ export default function CelebrationOverlay({
 
     // Trigger haptic
     runOnJS(triggerHaptic)();
-  }, []);
+  }, [contentOpacity, contentScale, iconScale, overlayOpacity, triggerHaptic]);
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,

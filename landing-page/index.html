@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MicroBreaks - Smart screen break reminders with guided exercises for eyes, posture, and wellness. Take care of your health while working on screens.">
-    <meta name="keywords" content="break reminder, screen break, eye strain, posture, wellness, productivity, health app">
+    <meta name="description" content="MicroBreaks helps desk workers reduce eye strain, neck tension, posture fatigue, and focus drop with guided 2-5 minute resets and privacy-first recovery tracking.">
+    <meta name="keywords" content="desk recovery,eye strain,neck pain,posture fatigue,focus reset,screen break,work break,stretch app">
     <meta name="author" content="Can Kanbur">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://microbreaks.app/">
-    <meta property="og:title" content="MicroBreaks - Smart Screen Break Reminders">
-    <meta property="og:description" content="Take care of your eyes, body, and mind with intelligent break reminders and guided exercises.">
+    <meta property="og:title" content="MicroBreaks - Desk Recovery for Eyes, Neck & Focus">
+    <meta property="og:description" content="Guided 2-5 minute resets for eye strain, neck tension, posture fatigue, and focus drops during the workday.">
     <meta property="og:image" content="https://microbreaks.app/og-image.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://microbreaks.app/">
-    <meta property="twitter:title" content="MicroBreaks - Smart Screen Break Reminders">
-    <meta property="twitter:description" content="Take care of your eyes, body, and mind with intelligent break reminders and guided exercises.">
+    <meta property="twitter:title" content="MicroBreaks - Desk Recovery for Eyes, Neck & Focus">
+    <meta property="twitter:description" content="Guided 2-5 minute resets for eye strain, neck tension, posture fatigue, and focus drops during the workday.">
     <meta property="twitter:image" content="https://microbreaks.app/og-image.png">
 
-    <title>MicroBreaks - Smart Screen Break Reminders</title>
+    <title>MicroBreaks - Desk Recovery for Eyes, Neck & Focus</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -30,17 +30,18 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #4A90D9;
-            --primary-dark: #3A7BC8;
-            --secondary: #34C4B5;
-            --bg-light: #E6F4FE;
-            --bg-dark: #1A1A2E;
-            --text-primary: #1A1A2E;
-            --text-secondary: #6B7280;
+            --primary: #0F766E;
+            --primary-dark: #115E59;
+            --secondary: #F59E0B;
+            --bg-light: #EEF6F3;
+            --bg-dark: #10211D;
+            --surface: #F8FBFA;
+            --text-primary: #10211D;
+            --text-secondary: #5B6B66;
             --white: #FFFFFF;
         }
 
@@ -54,7 +55,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
-            background: var(--white);
+            background: linear-gradient(180deg, #F8FBFA 0%, #FFFFFF 40%, #F3F8F6 100%);
         }
 
         .container {
@@ -83,10 +84,12 @@
         }
 
         .logo {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-size: 24px;
             font-weight: 700;
             color: var(--primary);
             text-decoration: none;
+            letter-spacing: -0.04em;
         }
 
         nav a {
@@ -101,54 +104,305 @@
             color: var(--primary);
         }
 
+        .nav-cta {
+            margin-left: 30px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary);
+        }
+
         /* Hero Section */
         .hero {
-            padding: 160px 0 100px;
-            background: linear-gradient(180deg, var(--bg-light) 0%, var(--white) 100%);
-            text-align: center;
+            padding: 150px 0 90px;
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 32%),
+                radial-gradient(circle at 85% 20%, rgba(245, 158, 11, 0.18), transparent 22%),
+                linear-gradient(180deg, #F3F9F7 0%, #FFFFFF 62%);
         }
 
-        .hero h1 {
+        .hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+            gap: 48px;
+            align-items: center;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            margin-bottom: 18px;
+        }
+
+        .hero-copy h1 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-size: 56px;
             font-weight: 700;
-            margin-bottom: 24px;
+            letter-spacing: -0.05em;
+            margin-bottom: 20px;
             color: var(--text-primary);
-            line-height: 1.2;
+            line-height: 1.04;
         }
 
-        .hero p {
+        .hero-copy p {
             font-size: 20px;
             color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 40px;
+            max-width: 560px;
+            margin: 0 0 28px;
         }
 
+        .hero-actions,
         .store-buttons {
             display: flex;
-            justify-content: center;
             gap: 16px;
             flex-wrap: wrap;
         }
 
-        .store-btn {
-            display: inline-block;
-            height: 54px;
+        .text-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 54px;
+            padding: 0 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
         }
 
-        .store-btn img {
-            height: 100%;
+        .text-cta:hover {
+            transform: translateY(-1px);
+        }
+
+        .text-cta.primary {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 16px 30px rgba(15, 118, 110, 0.18);
+        }
+
+        .text-cta.secondary {
+            border: 1px solid rgba(16, 33, 29, 0.12);
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .hero-note {
+            margin-top: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .hero-proof {
+            margin-top: 34px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .proof-item {
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .proof-item strong {
+            display: block;
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 24px;
+            letter-spacing: -0.04em;
+            margin-bottom: 4px;
+        }
+
+        .proof-item span {
+            color: var(--text-secondary);
+            font-size: 13px;
         }
 
         .hero-image {
-            margin-top: 60px;
+            position: relative;
             max-width: 100%;
         }
 
         .hero-image img {
-            max-width: 800px;
+            max-width: 760px;
             width: 100%;
+            border-radius: 30px;
+            box-shadow: 0 34px 70px rgba(16, 33, 29, 0.18);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+        }
+
+        .hero-annotation {
+            position: absolute;
+            right: -14px;
+            bottom: 28px;
+            max-width: 240px;
+            padding: 18px;
             border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 12px 30px rgba(16, 33, 29, 0.12);
+        }
+
+        .hero-annotation strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .hero-annotation p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .qualifier {
+            padding: 94px 0;
+            background:
+                linear-gradient(180deg, rgba(15, 118, 110, 0.06) 0%, rgba(255, 255, 255, 0.96) 100%);
+        }
+
+        .qualifier-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        .qualifier-copy h2 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            margin-bottom: 16px;
+        }
+
+        .qualifier-copy p {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 18px;
+            max-width: 620px;
+        }
+
+        .qualifier-points {
+            display: grid;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .qualifier-point {
+            padding: 18px 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .qualifier-point strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .qualifier-point span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .qualifier-surface {
+            padding: 30px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 24px 48px rgba(16, 33, 29, 0.08);
+        }
+
+        .qualifier-surface h3 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 30px;
+            letter-spacing: -0.04em;
+            margin-bottom: 10px;
+        }
+
+        .qualifier-surface > p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .qualifier-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px 20px;
+            margin-top: 24px;
+        }
+
+        .qualifier-field {
+            display: grid;
+            gap: 10px;
+        }
+
+        .qualifier-field label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .qualifier-field select {
+            width: 100%;
+            min-height: 50px;
+            padding: 0 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 33, 29, 0.12);
+            background: var(--white);
+            color: var(--text-primary);
+            font: inherit;
+        }
+
+        .qualifier-output-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .qualifier-output {
+            padding: 18px;
+            border-radius: 22px;
+            background: var(--surface);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .qualifier-output span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .qualifier-output strong {
+            display: block;
+            font-size: 20px;
+            line-height: 1.15;
+        }
+
+        .qualifier-cta-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .qualifier-note {
+            margin-top: 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
         }
 
         /* Features Section */
@@ -162,9 +416,11 @@
         }
 
         .section-title h2 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-size: 40px;
             font-weight: 700;
             margin-bottom: 16px;
+            letter-spacing: -0.04em;
         }
 
         .section-title p {
@@ -177,20 +433,20 @@
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
+            gap: 24px;
         }
 
         .feature-card {
             padding: 32px;
-            background: var(--white);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.82);
+            border-radius: 24px;
+            border: 1px solid rgba(16, 33, 29, 0.06);
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .feature-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 18px 36px rgba(16, 33, 29, 0.08);
         }
 
         .feature-icon {
@@ -217,7 +473,7 @@
         /* Exercises Section */
         .exercises {
             padding: 100px 0;
-            background: var(--bg-light);
+            background: linear-gradient(180deg, rgba(15, 118, 110, 0.06) 0%, rgba(255, 255, 255, 0.65) 100%);
         }
 
         .exercise-categories {
@@ -228,12 +484,13 @@
         }
 
         .exercise-category {
-            background: var(--white);
+            background: rgba(255, 255, 255, 0.86);
             padding: 24px 32px;
-            border-radius: 16px;
+            border-radius: 22px;
             text-align: center;
             min-width: 140px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+            box-shadow: 0 10px 24px rgba(16, 33, 29, 0.06);
         }
 
         .exercise-category .icon {
@@ -249,7 +506,7 @@
         /* Stats Section */
         .stats {
             padding: 80px 0;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--bg-dark) 100%);
             color: var(--white);
         }
 
@@ -284,8 +541,10 @@
         }
 
         .privacy-text h2 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-size: 40px;
             margin-bottom: 24px;
+            letter-spacing: -0.04em;
         }
 
         .privacy-text p {
@@ -311,6 +570,83 @@
             margin-right: 12px;
         }
 
+        .teams {
+            padding: 100px 0;
+        }
+
+        .teams-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.86fr);
+            gap: 32px;
+            align-items: center;
+            padding: 42px;
+            border-radius: 34px;
+            background:
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 28%),
+                linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(255, 255, 255, 0.88) 62%);
+            border: 1px solid rgba(16, 33, 29, 0.08);
+            box-shadow: 0 24px 48px rgba(16, 33, 29, 0.08);
+        }
+
+        .teams-copy h2 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 42px;
+            letter-spacing: -0.04em;
+            margin-bottom: 16px;
+        }
+
+        .teams-copy p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            max-width: 620px;
+        }
+
+        .teams-points {
+            list-style: none;
+            display: grid;
+            gap: 12px;
+            margin: 24px 0 28px;
+        }
+
+        .teams-points li {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .teams-points li::before {
+            content: "•";
+            color: var(--secondary);
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .teams-side {
+            display: grid;
+            gap: 14px;
+        }
+
+        .team-stat {
+            padding: 20px 22px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(16, 33, 29, 0.06);
+        }
+
+        .team-stat strong {
+            display: block;
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 30px;
+            letter-spacing: -0.04em;
+            margin-bottom: 6px;
+        }
+
+        .team-stat span {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
         /* CTA Section */
         .cta {
             padding: 100px 0;
@@ -320,8 +656,10 @@
         }
 
         .cta h2 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-size: 40px;
             margin-bottom: 24px;
+            letter-spacing: -0.04em;
         }
 
         .cta p {
@@ -381,8 +719,58 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero h1 {
+            .hero {
+                padding-top: 128px;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 36px;
+            }
+
+            .qualifier-grid,
+            .qualifier-form,
+            .qualifier-output-grid,
+            .hero-copy,
+            .section-title,
+            .cta {
+                text-align: center;
+            }
+
+            .hero-copy p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .qualifier-grid,
+            .qualifier-form,
+            .qualifier-output-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-actions,
+            .store-buttons {
+                justify-content: center;
+            }
+
+            .hero-proof {
+                grid-template-columns: 1fr;
+            }
+
+            .teams-panel {
+                grid-template-columns: 1fr;
+                padding: 28px;
+            }
+
+            .hero h1,
+            .hero-copy h1 {
                 font-size: 36px;
+            }
+
+            .hero-annotation {
+                position: static;
+                max-width: none;
+                margin-top: 18px;
             }
 
             .privacy-content {
@@ -411,169 +799,322 @@
         <div class="container">
             <a href="/" class="logo">MicroBreaks</a>
             <nav>
-                <a href="#features">Features</a>
-                <a href="#exercises">Exercises</a>
+                <a href="#qualifier">Find your reset</a>
+                <a href="#features">Recovery</a>
+                <a href="#exercises">Reset Packs</a>
+                <a href="teams.html">Teams</a>
                 <a href="/faq">FAQ</a>
-                <a href="/support">Support</a>
+                <a href="mailto:support@microbreaks.app?subject=MicroBreaks%20Launch%20Updates" class="nav-cta">Get updates</a>
             </nav>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="hero">
+    <section class="hero" data-analytics-section="landing_hero">
         <div class="container">
-            <h1>Smart Breaks for<br>Healthier Screen Time</h1>
-            <p>Take care of your eyes, body, and mind with intelligent break reminders and 50+ guided exercises.</p>
+            <div class="hero-grid">
+                <div class="hero-copy">
+                    <div class="eyebrow" id="consumer-hero-eyebrow">Desk recovery for remote and hybrid work</div>
+                    <h1 id="consumer-hero-title">2-minute resets for eyes, neck, posture, and focus.</h1>
+                    <p id="consumer-hero-body">MicroBreaks helps desk workers interrupt screen strain before it turns into stiff shoulders, tired eyes, and a wrecked afternoon.</p>
 
-            <div class="store-buttons">
-                <a href="#" class="store-btn">
-                    <img src="/images/app-store-badge.svg" alt="Download on the App Store">
-                </a>
-                <a href="#" class="store-btn">
-                    <img src="/images/google-play-badge.svg" alt="Get it on Google Play">
-                </a>
+                    <div class="hero-actions">
+                        <a href="mailto:support@microbreaks.app?subject=Notify%20me%20when%20MicroBreaks%20launches" class="text-cta primary" data-analytics-event="landing_hero_cta_clicked" data-analytics-label="launch_updates">Get launch updates</a>
+                        <a href="#qualifier" class="text-cta secondary" data-analytics-event="landing_secondary_cta_clicked" data-analytics-label="find_first_reset">Find your first reset</a>
+                    </div>
+                    <p class="hero-note">Store links go live with the public release. Until then, get launch updates and product access news by email.</p>
+
+                    <div class="hero-proof">
+                        <div class="proof-item">
+                            <strong>38</strong>
+                            <span>guided resets across the current library</span>
+                        </div>
+                        <div class="proof-item">
+                            <strong>4</strong>
+                            <span>recovery categories for workday strain</span>
+                        </div>
+                        <div class="proof-item">
+                            <strong>2-5m</strong>
+                            <span>starter routines that fit real work blocks</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-image">
+                    <img src="/images/hero-screenshot.png" alt="MicroBreaks recovery app interface showing guided desk resets and workday progress">
+                    <div class="hero-annotation">
+                        <strong>Recovery story, not just a timer</strong>
+                        <p>See when strain is building, which reset mix you rely on, and what to improve next.</p>
+                    </div>
+                </div>
             </div>
+        </div>
+    </section>
 
-            <div class="hero-image">
-                <img src="/images/hero-screenshot.png" alt="MicroBreaks App Screenshot">
+    <section class="qualifier" id="qualifier" data-analytics-section="landing_qualifier_section">
+        <div class="container">
+            <div class="qualifier-grid">
+                <div class="qualifier-copy">
+                    <div class="eyebrow">Start from the strain, not the feature list</div>
+                    <h2>Find the first reset pack that actually fits your workday.</h2>
+                    <p>Most desk workers do not need a generic wellness app. They need the right 2 to 5 minute reset for the point in the day where eyes burn, shoulders lock up, posture collapses, or focus starts falling apart.</p>
+
+                    <div class="qualifier-points">
+                        <div class="qualifier-point">
+                            <strong>Pick the symptom that shows up first</strong>
+                            <span>That is usually the cleanest entry point for the first habit.</span>
+                        </div>
+                        <div class="qualifier-point">
+                            <strong>Match it to the work pattern</strong>
+                            <span>A meeting-heavy day needs a different reset rhythm than a long deep-work block.</span>
+                        </div>
+                        <div class="qualifier-point">
+                            <strong>Start smaller than you think</strong>
+                            <span>The right starter plan is often one believable reset window, not a giant behavior overhaul.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qualifier-surface">
+                    <div class="eyebrow">Starter plan</div>
+                    <h3>Build your first reset recommendation</h3>
+                    <p>This is a fast qualifier for launch updates and early access. It helps the product point you toward the pack and rhythm most likely to stick first.</p>
+
+                    <div class="qualifier-form">
+                        <div class="qualifier-field">
+                            <label for="qualifier-symptom">What breaks first?</label>
+                            <select id="qualifier-symptom">
+                                <option value="eye_strain">My eyes burn or blur</option>
+                                <option value="neck_shoulders">My neck and shoulders tighten</option>
+                                <option value="posture_fatigue">My posture collapses after sitting</option>
+                                <option value="focus_drop">My focus drops after long work blocks</option>
+                                <option value="energy_dip">My energy falls apart in the afternoon</option>
+                            </select>
+                        </div>
+
+                        <div class="qualifier-field">
+                            <label for="qualifier-workday">What kind of workday creates it?</label>
+                            <select id="qualifier-workday">
+                                <option value="deep_work">Long deep-work blocks</option>
+                                <option value="meeting_heavy">Back-to-back meetings</option>
+                                <option value="all_day_screen">All-day screen time</option>
+                                <option value="late_day_crash">Late-day fatigue</option>
+                            </select>
+                        </div>
+
+                        <div class="qualifier-field">
+                            <label for="qualifier-window">How much time can you usually steal?</label>
+                            <select id="qualifier-window">
+                                <option value="two_minutes">About 2 minutes</option>
+                                <option value="three_minutes">About 3 minutes</option>
+                                <option value="five_minutes">About 5 minutes</option>
+                            </select>
+                        </div>
+
+                        <div class="qualifier-field">
+                            <label for="qualifier-goal">What do you want back first?</label>
+                            <select id="qualifier-goal">
+                                <option value="relief">Fast physical relief</option>
+                                <option value="consistency">A repeatable work rhythm</option>
+                                <option value="focus">Cleaner focus re-entry</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="qualifier-output-grid">
+                        <div class="qualifier-output">
+                            <span>Recommended pack</span>
+                            <strong id="qualifier-pack">Eye Rescue</strong>
+                        </div>
+                        <div class="qualifier-output">
+                            <span>Best first session</span>
+                            <strong id="qualifier-session">2-minute visual reset</strong>
+                        </div>
+                        <div class="qualifier-output">
+                            <span>Best workday trigger</span>
+                            <strong id="qualifier-trigger">After each long focus block</strong>
+                        </div>
+                        <div class="qualifier-output">
+                            <span>Starter rhythm</span>
+                            <strong id="qualifier-rhythm">Begin with 1 reset in the heaviest part of the day</strong>
+                        </div>
+                    </div>
+
+                    <div class="qualifier-cta-row">
+                        <a id="qualifier-cta" href="mailto:support@microbreaks.app?subject=MicroBreaks%20Launch%20Updates" class="text-cta primary" data-analytics-event="landing_qualifier_cta_clicked" data-analytics-label="launch_updates_from_qualifier">Get updates for this starter plan</a>
+                        <a href="#exercises" class="text-cta secondary" data-analytics-event="landing_qualifier_cta_clicked" data-analytics-label="see_reset_packs_from_qualifier">See reset packs</a>
+                    </div>
+                    <p class="qualifier-note">This recommendation is directional. The point is to narrow the first useful entry, not to pretend the product already knows everything about your day.</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section class="features" id="features">
+    <section class="features" id="features" data-analytics-section="landing_recovery_section">
         <div class="container">
             <div class="section-title">
-                <h2>Everything You Need</h2>
-                <p>MicroBreaks helps you build healthier screen habits with smart features.</p>
+                <h2>Built for the workday strain that actually shows up</h2>
+                <p>MicroBreaks is most useful when your day is already getting heavy: blurry eyes, tight shoulders, posture collapse, mental noise, or a fading afternoon.</p>
             </div>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">⏰</div>
-                    <h3>Smart Reminders</h3>
-                    <p>Customizable break intervals that adapt to your work schedule. Never miss a break again.</p>
+                    <div class="feature-icon">👀</div>
+                    <h3>Eye Strain Relief</h3>
+                    <p>Quick visual resets for dry eyes, blur, and screen fatigue after long focus blocks.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🧘</div>
-                    <h3>Guided Exercises</h3>
-                    <p>50+ exercises designed by wellness experts for eyes, neck, back, wrists, and breathing.</p>
+                    <div class="feature-icon">🧍</div>
+                    <h3>Desk Neck Reset</h3>
+                    <p>Guided routines for the tight neck and shoulders that build up during meetings and desk work.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Track Progress</h3>
-                    <p>Build healthy habits with streaks, achievements, and personalized insights.</p>
+                    <div class="feature-icon">💺</div>
+                    <h3>Posture Recovery</h3>
+                    <p>Short upper-body and desk mobility sessions when you feel compressed after sitting too long.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🌙</div>
-                    <h3>Focus Mode</h3>
-                    <p>Do Not Disturb integration for focused work sessions when you need it.</p>
+                    <div class="feature-icon">🧠</div>
+                    <h3>Focus Recovery</h3>
+                    <p>Breathing and mindful resets that help you re-enter work without losing the whole afternoon.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>Works Offline</h3>
-                    <p>No internet required. All features work completely offline.</p>
+                    <div class="feature-icon">📈</div>
+                    <h3>Weekly Recovery Story</h3>
+                    <p>See whether your reset rhythm is actually improving or if strain is still winning the week.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Beautiful Design</h3>
-                    <p>Clean, calming interface that doesn't distract from your work.</p>
+                    <div class="feature-icon">🔒</div>
+                    <h3>Private by Default</h3>
+                    <p>Core routines stay usable offline, with optional sync and anonymous diagnostics for stability.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Exercises Section -->
-    <section class="exercises" id="exercises">
+    <section class="exercises" id="exercises" data-analytics-section="landing_reset_packs_section">
         <div class="container">
             <div class="section-title">
-                <h2>5 Exercise Categories</h2>
-                <p>Comprehensive exercises for every part of your body affected by screen time.</p>
+                <h2>Reset packs for the moments desk work breaks you down</h2>
+                <p>Start from the kind of relief you need, then move into the specific guided reset that fits the moment.</p>
             </div>
 
             <div class="exercise-categories">
                 <div class="exercise-category">
                     <div class="icon">👁️</div>
-                    <h4>Eyes</h4>
+                    <h4>Eye Rescue</h4>
                 </div>
                 <div class="exercise-category">
-                    <div class="icon">🧣</div>
-                    <h4>Neck</h4>
+                    <div class="icon">🧍</div>
+                    <h4>Desk Neck Reset</h4>
                 </div>
                 <div class="exercise-category">
-                    <div class="icon">🪑</div>
-                    <h4>Back</h4>
+                    <div class="icon">💺</div>
+                    <h4>Posture Rescue</h4>
                 </div>
                 <div class="exercise-category">
-                    <div class="icon">✋</div>
-                    <h4>Wrists</h4>
+                    <div class="icon">🧠</div>
+                    <h4>Focus Reset</h4>
                 </div>
                 <div class="exercise-category">
-                    <div class="icon">🌬️</div>
-                    <h4>Breathing</h4>
+                    <div class="icon">⚡</div>
+                    <h4>Energy Lift</h4>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Stats Section -->
-    <section class="stats">
+    <section class="stats" data-analytics-section="landing_social_proof_section">
         <div class="container">
             <div class="stats-grid">
                 <div class="stat">
-                    <h3>50+</h3>
-                    <p>Guided Exercises</p>
+                    <h3>38</h3>
+                    <p>Guided Resets</p>
                 </div>
                 <div class="stat">
-                    <h3>5</h3>
-                    <p>Exercise Categories</p>
+                    <h3>4</h3>
+                    <p>Recovery Categories</p>
                 </div>
                 <div class="stat">
-                    <h3>100%</h3>
-                    <p>Free Forever</p>
+                    <h3>2-5m</h3>
+                    <p>Starter Sessions</p>
                 </div>
                 <div class="stat">
-                    <h3>0</h3>
-                    <p>Data Collected</p>
+                    <h3>Optional</h3>
+                    <p>Sync, Private-by-Default Core</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Privacy Section -->
-    <section class="privacy">
+    <section class="privacy" data-analytics-section="landing_privacy_section">
         <div class="container">
             <div class="privacy-content">
                 <div class="privacy-text">
-                    <h2>Privacy First</h2>
-                    <p>Your health data is personal. That's why we built MicroBreaks with privacy at its core.</p>
+                    <h2>Private by default, practical by design</h2>
+                    <p>Recovery data is personal. MicroBreaks keeps the core experience usable without forcing account setup, while still leaving room for optional sync and anonymous diagnostics that help stabilize the product.</p>
                     <ul class="privacy-features">
-                        <li>All data stored locally on your device</li>
-                        <li>No account required</li>
-                        <li>No cloud sync</li>
-                        <li>No tracking or analytics</li>
+                        <li>Core recovery history stored locally on your device</li>
+                        <li>No email or password required to start</li>
+                        <li>Optional sync when cross-device continuity matters</li>
+                        <li>Anonymous analytics and crash diagnostics for app stability</li>
                         <li>GDPR and KVKK compliant</li>
                     </ul>
                 </div>
                 <div class="privacy-image">
-                    <img src="/images/privacy-illustration.png" alt="Privacy First" style="max-width: 100%;">
+                    <img src="/images/privacy-illustration.png" alt="Private and optional sync experience" style="max-width: 100%;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="teams" data-analytics-section="landing_teams_section">
+        <div class="container">
+            <div class="teams-panel">
+                <div class="teams-copy">
+                    <div class="eyebrow">For remote and hybrid teams</div>
+                    <h2>MicroBreaks can become a small but real team product.</h2>
+                    <p>The consumer app is the base layer. The commercial upside comes from a pilot-ready B2B surface for teams that want less screen strain and better workday recovery habits.</p>
+                    <ul class="teams-points">
+                        <li>Pilot-friendly pricing instead of fake enterprise packaging</li>
+                        <li>Weekly recovery visibility for managers and people teams</li>
+                        <li>A desk-recovery program that fits product, engineering, support, and agency teams</li>
+                    </ul>
+                    <div class="hero-actions">
+                        <a href="teams.html" class="text-cta primary" data-analytics-event="landing_teams_cta_clicked" data-analytics-label="explore_teams">Explore teams</a>
+                        <a href="mailto:support@microbreaks.app?subject=MicroBreaks%20Teams%20Pilot" class="text-cta secondary" data-analytics-event="landing_teams_cta_clicked" data-analytics-label="request_pilot">Request a pilot</a>
+                    </div>
+                </div>
+                <div class="teams-side">
+                    <div class="team-stat">
+                        <strong>$499/mo</strong>
+                        <span>Recommended pilot entry for up to 50 seats</span>
+                    </div>
+                    <div class="team-stat">
+                        <strong>2-4 weeks</strong>
+                        <span>Enough time to see whether a recovery rhythm forms</span>
+                    </div>
+                    <div class="team-stat">
+                        <strong>Ops-ready</strong>
+                        <span>Better fit for people, ops, and team leads than a broad “wellness for everyone” pitch</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="cta">
+    <section class="cta" data-analytics-section="landing_final_cta_section">
         <div class="container">
-            <h2>Start Taking Better Breaks</h2>
-            <p>Download MicroBreaks today and build healthier screen habits.</p>
-            <div class="store-buttons">
-                <a href="#" class="store-btn">
-                    <img src="/images/app-store-badge.svg" alt="Download on the App Store">
-                </a>
-                <a href="#" class="store-btn">
-                    <img src="/images/google-play-badge.svg" alt="Get it on Google Play">
-                </a>
+            <h2>Build a better work rhythm before strain becomes the default</h2>
+            <p>MicroBreaks is being positioned around desk recovery, not generic wellness. Get launch updates and use the FAQ to see how the product is evolving.</p>
+            <div class="hero-actions" style="justify-content: center;">
+                <a href="mailto:support@microbreaks.app?subject=Notify%20me%20when%20MicroBreaks%20launches" class="text-cta primary" data-analytics-event="landing_final_cta_clicked" data-analytics-label="launch_updates">Get launch updates</a>
+                <a href="/faq" class="text-cta secondary" data-analytics-event="landing_final_cta_clicked" data-analytics-label="read_faq">Read the FAQ</a>
             </div>
         </div>
     </section>
@@ -584,12 +1125,13 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <div class="logo">MicroBreaks</div>
-                    <p>Smart screen break reminders for healthier you.</p>
+                    <p>Guided desk recovery for eye strain, posture fatigue, tight shoulders, and focus drops.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Product</h4>
-                    <a href="#features">Features</a>
-                    <a href="#exercises">Exercises</a>
+                    <a href="#features">Recovery</a>
+                    <a href="#exercises">Reset Packs</a>
+                    <a href="teams.html">Teams</a>
                     <a href="/faq">FAQ</a>
                 </div>
                 <div class="footer-links">
@@ -605,16 +1147,26 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 MicroBreaks. All rights reserved.</p>
-                <p>Made with ❤️ in Istanbul</p>
+                <p>&copy; 2026 MicroBreaks. All rights reserved.</p>
+                <p>Built in Istanbul for long workdays</p>
             </div>
         </div>
     </footer>
 
-    <!-- Analytics (placeholder) -->
+    <script src="analytics-config.js"></script>
+    <script src="web-analytics.js"></script>
+    <script src="experiments-config.js"></script>
+    <script src="web-experiments.js"></script>
+    <script src="consumer-reset-qualifier.js"></script>
     <script>
-        // Add your analytics code here
-        // Example: Mixpanel, Amplitude, Google Analytics
+        window.MicroBreaksWebAnalytics.init({
+            pageType: 'consumer',
+            pageViewEvent: 'landing_page_viewed',
+            sectionViewEvent: 'landing_section_viewed'
+        });
+        window.MicroBreaksWebExperiments.init({
+            pageType: 'consumer'
+        });
     </script>
 </body>
 </html>

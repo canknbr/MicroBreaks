@@ -14,26 +14,26 @@ MicroBreaks, ekran süresinden düzenli molalar almanıza yardımcı olan akıll
 ---
 
 ### Is MicroBreaks free?
-Yes! MicroBreaks is completely free to use with no hidden costs or in-app purchases.
+MicroBreaks' core features are currently available at no cost. Optional premium plans may be introduced in future updates.
 
 ### MicroBreaks ücretsiz mi?
-Evet! MicroBreaks tamamen ücretsizdir, gizli maliyet veya uygulama içi satın alma yoktur.
+MicroBreaks'in çekirdek özellikleri şu anda ücretsizdir. İleride isteğe bağlı premium planlar sunulabilir.
 
 ---
 
 ### Does MicroBreaks require an internet connection?
-No, MicroBreaks works completely offline. All exercises and features are available without an internet connection.
+Core timers, exercises, and progress tracking work offline. Cloud sync, push notifications, and diagnostics need an internet connection.
 
 ### MicroBreaks internet bağlantısı gerektiriyor mu?
-Hayır, MicroBreaks tamamen çevrimdışı çalışır. Tüm egzersizler ve özellikler internet bağlantısı olmadan kullanılabilir.
+Temel zamanlayıcılar, egzersizler ve ilerleme takibi çevrimdışı çalışır. Bulut senkronizasyonu, push bildirimleri ve tanılama özellikleri için internet bağlantısı gerekir.
 
 ---
 
 ### Do I need to create an account?
-No account is required. Just download and start using MicroBreaks immediately.
+No email or password sign-up is required. MicroBreaks creates an anonymous account in the background to support sync, notifications, and account deletion.
 
 ### Hesap oluşturmam gerekiyor mu?
-Hesap gerekli değil. Sadece indirin ve MicroBreaks'i hemen kullanmaya başlayın.
+E-posta veya şifreyle kayıt olmanız gerekmez. MicroBreaks, senkronizasyon, bildirimler ve hesap silme işlemleri için arka planda anonim bir hesap oluşturur.
 
 ---
 
@@ -160,36 +160,38 @@ Evet, günlük, haftalık ve aylık istatistikler dahil mola geçmişinizi görm
 ## Privacy & Data / Gizlilik ve Veri
 
 ### What data does MicroBreaks collect?
-MicroBreaks collects minimal data, all stored locally on your device:
+MicroBreaks collects limited app data to provide core functionality and keep the app reliable:
 - Break history and completion times
-- Preferences and settings
-- Achievement progress
+- Preferences, settings, and achievement progress
+- Anonymous usage analytics and crash diagnostics
+- Anonymous account and sync identifiers when cloud sync is used
 
-We do NOT collect personal information, location data, or share data with third parties.
+We do NOT require your real name, phone number, or location to use the core app experience.
 
 ### MicroBreaks hangi verileri toplar?
-MicroBreaks minimum veri toplar, tamamı cihazınızda yerel olarak saklanır:
+MicroBreaks, çekirdek işlevleri sağlamak ve uygulamayı güvenilir tutmak için sınırlı uygulama verisi toplar:
 - Mola geçmişi ve tamamlanma zamanları
-- Tercihler ve ayarlar
-- Başarı ilerlemesi
+- Tercihler, ayarlar ve başarı ilerlemesi
+- Anonim kullanım analitiği ve çökme tanılama verileri
+- Bulut senkronizasyonu kullanıldığında anonim hesap ve senkronizasyon tanımlayıcıları
 
-Kişisel bilgi, konum verisi TOPLAMIYORUZ veya üçüncü taraflarla veri paylaşmıyoruz.
+Gerçek adınız, telefon numaranız veya konumunuz temel uygulama deneyimi için gerekli değildir.
 
 ---
 
 ### How do I delete my data?
-Simply uninstall the app. All data is stored locally and will be deleted when you remove the app.
+Uninstalling the app removes locally stored data. If you have used cloud sync, also use Profile > Delete Account to remove synced data from Firebase.
 
 ### Verilerimi nasıl silerim?
-Uygulamayı kaldırmanız yeterlidir. Tüm veriler yerel olarak saklanır ve uygulamayı kaldırdığınızda silinir.
+Uygulamayı kaldırmak cihazdaki yerel verileri siler. Bulut senkronizasyonu kullandıysanız, Firebase'deki senkronize verileri kaldırmak için ayrıca Profil > Hesabı Sil yolunu kullanın.
 
 ---
 
 ### Is my data synced to the cloud?
-No, all data stays on your device. There is no cloud sync feature.
+Yes, optional cloud sync is available. Your core data remains on-device first, and synced data can be deleted from Profile > Delete Account.
 
 ### Verilerim buluta senkronize ediliyor mu?
-Hayır, tüm veriler cihazınızda kalır. Bulut senkronizasyonu özelliği yoktur.
+Evet, isteğe bağlı bulut senkronizasyonu kullanılabilir. Çekirdek verileriniz önce cihazda tutulur; senkronize edilen veriler Profil > Hesabı Sil üzerinden kaldırılabilir.
 
 ---
 

@@ -87,7 +87,7 @@ function SmartInsight({
         )
       );
     }
-  }, [delay, type]);
+  }, [delay, iconPulse, opacity, translateY, type]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -182,9 +182,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: 12,
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(20, 20, 30, 0.9)',
   },
   content: {
     flexDirection: 'row',

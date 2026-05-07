@@ -21,15 +21,24 @@ import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
+import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
+import { useOnboardingStore } from '@/store';
+import {
+  requestNotificationPermissions,
+  scheduleAllNotifications,
+} from '@/services/notifications';
+import { getCurrentUserId } from '@/services/firebase/auth';
+import { registerForPushNotifications } from '@/services/firebase/messaging';
 
 const BENEFITS = [
-  { icon: 'notifications-outline', text: 'Gentle reminders between tasks' },
-  { icon: 'calendar-outline', text: 'Skip when in meetings' },
-  { icon: 'options-outline', text: 'Full control over frequency' },
+  { icon: 'notifications-outline', text: 'Short nudges between work blocks' },
+  { icon: 'options-outline', text: 'You can tune or mute them anytime' },
+  { icon: 'sparkles-outline', text: 'Calendar-aware timing is coming soon' },
 ];
 
 export default function NotificationPermissionScreen() {
   const router = useRouter();
+  const updateData = useOnboardingStore((state) => state.updateData);
   const [, setPermissionGranted] = useState(false);
 
   // Animation values
@@ -44,7 +53,7 @@ export default function NotificationPermissionScreen() {
     bellScale.value = withDelay(200, withTiming(1, { duration: 600, easing }));
     benefitsOpacity.value = withDelay(350, withTiming(1, { duration: 400, easing }));
     trustOpacity.value = withDelay(500, withTiming(1, { duration: 400, easing }));
-  }, []);
+  }, [bellOpacity, bellScale, benefitsOpacity, trustOpacity]);
 
   const bellAnimatedStyle = useAnimatedStyle(() => ({
     opacity: bellOpacity.value,
@@ -61,26 +70,40 @@ export default function NotificationPermissionScreen() {
   }));
 
   const handleEnable = async () => {
-    // In real implementation, use expo-notifications
-    const granted = true;
+    const granted = await requestNotificationPermissions();
     setPermissionGranted(granted);
+    updateData({ notificationsEnabled: granted });
+
+    if (granted) {
+      const userId = getCurrentUserId();
+      if (userId) {
+        await registerForPushNotifications(userId);
+      }
+      await scheduleAllNotifications();
+    }
+
     setTimeout(() => {
-      router.push('./calendar-integration');
+      router.push('./premium-pitch');
     }, 500);
   };
 
   const handleLater = () => {
-    router.push('./calendar-integration');
+    updateData({ notificationsEnabled: false });
+    router.push('./premium-pitch');
   };
 
   return (
-    <OnboardingLayout currentStep={17} ambientColor="purple">
+    <OnboardingLayout
+      currentStep={6}
+      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
+      ambientColor="purple"
+    >
       <View style={styles.container}>
         <HeadlineText delay={0}>
-          Stay healthy without thinking about it
+          Do you want reset reminders on by default?
         </HeadlineText>
         <SubheadText delay={100}>
-          Get gentle reminders for your break times
+          They help the habit stick, but you stay in control and can change this later.
         </SubheadText>
 
         {/* Bell Icon */}
@@ -110,26 +133,26 @@ export default function NotificationPermissionScreen() {
         <Animated.View style={[styles.trustContainer, trustAnimatedStyle]}>
           <View style={styles.trustBadge}>
             <Ionicons name="shield-checkmark-outline" size={14} color={ZenColors.text.muted} />
-            <Text style={styles.trustText}>No spam</Text>
+            <Text style={styles.trustText}>Easy to mute</Text>
           </View>
           <View style={styles.trustBadge}>
             <Ionicons name="pause-outline" size={14} color={ZenColors.text.muted} />
-            <Text style={styles.trustText}>Snooze anytime</Text>
+            <Text style={styles.trustText}>Adjust anytime</Text>
           </View>
           <View style={styles.trustBadge}>
-            <Ionicons name="sparkles-outline" size={14} color={ZenColors.text.muted} />
-            <Text style={styles.trustText}>Smart detection</Text>
+            <Ionicons name="time-outline" size={14} color={ZenColors.text.muted} />
+            <Text style={styles.trustText}>Built for workdays</Text>
           </View>
         </Animated.View>
 
         <View style={styles.spacer} />
 
         <PrimaryButton
-          title="Enable Smart Reminders"
+          title="Keep Reminders On"
           onPress={handleEnable}
           variant="primary"
         />
-        <SecondaryButton title="Maybe later" onPress={handleLater} variant="muted" />
+        <SecondaryButton title="I'll set this later" onPress={handleLater} variant="muted" />
       </View>
     </OnboardingLayout>
   );

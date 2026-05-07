@@ -11,9 +11,9 @@ Content templates and strategies for MicroBreaks social media presence.
 **Bio:**
 ```
 MicroBreaks | Screen Break Reminders
-🧘 50+ guided exercises
+🧘 Guided exercises
 👁️ Protect your eyes
-📱 100% free & private
+📱 Free to start • privacy-first
 ⬇️ Download now
 linktr.ee/microbreaks
 ```
@@ -29,14 +29,14 @@ linktr.ee/microbreaks
 
 **Bio:**
 ```
-Smart screen break reminders with guided exercises for your eyes, neck, back & more. 100% free, 100% private. 📱 iOS & Android
+Smart screen break reminders with guided exercises for your eyes, neck, back & more. Free to start, privacy-first. 📱 iOS & Android
 ```
 
 ### LinkedIn (MicroBreaks)
 
 **About:**
 ```
-MicroBreaks is a smart break reminder app designed for professionals who spend hours in front of screens. With 50+ guided exercises for eyes, posture, and stress relief, we help you build healthier screen habits. 100% free, privacy-first design.
+MicroBreaks is a smart break reminder app designed for professionals who spend hours in front of screens. With guided exercises for eyes, posture, and stress relief, we help you build healthier screen habits with a privacy-first, local-first experience.
 ```
 
 ---
@@ -287,10 +287,10 @@ Smart reminders that fit your schedule.
 
 4/ What makes us different:
 
-✅ 100% free - no subscriptions
-✅ Works offline - no internet needed
-✅ Privacy first - all data stays on your device
-✅ No account required - just download and go
+✅ Core features are free to start
+✅ Core routines work offline
+✅ Privacy first - local-first with optional sync
+✅ No email/password setup required
 
 5/ Built for:
 
@@ -326,23 +326,23 @@ Questions? Drop them below 👇
 
 ### Post Template
 ```
-Title: I built a free app to help with screen break reminders (no ads, no tracking)
+Title: I built a privacy-first app to help with screen break reminders
 
 Hi everyone!
 
-I've been working on MicroBreaks, a free break reminder app with guided exercises.
+I've been working on MicroBreaks, a break reminder app with guided exercises.
 
 What it does:
 - Smart reminders you can customize
-- 50+ exercises for eyes, neck, back, wrists
+- Guided exercises for eyes, neck, back, wrists
 - Progress tracking with streaks
-- Works completely offline
-- No account required
+- Core routines work offline
+- No email/password setup required
 
 Why I built it:
 After developing eye strain from too much screen time, I wanted a simple tool that would help me take regular breaks. Most apps either cost money, have ads, or collect too much data.
 
-It's completely free with no in-app purchases. All data stays on your device.
+Core features are available at no cost today. Data is stored locally first, with optional sync if you want it.
 
 Available for iOS and Android.
 

@@ -25,7 +25,7 @@ const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 // Separate component to avoid hook violations - memoized for performance
-const DayItem = React.memo(function DayItem({
+const DayItemComponent = ({
   day,
   index,
   isCompleted,
@@ -37,7 +37,7 @@ const DayItem = React.memo(function DayItem({
   isCompleted: boolean;
   isToday: boolean;
   isFuture: boolean;
-}) {
+}) => {
   const theme = useTheme();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.5);
@@ -48,7 +48,7 @@ const DayItem = React.memo(function DayItem({
     opacity.value = withDelay(delay, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
     scale.value = withDelay(delay, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
     translateY.value = withDelay(delay, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
-  }, [index]);
+  }, [index, opacity, scale, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -80,7 +80,11 @@ const DayItem = React.memo(function DayItem({
       </View>
     </Animated.View>
   );
-});
+};
+
+DayItemComponent.displayName = 'DayItem';
+
+const DayItem = React.memo(DayItemComponent);
 
 function StreakCalendar({
   completedDays,
@@ -101,7 +105,7 @@ function StreakCalendar({
         withTiming(1, { duration: 200 })
       )
     );
-  }, []);
+  }, [streakOpacity, streakScale]);
 
   const streakBadgeStyle = useAnimatedStyle(() => ({
     transform: [{ scale: streakScale.value }],
@@ -175,10 +179,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 8,
   },
-  dayLabelToday: {
-    color: '#06FFA5',
-    fontWeight: '700',
-  },
   dayDot: {
     width: 32,
     height: 32,
@@ -188,14 +188,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
-  },
-  dayDotCompleted: {
-    backgroundColor: '#06FFA5',
-    borderColor: '#06FFA5',
-  },
-  dayDotToday: {
-    borderColor: '#06FFA5',
-    backgroundColor: 'rgba(6, 255, 165, 0.1)',
   },
   dayDotFuture: {
     opacity: 0.4,

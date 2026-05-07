@@ -57,7 +57,7 @@ export default function FirstSessionScreen() {
         true
       )
     );
-  }, []);
+  }, [buttonsOpacity, settingsOpacity, timerOpacity, timerPulse, timerScale]);
 
   const timerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: timerOpacity.value,
@@ -78,7 +78,7 @@ export default function FirstSessionScreen() {
   };
 
   const handleExplore = () => {
-    router.push('./completion');
+    router.push('./premium-pitch');
   };
 
   return (
@@ -171,7 +171,7 @@ export default function FirstSessionScreen() {
             size="large"
             variant="primary"
           />
-          <SecondaryButton title="Explore first" onPress={handleExplore} variant="muted" />
+          <SecondaryButton title="Preview Pro first" onPress={handleExplore} variant="muted" />
         </Animated.View>
       </View>
     </OnboardingLayout>

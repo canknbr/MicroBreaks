@@ -14,7 +14,6 @@ import {
 
 class CrashlyticsService {
   private isInitialized = false;
-  private userId: string | null = null;
   private sessionId: string = generateId('session');
 
   async initialize(): Promise<void> {
@@ -22,9 +21,6 @@ class CrashlyticsService {
 
     try {
       const instance = crashlytics();
-
-      // Disable collection in dev
-      await instance.setCrashlyticsCollectionEnabled(!__DEV__);
 
       // Set initial attributes
       await instance.setAttribute('platform', Platform.OS);
@@ -42,8 +38,6 @@ class CrashlyticsService {
   }
 
   setUser(userId: string | null, email?: string): void {
-    this.userId = userId;
-
     try {
       if (userId) {
         crashlytics().setUserId(userId);

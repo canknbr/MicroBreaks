@@ -40,7 +40,7 @@ TRACK YOUR PROGRESS
 WORKS THE WAY YOU WORK
 • Flexible scheduling that adapts to your routine
 • Do Not Disturb integration for focused work sessions
-• Offline functionality - no internet required
+• Core routines work offline
 • Beautiful, calming design that doesn't distract
 
 PERFECT FOR
@@ -50,7 +50,7 @@ PERFECT FOR
 • Anyone who spends extended time on screens
 
 PRIVACY FIRST
-Your data stays on your device. No account required. No cloud storage. No tracking.
+Your core data stays on your device first. No email/password setup is required, optional cloud sync is available, and anonymous diagnostics help improve stability.
 
 Download MicroBreaks today and start building healthier screen habits. Your eyes, neck, and back will thank you!
 ```
@@ -179,7 +179,7 @@ Each break features quick, effective exercises designed by wellness experts:
 ★ WORKS THE WAY YOU WORK
 → Flexible scheduling that adapts to your routine
 → Do Not Disturb integration for focused work sessions
-→ Offline functionality - no internet required
+→ Core routines work offline
 → Beautiful, calming design that doesn't distract
 
 ★ PERFECT FOR
@@ -189,7 +189,7 @@ Each break features quick, effective exercises designed by wellness experts:
 → Anyone who spends extended time on screens
 
 ★ PRIVACY FIRST
-Your data stays on your device. No account required. No cloud storage. No tracking.
+Your core data stays on your device first. No email/password setup is required, optional cloud sync is available, and anonymous diagnostics help improve stability.
 
 Download MicroBreaks today and start building healthier screen habits. Your eyes, neck, and back will thank you!
 

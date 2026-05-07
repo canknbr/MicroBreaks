@@ -101,20 +101,6 @@ function BreakSessionScreen() {
           console.warn('Failed to save break to history:', saveResult.error);
         }
 
-        // Store the saved break ID for later rating update
-        if (saveResult.success && saveResult.breakId) {
-          savedBreakIdRef.current = saveResult.breakId;
-        }
-
-        // Sync with user store
-        incrementBreaks(); // Increment total breaks
-        addXP(stats.xpEarned); // Add XP to user profile
-        trackBreakCompletion(exercise.category, Math.round(stats.totalDuration / 60)); // Track for achievements
-        addRecentBreak(exercise.id); // Add to recent breaks
-
-        // Check for new achievements
-        checkAndUnlockAchievements();
-
         // Schedule next break reminder with error handling
         try {
           await scheduleBreakReminder();
@@ -124,6 +110,24 @@ function BreakSessionScreen() {
           }
           // Non-blocking - continue with the rest of the flow
         }
+
+        if (!saveResult.success) {
+          return;
+        }
+
+        // Store the saved break ID for later rating update
+        if (saveResult.breakId) {
+          savedBreakIdRef.current = saveResult.breakId;
+        }
+
+        // Sync with user store only after persistence succeeds
+        incrementBreaks();
+        addXP(stats.xpEarned);
+        trackBreakCompletion(exercise.category, Math.round(stats.totalDuration / 60));
+        addRecentBreak(exercise.id);
+
+        // Check for new achievements
+        checkAndUnlockAchievements();
 
         // Check if daily goal is complete with error handling
         try {
@@ -417,6 +421,7 @@ function BreakSessionScreen() {
     handleClose,
     handleFinish,
     renderExerciseAnimation,
+    t,
     theme,
   ]);
 

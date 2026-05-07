@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 
 export interface OnboardingData {
   workRole: string | null;
@@ -34,7 +35,7 @@ interface OnboardingState {
   skipOnboarding: () => void;
 }
 
-const initialData: OnboardingData = {
+export const initialOnboardingData: OnboardingData = {
   workRole: null,
   screenTime: null,
   painAreas: [],
@@ -52,8 +53,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       // Initial State
       isComplete: false,
       currentStep: 0,
-      totalSteps: 21,
-      data: initialData,
+      totalSteps: ACTIVE_ONBOARDING_TOTAL_STEPS,
+      data: initialOnboardingData,
 
       // Actions
       setCurrentStep: (step) => set({ currentStep: step }),
@@ -66,21 +67,21 @@ export const useOnboardingStore = create<OnboardingState>()(
       completeOnboarding: () =>
         set({
           isComplete: true,
-          currentStep: 21,
+          currentStep: ACTIVE_ONBOARDING_TOTAL_STEPS,
         }),
 
       skipOnboarding: () =>
         set({
           isComplete: true,
           currentStep: 0,
-          data: initialData,
+          data: initialOnboardingData,
         }),
 
       resetOnboarding: () =>
         set({
           isComplete: false,
           currentStep: 0,
-          data: initialData,
+          data: initialOnboardingData,
         }),
     }),
     {

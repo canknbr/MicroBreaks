@@ -173,7 +173,7 @@ export default function EyeExercise({
         dotY.value = withTiming(0, { duration: 100 });
         break;
     }
-  }, [animation]);
+  }, [animation, dotOpacity, dotScale, dotX, dotY]);
 
   const dotStyle = useAnimatedStyle(() => ({
     transform: [

@@ -205,7 +205,7 @@ export function AnimatedPlaceholder({
         );
         break;
     }
-  }, [type]);
+  }, [opacity, rotation, scale, type]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

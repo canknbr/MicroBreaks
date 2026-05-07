@@ -200,7 +200,7 @@ export default function StretchExercise({
         );
         break;
     }
-  }, [animation]);
+  }, [animation, opacity, rotate, scale, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

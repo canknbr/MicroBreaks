@@ -296,7 +296,7 @@ MicroBreaks Destek
 ```
 Hi [Name],
 
-Thank you for reaching out. MicroBreaks is completely free with no in-app purchases, so there's nothing to refund!
+Thank you for reaching out. MicroBreaks does not currently offer paid plans or in-app purchases, so there's nothing to refund at the moment.
 
 If you're having any issues with the app that made you consider a refund, please let us know. We'd love to help resolve them.
 

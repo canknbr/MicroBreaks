@@ -70,7 +70,7 @@ export default function AnimatedText({
       delay,
       withTiming(1, { duration, easing: Easing.out(Easing.cubic) })
     );
-  }, []);
+  }, [delay, duration, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: progress.value,

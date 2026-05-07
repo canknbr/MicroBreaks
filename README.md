@@ -145,8 +145,14 @@ npm run android    # Run on Android emulator/device
 npm run ios        # Run on iOS simulator/device
 npm run web        # Run in web browser
 npm run lint       # Run ESLint
+npm run typecheck  # Run TypeScript checks
+npm run verify:config   # Validate Expo/EAS config and asset references
+npm run verify:expo-config  # Ensure Expo can resolve the final app config
+npm run verify:release  # Run config validation, typecheck, lint, and tests
 npm run reset-project  # Reset to blank project
 ```
+
+Release guardrails are documented in [docs/BUILD_RELEASE_GUARDRAILS.md](docs/BUILD_RELEASE_GUARDRAILS.md).
 
 ---
 

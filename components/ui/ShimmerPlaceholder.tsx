@@ -40,7 +40,7 @@ export function ShimmerPlaceholder({
       -1,
       false
     );
-  }, []);
+  }, [shimmerPosition]);
 
   const shimmerStyle = useAnimatedStyle(() => ({
     transform: [

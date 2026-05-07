@@ -405,6 +405,48 @@ describe('Break History Service', () => {
       expect(result.success).toBe(false);
       consoleSpy.mockRestore();
     });
+
+    it('should serialize concurrent saves without dropping entries', async () => {
+      const breakA = saveCompletedBreak({
+        breakId: 'neck-reset',
+        title: 'Neck Reset',
+        category: 'stretch',
+        icon: '🧘',
+        color: '#B47EFF',
+        duration: 90,
+        stepsCompleted: 2,
+        totalSteps: 2,
+        xpEarned: 15,
+        rating: 'good',
+        completedAt: new Date().toISOString(),
+      });
+
+      const breakB = saveCompletedBreak({
+        breakId: 'eye-rescue',
+        title: 'Eye Rescue',
+        category: 'quick',
+        icon: '👁️',
+        color: '#06FFA5',
+        duration: 60,
+        stepsCompleted: 1,
+        totalSteps: 1,
+        xpEarned: 10,
+        rating: 'good',
+        completedAt: new Date().toISOString(),
+      });
+
+      const results = await Promise.all([breakA, breakB]);
+
+      expect(results.every((result) => result.success)).toBe(true);
+
+      const history = await getBreakHistory();
+      const stats = await getUserStats();
+
+      expect(history).toHaveLength(2);
+      expect(history.map((item) => item.breakId).sort()).toEqual(['eye-rescue', 'neck-reset']);
+      expect(stats.totalBreaks).toBe(2);
+      expect(stats.totalXP).toBe(25);
+    });
   });
 
   describe('getStreakData', () => {

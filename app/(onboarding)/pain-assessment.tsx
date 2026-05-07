@@ -16,9 +16,14 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
+import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
-import { PAIN_AREAS } from '@/constants/onboarding';
+import {
+  ACTIVE_ONBOARDING_TOTAL_STEPS,
+  PAIN_AREAS,
+} from '@/constants/onboarding';
+import { useOnboardingStore } from '@/store';
 
 type Severity = 'mild' | 'moderate' | 'severe';
 
@@ -27,7 +32,7 @@ function PainAreaCard({ area, isSelected, severity, onToggle, onSeverityChange }
   isSelected: boolean;
   severity?: Severity;
   onToggle: () => void;
-  onSeverityChange: (level: Severity) => void;
+  onSeverityChange: (_level: Severity) => void;
 }) {
   const cardScale = useSharedValue(1);
 
@@ -91,7 +96,11 @@ function PainAreaCard({ area, isSelected, severity, onToggle, onSeverityChange }
 
 export default function PainAssessmentScreen() {
   const router = useRouter();
-  const [selectedAreas, setSelectedAreas] = useState<Set<string>>(new Set());
+  const onboardingData = useOnboardingStore((state) => state.data);
+  const updateData = useOnboardingStore((state) => state.updateData);
+  const [selectedAreas, setSelectedAreas] = useState<Set<string>>(
+    new Set(onboardingData.painAreas)
+  );
   const [severity, setSeverity] = useState<Record<string, Severity>>({});
 
   const toggleArea = (areaId: string) => {
@@ -121,19 +130,29 @@ export default function PainAssessmentScreen() {
   };
 
   const handleContinue = () => {
-    if (selectedAreas.size > 0) {
-      router.push('./work-pattern');
-    }
+    const painAreas = selectedAreas.size > 0 ? Array.from(selectedAreas) : ['none'];
+    updateData({ painAreas });
+    router.push('./recommendation');
+  };
+
+  const handleNoPain = () => {
+    setSelectedAreas(new Set(['none']));
+    updateData({ painAreas: ['none'] });
+    router.push('./recommendation');
   };
 
   return (
-    <OnboardingLayout currentStep={6} ambientColor="purple">
+    <OnboardingLayout
+      currentStep={3}
+      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
+      ambientColor="purple"
+    >
       <View style={styles.container}>
         <HeadlineText delay={0}>
-          Where do you feel discomfort?
+          What usually bothers you during screen-heavy work?
         </HeadlineText>
         <SubheadText delay={100}>
-          Select all areas that apply
+          Pick what needs relief most often. You can change this later.
         </SubheadText>
 
         <ScrollView
@@ -156,14 +175,18 @@ export default function PainAssessmentScreen() {
         <View style={styles.legend}>
           <View style={styles.legendDot} />
           <Text style={styles.legendText}>
-            Dots show intensity level
+            Dots show intensity if you want to be more specific
           </Text>
         </View>
 
         <PrimaryButton
-          title="Continue"
+          title="Build My Starting Plan"
           onPress={handleContinue}
-          disabled={selectedAreas.size === 0}
+        />
+        <SecondaryButton
+          title="Nothing specific today"
+          onPress={handleNoPain}
+          variant="muted"
         />
       </View>
     </OnboardingLayout>

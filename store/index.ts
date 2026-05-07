@@ -3,16 +3,38 @@
  * Central export point for all Zustand stores
  */
 
-export { useOnboardingStore } from './onboardingStore';
+export { useOnboardingStore, initialOnboardingData } from './onboardingStore';
 export type { OnboardingData } from './onboardingStore';
 
-export { useUserStore } from './userStore';
+export {
+  useUserStore,
+  initialUserProfile,
+  initialUserProgress,
+  initialUserPreferences,
+  initialUserAchievements,
+} from './userStore';
 export type { UserProfile, UserProgress } from './userStore';
 
-export { useSettingsStore } from './settingsStore';
+export { useSettingsStore, defaultAppSettings } from './settingsStore';
 export type { AppSettings } from './settingsStore';
 
 export { useNotificationStore, createAchievementNotification, createStreakNotification, createGoalNotification, createLevelUpNotification } from './notificationStore';
 export type { AppNotification, NotificationType } from './notificationStore';
 
-export { useTimerStore } from './timerStore';
+export {
+  useTimerStore,
+  initialTimerSession,
+  initialTimerStats,
+  initialTimerPreferences,
+} from './timerStore';
+
+export {
+  useSubscriptionStore,
+  useSubscriptionCustomer,
+  useSubscriptionOffers,
+  useSubscriptionStatus,
+  useBillingProvider,
+  useBillingDiagnostics,
+  useEntitlementHealth,
+  useHasActiveSubscription,
+} from './subscriptionStore';

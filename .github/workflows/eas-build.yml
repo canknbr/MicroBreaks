@@ -57,8 +57,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate development config
+        env:
+          APP_ENV: development
+        run: npm run verify:config -- --profile development
+
+      - name: Verify Expo config resolution
+        run: npm run verify:expo-config
+
+      - name: Run TypeScript
+        run: npm run typecheck
+
       - name: Run ESLint
-        run: npm run lint
+        run: npm run lint -- --max-warnings=0
 
       - name: Run tests
         run: npm run test:ci
@@ -68,8 +79,8 @@ jobs:
         if: always()
         with:
           name: test-results
+          if-no-files-found: ignore
           path: |
-            coverage/
             junit.xml
 
   build-ios:
@@ -98,6 +109,19 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate iOS build config
+        env:
+          APP_ENV: ${{ github.event.inputs.profile || 'production' }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EXPO_PUBLIC_EAS_PROJECT_ID }}
+          EAS_UPDATE_URL: ${{ secrets.EAS_UPDATE_URL }}
+          EXPO_PUBLIC_EAS_UPDATE_URL: ${{ vars.EXPO_PUBLIC_EAS_UPDATE_URL }}
+          EXPO_PUBLIC_BILLING_PROVIDER: ${{ vars.EXPO_PUBLIC_BILLING_PROVIDER }}
+        run: npm run verify:config -- --profile $APP_ENV
+
+      - name: Verify Expo config resolution
+        run: npm run verify:expo-config
 
       - name: Build iOS
         run: |
@@ -141,6 +165,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Android build config
+        env:
+          APP_ENV: ${{ github.event.inputs.profile || 'production' }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EXPO_PUBLIC_EAS_PROJECT_ID }}
+          EAS_UPDATE_URL: ${{ secrets.EAS_UPDATE_URL }}
+          EXPO_PUBLIC_EAS_UPDATE_URL: ${{ vars.EXPO_PUBLIC_EAS_UPDATE_URL }}
+          EXPO_PUBLIC_BILLING_PROVIDER: ${{ vars.EXPO_PUBLIC_BILLING_PROVIDER }}
+        run: npm run verify:config -- --profile $APP_ENV
+
+      - name: Verify Expo config resolution
+        run: npm run verify:expo-config
+
       - name: Build Android
         run: |
           PROFILE=${{ github.event.inputs.profile || 'production' }}
@@ -175,6 +212,19 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate preview build config
+        env:
+          APP_ENV: preview
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EXPO_PUBLIC_EAS_PROJECT_ID }}
+          EAS_UPDATE_URL: ${{ secrets.EAS_UPDATE_URL }}
+          EXPO_PUBLIC_EAS_UPDATE_URL: ${{ vars.EXPO_PUBLIC_EAS_UPDATE_URL }}
+          EXPO_PUBLIC_BILLING_PROVIDER: ${{ vars.EXPO_PUBLIC_BILLING_PROVIDER }}
+        run: npm run verify:config -- --profile preview
+
+      - name: Verify Expo config resolution
+        run: npm run verify:expo-config
 
       - name: Create preview build
         run: eas build --platform all --profile preview --non-interactive

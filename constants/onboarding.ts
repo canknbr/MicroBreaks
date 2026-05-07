@@ -29,6 +29,62 @@ export const ONBOARDING_SCREENS: OnboardingScreenId[] = [
   'ONB_021',
 ];
 
+export const ACTIVE_ONBOARDING_TOTAL_STEPS = 7;
+
+export const PRIMARY_NEEDS = [
+  {
+    id: 'eyes',
+    label: 'Eye strain',
+    description: 'Dry, tired, or blurry eyes during screen-heavy work',
+    icon: '👀',
+  },
+  {
+    id: 'neck',
+    label: 'Neck tension',
+    description: 'Tight neck and shoulders after long desk blocks',
+    icon: '🧍',
+  },
+  {
+    id: 'focus',
+    label: 'Focus reset',
+    description: 'Mental fog, task-switching fatigue, and attention drops',
+    icon: '🧠',
+  },
+  {
+    id: 'energy',
+    label: 'Energy dip',
+    description: 'Low energy between meetings or during afternoon slumps',
+    icon: '⚡',
+  },
+] as const;
+
+export const SCREEN_TIME_BANDS = [
+  {
+    id: 'light',
+    label: '0-4 hours',
+    description: 'Light screen work',
+    hours: 4,
+  },
+  {
+    id: 'steady',
+    label: '5-8 hours',
+    description: 'Typical desk day',
+    hours: 8,
+  },
+  {
+    id: 'heavy',
+    label: '9-10 hours',
+    description: 'Screen-heavy workday',
+    hours: 10,
+  },
+  {
+    id: 'marathon',
+    label: '11+ hours',
+    description: 'Long intense days',
+    hours: 12,
+  },
+] as const;
+
 export const WORK_ROLES = [
   { id: 'developer', label: 'Software Developer', icon: '💻' },
   { id: 'designer', label: 'Designer/Creative', icon: '🎨' },
@@ -167,5 +223,4 @@ export const TIMER_PRESETS = [
     break: 5,
   },
 ] as const;
-
 

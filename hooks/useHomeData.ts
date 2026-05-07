@@ -7,11 +7,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from '@/i18n/hooks';
 import {
-  getTodayBreaks,
-  getWeekBreaks,
+  getBreakHistory,
   getStreakData,
   getUserStats,
-  getRecentBreaks,
 } from '@/services/breakHistory';
 import { useUserStore } from '@/store';
 
@@ -111,17 +109,43 @@ function calculateWeeklyDays(streakHistory: { date: string; count: number }[]): 
   return completedDays;
 }
 
+function getDayRange(date: Date): { start: Date; end: Date } {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+}
+
 // Generate home data from stored data
 async function generateHomeData(userName: string, userAvatar: string | null): Promise<HomeData & { avatar: string | null }> {
-  const [todayBreaks, weekBreaks, storedStreak, userStats, recentBreaks] = await Promise.all([
-    getTodayBreaks(),
-    getWeekBreaks(),
+  const [allBreaks, storedStreak, userStats] = await Promise.all([
+    getBreakHistory(),
     getStreakData(),
     getUserStats(),
-    getRecentBreaks(1),
   ]);
 
-  const dayOfWeek = new Date().getDay();
+  const today = new Date();
+  const { start: todayStart, end: tomorrow } = getDayRange(today);
+  const dayOfWeek = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 7);
+
+  const todayBreaks = allBreaks.filter((breakEntry) => {
+    const completedAt = new Date(breakEntry.completedAt);
+    return completedAt >= todayStart && completedAt < tomorrow;
+  });
+
+  const weekBreaks = allBreaks.filter((breakEntry) => {
+    const completedAt = new Date(breakEntry.completedAt);
+    return completedAt >= monday && completedAt <= sunday;
+  });
+
+  const mostRecentBreak = allBreaks[0];
+
   const currentDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
   // Calculate minutes invested today
@@ -131,8 +155,8 @@ async function generateHomeData(userName: string, userAvatar: string | null): Pr
   );
 
   // Calculate last break time
-  const lastBreakMinutesAgo = recentBreaks.length > 0
-    ? calculateLastBreakMinutes(recentBreaks[0].completedAt)
+  const lastBreakMinutesAgo = mostRecentBreak
+    ? calculateLastBreakMinutes(mostRecentBreak.completedAt)
     : 999;
 
   // Calculate weekly insights

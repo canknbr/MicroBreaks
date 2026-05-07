@@ -5,7 +5,7 @@
 
 export const PRIVACY_POLICY = `# Privacy Policy
 
-**Last updated: February 2026**
+**Last updated: May 2026**
 
 ## 1. Introduction
 
@@ -25,7 +25,7 @@ MicroBreaks ("we", "us", "our") is committed to protecting your privacy. This Pr
 - **Onboarding Responses**: Work role, screen time habits, and pain area selections used to personalize recommendations.
 
 ### 2.3 What We Do NOT Collect
-- Real names, email addresses, or phone numbers (unless you upgrade from anonymous auth)
+- Real names, email addresses, or phone numbers to use the core app experience
 - Location data
 - Contacts, photos, or other device data
 - Health or medical data
@@ -58,7 +58,6 @@ You have the right to:
 - **Access**: View all your data within the app.
 - **Export**: Download all your data as a JSON file via Profile > Download My Data.
 - **Delete**: Permanently delete your account and all associated data via Profile > Delete Account.
-- **Opt-out**: Disable analytics and crash reporting in Profile > Preferences.
 
 ## 7. Third-Party Services
 
@@ -86,7 +85,7 @@ For privacy-related inquiries, please contact us at:
 
 export const TERMS_OF_SERVICE = `# Terms of Service
 
-**Last updated: February 2026**
+**Last updated: May 2026**
 
 ## 1. Acceptance of Terms
 

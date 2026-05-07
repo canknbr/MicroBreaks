@@ -78,7 +78,7 @@ export default function OnboardingLayout({
     ).start();
 
     return () => ambientAnim.stopAnimation();
-  }, []);
+  }, [ambientAnim]);
 
   useEffect(() => {
     // Reset animations on step change
@@ -98,7 +98,14 @@ export default function OnboardingLayout({
       50,
       withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) })
     );
-  }, [currentStep]);
+  }, [
+    contentOpacity,
+    contentTranslateY,
+    currentStep,
+    progressGlow,
+    progressPercent,
+    progressWidth,
+  ]);
 
   // Animated styles
   const animatedProgressStyle = useAnimatedStyle(() => ({

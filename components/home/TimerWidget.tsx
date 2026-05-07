@@ -58,11 +58,11 @@ function TimerWidget({ onPresetPress }: TimerWidgetProps) {
     } else {
       pulseScale.value = withTiming(1, { duration: 300 });
     }
-  }, [session.isActive, session.isPaused]);
+  }, [pulseScale, session.isActive, session.isPaused]);
 
   useEffect(() => {
     progressWidth.value = withTiming(progress, { duration: 900 });
-  }, [progress]);
+  }, [progress, progressWidth]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],

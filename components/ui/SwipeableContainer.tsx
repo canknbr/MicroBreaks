@@ -277,7 +277,7 @@ export function SwipeHint({ direction = 'horizontal' }: { direction?: 'horizonta
 
     const timeout = setTimeout(animate, 2000);
     return () => clearTimeout(timeout);
-  }, [direction]);
+  }, [direction, opacity, translateX, translateY]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }, { translateY: translateY.value }],

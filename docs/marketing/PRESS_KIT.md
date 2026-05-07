@@ -20,14 +20,14 @@
 ## About MicroBreaks
 
 ### Short Description (50 words)
-MicroBreaks is a smart break reminder app that helps screen-heavy users protect their eyes, improve posture, and reduce stress through timely reminders and guided exercises. With 50+ exercises for eyes, neck, back, wrists, and breathing, it makes healthy screen habits simple and achievable.
+MicroBreaks is a smart break reminder app that helps screen-heavy users protect their eyes, improve posture, and reduce stress through timely reminders and guided exercises. With guided routines for eyes, neck, back, wrists, and breathing, it makes healthy screen habits simple and achievable.
 
 ### Long Description (150 words)
 In a world where we spend 7+ hours daily staring at screens, MicroBreaks is the wellness companion designed to protect what matters most - your health.
 
 MicroBreaks uses intelligent scheduling to remind you when it's time to step away from the screen. Each break features quick, effective exercises designed by wellness experts: eye exercises to reduce digital strain, neck and shoulder stretches to release tension, back movements for better posture, wrist stretches to prevent repetitive strain, and breathing exercises for stress relief.
 
-The app tracks your progress with streaks and achievements, making healthy habits rewarding and fun. It works completely offline, requires no account, and keeps all your data private on your device.
+The app tracks your progress with streaks and achievements, making healthy habits rewarding and fun. Core routines work offline, no email or password sign-up is required, and privacy-first sync keeps your data available across devices only when you want it.
 
 Whether you're a remote worker, student, gamer, or anyone who spends extended time on screens, MicroBreaks helps you build sustainable, healthy screen habits.
 
@@ -55,10 +55,10 @@ Whether you're a remote worker, student, gamer, or anyone who spends extended ti
 - Personalized insights
 
 ### Privacy-First Design
-- All data stored locally
-- No account required
-- No cloud sync needed
-- No tracking or analytics collection
+- Local-first data storage
+- No email or password sign-up
+- Optional cloud sync across devices
+- Anonymous analytics and crash reporting for app stability
 
 ---
 
@@ -173,16 +173,16 @@ Includes:
 ## FAQ for Press
 
 **Q: Is MicroBreaks free?**
-A: Yes, MicroBreaks is completely free with no in-app purchases.
+A: MicroBreaks' core features are currently available at no cost. Optional premium plans may be introduced in future updates.
 
 **Q: Does MicroBreaks require an internet connection?**
-A: No, all features work offline.
+A: Core routines work offline. Cloud sync, push notifications, and diagnostics require an internet connection.
 
 **Q: What makes MicroBreaks different from other reminder apps?**
 A: MicroBreaks combines smart reminders with guided exercises specifically designed for screen-related health issues. It's not just a timer - it's a complete wellness solution for screen users.
 
 **Q: Is my data shared with third parties?**
-A: No. All data is stored locally on your device. We don't collect, store, or share personal data.
+A: We use infrastructure providers like Firebase for anonymous authentication, optional sync, analytics, and crash reporting. We do not sell personal data or use ad tracking.
 
 ---
 

@@ -134,7 +134,7 @@ export default function NeckExercise({
         );
         break;
     }
-  }, [animation]);
+  }, [animation, arrowOpacity, pulseScale, rotation, tiltX, tiltY]);
 
   const headStyle = useAnimatedStyle(() => ({
     transform: [

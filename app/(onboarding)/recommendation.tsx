@@ -20,6 +20,7 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
+import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { generatePersonalizedPlan } from '@/services/recommendations/engine';
 
@@ -27,12 +28,13 @@ export default function RecommendationScreen() {
   const router = useRouter();
   const onboardingData = useOnboardingStore((state) => state.data);
   const plan = generatePersonalizedPlan(onboardingData);
+  const firstRecommendation = plan.topExercises[0] ?? null;
 
   const PLAN_ITEMS = [
     { icon: 'flag-outline', label: 'Primary concern', value: plan.primaryConcern },
     { icon: 'fitness-outline', label: 'Recommended focus', value: plan.recommendedFocus },
-    { icon: 'time-outline', label: 'Optimal schedule', value: plan.optimalSchedule },
-    { icon: 'trophy-outline', label: 'First week goal', value: plan.weekGoal },
+    { icon: 'time-outline', label: 'Suggested rhythm', value: plan.optimalSchedule },
+    { icon: 'trophy-outline', label: 'Week-one target', value: plan.weekGoal },
   ];
 
   // Animation values
@@ -49,7 +51,7 @@ export default function RecommendationScreen() {
     matchGlow.value = withDelay(400, withTiming(1, { duration: 700 }));
     planOpacity.value = withDelay(500, withTiming(1, { duration: 400, easing }));
     buttonsOpacity.value = withDelay(750, withTiming(1, { duration: 400, easing }));
-  }, []);
+  }, [badgeScale, buttonsOpacity, matchGlow, matchScale, planOpacity]);
 
   const badgeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: badgeScale.value }],
@@ -82,20 +84,24 @@ export default function RecommendationScreen() {
   };
 
   return (
-    <OnboardingLayout currentStep={12} ambientColor="gold">
+    <OnboardingLayout
+      currentStep={4}
+      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
+      ambientColor="gold"
+    >
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
           <View style={styles.header}>
             <Animated.View style={[styles.badge, badgeAnimatedStyle]}>
               <Ionicons name="sparkles" size={14} color={ZenColors.accent.main} />
-              <Text style={styles.badgeText}>PERSONALIZED FOR YOU</Text>
+              <Text style={styles.badgeText}>YOUR STARTING PLAN</Text>
             </Animated.View>
             <Text style={styles.headline}>
-              Based on your profile, we recommend...
+              Here&apos;s the desk-recovery plan we&apos;d start you on
             </Text>
           </View>
 
-          {/* Personalization Match */}
+          {/* Recommended first reset */}
           <Animated.View style={[styles.matchContainer, matchAnimatedStyle]}>
             <Animated.View style={[styles.matchGlow, matchGlowStyle]}>
               <LinearGradient
@@ -107,8 +113,20 @@ export default function RecommendationScreen() {
               colors={[ZenColors.primary.glow, 'transparent']}
               style={styles.matchInnerGlow}
             />
-            <Text style={styles.matchValue}>{plan.matchScore}%</Text>
-            <Text style={styles.matchLabel}>match score</Text>
+            <Text style={styles.matchEyebrow}>START WITH</Text>
+            <Text style={styles.matchValue}>
+              {firstRecommendation?.exercise.title ?? 'A short guided reset'}
+            </Text>
+            <Text style={styles.matchLabel}>
+              {firstRecommendation
+                ? `${Math.max(1, Math.round(firstRecommendation.exercise.totalDuration / 60))} minute guided reset`
+                : 'A short session to build your first relief win'}
+            </Text>
+            {firstRecommendation?.reason ? (
+              <Text style={styles.matchReason}>
+                {firstRecommendation.reason}
+              </Text>
+            ) : null}
           </Animated.View>
 
           {/* Plan Details */}
@@ -207,13 +225,28 @@ const styles = StyleSheet.create({
     right: 0,
     height: 80,
   },
+  matchEyebrow: {
+    ...ZenTypography.caption,
+    color: ZenColors.text.secondary,
+    letterSpacing: 1,
+    marginBottom: ZenSpacing.xs,
+  },
   matchValue: {
-    ...ZenTypography.display.large,
+    ...ZenTypography.headline.medium,
     color: ZenColors.primary.main,
+    textAlign: 'center',
   },
   matchLabel: {
     ...ZenTypography.body.medium,
     color: ZenColors.text.secondary,
+    textAlign: 'center',
+    marginTop: ZenSpacing.xs,
+  },
+  matchReason: {
+    ...ZenTypography.body.small,
+    color: ZenColors.text.primary,
+    textAlign: 'center',
+    marginTop: ZenSpacing.sm,
   },
   planContainer: {
     backgroundColor: ZenColors.background.card,

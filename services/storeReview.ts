@@ -14,7 +14,7 @@ interface ReviewState {
   hasPrompted: boolean;
 }
 
-let reviewState: ReviewState = {
+const reviewState: ReviewState = {
   lastPromptDate: null,
   breaksCompletedSincePrompt: 0,
   hasPrompted: false,

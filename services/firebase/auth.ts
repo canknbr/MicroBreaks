@@ -72,6 +72,32 @@ export async function signOut(): Promise<void> {
 }
 
 /**
+ * Start a fresh anonymous session.
+ * Useful after account deletion or a local reset flow.
+ */
+export async function refreshAnonymousSession(): Promise<AuthUser | null> {
+  try {
+    const authInstance = auth();
+
+    if (authInstance.currentUser) {
+      await authInstance.signOut();
+    }
+
+    const credential = await authInstance.signInAnonymously();
+    currentUser = credential.user;
+
+    if (__DEV__) {
+      console.log('[Auth] Refreshed anonymous session:', currentUser?.uid);
+    }
+
+    return currentUser;
+  } catch (error) {
+    console.error('[Auth] Failed to refresh anonymous session:', error);
+    return null;
+  }
+}
+
+/**
  * Delete the current user's Firebase Auth account.
  * Caller should delete Firestore data and clear local storage before this.
  */

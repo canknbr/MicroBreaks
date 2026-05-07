@@ -3,7 +3,7 @@
  * Premium design with categories, search, filtering, and featured breaks
  */
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useDeferredValue, useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -31,8 +31,23 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
-import { useUserStore } from '@/store';
+import { useHasActiveSubscription, useOnboardingStore, useUserStore } from '@/store';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
+import { ALL_EXERCISES, ExerciseCategory } from '@/data/exercises';
+import {
+  PRO_LIBRARY_HIGHLIGHTS,
+} from '@/constants/subscription';
+import { UpgradePrompt } from '@/components/subscription';
+import {
+  CATEGORY_DEFINITIONS,
+  FEATURED_EXERCISE_ID,
+  FEATURED_GRADIENT,
+  OUTCOME_PACKS,
+  OutcomePackId,
+  formatDurationMinutes,
+  getDefaultOutcomePackId,
+  isStarterExercise,
+} from '@/features/recovery/outcomePacks';
 
 // Duration filter options
 const DURATION_FILTERS = [
@@ -42,67 +57,26 @@ const DURATION_FILTERS = [
   { id: 'long', label: '5m+', min: 5, max: 999 },
 ];
 
-// Break categories with their breaks
-const BREAK_CATEGORIES = [
-  {
-    id: 'quick',
-    title: 'Quick Breaks',
-    subtitle: '1-2 minutes',
-    icon: 'flash',
-    color: '#06FFA5',
-    breaks: [
-      { id: 'eye-rest', title: 'Eye Rest', duration: '1m', icon: '👁️', description: '20-20-20 rule for eye strain' },
-      { id: 'deep-breath', title: 'Deep Breath', duration: '1m', icon: '🌬️', description: 'Quick breathing exercise' },
-      { id: 'neck-roll', title: 'Neck Roll', duration: '2m', icon: '🧘', description: 'Release neck tension' },
-    ],
-  },
-  {
-    id: 'stretch',
-    title: 'Stretching',
-    subtitle: '3-5 minutes',
-    icon: 'body',
-    color: '#B47EFF',
-    breaks: [
-      { id: 'upper-body', title: 'Upper Body', duration: '3m', icon: '💪', description: 'Shoulders, arms, and back' },
-      { id: 'lower-body', title: 'Lower Body', duration: '4m', icon: '🦵', description: 'Legs, hips, and ankles' },
-      { id: 'full-body', title: 'Full Body', duration: '5m', icon: '🙆', description: 'Complete stretch routine' },
-    ],
-  },
-  {
-    id: 'mindful',
-    title: 'Mindfulness',
-    subtitle: '2-5 minutes',
-    icon: 'leaf',
-    color: '#00E5FF',
-    breaks: [
-      { id: 'meditation', title: 'Mini Meditation', duration: '3m', icon: '🧘‍♀️', description: 'Calm your mind' },
-      { id: 'body-scan', title: 'Body Scan', duration: '4m', icon: '✨', description: 'Release physical tension' },
-      { id: 'gratitude', title: 'Gratitude', duration: '2m', icon: '🙏', description: 'Positive reflection moment' },
-    ],
-  },
-  {
-    id: 'active',
-    title: 'Active Breaks',
-    subtitle: '5-10 minutes',
-    icon: 'walk',
-    color: '#FFD166',
-    breaks: [
-      { id: 'walk', title: 'Quick Walk', duration: '5m', icon: '🚶', description: 'Get moving and refresh' },
-      { id: 'desk-exercises', title: 'Desk Exercises', duration: '5m', icon: '🏋️', description: 'Light exercises at desk' },
-      { id: 'energizer', title: 'Energizer', duration: '3m', icon: '⚡', description: 'Boost your energy' },
-    ],
-  },
-];
+interface BreakListItem {
+  id: string;
+  title: string;
+  duration: string;
+  durationMinutes: number;
+  icon: string;
+  description: string;
+  category: ExerciseCategory;
+  color: string;
+  isLocked: boolean;
+}
 
-// Featured break
-const FEATURED_BREAK = {
-  id: 'afternoon-reset',
-  title: 'Afternoon Reset',
-  duration: '5m',
-  description: 'Perfect mid-day break combining stretching and breathing',
-  gradient: ['#06FFA5', '#00E5FF'] as [string, string],
-  icon: '🌟',
-};
+interface BreakCategorySectionData {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: IoniconsName;
+  color: string;
+  breaks: BreakListItem[];
+}
 
 // Animated Break Card Component
 function BreakCard({
@@ -114,12 +88,12 @@ function BreakCard({
   onToggleFavorite,
   theme,
 }: {
-  item: typeof BREAK_CATEGORIES[0]['breaks'][0];
+  item: BreakListItem;
   index: number;
   categoryColor: string;
-  onPress: (id: string) => void;
+  onPress: (_item: BreakListItem) => void;
   isFavorite: boolean;
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite: (_id: string) => void;
   theme: ThemeColors;
 }) {
   const scale = useSharedValue(1);
@@ -129,7 +103,7 @@ function BreakCard({
   useEffect(() => {
     opacity.value = withDelay(index * 100, withTiming(1, { duration: 400 }));
     translateY.value = withDelay(index * 100, withTiming(0, { duration: 400 }));
-  }, [index]);
+  }, [index, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -146,7 +120,7 @@ function BreakCard({
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onPress(item.id);
+    onPress(item);
   };
 
   const handleFavoritePress = () => {
@@ -161,7 +135,11 @@ function BreakCard({
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={`${item.title}, ${item.duration}, ${item.description}`}
-      accessibilityHint="Double tap to start this break exercise"
+      accessibilityHint={
+        item.isLocked
+          ? 'Double tap to preview Pro access for this break'
+          : 'Double tap to start this break exercise'
+      }
     >
       <Animated.View style={[
         styles.breakCard,
@@ -190,7 +168,9 @@ function BreakCard({
           </View>
           <View style={styles.breakInfo}>
             <Text style={[styles.breakTitle, { color: theme.text.primary }]}>{item.title}</Text>
-            <Text style={[styles.breakDescription, { color: theme.text.muted }]}>{item.description}</Text>
+            <Text style={[styles.breakDescription, { color: theme.text.muted }]}>
+              {item.isLocked ? `Pro • ${item.description}` : item.description}
+            </Text>
           </View>
           <View style={styles.breakActions}>
             <Pressable
@@ -207,8 +187,21 @@ function BreakCard({
                 color={isFavorite ? '#FF6B6B' : theme.text.muted}
               />
             </Pressable>
-            <Text style={[styles.durationText, { color: categoryColor }]} accessibilityLabel={`Duration: ${item.duration}`}>{item.duration}</Text>
-            <Ionicons name="play-circle" size={24} color={categoryColor} accessibilityElementsHidden />
+            <Text
+              style={[
+                styles.durationText,
+                { color: item.isLocked ? theme.text.muted : categoryColor },
+              ]}
+              accessibilityLabel={`Duration: ${item.duration}`}
+            >
+              {item.duration}
+            </Text>
+            <Ionicons
+              name={item.isLocked ? 'lock-closed' : 'play-circle'}
+              size={24}
+              color={item.isLocked ? theme.text.muted : categoryColor}
+              accessibilityElementsHidden
+            />
           </View>
         </View>
       </Animated.View>
@@ -225,11 +218,11 @@ function CategorySection({
   onToggleFavorite,
   theme,
 }: {
-  category: typeof BREAK_CATEGORIES[0];
+  category: BreakCategorySectionData;
   delay: number;
-  onBreakPress: (id: string) => void;
+  onBreakPress: (_item: BreakListItem) => void;
   favoriteBreaks: string[];
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite: (_id: string) => void;
   theme: ThemeColors;
 }) {
   const opacity = useSharedValue(0);
@@ -238,7 +231,7 @@ function CategorySection({
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 500 }));
     translateX.value = withDelay(delay, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-  }, [delay]);
+  }, [delay, opacity, translateX]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -282,7 +275,7 @@ function SearchBar({
   theme,
 }: {
   value: string;
-  onChangeText: (text: string) => void;
+  onChangeText: (_text: string) => void;
   onClear: () => void;
   theme: ThemeColors;
 }) {
@@ -336,8 +329,8 @@ function FilterChips({
 }: {
   selectedCategory: string | null;
   selectedDuration: string;
-  onCategoryChange: (id: string | null) => void;
-  onDurationChange: (id: string) => void;
+  onCategoryChange: (_id: string | null) => void;
+  onDurationChange: (_id: string) => void;
   theme: ThemeColors;
 }) {
   return (
@@ -404,7 +397,7 @@ function FilterChips({
             Favorites
           </Text>
         </Pressable>
-        {BREAK_CATEGORIES.map((cat) => (
+        {CATEGORY_DEFINITIONS.map((cat) => (
           <Pressable
             key={cat.id}
             style={[
@@ -476,14 +469,10 @@ function FilterChips({
   );
 }
 
-// Parse duration string to number (e.g., "3m" -> 3)
-function parseDuration(duration: string): number {
-  return parseInt(duration.replace('m', ''), 10) || 0;
-}
-
 export default function BreaksScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const onboardingData = useOnboardingStore((state) => state.data);
   const headerOpacity = useSharedValue(0);
   const featuredScale = useSharedValue(0.9);
   const featuredOpacity = useSharedValue(0);
@@ -492,6 +481,10 @@ export default function BreaksScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState('all');
+  const [selectedPackId, setSelectedPackId] = useState<OutcomePackId>(
+    getDefaultOutcomePackId(onboardingData.painAreas, onboardingData.breakStyle)
+  );
+  const hasActiveSubscription = useHasActiveSubscription();
 
   // Favorites from store
   const favoriteBreaks = useUserStore((state) => state.preferences.favoriteBreaks);
@@ -501,20 +494,107 @@ export default function BreaksScreen() {
     headerOpacity.value = withTiming(1, { duration: 600 });
     featuredOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
     featuredScale.value = withDelay(200, withSpring(1));
-  }, []);
+  }, [featuredOpacity, featuredScale, headerOpacity]);
+
+  const defaultPackId = useMemo(
+    () => getDefaultOutcomePackId(onboardingData.painAreas, onboardingData.breakStyle),
+    [onboardingData.breakStyle, onboardingData.painAreas]
+  );
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  useEffect(() => {
+    setSelectedPackId(defaultPackId);
+  }, [defaultPackId]);
+
+  const library = useMemo<BreakListItem[]>(
+    () =>
+      ALL_EXERCISES.map((exercise) => ({
+        id: exercise.id,
+        title: exercise.title,
+        duration: formatDurationMinutes(exercise.totalDuration),
+        durationMinutes: Math.max(1, Math.round(exercise.totalDuration / 60)),
+        icon: exercise.icon,
+        description: exercise.description,
+        category: exercise.category,
+        color:
+          CATEGORY_DEFINITIONS.find((category) => category.id === exercise.category)?.color ??
+          exercise.color,
+        isLocked: !hasActiveSubscription && !isStarterExercise(exercise.id),
+      })),
+    [hasActiveSubscription]
+  );
+
+  const selectedPack = useMemo(
+    () => OUTCOME_PACKS.find((pack) => pack.id === selectedPackId) ?? OUTCOME_PACKS[0],
+    [selectedPackId]
+  );
+
+  const featuredBreak = useMemo(
+    () =>
+      library.find((item) => item.id === selectedPack.featuredBreakId) ??
+      library.find((item) => item.id === FEATURED_EXERCISE_ID) ??
+      library[0] ??
+      null,
+    [library, selectedPack.featuredBreakId]
+  );
+
+  const lockedExerciseCount = useMemo(
+    () => library.filter((item) => item.isLocked).length,
+    [library]
+  );
+
+  const starterExerciseCount = useMemo(
+    () => library.length - lockedExerciseCount,
+    [library, lockedExerciseCount]
+  );
+
+  const packLibraryCount = useMemo(
+    () => library.filter((item) => item.category === selectedPack.category).length,
+    [library, selectedPack.category]
+  );
+
+  const packStarterCount = useMemo(
+    () =>
+      library.filter(
+        (item) => item.category === selectedPack.category && !item.isLocked
+      ).length,
+    [library, selectedPack.category]
+  );
+
+  const libraryByCategory = useMemo(
+    () =>
+      library.reduce<Record<ExerciseCategory, BreakListItem[]>>(
+        (acc, item) => {
+          acc[item.category].push(item);
+          return acc;
+        },
+        {
+          quick: [],
+          stretch: [],
+          mindful: [],
+          active: [],
+        }
+      ),
+    [library]
+  );
+
+  const openProPreview = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push({
+      pathname: '/subscription',
+      params: { placement: 'breaks' },
+    } as any);
+  }, [router]);
 
   // Filter breaks based on search and filters
   const filteredCategories = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
+    const query = deferredSearchQuery.toLowerCase().trim();
     const durationFilter = DURATION_FILTERS.find((d) => d.id === selectedDuration);
 
     // Special handling for favorites
     if (selectedCategory === 'favorites') {
       // Create a virtual "Favorites" category with all favorited breaks
-      const allBreaks = BREAK_CATEGORIES.flatMap((cat) =>
-        cat.breaks.map((brk) => ({ ...brk, categoryColor: cat.color }))
-      );
-      const favoriteBreaksList = allBreaks.filter((brk) => favoriteBreaks.includes(brk.id));
+      const favoriteBreaksList = library.filter((brk) => favoriteBreaks.includes(brk.id));
 
       if (favoriteBreaksList.length === 0) {
         return [];
@@ -524,14 +604,14 @@ export default function BreaksScreen() {
         id: 'favorites',
         title: 'Your Favorites',
         subtitle: `${favoriteBreaksList.length} saved`,
-        icon: 'heart',
+        icon: 'heart' as IoniconsName,
         color: '#FF6B6B',
         breaks: favoriteBreaksList.filter((brk) => {
           const matchesSearch =
             !query ||
             brk.title.toLowerCase().includes(query) ||
             brk.description.toLowerCase().includes(query);
-          const duration = parseDuration(brk.duration);
+          const duration = brk.durationMinutes;
           const matchesDuration =
             !durationFilter ||
             (duration >= durationFilter.min && duration <= durationFilter.max);
@@ -540,11 +620,11 @@ export default function BreaksScreen() {
       }].filter((cat) => cat.breaks.length > 0);
     }
 
-    return BREAK_CATEGORIES
+    return CATEGORY_DEFINITIONS
       .filter((cat) => !selectedCategory || cat.id === selectedCategory)
       .map((cat) => ({
         ...cat,
-        breaks: cat.breaks.filter((brk) => {
+        breaks: libraryByCategory[cat.id].filter((brk) => {
           // Search filter
           const matchesSearch =
             !query ||
@@ -552,7 +632,7 @@ export default function BreaksScreen() {
             brk.description.toLowerCase().includes(query);
 
           // Duration filter
-          const duration = parseDuration(brk.duration);
+          const duration = brk.durationMinutes;
           const matchesDuration =
             !durationFilter ||
             (duration >= durationFilter.min && duration <= durationFilter.max);
@@ -561,7 +641,14 @@ export default function BreaksScreen() {
         }),
       }))
       .filter((cat) => cat.breaks.length > 0);
-  }, [searchQuery, selectedCategory, selectedDuration, favoriteBreaks]);
+  }, [
+    deferredSearchQuery,
+    favoriteBreaks,
+    libraryByCategory,
+    library,
+    selectedCategory,
+    selectedDuration,
+  ]);
 
   // Check if we have any results
   const hasResults = filteredCategories.length > 0;
@@ -577,20 +664,34 @@ export default function BreaksScreen() {
     transform: [{ scale: featuredScale.value }],
   }));
 
-  const handleBreakPress = useCallback((breakId: string) => {
+  const handleBreakPress = useCallback((item: BreakListItem) => {
+    if (item.isLocked) {
+      openProPreview();
+      return;
+    }
+
     router.push({
       pathname: '/break-session',
-      params: { breakId },
+      params: { breakId: item.id },
     });
-  }, [router]);
+  }, [openProPreview, router]);
 
   const handleFeaturedPress = useCallback(() => {
+    if (!featuredBreak) {
+      return;
+    }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (featuredBreak.isLocked) {
+      openProPreview();
+      return;
+    }
+
     router.push({
       pathname: '/break-session',
-      params: { breakId: FEATURED_BREAK.id },
+      params: { breakId: featuredBreak.id },
     });
-  }, [router]);
+  }, [featuredBreak, openProPreview, router]);
 
   const handleClearSearch = useCallback(() => {
     setSearchQuery('');
@@ -600,6 +701,11 @@ export default function BreaksScreen() {
     setSearchQuery('');
     setSelectedCategory(null);
     setSelectedDuration('all');
+  }, []);
+
+  const handlePackPress = useCallback((packId: OutcomePackId) => {
+    Haptics.selectionAsync();
+    setSelectedPackId(packId);
   }, []);
 
   return (
@@ -617,8 +723,65 @@ export default function BreaksScreen() {
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
             <Text style={[styles.title, { color: theme.text.primary }]}>Breaks</Text>
-            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>Choose your wellness moment</Text>
+            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
+              Pick the kind of relief you want, then start with a guided reset.
+            </Text>
           </Animated.View>
+
+          <View style={styles.packSection}>
+            <View style={styles.packSectionHeader}>
+              <Text style={[styles.packSectionTitle, { color: theme.text.primary }]}>
+                Reset packs
+              </Text>
+              <Text style={[styles.packSectionSubtitle, { color: theme.text.muted }]}>
+                Outcome-first entry points for desk work pain, fatigue, and focus drops.
+              </Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.packRail}
+            >
+              {OUTCOME_PACKS.map((pack) => {
+                const isSelected = pack.id === selectedPack.id;
+
+                return (
+                  <Pressable
+                    key={pack.id}
+                    style={[
+                      styles.packChip,
+                      {
+                        borderColor: isSelected ? pack.color : theme.border.subtle,
+                        backgroundColor: theme.isDark ? 'rgba(19, 19, 26, 0.92)' : theme.background.card,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: theme.isDark ? 0 : 0.08,
+                        shadowRadius: 4,
+                        elevation: theme.isDark ? 0 : 2,
+                      },
+                    ]}
+                    onPress={() => handlePackPress(pack.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${pack.title}. ${pack.description}`}
+                    accessibilityState={{ selected: isSelected }}
+                  >
+                    <View style={[styles.packChipIcon, { backgroundColor: `${pack.color}18` }]}>
+                      <Text style={styles.packChipEmoji}>{pack.icon}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.packChipText,
+                        { color: isSelected ? pack.color : theme.text.primary },
+                      ]}
+                    >
+                      {pack.shortLabel}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
 
           {/* Search Bar */}
           <SearchBar
@@ -637,29 +800,60 @@ export default function BreaksScreen() {
             theme={theme}
           />
 
+          {!hasActiveSubscription && !isFiltering && (
+            <UpgradePrompt
+              title={`Unlock the full ${selectedPack.title} library`}
+              subtitle={`You currently have ${starterExerciseCount} starter sessions. Pro opens ${lockedExerciseCount} more guided breaks, including deeper ${selectedPack.shortLabel.toLowerCase()} reset options.`}
+              bullets={PRO_LIBRARY_HIGHLIGHTS}
+              ctaLabel="Preview Pro Library"
+              onPress={openProPreview}
+              icon="sparkles"
+              accentColors={FEATURED_GRADIENT}
+            />
+          )}
+
           {/* Featured Break - only show when not filtering */}
-          {!isFiltering && (
+          {!isFiltering && featuredBreak && (
             <Pressable onPress={handleFeaturedPress}>
               <Animated.View style={[styles.featuredCard, featuredStyle]}>
                 <LinearGradient
-                  colors={FEATURED_BREAK.gradient}
+                  colors={FEATURED_GRADIENT}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.featuredContent}>
                   <View style={styles.featuredBadge}>
-                    <Ionicons name="star" size={12} color="#000" />
-                    <Text style={styles.featuredBadgeText}>FEATURED</Text>
+                    <Ionicons
+                      name={featuredBreak.isLocked ? 'lock-closed' : 'star'}
+                      size={12}
+                      color="#000"
+                    />
+                    <Text style={styles.featuredBadgeText}>
+                      {featuredBreak.isLocked ? 'PRO STARTER' : 'START HERE'}
+                    </Text>
                   </View>
-                  <Text style={styles.featuredIcon}>{FEATURED_BREAK.icon}</Text>
-                  <Text style={styles.featuredTitle}>{FEATURED_BREAK.title}</Text>
-                  <Text style={styles.featuredDescription}>{FEATURED_BREAK.description}</Text>
+                  <Text style={styles.featuredIcon}>{selectedPack.icon}</Text>
+                  <Text style={styles.featuredTitle}>{selectedPack.title}</Text>
+                  <Text style={styles.featuredDescription}>
+                    {selectedPack.description} Start with {featuredBreak.title} for a fast {featuredBreak.duration} guided reset.
+                  </Text>
                   <View style={styles.featuredFooter}>
-                    <Text style={styles.featuredDuration}>{FEATURED_BREAK.duration}</Text>
+                    <View>
+                      <Text style={styles.featuredDuration}>{featuredBreak.title}</Text>
+                      <Text style={styles.featuredLibraryMeta}>
+                        {packStarterCount}/{packLibraryCount} unlocked in this pack
+                      </Text>
+                    </View>
                     <View style={styles.featuredButton}>
-                      <Text style={styles.featuredButtonText}>Start</Text>
-                      <Ionicons name="play" size={16} color="#000" />
+                      <Text style={styles.featuredButtonText}>
+                        {featuredBreak.isLocked ? 'Unlock Pro' : 'Start'}
+                      </Text>
+                      <Ionicons
+                        name={featuredBreak.isLocked ? 'lock-open' : 'play'}
+                        size={16}
+                        color="#000"
+                      />
                     </View>
                   </View>
                 </View>
@@ -748,6 +942,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.6)',
   },
+  packSection: {
+    marginBottom: Spacing.lg,
+  },
+  packSectionHeader: {
+    marginBottom: Spacing.sm,
+  },
+  packSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  packSectionSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  packRail: {
+    paddingRight: Spacing.lg,
+    gap: 10,
+  },
+  packChip: {
+    minWidth: 92,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  packChipIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  packChipEmoji: {
+    fontSize: 20,
+  },
+  packChipText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
   featuredCard: {
     borderRadius: 24,
     overflow: 'hidden',
@@ -796,6 +1033,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#000',
+  },
+  featuredLibraryMeta: {
+    fontSize: 12,
+    color: 'rgba(0, 0, 0, 0.65)',
+    marginTop: 2,
   },
   featuredButton: {
     flexDirection: 'row',

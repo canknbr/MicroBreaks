@@ -22,7 +22,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { captureError, addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
-import { RenderError, ErrorSeverity, ErrorCategory } from '@/services/error/types';
+import { RenderError } from '@/services/error/types';
 
 // ============================================
 // Types
@@ -31,9 +31,9 @@ import { RenderError, ErrorSeverity, ErrorCategory } from '@/services/error/type
 interface ErrorBoundaryProps {
   children: ReactNode;
   /** Fallback UI component */
-  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
+  fallback?: ReactNode | ((_error: Error, _reset: () => void) => ReactNode);
   /** Callback when error occurs */
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onError?: (_error: Error, _errorInfo: ErrorInfo) => void;
   /** Component name for error context */
   componentName?: string;
   /** Whether to show detailed error in dev */

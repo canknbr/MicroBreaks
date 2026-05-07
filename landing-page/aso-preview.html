@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MicroBreaks ASO Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0F766E;
+            --accent: #F59E0B;
+            --ink: #10211D;
+            --muted: #5B6B66;
+            --surface: rgba(255,255,255,0.88);
+            --line: rgba(16,33,29,0.08);
+            --bg: #F3F8F6;
+            --white: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 26%),
+                linear-gradient(180deg, #F8FBFA 0%, #FFFFFF 42%, #F3F8F6 100%);
+        }
+
+        .container {
+            width: min(1240px, calc(100% - 40px));
+            margin: 0 auto;
+        }
+
+        header {
+            padding: 46px 0 28px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.04em;
+        }
+
+        h1 {
+            font-size: 56px;
+            line-height: 1.02;
+            margin-bottom: 16px;
+            max-width: 760px;
+        }
+
+        .intro {
+            max-width: 760px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 22px 0 32px;
+        }
+
+        .toolbar-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .locale-toggle {
+            display: inline-flex;
+            background: rgba(16,33,29,0.06);
+            border-radius: 999px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .locale-button,
+        .device-button {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .locale-button.active,
+        .device-button.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .device-toggle {
+            display: inline-flex;
+            flex-wrap: wrap;
+            background: rgba(16,33,29,0.06);
+            border-radius: 999px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .shot-filter {
+            min-height: 42px;
+            min-width: 170px;
+            border-radius: 999px;
+            border: 1px solid rgba(16,33,29,0.08);
+            background: rgba(255,255,255,0.88);
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 0 16px;
+            outline: none;
+        }
+
+        .toolbar-note {
+            color: var(--muted);
+            font-size: 14px;
+            max-width: 360px;
+            line-height: 1.6;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .summary-card {
+            padding: 18px 20px;
+            border-radius: 22px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+        }
+
+        .summary-card strong {
+            display: block;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 30px;
+            margin-bottom: 6px;
+        }
+
+        .summary-card span {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .shots {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+            padding-bottom: 56px;
+        }
+
+        .shot-card {
+            display: grid;
+            grid-template-columns: 310px minmax(0, 1fr);
+            gap: 22px;
+            padding: 22px;
+            border-radius: 28px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: 0 16px 34px rgba(16,33,29,0.06);
+        }
+
+        .device-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: var(--device-aspect-ratio, 1290 / 2796);
+            border-radius: 38px;
+            padding: 16px;
+            background: linear-gradient(180deg, #091513 0%, #1A2B28 100%);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .device-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+                linear-gradient(180deg, #F6FAF8 0%, #FFFFFF 55%, #EEF6F3 100%);
+            position: relative;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            padding: 32px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .overlay-copy {
+            max-width: 88%;
+        }
+
+        .overlay-label {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: rgba(15,118,110,0.12);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .overlay h3 {
+            font-size: 34px;
+            line-height: 1.02;
+            margin-bottom: 12px;
+            max-width: 96%;
+        }
+
+        .overlay p {
+            font-size: 15px;
+            line-height: 1.45;
+            color: #29423C;
+            max-width: 92%;
+        }
+
+        .mock-ui {
+            align-self: stretch;
+            display: grid;
+            gap: 10px;
+        }
+
+        .ui-chip-row,
+        .ui-card,
+        .ui-chart,
+        .ui-list-row {
+            background: rgba(255,255,255,0.84);
+            border: 1px solid rgba(16,33,29,0.06);
+            box-shadow: 0 10px 18px rgba(16,33,29,0.05);
+        }
+
+        .ui-chip-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 16px;
+        }
+
+        .ui-chip {
+            flex: 1;
+            min-height: 36px;
+            border-radius: 999px;
+            background: rgba(15,118,110,0.08);
+        }
+
+        .ui-card {
+            border-radius: 22px;
+            min-height: 170px;
+            padding: 18px;
+        }
+
+        .ui-card strong {
+            display: block;
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .ui-line {
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(16,33,29,0.08);
+            margin-bottom: 10px;
+        }
+
+        .ui-line.short { width: 48%; }
+        .ui-line.medium { width: 72%; }
+        .ui-line.long { width: 88%; }
+
+        .ui-chart {
+            border-radius: 22px;
+            min-height: 180px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            align-items: end;
+            padding: 18px;
+        }
+
+        .ui-bar {
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(15,118,110,0.82), rgba(245,158,11,0.78));
+        }
+
+        .ui-list-row {
+            border-radius: 18px;
+            min-height: 62px;
+            padding: 14px 16px;
+        }
+
+        .shot-meta h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .shot-meta p {
+            color: var(--muted);
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .meta-list {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .meta-item {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(16,33,29,0.04);
+        }
+
+        .meta-item strong {
+            display: block;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .meta-item span {
+            color: var(--ink);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .export-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: rgba(245,158,11,0.14);
+            color: #8A5200;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .frame-meta {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 1100px) {
+            .shots {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 860px) {
+            h1 {
+                font-size: 40px;
+            }
+
+            .summary-grid,
+            .shot-card {
+                grid-template-columns: 1fr;
+            }
+
+            .shot-card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="eyebrow">Release preview surface</div>
+            <h1>ASO screenshot copy preview for consumer store listings.</h1>
+            <p class="intro">This page is a static review surface for copy, order, locale, and capture intent. It does not require final screenshot exports to exist yet, so marketing, product, and design can align before the asset pass begins.</p>
+        </header>
+
+        <div class="toolbar">
+            <div class="toolbar-controls">
+                <div class="locale-toggle" role="tablist" aria-label="ASO locale preview">
+                    <button class="locale-button active" data-locale="en" type="button">English</button>
+                    <button class="locale-button" data-locale="tr" type="button">Turkish</button>
+                </div>
+                <div class="device-toggle" role="tablist" aria-label="ASO device preview">
+                    <button class="device-button active" data-device="ios67" type="button">iOS 6.7</button>
+                    <button class="device-button" data-device="ios65" type="button">iOS 6.5</button>
+                    <button class="device-button" data-device="ios55" type="button">iOS 5.5</button>
+                    <button class="device-button" data-device="android" type="button">Android</button>
+                </div>
+                <select class="shot-filter" id="shot-filter" aria-label="Filter screenshots">
+                    <option value="all">All screenshots</option>
+                </select>
+            </div>
+            <p class="toolbar-note">Order, copy, export names, and aspect ratio presets stay aligned with the desk-recovery positioning docs.</p>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <strong>6</strong>
+                <span>portrait screenshots in the recommended first sequence</span>
+            </div>
+            <div class="summary-card">
+                <strong>1 job</strong>
+                <span>per frame: explain, prove, deepen, trust, or convert</span>
+            </div>
+            <div class="summary-card">
+                <strong>Symptom-first</strong>
+                <span>copy that sounds like desk recovery, not generic wellness</span>
+            </div>
+        </div>
+
+        <main class="shots" id="shots"></main>
+    </div>
+
+    <script src="aso-screenshots.js"></script>
+    <script>
+        (function () {
+            var data = window.MICROBREAKS_ASO_SCREENSHOTS;
+            var params = new URLSearchParams(window.location.search);
+            var activeLocale = params.get('locale') || 'en';
+            var activeDevice = params.get('device') || 'ios67';
+            var activeShot = params.get('shot') || 'all';
+            var shotsRoot = document.getElementById('shots');
+            var localeButtons = Array.prototype.slice.call(document.querySelectorAll('.locale-button'));
+            var deviceButtons = Array.prototype.slice.call(document.querySelectorAll('.device-button'));
+            var shotFilter = document.getElementById('shot-filter');
+
+            if (!data.locales[activeLocale]) {
+                activeLocale = 'en';
+            }
+
+            if (!data.devicePresets[activeDevice]) {
+                activeDevice = 'ios67';
+            }
+
+            function updateQuery() {
+                var nextParams = new URLSearchParams();
+                nextParams.set('locale', activeLocale);
+                nextParams.set('device', activeDevice);
+                if (activeShot !== 'all') {
+                    nextParams.set('shot', activeShot);
+                }
+                window.history.replaceState({}, '', window.location.pathname + '?' + nextParams.toString());
+            }
+
+            function createBars() {
+                var heights = ['58%', '76%', '42%', '88%', '54%', '68%'];
+                return heights.map(function (height) {
+                    return '<div class="ui-bar" style="height:' + height + ';"></div>';
+                }).join('');
+            }
+
+            function renderScreenshot(shot, index) {
+                var device = data.devicePresets[activeDevice];
+                var exportName = shot.exportName.replace(/^ios-67|^ios-65|^ios-55|^android/, device.exportPrefix);
+                return [
+                    '<article class="shot-card">',
+                        '<div class="device-frame">',
+                            '<div class="device-screen">',
+                                '<div class="overlay">',
+                                    '<div class="overlay-copy">',
+                                        '<div class="overlay-label">Screenshot ' + (index + 1) + '</div>',
+                                        '<h3>' + shot.title + '</h3>',
+                                        '<p>' + shot.subtitle + '</p>',
+                                    '</div>',
+                                    '<div class="mock-ui">',
+                                        '<div class="ui-chip-row">',
+                                            '<div class="ui-chip"></div>',
+                                            '<div class="ui-chip"></div>',
+                                            '<div class="ui-chip"></div>',
+                                        '</div>',
+                                        '<div class="ui-card">',
+                                            '<strong>' + shot.surface + '</strong>',
+                                            '<div class="ui-line long"></div>',
+                                            '<div class="ui-line medium"></div>',
+                                            '<div class="ui-line short"></div>',
+                                        '</div>',
+                                        (shot.id === '05-recovery'
+                                            ? '<div class="ui-chart">' + createBars() + '</div>'
+                                            : '<div class="ui-list-row"><div class="ui-line long"></div><div class="ui-line medium"></div></div>'),
+                                    '</div>',
+                                '</div>',
+                            '</div>',
+                        '</div>',
+                        '<div class="shot-meta">',
+                            '<h2>' + shot.id.toUpperCase().replace('-', ' ') + '</h2>',
+                            '<p>This frame should communicate one thing fast and keep the UI legible enough for store-preview scanning.</p>',
+                            '<div class="meta-list">',
+                                '<div class="meta-item"><strong>Surface</strong><span>' + shot.surface + '</span></div>',
+                                '<div class="meta-item"><strong>Capture Note</strong><span>' + shot.captureNote + '</span></div>',
+                                '<div class="meta-item"><strong>Headline</strong><span>' + shot.title + '</span></div>',
+                                '<div class="meta-item"><strong>Subheadline</strong><span>' + shot.subtitle + '</span></div>',
+                            '</div>',
+                            '<div class="export-pill">' + exportName + '</div>',
+                            '<p class="frame-meta">Preview preset: ' + device.label + ' • aspect ratio ' + device.aspectRatio + '</p>',
+                        '</div>',
+                    '</article>'
+                ].join('');
+            }
+
+            function hydrateShotFilter() {
+                var localeData = data.locales[activeLocale];
+                var options = ['<option value="all">All screenshots</option>'].concat(
+                    localeData.screenshots.map(function (shot, index) {
+                        return '<option value="' + shot.id + '">Screenshot ' + (index + 1) + ' • ' + shot.id + '</option>';
+                    })
+                );
+                shotFilter.innerHTML = options.join('');
+
+                var hasMatchingShot = localeData.screenshots.some(function (shot) {
+                    return shot.id === activeShot;
+                });
+                shotFilter.value = hasMatchingShot ? activeShot : 'all';
+                if (!hasMatchingShot) {
+                    activeShot = 'all';
+                }
+            }
+
+            function render() {
+                document.documentElement.style.setProperty('--device-aspect-ratio', data.devicePresets[activeDevice].aspectRatio);
+                var localeData = data.locales[activeLocale];
+                hydrateShotFilter();
+                var visibleShots = localeData.screenshots.filter(function (shot) {
+                    return activeShot === 'all' || shot.id === activeShot;
+                });
+                shotsRoot.innerHTML = visibleShots.map(renderScreenshot).join('');
+                localeButtons.forEach(function (button) {
+                    button.classList.toggle('active', button.getAttribute('data-locale') === activeLocale);
+                });
+                deviceButtons.forEach(function (button) {
+                    button.classList.toggle('active', button.getAttribute('data-device') === activeDevice);
+                });
+                updateQuery();
+            }
+
+            localeButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    activeLocale = button.getAttribute('data-locale') || 'en';
+                    render();
+                });
+            });
+
+            deviceButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    activeDevice = button.getAttribute('data-device') || 'ios67';
+                    render();
+                });
+            });
+
+            shotFilter.addEventListener('change', function () {
+                activeShot = shotFilter.value || 'all';
+                render();
+            });
+
+            render();
+        })();
+    </script>
+</body>
+</html>

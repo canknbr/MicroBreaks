@@ -95,7 +95,7 @@ export default function ProgressRing({
         )
       );
     }
-  }, [progress, delay, showPulse]);
+  }, [animatedProgress, delay, progress, pulseOpacity, pulseScale, showPulse]);
 
   // Create arc path based on current progress
   const createArcPath = () => {

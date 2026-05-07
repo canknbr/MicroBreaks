@@ -87,12 +87,12 @@ This document outlines all required and recommended assets for App Store and Goo
 
 | # | Focus | Title (EN) | Title (TR) |
 |---|-------|------------|------------|
-| 1 | Hero/Welcome | Smart Breaks for Healthier Screen Time | Daha Sağlıklı Ekran Süresi için Akıllı Molalar |
-| 2 | Reminders | Get Reminded at the Perfect Time | Tam Zamanında Hatırlatma Alın |
-| 3 | Exercises | 50+ Guided Exercises | 50+ Rehberli Egzersiz |
-| 4 | Categories | Eyes • Neck • Back • Wrists • Breathing | Göz • Boyun • Sırt • Bilek • Nefes |
-| 5 | Progress | Track Your Healthy Habits | Sağlıklı Alışkanlıklarınızı Takip Edin |
-| 6 | Privacy | Your Data Stays Private | Verileriniz Gizli Kalır |
+| 1 | Home | Eyes tired? Start here. | Gözlerin yoruldu mu? Buradan başla. |
+| 2 | Timer | Build a better work rhythm. | Daha iyi bir çalışma ritmi kur. |
+| 3 | Guided Session | Reset neck, posture, and breathing fast. | Boyun, duruş ve nefesi hızlıca resetle. |
+| 4 | Library | Go beyond starter relief. | Başlangıç rahatlamasının ötesine geç. |
+| 5 | Recovery Story | See your weekly recovery story. | Haftalık recovery hikayeni gör. |
+| 6 | Trust | Stay private. Keep improving. | Gizli kal. Daha iyi hissetmeye devam et. |
 
 ### Screenshot Design Guidelines
 - Show actual app UI (not mockups)
@@ -218,7 +218,7 @@ This document outlines all required and recommended assets for App Store and Goo
 - **Android:** Roboto (all)
 
 ### Marketing Fonts
-- **Headings:** Inter Bold
+- **Headings:** Space Grotesk Bold
 - **Body:** Inter Regular
 
 ---

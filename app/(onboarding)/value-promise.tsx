@@ -46,7 +46,7 @@ function BenefitCard({ benefit, index }: { benefit: typeof BENEFITS[0]; index: n
     const easing = Easing.out(Easing.cubic);
     cardOpacity.value = withDelay(250 + index * 100, withTiming(1, { duration: 400, easing }));
     cardTranslateX.value = withDelay(250 + index * 100, withTiming(0, { duration: 500, easing }));
-  }, []);
+  }, [cardOpacity, cardTranslateX, index]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,
@@ -78,7 +78,7 @@ export default function ValuePromiseScreen() {
 
   useEffect(() => {
     buttonsOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-  }, []);
+  }, [buttonsOpacity]);
 
   const buttonsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: buttonsOpacity.value,

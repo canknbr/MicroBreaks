@@ -87,7 +87,7 @@ export default function EmptyState({ type, onAction }: EmptyStateProps) {
         true
       )
     );
-  }, []);
+  }, [iconPulse, opacity, scale]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -176,9 +176,6 @@ const styles = StyleSheet.create({
     padding: 32,
     alignItems: 'center',
     marginVertical: 20,
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.95)',
   },
   gradientOverlay: {
     ...StyleSheet.absoluteFillObject,

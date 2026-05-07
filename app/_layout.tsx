@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
@@ -17,9 +18,13 @@ import {
   scheduleBreakReminder,
 } from '@/services/notifications';
 import { analytics } from '@/services/analytics';
+import { billingService } from '@/services/billing';
 import { initializeFirebase } from '@/services/firebase/config';
-import { initializeCrashlytics } from '@/services/firebase/crashlytics-adapter';
-import { initializeAuth } from '@/services/firebase/auth';
+import {
+  initializeCrashlytics,
+  setUser as setCrashlyticsUser,
+} from '@/services/firebase/crashlytics-adapter';
+import { initializeAuth, onAuthStateChanged } from '@/services/firebase/auth';
 import { initializeFirestore } from '@/services/firebase/firestore';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
@@ -52,6 +57,62 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
   const [appIsReady, setAppIsReady] = useState(false);
   const tokenRefreshUnsubRef = useRef<(() => void) | null>(null);
+  const authStateUnsubRef = useRef<(() => void) | null>(null);
+  const activeUserIdRef = useRef<string | null>(null);
+
+  const teardownUserSession = useCallback(() => {
+    if (tokenRefreshUnsubRef.current) {
+      tokenRefreshUnsubRef.current();
+      tokenRefreshUnsubRef.current = null;
+    }
+
+    syncService.shutdown();
+    analytics.setUserId(null);
+    analytics.setUserProperties({
+      auth_type: null,
+      sync_enabled: false,
+      subscription_status: null,
+      subscription_offer_id: null,
+      subscription_entitlement: null,
+      billing_provider: null,
+      has_pro_access: false,
+      billing_preview_mode: false,
+    });
+    setCrashlyticsUser(null);
+    activeUserIdRef.current = null;
+  }, []);
+
+  const bindUserSession = useCallback(async (user: FirebaseAuthTypes.User) => {
+    if (activeUserIdRef.current === user.uid) {
+      return;
+    }
+
+    if (activeUserIdRef.current && activeUserIdRef.current !== user.uid) {
+      teardownUserSession();
+    }
+
+    activeUserIdRef.current = user.uid;
+
+    analytics.setUserId(user.uid);
+    analytics.setUserProperties({
+      auth_type: user.isAnonymous ? 'anonymous' : 'authenticated',
+      sync_enabled: true,
+    });
+    setCrashlyticsUser(user.uid);
+
+    await billingService.initialize({ appUserId: user.uid });
+    await syncService.initialize(user.uid);
+
+    try {
+      await registerForPushNotifications(user.uid);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Failed to register for push notifications:', error);
+      }
+    }
+
+    tokenRefreshUnsubRef.current = onTokenRefresh(user.uid);
+  }, [teardownUserSession]);
 
   useEffect(() => {
     async function prepare() {
@@ -65,19 +126,6 @@ export default function RootLayout() {
         // Initialize Firestore
         await initializeFirestore();
 
-        // Initialize Auth, start sync, and register for push
-        const user = await initializeAuth();
-        if (user) {
-          await syncService.initialize(user.uid);
-          try {
-            await registerForPushNotifications(user.uid);
-          } catch (e) {
-            if (__DEV__) console.warn('Failed to register for push notifications:', e);
-          }
-          const unsubTokenRefresh = onTokenRefresh(user.uid);
-          tokenRefreshUnsubRef.current = unsubTokenRefresh;
-        }
-
         // Initialize notifications
         await initializeNotifications();
 
@@ -89,6 +137,20 @@ export default function RootLayout() {
 
         // Initialize timer service (foreground tick + AppState handler)
         initializeTimerService();
+
+        authStateUnsubRef.current = onAuthStateChanged((user) => {
+          if (user) {
+            void bindUserSession(user);
+            return;
+          }
+
+          teardownUserSession();
+        });
+
+        const user = await initializeAuth();
+        if (user) {
+          await bindUserSession(user);
+        }
 
         // Artificial delay to ensure smooth experience
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -102,21 +164,30 @@ export default function RootLayout() {
     prepare();
 
     return () => {
-      // Cleanup sync, analytics, and timer on unmount
-      syncService.shutdown();
+      if (authStateUnsubRef.current) {
+        authStateUnsubRef.current();
+        authStateUnsubRef.current = null;
+      }
+      teardownUserSession();
       void analytics.shutdown();
       shutdownTimerService();
-      if (tokenRefreshUnsubRef.current) {
-        tokenRefreshUnsubRef.current();
-        tokenRefreshUnsubRef.current = null;
-      }
     };
-  }, []);
+  }, [bindUserSession, teardownUserSession]);
 
   // Handle app state changes to reschedule break reminders
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
+        if (billingService.isReady) {
+          try {
+            await billingService.refreshCustomerState();
+          } catch (error) {
+            if (__DEV__) {
+              console.warn('Failed to refresh billing state on foreground:', error);
+            }
+          }
+        }
+
         // App came to foreground, reschedule break reminder
         try {
           await scheduleBreakReminder();
@@ -187,6 +258,14 @@ export default function RootLayout() {
                 options={{
                   presentation: 'modal',
                   animation: 'slide_from_right',
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="subscription"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
                   headerShown: false,
                 }}
               />

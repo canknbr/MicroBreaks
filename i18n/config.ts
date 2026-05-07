@@ -131,7 +131,7 @@ const i18nConfig: InitOptions = {
   interpolation: {
     escapeValue: false, // React already escapes
     formatSeparator: ',',
-    format: (value, format, lng) => {
+    format: (value, format, _lng) => {
       if (format === 'uppercase') return value?.toUpperCase();
       if (format === 'lowercase') return value?.toLowerCase();
       if (format === 'capitalize') {
@@ -155,7 +155,7 @@ const i18nConfig: InitOptions = {
 
   // Missing key handling
   saveMissing: __DEV__,
-  missingKeyHandler: (lngs, ns, key, fallbackValue) => {
+  missingKeyHandler: (lngs, _ns, key, _fallbackValue) => {
     if (__DEV__) {
       console.warn(`[i18n] Missing translation: ${key} in ${lngs.join(', ')}`);
     }

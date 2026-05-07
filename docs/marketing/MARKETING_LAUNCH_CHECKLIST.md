@@ -18,7 +18,9 @@ Complete guide for MicroBreaks marketing activities before, during, and after la
 #### Website/Landing Page
 - [ ] Domain purchased (microbreaks.app)
 - [ ] Landing page live
+- [ ] Teams pilot landing live
 - [ ] Email capture form working
+- [ ] Web analytics provider IDs configured
 - [ ] Privacy Policy page published
 - [ ] Terms of Service page published
 - [ ] Support page created
@@ -36,6 +38,8 @@ Complete guide for MicroBreaks marketing activities before, during, and after la
 
 #### Content Creation
 - [ ] 6 App Store screenshots per device
+- [ ] Screenshot copy aligned to desk-recovery positioning
+- [ ] ASO preview page reviewed in EN and TR
 - [ ] App preview video (15-30s)
 - [ ] Social media content calendar (4 weeks)
 - [ ] Launch announcement graphics
@@ -58,7 +62,7 @@ Complete guide for MicroBreaks marketing activities before, during, and after la
 - [ ] Preview video uploaded
 - [ ] App categories selected
 - [ ] Age rating completed
-- [ ] Pricing set (Free)
+- [ ] Pricing and monetization messaging finalized
 
 #### Beta Testing
 - [ ] Beta feedback collected

@@ -27,7 +27,7 @@ export default function OfflineBanner() {
       translateY.value = withTiming(-50, { duration: 300 });
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [isOffline]);
+  }, [isOffline, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

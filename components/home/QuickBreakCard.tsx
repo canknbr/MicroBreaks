@@ -152,10 +152,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginRight: 12,
   },
-  androidFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-    borderRadius: 20,
-  },
   highlight: {
     position: 'absolute',
     top: 0,

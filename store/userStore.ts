@@ -71,14 +71,14 @@ interface UserState {
   trackBreakCompletion: (category: string, durationMinutes: number) => void;
 }
 
-const initialProfile: UserProfile = {
+export const initialUserProfile: UserProfile = {
   name: 'User',
   avatar: null,
   email: null,
   joinedAt: new Date().toISOString(),
 };
 
-const initialProgress: UserProgress = {
+export const initialUserProgress: UserProgress = {
   level: 1,
   totalXP: 0,
   totalBreaks: 0,
@@ -88,12 +88,12 @@ const initialProgress: UserProgress = {
   dailyGoal: 5,
 };
 
-const initialPreferences: UserPreferences = {
+export const initialUserPreferences: UserPreferences = {
   favoriteBreaks: [],
   recentBreaks: [],
 };
 
-const initialAchievements: UserAchievements = {
+export const initialUserAchievements: UserAchievements = {
   unlockedIds: [],
   unlockedAt: {},
   categoryBreaks: {},
@@ -143,10 +143,10 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       // Initial State
-      profile: initialProfile,
-      progress: initialProgress,
-      preferences: initialPreferences,
-      achievements: initialAchievements,
+      profile: initialUserProfile,
+      progress: initialUserProgress,
+      preferences: initialUserPreferences,
+      achievements: initialUserAchievements,
       isAuthenticated: false,
 
       // Profile Actions
@@ -237,15 +237,15 @@ export const useUserStore = create<UserState>()(
 
       resetProgress: () =>
         set({
-          progress: initialProgress,
+          progress: initialUserProgress,
         }),
 
       signOut: () =>
         set({
-          profile: initialProfile,
-          progress: initialProgress,
-          preferences: initialPreferences,
-          achievements: initialAchievements,
+          profile: initialUserProfile,
+          progress: initialUserProgress,
+          preferences: initialUserPreferences,
+          achievements: initialUserAchievements,
           isAuthenticated: false,
         }),
 

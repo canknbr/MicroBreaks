@@ -108,7 +108,7 @@ function resetStatsIfNewDay(stats: TimerStats): TimerStats {
   return stats;
 }
 
-const initialSession: TimerSession = {
+export const initialTimerSession: TimerSession = {
   isActive: false,
   isPaused: false,
   phase: 'work',
@@ -119,14 +119,14 @@ const initialSession: TimerSession = {
   pausedAt: null,
 };
 
-const initialStats: TimerStats = {
+export const initialTimerStats: TimerStats = {
   todayFocusMinutes: 0,
   totalFocusMinutes: 0,
   todaySessionsCompleted: 0,
   lastResetDate: getTodayKey(),
 };
 
-const initialPreferences: TimerPreferences = {
+export const initialTimerPreferences: TimerPreferences = {
   selectedPresetId: DEFAULT_PRESET_ID,
   customWorkMinutes: 25,
   customBreakMinutes: 5,
@@ -177,9 +177,9 @@ export const useTimerActions = () =>
 export const useTimerStore = create<TimerState>()(
   persist(
     (set, get) => ({
-      session: initialSession,
-      stats: initialStats,
-      preferences: initialPreferences,
+      session: initialTimerSession,
+      stats: initialTimerStats,
+      preferences: initialTimerPreferences,
 
       startWorkSession: () => {
         const { preferences } = get();
@@ -310,7 +310,7 @@ export const useTimerStore = create<TimerState>()(
         const duration = getPhaseDuration('work', preferences);
         set({
           session: {
-            ...initialSession,
+            ...initialTimerSession,
             remainingSeconds: duration,
             phaseDurationSeconds: duration,
           },
@@ -340,7 +340,7 @@ export const useTimerStore = create<TimerState>()(
         set({
           preferences: newPreferences,
           session: {
-            ...initialSession,
+            ...initialTimerSession,
             remainingSeconds: duration,
             phaseDurationSeconds: duration,
           },
@@ -363,7 +363,7 @@ export const useTimerStore = create<TimerState>()(
         const duration = getPhaseDuration('work', preferences);
         set({
           session: {
-            ...initialSession,
+            ...initialTimerSession,
             remainingSeconds: duration,
             phaseDurationSeconds: duration,
           },

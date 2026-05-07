@@ -54,6 +54,7 @@
       "package": "com.cankanbur.MicroBreaks",
       "versionCode": 1,
       "permissions": [
+        "com.android.vending.BILLING",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "SCHEDULE_EXACT_ALARM",
@@ -99,16 +100,13 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notification-icon.png",
-          "color": "#4A90D9",
-          "sounds": ["./assets/sounds/notification.wav"]
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#4A90D9"
         }
       ],
       "@react-native-firebase/app",
-      "@react-native-firebase/analytics",
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/auth",
-      "@react-native-firebase/firestore",
       "@react-native-firebase/messaging"
     ],
     "experiments": {
@@ -126,9 +124,6 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "locales": {
-      "en": "./i18n/locales/en.json",
-      "tr": "./i18n/locales/tr.json"
-    }
+    "locales": {}
   }
 }
