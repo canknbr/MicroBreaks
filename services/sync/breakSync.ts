@@ -12,6 +12,10 @@ import type { CompletedBreak } from '@/services/storage';
 
 const BREAK_PULL_PAGE_SIZE = 500;
 
+function getBreakMutationTimestamp(breakItem: CompletedBreak): number {
+  return new Date(breakItem.updatedAt ?? breakItem.completedAt).getTime();
+}
+
 /**
  * Push local break history to Firestore
  * Uses batch writes for efficiency
@@ -19,9 +23,9 @@ const BREAK_PULL_PAGE_SIZE = 500;
 export async function pushBreakHistory(userId: string, lastPushAt: number | null): Promise<void> {
   const localBreaks = await getBreakHistory();
 
-  // Filter to only breaks created after last push
+  // Filter to breaks created or mutated after the last push
   const newBreaks = lastPushAt
-    ? localBreaks.filter((b) => new Date(b.completedAt).getTime() > lastPushAt)
+    ? localBreaks.filter((b) => getBreakMutationTimestamp(b) > lastPushAt)
     : localBreaks;
 
   if (newBreaks.length === 0) return;
@@ -59,8 +63,8 @@ export async function pullBreakHistory(userId: string, lastPullAt: number | null
   while (true) {
     let query: FirebaseFirestoreTypes.Query = lastPullDate
       ? breaksRef
-          .where('completedAt', '>', lastPullDate)
-          .orderBy('completedAt', 'desc')
+          .where('updatedAt', '>', lastPullDate)
+          .orderBy('updatedAt', 'desc')
           .limit(BREAK_PULL_PAGE_SIZE)
       : breaksRef.orderBy('completedAt', 'desc').limit(BREAK_PULL_PAGE_SIZE);
 
@@ -74,7 +78,13 @@ export async function pullBreakHistory(userId: string, lastPullAt: number | null
     }
 
     remoteBreaks.push(
-      ...snapshot.docs.map((doc) => doc.data() as CompletedBreak)
+      ...snapshot.docs.map((doc) => {
+        const breakItem = doc.data() as CompletedBreak;
+        return {
+          ...breakItem,
+          updatedAt: breakItem.updatedAt ?? breakItem.completedAt,
+        };
+      })
     );
 
     if (snapshot.docs.length < BREAK_PULL_PAGE_SIZE) {

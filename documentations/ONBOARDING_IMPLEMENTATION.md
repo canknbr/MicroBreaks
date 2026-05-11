@@ -1,5 +1,8 @@
 # Onboarding Flow Implementation Summary
 
+> Archived reference: this document describes the original 21-screen onboarding implementation from 2025.
+> As of May 2026, the active runtime onboarding flow is shorter; see [app/(onboarding)/README.md](/Users/can/Projects/MicroBreaks/app/(onboarding)/README.md:1) for the current path.
+
 ## Overview
 
 Successfully implemented the complete 21-screen onboarding flow for MicroBreaks as specified in `Onboarding_Flow_MicroBreaks_v3.md` and `PRD_MicroBreaks_Enhanced_v2.md`.

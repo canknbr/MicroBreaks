@@ -39,7 +39,19 @@ import { LEVEL_COLORS, LEVEL_TITLES } from '@/constants/levels';
 import { getPremiumHealthSummary } from '@/services/billing/healthSummary';
 import { replaceWithFreshAnonymousSession } from '@/services/account/sessionReset';
 import { setFirebaseCollectionPreferences } from '@/services/firebase/config';
-import { EditProfileModal, IntervalPickerModal, SettingItem, ThemePickerModal } from '@/components/profile';
+import {
+  reloadCurrentUser,
+  sendCurrentUserEmailVerification,
+  sendPasswordResetEmail,
+} from '@/services/firebase/auth';
+import {
+  AccountAccessModal,
+  type AccountAccessMode,
+  EditProfileModal,
+  IntervalPickerModal,
+  SettingItem,
+  ThemePickerModal,
+} from '@/components/profile';
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -58,6 +70,7 @@ export default function ProfileScreen() {
   // User store
   const profile = useUserStore((state) => state.profile);
   const progress = useUserStore((state) => state.progress);
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   const updateProfile = useUserStore((state) => state.updateProfile);
   const billingDiagnostics = useBillingDiagnostics();
   const entitlementHealth = useEntitlementHealth();
@@ -78,6 +91,8 @@ export default function ProfileScreen() {
 
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAccountAccess, setShowAccountAccess] = useState(false);
+  const [accountAccessMode, setAccountAccessMode] = useState<AccountAccessMode>('link');
   const [showThemePicker, setShowThemePicker] = useState(false);
 
   const headerOpacity = useSharedValue(0);
@@ -203,6 +218,11 @@ export default function ProfileScreen() {
   };
 
   const notificationsDisabled = !settings.enabled;
+  const accountTypeLabel = isAuthenticated ? 'Linked' : 'Anonymous';
+  const accountRecoveryLabel = isAuthenticated
+    ? profile.email ?? 'Email sign-in active'
+    : 'Secure My Progress';
+  const accountVerificationLabel = profile.emailVerified ? 'Verified' : 'Verification Needed';
 
   const getThemeLabel = (theme: 'dark' | 'light' | 'system') => {
     switch (theme) {
@@ -217,6 +237,56 @@ export default function ProfileScreen() {
       Alert.alert('Unable to Open Email', 'Please email us at support@microbreaks.app');
     });
   }, []);
+
+  const handleRefreshVerificationStatus = useCallback(async () => {
+    try {
+      const user = await reloadCurrentUser();
+      updateProfile({
+        email: user?.email ?? profile.email,
+        emailVerified: user?.emailVerified === true,
+        updatedAt: Date.now(),
+      });
+      Alert.alert(
+        user?.emailVerified
+          ? 'Email Verified'
+          : 'Verification Still Pending',
+        user?.emailVerified
+          ? 'Your linked email is now verified on this device.'
+          : 'We still have not seen a completed email verification for this account.'
+      );
+    } catch (_error) {
+      Alert.alert('Unable to Refresh', 'Could not refresh verification status right now.');
+    }
+  }, [profile.email, updateProfile]);
+
+  const handleSendVerificationEmail = useCallback(async () => {
+    try {
+      await sendCurrentUserEmailVerification();
+      Alert.alert(
+        'Verification Email Sent',
+        'Check your inbox and then return here to refresh the verification status.'
+      );
+    } catch (_error) {
+      Alert.alert('Unable to Send', 'Could not send a verification email right now.');
+    }
+  }, []);
+
+  const handleSendPasswordReset = useCallback(async () => {
+    if (!profile.email) {
+      Alert.alert('No Linked Email', 'Link an email first before requesting a password reset.');
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(profile.email);
+      Alert.alert(
+        'Reset Email Sent',
+        'If this linked email is active, a password reset link is on its way.'
+      );
+    } catch (_error) {
+      Alert.alert('Unable to Send', 'Could not send a password reset email right now.');
+    }
+  }, [profile.email]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
@@ -470,6 +540,125 @@ export default function ProfileScreen() {
               </View>
             </Animated.View>
           </Pressable>
+
+          {/* Account Section */}
+          <View style={styles.settingsSection}>
+            <Text style={[styles.sectionHeader, { color: theme.text.muted }]} accessibilityRole="header">ACCOUNT</Text>
+            <View style={[
+              styles.sectionCard,
+              {
+                borderColor: theme.isDark ? theme.border.subtle : 'transparent',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: theme.isDark ? 0 : 0.06,
+                shadowRadius: 12,
+                elevation: theme.isDark ? 0 : 4,
+              },
+            ]}>
+              {theme.isDark ? (
+                Platform.OS === 'ios' ? (
+                  <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
+                )
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background.card }]} />
+              )}
+              <SettingItem
+                icon="person-circle"
+                label="Account Type"
+                type="value"
+                value={accountTypeLabel}
+                delay={350}
+                index={0}
+                theme={theme}
+              />
+              <SettingItem
+                icon={isAuthenticated ? 'mail' : 'lock-closed'}
+                label={isAuthenticated ? 'Linked Email' : 'Secure My Progress'}
+                type={isAuthenticated ? 'value' : 'arrow'}
+                value={isAuthenticated ? accountRecoveryLabel : undefined}
+                onPress={isAuthenticated ? undefined : () => {
+                  setAccountAccessMode('link');
+                  setShowAccountAccess(true);
+                }}
+                delay={350}
+                index={1}
+                theme={theme}
+              />
+              {isAuthenticated ? (
+                <SettingItem
+                  icon={profile.emailVerified ? 'checkmark-circle' : 'alert-circle'}
+                  label="Email Status"
+                  type="value"
+                  value={accountVerificationLabel}
+                  delay={350}
+                  index={2}
+                  theme={theme}
+                />
+              ) : null}
+              {!isAuthenticated ? (
+                <SettingItem
+                  icon="log-in"
+                  label="Restore Linked Account"
+                  type="arrow"
+                  onPress={() => {
+                    setAccountAccessMode('sign_in');
+                    setShowAccountAccess(true);
+                  }}
+                  delay={350}
+                  index={2}
+                  theme={theme}
+                />
+              ) : null}
+              {isAuthenticated && !profile.emailVerified ? (
+                <SettingItem
+                  icon="mail-open"
+                  label="Resend Verification Email"
+                  type="arrow"
+                  onPress={() => {
+                    void handleSendVerificationEmail();
+                  }}
+                  delay={350}
+                  index={3}
+                  theme={theme}
+                />
+              ) : null}
+              {isAuthenticated ? (
+                <SettingItem
+                  icon="refresh-circle"
+                  label="Refresh Verification Status"
+                  type="arrow"
+                  onPress={() => {
+                    void handleRefreshVerificationStatus();
+                  }}
+                  delay={350}
+                  index={profile.emailVerified ? 3 : 4}
+                  theme={theme}
+                />
+              ) : null}
+              {isAuthenticated ? (
+                <SettingItem
+                  icon="key"
+                  label="Send Password Reset Email"
+                  type="arrow"
+                  onPress={() => {
+                    void handleSendPasswordReset();
+                  }}
+                  delay={350}
+                  index={profile.emailVerified ? 4 : 5}
+                  theme={theme}
+                />
+              ) : null}
+              <Text style={[styles.accountFootnote, { color: theme.text.muted }]}>
+                {isAuthenticated
+                  ? profile.emailVerified
+                    ? 'This device is attached to a recoverable, verified email sign-in.'
+                    : 'This device is attached to a recoverable email sign-in, but verification is still pending.'
+                  : 'Link an email sign-in for this device, or sign in to restore a previously linked account.'}
+              </Text>
+            </View>
+          </View>
 
           {/* Timer Settings Section */}
           <View style={styles.settingsSection}>
@@ -918,6 +1107,13 @@ export default function ProfileScreen() {
         onClose={() => setShowEditProfile(false)}
       />
 
+      <AccountAccessModal
+        visible={showAccountAccess}
+        mode={accountAccessMode}
+        onModeChange={setAccountAccessMode}
+        onClose={() => setShowAccountAccess(false)}
+      />
+
       {/* Theme Picker Modal */}
       <ThemePickerModal
         visible={showThemePicker}
@@ -1219,6 +1415,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#06FFA5',
+  },
+  accountFootnote: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
   achievementsList: {
     paddingHorizontal: 12,

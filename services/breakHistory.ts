@@ -6,22 +6,24 @@
 import { generateId } from '@/utils/generateId';
 import {
   STORAGE_KEYS,
-  getItem,
+  getItemWithError,
   setItem,
   setItemWithError,
   CompletedBreak,
   StreakData,
   UserStats,
   DEFAULT_STREAK_DATA,
-  DEFAULT_USER_STATS,
   StorageError,
+  getStoredUserStats,
+  updateStoredUserStats,
 } from './storage';
 import {
   MAX_BREAK_HISTORY,
   MAX_STREAK_HISTORY_DAYS,
 } from '@/constants/config';
-import { validateBreakDuration, validateXP } from '@/utils/validation';
+import { calculateDailyGoal, validateBreakDuration, validateXP } from '@/utils/validation';
 import { syncService } from '@/services/sync';
+import { useUserStore } from '@/store/userStore';
 
 // Result type for save operations
 export interface SaveBreakResult {
@@ -57,16 +59,30 @@ function createDefaultStreakData(): StreakData {
   };
 }
 
-function createDefaultUserStats(): UserStats {
-  return {
-    ...DEFAULT_USER_STATS,
-  };
+function syncUserProgressProjection(stats: UserStats, streakData: StreakData): void {
+  useUserStore.setState((state) => ({
+    progress: {
+      ...state.progress,
+      level: stats.level,
+      totalXP: stats.totalXP,
+      totalBreaks: stats.totalBreaks,
+      currentStreak: streakData.currentStreak,
+      longestStreak: streakData.longestStreak,
+      weeklyGoal: stats.weeklyGoal,
+      dailyGoal: calculateDailyGoal(stats.weeklyGoal),
+    },
+  }));
 }
 
 // Get all completed breaks
 export async function getBreakHistory(): Promise<CompletedBreak[]> {
-  const history = await getItem<CompletedBreak[]>(STORAGE_KEYS.BREAK_HISTORY);
-  return history || [];
+  const result = await getItemWithError<CompletedBreak[]>(STORAGE_KEYS.BREAK_HISTORY);
+  if (result.error) {
+    await setItem(STORAGE_KEYS.BREAK_HISTORY, []);
+    return [];
+  }
+
+  return result.data || [];
 }
 
 export function getBreaksByDateRangeFromHistory(
@@ -127,6 +143,16 @@ export function getMonthBreaksFromHistory(history: CompletedBreak[]): CompletedB
   return getBreaksByDateRangeFromHistory(history, firstDay, lastDay);
 }
 
+export function getYearBreaksFromHistory(history: CompletedBreak[]): CompletedBreak[] {
+  const today = new Date();
+  const firstMonth = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+  firstMonth.setHours(0, 0, 0, 0);
+  const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  nextMonth.setHours(0, 0, 0, 0);
+
+  return getBreaksByDateRangeFromHistory(history, firstMonth, nextMonth);
+}
+
 // Get breaks for current month
 export async function getMonthBreaks(): Promise<CompletedBreak[]> {
   const history = await getBreakHistory();
@@ -154,6 +180,8 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
         xpEarned: validatedXP,
         stepsCompleted: Math.max(0, Math.round(breakData.stepsCompleted)),
         totalSteps: Math.max(1, Math.round(breakData.totalSteps)),
+        reliefScore: breakData.reliefScore ?? null,
+        updatedAt: breakData.updatedAt ?? breakData.completedAt,
       };
 
       history.unshift(newBreak); // Add to beginning
@@ -169,10 +197,12 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
       }
 
       // Update streak
-      await updateStreak();
+      const streakData = await updateStreak();
 
       // Update user stats
-      await updateUserStats(newBreak);
+      const userStats = await updateUserStats(newBreak);
+
+      syncUserProgressProjection(userStats, streakData);
 
       // Sync new break to cloud
       syncService.queueDataChange('break', newBreak);
@@ -197,24 +227,39 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
 // Update the rating on an existing break
 export async function updateBreakRating(
   breakId: string,
-  rating: CompletedBreak['rating']
+  rating: CompletedBreak['rating'],
+  reliefScore?: CompletedBreak['reliefScore']
 ): Promise<void> {
   const history = await getBreakHistory();
   const breakEntry = history.find((b) => b.id === breakId);
   if (!breakEntry) return;
+  const nextReliefScore = reliefScore ?? breakEntry.reliefScore ?? null;
+  if (breakEntry.rating === rating && (breakEntry.reliefScore ?? null) === nextReliefScore) return;
 
   breakEntry.rating = rating;
-  await setItem(STORAGE_KEYS.BREAK_HISTORY, history);
+  breakEntry.reliefScore = nextReliefScore;
+  breakEntry.updatedAt = new Date().toISOString();
+
+  const saved = await setItem(STORAGE_KEYS.BREAK_HISTORY, history);
+  if (saved) {
+    syncService.queueDataChange('break', breakEntry);
+  }
 }
 
 // Get streak data
 export async function getStreakData(): Promise<StreakData> {
-  const data = await getItem<StreakData>(STORAGE_KEYS.STREAK_DATA);
-  return data || createDefaultStreakData();
+  const result = await getItemWithError<StreakData>(STORAGE_KEYS.STREAK_DATA);
+  if (result.error) {
+    const fallback = createDefaultStreakData();
+    await setItem(STORAGE_KEYS.STREAK_DATA, fallback);
+    return fallback;
+  }
+
+  return result.data || createDefaultStreakData();
 }
 
 // Update streak based on break history
-async function updateStreak(): Promise<void> {
+async function updateStreak(): Promise<StreakData> {
   const streakData = await getStreakData();
   const today = getLocalStartOfDay(new Date());
   const todayStr = getLocalDateString(today);
@@ -262,16 +307,16 @@ async function updateStreak(): Promise<void> {
   }
 
   await setItem(STORAGE_KEYS.STREAK_DATA, streakData);
+  return streakData;
 }
 
 // Get user stats
 export async function getUserStats(): Promise<UserStats> {
-  const stats = await getItem<UserStats>(STORAGE_KEYS.USER_STATS);
-  return stats || createDefaultUserStats();
+  return getStoredUserStats();
 }
 
 // Update user stats after completing a break
-async function updateUserStats(breakData: CompletedBreak): Promise<void> {
+async function updateUserStats(breakData: CompletedBreak): Promise<UserStats> {
   const stats = await getUserStats();
 
   stats.totalBreaks += 1;
@@ -285,7 +330,7 @@ async function updateUserStats(breakData: CompletedBreak): Promise<void> {
   const weekBreaks = await getWeekBreaks();
   stats.weeklyProgress = weekBreaks.length;
 
-  await setItem(STORAGE_KEYS.USER_STATS, stats);
+  return updateStoredUserStats(stats);
 }
 
 // Get weekly data for chart (last 7 days)
@@ -375,6 +420,40 @@ export function getMonthlyChartDataFromHistory(
       date: `${dayStart.getMonth() + 1}/${dayStart.getDate()}`,
       count: dayBreaks.length,
       minutes: totalMinutes,
+    });
+  }
+
+  return result;
+}
+
+export async function getYearlyChartData(): Promise<{ month: string; count: number; minutes: number }[]> {
+  const history = await getBreakHistory();
+  return getYearlyChartDataFromHistory(history);
+}
+
+export function getYearlyChartDataFromHistory(
+  history: CompletedBreak[]
+): { month: string; count: number; minutes: number }[] {
+  const today = new Date();
+  const yearBreaks = getYearBreaksFromHistory(history);
+  const formatter = new Intl.DateTimeFormat('en-US', { month: 'short' });
+  const result: { month: string; count: number; minutes: number }[] = [];
+
+  for (let i = 11; i >= 0; i--) {
+    const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+    monthEnd.setHours(0, 0, 0, 0);
+
+    const monthBreaks = yearBreaks.filter((b) => {
+      const breakDate = new Date(b.completedAt);
+      return breakDate >= monthStart && breakDate < monthEnd;
+    });
+
+    result.push({
+      month: formatter.format(monthStart),
+      count: monthBreaks.length,
+      minutes: monthBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0),
     });
   }
 

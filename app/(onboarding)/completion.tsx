@@ -3,7 +3,7 @@
  * Premium zen celebration screen with animations
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated as RNAnimated } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -21,6 +21,21 @@ import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { useOnboardingStore, useUserStore, useNotificationStore } from '@/store';
+import { useTimerStore } from '@/store/timerStore';
+import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
+import { calculateWeeklyGoalFromBreakInterval } from '@/utils/validation';
+import { saveNotificationSettings } from '@/services/notifications';
+import {
+  syncOnboardingRuntimeState,
+} from '@/features/onboarding/runtime';
+
+function getRecoveryFocusLabel(painAreas: string[]): string {
+  if (painAreas.includes('eyes')) return 'Eye relief';
+  if (painAreas.includes('neck') || painAreas.includes('shoulders')) return 'Neck reset';
+  if (painAreas.includes('lower_back') || painAreas.includes('upper_back')) return 'Posture recovery';
+  if (painAreas.includes('wrists') || painAreas.includes('hands')) return 'Hand relief';
+  return 'Starter plan';
+}
 
 export default function CompletionScreen() {
   const router = useRouter();
@@ -32,9 +47,13 @@ export default function CompletionScreen() {
   const updateProfile = useUserStore((s) => s.updateProfile);
   const unlockAchievement = useUserStore((s) => s.unlockAchievement);
   const addXP = useUserStore((s) => s.addXP);
+  const setCustomDurations = useTimerStore((s) => s.setCustomDurations);
 
   // Notification store
   const addNotification = useNotificationStore((s) => s.addNotification);
+  const weeklyGoal = calculateWeeklyGoalFromBreakInterval(onboardingData.breakInterval);
+  const recoveryFocusLabel = getRecoveryFocusLabel(onboardingData.painAreas);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   // Animation values
   const celebrationScale = useSharedValue(0.9);
@@ -127,59 +146,50 @@ export default function CompletionScreen() {
     opacity: buttonsOpacity.value,
   }));
 
-  const handleGoToDashboard = () => {
-    // Sync onboarding data with user store
-    syncOnboardingData();
+  const handleGoToDashboard = async () => {
+    if (isCompleting) {
+      return;
+    }
 
-    // Mark onboarding as complete
-    completeOnboarding();
+    setIsCompleting(true);
 
-    // Navigate to main app
-    router.replace('/(tabs)');
-  };
+    try {
+      const result = await syncOnboardingRuntimeState(
+        onboardingData,
+        {
+          setWeeklyGoal,
+          saveNotificationSettings,
+          setCustomDurations,
+          updateProfile,
+          unlockAchievement,
+          addXP,
+          addNotification,
+        }
+      );
 
-  const syncOnboardingData = () => {
-    // Calculate weekly goal based on break interval
-    // Default: 25 min interval = ~16 breaks per 8-hour day = ~80 breaks per week
-    // We'll use a more reasonable 5 breaks per day as default
-    const breakInterval = onboardingData.breakInterval || 25;
-    const breaksPerHour = 60 / breakInterval;
-    const breaksPerDay = Math.round(breaksPerHour * 8); // 8-hour workday
-    const weeklyGoal = Math.max(breaksPerDay * 5, 20); // 5 work days, minimum 20
+      if (__DEV__ && result.errors.length > 0) {
+        console.warn('Onboarding runtime sync completed with non-fatal issues:', result.errors);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Unexpected onboarding completion failure:', error);
+      }
+    }
 
-    setWeeklyGoal(weeklyGoal);
-
-    // Update profile with joined date
-    updateProfile({
-      joinedAt: new Date().toISOString(),
-    });
-
-    // Unlock first achievement - "Health Pioneer" for completing onboarding
-    unlockAchievement('health-pioneer');
-    addXP(25); // Bonus XP for completing onboarding
-
-    // Create welcome notification
-    addNotification({
-      type: 'welcome',
-      title: 'Welcome to MicroBreaks!',
-      message: 'Your wellness journey starts now. Take your first break to earn XP!',
-      icon: '🎉',
-      color: '#06FFA5',
-    });
-
-    // Create achievement notification
-    addNotification({
-      type: 'achievement',
-      title: 'Achievement Unlocked!',
-      message: 'Health Pioneer: Completed your wellness setup. +25 XP',
-      icon: '🏆',
-      color: '#FFD166',
-      data: { achievementTitle: 'Health Pioneer', xpReward: 25 },
-    });
+    try {
+      completeOnboarding();
+    } finally {
+      router.replace('/(tabs)');
+    }
   };
 
   return (
-    <OnboardingLayout currentStep={21} showProgress={false} ambientColor="gold">
+    <OnboardingLayout
+      currentStep={ACTIVE_ONBOARDING_TOTAL_STEPS}
+      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
+      showProgress={false}
+      ambientColor="gold"
+    >
       <View style={styles.container}>
         {/* Celebration */}
         <View style={styles.celebrationContainer}>
@@ -207,19 +217,19 @@ export default function CompletionScreen() {
         <Animated.View style={[styles.summaryContainer, cardsAnimatedStyle]}>
           <View style={styles.summaryCard}>
             <Ionicons name="time-outline" size={28} color={ZenColors.primary.main} />
-            <Text style={styles.summaryValue}>50 min</Text>
+            <Text style={styles.summaryValue}>{onboardingData.breakInterval} min</Text>
             <Text style={styles.summaryLabel}>First break in</Text>
           </View>
 
           <View style={styles.summaryCard}>
             <Ionicons name="trending-up-outline" size={28} color={ZenColors.secondary.main} />
-            <Text style={styles.summaryValue}>Starting</Text>
-            <Text style={styles.summaryLabel}>Health score</Text>
+            <Text style={styles.summaryValue}>{recoveryFocusLabel}</Text>
+            <Text style={styles.summaryLabel}>Recovery focus</Text>
           </View>
 
           <View style={styles.summaryCard}>
             <Ionicons name="flag-outline" size={28} color={ZenColors.accent.main} />
-            <Text style={styles.summaryValue}>10</Text>
+            <Text style={styles.summaryValue}>{weeklyGoal}</Text>
             <Text style={styles.summaryLabel}>Weekly goal</Text>
           </View>
         </Animated.View>
@@ -234,8 +244,8 @@ export default function CompletionScreen() {
               style={styles.ringGradient}
             />
             <View style={styles.ringInner}>
-              <Text style={styles.progressValue}>0%</Text>
-              <Text style={styles.progressSubtext}>Complete</Text>
+              <Text style={styles.progressValue}>Day 1</Text>
+              <Text style={styles.progressSubtext}>Ready</Text>
             </View>
           </View>
           <Text style={styles.progressLabel}>
@@ -246,7 +256,9 @@ export default function CompletionScreen() {
         {/* Tip */}
         <View style={styles.tipContainer}>
           <Ionicons name="bulb-outline" size={18} color={ZenColors.accent.main} />
-          <Text style={styles.tipText}>Keep the app open for best results</Text>
+          <Text style={styles.tipText}>
+            Reminders help you come back later, but you can start your first reset anytime from Home.
+          </Text>
         </View>
 
         <View style={styles.spacer} />
@@ -257,6 +269,8 @@ export default function CompletionScreen() {
             onPress={handleGoToDashboard}
             size="large"
             variant="primary"
+            disabled={isCompleting}
+            loading={isCompleting}
           />
         </Animated.View>
       </View>

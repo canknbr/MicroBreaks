@@ -9,21 +9,43 @@ let offlinePersistenceEnabled = false;
 const DELETE_BATCH_SIZE = 450;
 const FIRESTORE_CACHE_SIZE_BYTES = 20 * 1024 * 1024;
 
+function isIgnorableFirestoreSettingsError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  if (code === 'failed-precondition') {
+    return true;
+  }
+
+  const message = (error as { message?: unknown }).message;
+  if (typeof message !== 'string') {
+    return false;
+  }
+
+  return /already|before any other firestore call|cannot be changed/i.test(message);
+}
+
 async function deleteCollectionDocuments(
   collectionRef: FirebaseFirestoreTypes.CollectionReference
 ): Promise<void> {
   const db = firestore();
-  const snapshot = await collectionRef.get();
+  while (true) {
+    const snapshot = await collectionRef.limit(DELETE_BATCH_SIZE).get();
+    if (snapshot.docs.length === 0) {
+      return;
+    }
 
-  for (let index = 0; index < snapshot.docs.length; index += DELETE_BATCH_SIZE) {
     const batch = db.batch();
-    const chunk = snapshot.docs.slice(index, index + DELETE_BATCH_SIZE);
-
-    chunk.forEach((doc) => {
+    snapshot.docs.forEach((doc) => {
       batch.delete(doc.ref);
     });
-
     await batch.commit();
+
+    if (snapshot.docs.length < DELETE_BATCH_SIZE) {
+      return;
+    }
   }
 }
 
@@ -48,10 +70,18 @@ export async function initializeFirestore(): Promise<void> {
   } catch (error) {
     // Settings can only be set before any other Firestore call
     // If already initialized, that's fine
-    if (__DEV__) {
-      console.warn('[Firestore] Settings already applied or error:', error);
+    if (isIgnorableFirestoreSettingsError(error)) {
+      if (__DEV__) {
+        console.warn('[Firestore] Settings already applied:', error);
+      }
+      offlinePersistenceEnabled = true;
+      return;
     }
-    offlinePersistenceEnabled = true;
+
+    if (__DEV__) {
+      console.error('[Firestore] Failed to initialize:', error);
+    }
+    throw error;
   }
 }
 

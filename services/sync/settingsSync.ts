@@ -70,6 +70,7 @@ export async function pullSettings(userId: string, prefetchedDoc?: any): Promise
     // Use setState directly to avoid triggering sync hooks
     useSettingsStore.setState((state) => ({
       settings: { ...state.settings, ...updates },
+      settingsUpdatedAt: remoteUpdatedAt,
     }));
   }
 

@@ -25,21 +25,23 @@ import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 import { useOnboardingStore } from '@/store';
 import {
   requestNotificationPermissions,
-  scheduleAllNotifications,
+  saveNotificationSettings,
 } from '@/services/notifications';
 import { getCurrentUserId } from '@/services/firebase/auth';
 import { registerForPushNotifications } from '@/services/firebase/messaging';
+import { applyOnboardingNotificationChoice } from '@/features/onboarding/runtime';
 
 const BENEFITS = [
   { icon: 'notifications-outline', text: 'Short nudges between work blocks' },
   { icon: 'options-outline', text: 'You can tune or mute them anytime' },
-  { icon: 'sparkles-outline', text: 'Calendar-aware timing is coming soon' },
+  { icon: 'sparkles-outline', text: 'They respect workdays and quiet hours' },
 ];
 
 export default function NotificationPermissionScreen() {
   const router = useRouter();
   const updateData = useOnboardingStore((state) => state.updateData);
   const [, setPermissionGranted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Animation values
   const bellOpacity = useSharedValue(0);
@@ -70,16 +72,37 @@ export default function NotificationPermissionScreen() {
   }));
 
   const handleEnable = async () => {
-    const granted = await requestNotificationPermissions();
-    setPermissionGranted(granted);
-    updateData({ notificationsEnabled: granted });
+    if (isSubmitting) {
+      return;
+    }
 
-    if (granted) {
-      const userId = getCurrentUserId();
-      if (userId) {
-        await registerForPushNotifications(userId);
+    setIsSubmitting(true);
+
+    try {
+      const result = await applyOnboardingNotificationChoice(
+        true,
+        requestNotificationPermissions,
+        {
+          updateData,
+          saveNotificationSettings,
+          getCurrentUserId,
+          registerForPushNotifications,
+        }
+      );
+      setPermissionGranted(result.granted);
+
+      if (__DEV__ && result.errors.length > 0) {
+        console.warn(
+          'Onboarding notification opt-in completed with non-fatal issues:',
+          result.errors
+        );
       }
-      await scheduleAllNotifications();
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Unexpected notification onboarding failure:', error);
+      }
+      updateData({ notificationsEnabled: false });
+      setPermissionGranted(false);
     }
 
     setTimeout(() => {
@@ -87,8 +110,38 @@ export default function NotificationPermissionScreen() {
     }, 500);
   };
 
-  const handleLater = () => {
-    updateData({ notificationsEnabled: false });
+  const handleLater = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await applyOnboardingNotificationChoice(
+        false,
+        requestNotificationPermissions,
+        {
+          updateData,
+          saveNotificationSettings,
+          getCurrentUserId,
+          registerForPushNotifications,
+        }
+      );
+
+      if (__DEV__ && result.errors.length > 0) {
+        console.warn(
+          'Onboarding notification deferral completed with non-fatal issues:',
+          result.errors
+        );
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Unexpected notification deferral failure:', error);
+      }
+      updateData({ notificationsEnabled: false });
+    }
+
     router.push('./premium-pitch');
   };
 
@@ -151,8 +204,15 @@ export default function NotificationPermissionScreen() {
           title="Keep Reminders On"
           onPress={handleEnable}
           variant="primary"
+          disabled={isSubmitting}
+          loading={isSubmitting}
         />
-        <SecondaryButton title="I'll set this later" onPress={handleLater} variant="muted" />
+        <SecondaryButton
+          title="I'll set this later"
+          onPress={handleLater}
+          variant="muted"
+          disabled={isSubmitting}
+        />
       </View>
     </OnboardingLayout>
   );

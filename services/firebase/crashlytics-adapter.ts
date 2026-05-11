@@ -33,7 +33,10 @@ class CrashlyticsService {
         console.log('[Crashlytics] Initialized successfully');
       }
     } catch (error) {
-      console.error('[Crashlytics] Failed to initialize:', error);
+      if (__DEV__) {
+        console.error('[Crashlytics] Failed to initialize:', error);
+      }
+      throw error;
     }
   }
 

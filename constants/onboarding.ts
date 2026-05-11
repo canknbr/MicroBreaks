@@ -5,26 +5,15 @@
 
 import { OnboardingScreenId } from '@/types/onboarding';
 
+// Keep the broader ID union in `types/onboarding.ts` for analytics history,
+// but the active runtime path only includes the screens below.
 export const ONBOARDING_SCREENS: OnboardingScreenId[] = [
   'ONB_001',
-  'ONB_002',
-  'ONB_003',
   'ONB_004',
-  'ONB_005',
   'ONB_006',
-  'ONB_007',
-  'ONB_008',
-  'ONB_009',
-  'ONB_010',
-  'ONB_011',
   'ONB_012',
   'ONB_013',
-  'ONB_014',
-  'ONB_015',
-  'ONB_016',
   'ONB_017',
-  'ONB_018',
-  'ONB_019',
   'ONB_020',
   'ONB_021',
 ];
@@ -153,8 +142,8 @@ export const NOTIFICATION_STYLES = [
   },
   {
     id: 'smart',
-    label: 'Smart',
-    description: 'AI-adjusted based on my behavior',
+    label: 'Adaptive',
+    description: 'Adjusts around my workday preferences',
   },
 ] as const;
 
@@ -223,4 +212,3 @@ export const TIMER_PRESETS = [
     break: 5,
   },
 ] as const;
-

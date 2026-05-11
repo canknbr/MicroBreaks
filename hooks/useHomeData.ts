@@ -11,7 +11,13 @@ import {
   getStreakData,
   getUserStats,
 } from '@/services/breakHistory';
+import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
 import { useUserStore } from '@/store';
+import { useSettingsStore } from '@/store/settingsStore';
+import { calculateDailyGoal } from '@/utils/validation';
+import { mapBreakHistoryToOutcomeSignals } from '@/features/recovery/personalization';
+import type { RecommendationOutcomeSignal } from '@/services/recommendations/scoring';
+import { getEffectiveReminderInterval } from '@/features/workday/patterns';
 
 export interface UserData {
   name: string;
@@ -50,6 +56,10 @@ export interface HomeData {
   streak: StreakData;
   weeklyInsights: WeeklyInsight[];
   nextBreakMinutes: number;
+  recommendationSignals: {
+    recentBreakIds: string[];
+    historicalOutcomes: RecommendationOutcomeSignal[];
+  };
 }
 
 interface UseHomeDataReturn {
@@ -64,6 +74,10 @@ interface UseHomeDataReturn {
   hasCompletedGoal: boolean;
   shouldCelebrate: 'goal_complete' | 'new_level' | 'streak_milestone' | 'first_break' | null;
   clearCelebration: () => void;
+}
+
+interface UseHomeDataOptions {
+  workPattern?: string | null;
 }
 
 // Level titles based on level
@@ -117,8 +131,12 @@ function getDayRange(date: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
-// Generate home data from stored data
-async function generateHomeData(userName: string, userAvatar: string | null): Promise<HomeData & { avatar: string | null }> {
+async function generateHomeData(
+  userName: string,
+  userAvatar: string | null,
+  reminderIntervalMinutes: number,
+  workPattern: string | null
+): Promise<HomeData & { avatar: string | null }> {
   const [allBreaks, storedStreak, userStats] = await Promise.all([
     getBreakHistory(),
     getStreakData(),
@@ -145,6 +163,10 @@ async function generateHomeData(userName: string, userAvatar: string | null): Pr
   });
 
   const mostRecentBreak = allBreaks[0];
+  const recommendationSignals = {
+    recentBreakIds: allBreaks.slice(0, 5).map((breakEntry) => breakEntry.breakId),
+    historicalOutcomes: mapBreakHistoryToOutcomeSignals(allBreaks),
+  };
 
   const currentDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
@@ -166,6 +188,11 @@ async function generateHomeData(userName: string, userAvatar: string | null): Pr
   // Get level title
   const levelTitle = LEVEL_TITLES[Math.min(userStats.level, 10)] || LEVEL_TITLES[10];
 
+  const effectiveReminderInterval = getEffectiveReminderInterval(
+    reminderIntervalMinutes,
+    workPattern
+  );
+
   return {
     user: {
       name: userName,
@@ -177,7 +204,10 @@ async function generateHomeData(userName: string, userAvatar: string | null): Pr
     avatar: userAvatar,
     dailyProgress: {
       breaksTaken: todayBreaks.length,
-      breaksGoal: userStats.weeklyGoal > 0 ? Math.max(Math.round(userStats.weeklyGoal / 7), 3) : 8,
+      breaksGoal:
+        userStats.weeklyGoal > 0
+          ? calculateDailyGoal(userStats.weeklyGoal)
+          : calculateDailyGoal(DEFAULT_WEEKLY_GOAL),
       minutesInvested,
       lastBreakMinutesAgo,
     },
@@ -219,11 +249,15 @@ async function generateHomeData(userName: string, userAvatar: string | null): Pr
         color: '#B47EFF',
       },
     ],
-    nextBreakMinutes: lastBreakMinutesAgo > 25 ? 0 : 25 - lastBreakMinutesAgo,
+    nextBreakMinutes:
+      lastBreakMinutesAgo > effectiveReminderInterval
+        ? 0
+        : effectiveReminderInterval - lastBreakMinutesAgo,
+    recommendationSignals,
   };
 }
 
-export function useHomeData(): UseHomeDataReturn {
+export function useHomeData(options: UseHomeDataOptions = {}): UseHomeDataReturn {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -233,11 +267,19 @@ export function useHomeData(): UseHomeDataReturn {
   // Use refs to avoid unnecessary callback recreations
   const dataRef = useRef<HomeData | null>(null);
   const previousDataRef = useRef<HomeData | null>(null);
+  const isMountedRef = useRef(true);
+  const requestIdRef = useRef(0);
 
   // Get user profile from store
   const userProfile = useUserStore((state) => state.profile);
+  const reminderIntervalMinutes = useSettingsStore(
+    (state) => state.settings.reminderIntervalMinutes
+  );
+  const workPattern = options.workPattern ?? null;
 
   const fetchData = useCallback(async (isRefresh = false) => {
+    const requestId = ++requestIdRef.current;
+
     try {
       if (isRefresh) {
         setIsRefreshing(true);
@@ -246,7 +288,16 @@ export function useHomeData(): UseHomeDataReturn {
       }
       setError(null);
 
-      const newData = await generateHomeData(userProfile.name, userProfile.avatar);
+      const newData = await generateHomeData(
+        userProfile.name,
+        userProfile.avatar,
+        reminderIntervalMinutes,
+        workPattern
+      );
+
+      if (!isMountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
 
       // Check for celebrations (only on refresh, not initial load)
       const prevData = previousDataRef.current;
@@ -283,15 +334,28 @@ export function useHomeData(): UseHomeDataReturn {
       dataRef.current = newData;
       setData(newData);
     } catch (err) {
+      if (!isMountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
+
       setError(err instanceof Error ? err : new Error('Failed to fetch data'));
     } finally {
+      if (!isMountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
+
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [userProfile.name, userProfile.avatar]);
+  }, [userProfile.name, userProfile.avatar, reminderIntervalMinutes, workPattern]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchData();
+    return () => {
+      isMountedRef.current = false;
+      requestIdRef.current += 1;
+    };
   }, [fetchData]);
 
   const refresh = useCallback(async () => {

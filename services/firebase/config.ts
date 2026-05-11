@@ -78,24 +78,26 @@ export async function setFirebaseCollectionPreferences(
 export async function initializeFirebase(): Promise<void> {
   if (isInitialized) return;
 
-  try {
-    // Firebase auto-initializes from native config files.
-    // Verify it's available:
-    if (!firebase.apps.length) {
-      console.warn('[Firebase] No Firebase app initialized. Check native config files.');
-      return;
-    }
+  // Firebase auto-initializes from native config files.
+  // Verify it's available so bootstrap can block instead of silently continuing.
+  if (!firebase.apps.length) {
+    throw new Error('Firebase app is unavailable. Check native Firebase configuration.');
+  }
 
+  try {
     const preferences = await getStoredFirebaseCollectionPreferences();
     await setFirebaseCollectionPreferences(preferences);
-
-    isInitialized = true;
-
-    if (__DEV__) {
-      console.log('[Firebase] Initialized successfully');
-    }
   } catch (error) {
-    console.error('[Firebase] Failed to initialize:', error);
+    if (__DEV__) {
+      console.error('[Firebase] Failed to initialize:', error);
+    }
+    throw error;
+  }
+
+  isInitialized = true;
+
+  if (__DEV__) {
+    console.log('[Firebase] Initialized successfully');
   }
 }
 

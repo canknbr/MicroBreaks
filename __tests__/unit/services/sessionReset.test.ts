@@ -7,10 +7,14 @@ import {
   useTimerStore,
   useUserStore,
 } from '@/store';
-import { replaceWithFreshAnonymousSession } from '@/services/account/sessionReset';
+import {
+  replaceWithFreshAnonymousSession,
+  signInWithRecoveredAccount,
+} from '@/services/account/sessionReset';
 import {
   deleteAuthAccount,
   refreshAnonymousSession,
+  signInWithEmailPassword,
   signOut,
 } from '@/services/firebase/auth';
 import { deleteAllUserData } from '@/services/firebase/firestore';
@@ -25,6 +29,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('@/services/firebase/auth', () => ({
   getCurrentUserId: jest.fn(() => 'user-1'),
   signOut: jest.fn(() => Promise.resolve()),
+  signInWithEmailPassword: jest.fn(() => Promise.resolve({ uid: 'linked-user' })),
   refreshAnonymousSession: jest.fn(() => Promise.resolve({ uid: 'fresh-user' })),
   deleteAuthAccount: jest.fn(() => Promise.resolve()),
 }));
@@ -60,6 +65,7 @@ describe('replaceWithFreshAnonymousSession', () => {
         workRole: 'engineer',
         screenTime: 8,
         painAreas: ['neck'],
+        painSeverity: { neck: 'moderate' },
         workPattern: 'meetings',
         energyPattern: 'afternoon',
         breakStyle: ['guided'],
@@ -74,6 +80,7 @@ describe('replaceWithFreshAnonymousSession', () => {
         name: 'Can',
         avatar: '🙂',
         email: 'can@example.com',
+        emailVerified: true,
         joinedAt: '2026-01-01T00:00:00.000Z',
       },
       progress: {
@@ -194,5 +201,27 @@ describe('replaceWithFreshAnonymousSession', () => {
     expect(
       (deleteAllUserData as jest.Mock).mock.invocationCallOrder[0]
     ).toBeLessThan((deleteAuthAccount as jest.Mock).mock.invocationCallOrder[0]);
+  });
+
+  it('clears the local session before signing in to a recovered account', async () => {
+    await signInWithRecoveredAccount('recover@example.com', 'secret123');
+
+    expect(syncService.shutdown).toHaveBeenCalledTimes(1);
+    expect(unregisterPushNotifications).toHaveBeenCalledWith('user-1');
+    expect(cancelAllNotifications).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signInWithEmailPassword).toHaveBeenCalledWith('recover@example.com', 'secret123');
+    expect(refreshAnonymousSession).not.toHaveBeenCalled();
+    expect(await AsyncStorage.getItem('@microbreaks/break_history')).toBeNull();
+  });
+
+  it('recovers a fresh anonymous session when sign-in restoration fails', async () => {
+    (signInWithEmailPassword as jest.Mock).mockRejectedValueOnce(new Error('restore failed'));
+
+    await expect(
+      signInWithRecoveredAccount('recover@example.com', 'secret123')
+    ).rejects.toThrow('restore failed');
+
+    expect(refreshAnonymousSession).toHaveBeenCalledTimes(1);
   });
 });

@@ -12,6 +12,9 @@ import {
   STORAGE_KEYS,
   DEFAULT_STREAK_DATA,
   DEFAULT_USER_STATS,
+  getStoredUserStats,
+  updateStoredUserStats,
+  syncStoredUserStatsFromProgress,
 } from '@/services/storage';
 
 // Mock AsyncStorage
@@ -55,6 +58,95 @@ describe('Storage Service', () => {
       expect(DEFAULT_USER_STATS.level).toBe(1);
       expect(DEFAULT_USER_STATS.weeklyGoal).toBe(35);
       expect(DEFAULT_USER_STATS.weeklyProgress).toBe(0);
+    });
+  });
+
+  describe('user stats helpers', () => {
+    it('should return sanitized default user stats when none are stored', async () => {
+      const result = await getStoredUserStats();
+
+      expect(result).toEqual(DEFAULT_USER_STATS);
+    });
+
+    it('should sanitize malformed stored user stats', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, JSON.stringify({
+        totalBreaks: -5,
+        totalMinutes: 'broken',
+        totalXP: 40.8,
+        level: 0,
+        weeklyGoal: -10,
+        weeklyProgress: 2.6,
+      }));
+
+      const result = await getStoredUserStats();
+
+      expect(result).toEqual({
+        totalBreaks: 0,
+        totalMinutes: 0,
+        totalXP: 41,
+        level: 1,
+        weeklyGoal: 0,
+        weeklyProgress: 3,
+      });
+    });
+
+    it('should self-heal corrupted stored user stats JSON', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, 'invalid-json');
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const result = await getStoredUserStats();
+
+      expect(result).toEqual(DEFAULT_USER_STATS);
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS)).toBe(JSON.stringify(DEFAULT_USER_STATS));
+      consoleSpy.mockRestore();
+    });
+
+    it('should update stored user stats while preserving untouched fields', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, JSON.stringify({
+        ...DEFAULT_USER_STATS,
+        totalMinutes: 18,
+        weeklyProgress: 4,
+      }));
+
+      const result = await updateStoredUserStats({
+        totalBreaks: 8,
+        totalXP: 120,
+        level: 2,
+        weeklyGoal: 42,
+      });
+
+      expect(result).toEqual({
+        totalBreaks: 8,
+        totalMinutes: 18,
+        totalXP: 120,
+        level: 2,
+        weeklyGoal: 42,
+        weeklyProgress: 4,
+      });
+    });
+
+    it('should sync user stats projection from progress fields', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, JSON.stringify({
+        ...DEFAULT_USER_STATS,
+        totalMinutes: 12,
+        weeklyProgress: 3,
+      }));
+
+      const result = await syncStoredUserStatsFromProgress({
+        totalBreaks: 15,
+        totalXP: 250,
+        level: 3,
+        weeklyGoal: 49,
+      });
+
+      expect(result).toEqual({
+        totalBreaks: 15,
+        totalMinutes: 12,
+        totalXP: 250,
+        level: 3,
+        weeklyGoal: 49,
+        weeklyProgress: 3,
+      });
     });
   });
 
@@ -110,6 +202,7 @@ describe('Storage Service', () => {
       const result = await getItem<object>('invalid-json-key');
 
       expect(result).toBeNull();
+      expect(await AsyncStorage.getItem('invalid-json-key')).toBeNull();
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

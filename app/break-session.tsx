@@ -14,7 +14,8 @@ import * as Haptics from 'expo-haptics';
 import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
 import { saveCompletedBreak, updateBreakRating, getTodayBreaks, getUserStats } from '@/services/breakHistory';
-import { STREAK_MILESTONES, MIN_DAILY_GOAL } from '@/constants/config';
+import { STREAK_MILESTONES } from '@/constants/config';
+import { calculateDailyGoal } from '@/utils/validation';
 import { getLevelTitle } from '@/constants/levels';
 import {
   scheduleBreakReminder,
@@ -43,22 +44,21 @@ import {
 } from '@/components/break-session';
 import { AnimationType } from '@/data/exercises';
 import { ScreenErrorBoundary } from '@/components/error';
+import { resolveBreakSessionBreakId } from '@/features/break-session/sessionParams';
 
 function BreakSessionScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { t } = useTranslation();
-  const { breakId } = useLocalSearchParams<{ breakId: string }>();
+  const { breakId } = useLocalSearchParams<{ breakId?: string | string[] }>();
+  const resolvedBreakId = resolveBreakSessionBreakId(breakId);
 
-  const { state, actions, stats, progress } = useBreakSession(breakId || 'deep-breath');
+  const { state, actions, stats, progress } = useBreakSession(resolvedBreakId);
 
   // User store actions
-  const incrementBreaks = useUserStore((state) => state.incrementBreaks);
-  const addXP = useUserStore((state) => state.addXP);
   const trackBreakCompletion = useUserStore((state) => state.trackBreakCompletion);
   const addRecentBreak = useUserStore((state) => state.addRecentBreak);
   const currentLevel = useUserStore((state) => state.progress.level);
-  const currentStreak = useUserStore((state) => state.progress.currentStreak);
 
   // Notifications
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -72,6 +72,7 @@ function BreakSessionScreen() {
 
   // Track the saved break ID so we can update it with rating later
   const savedBreakIdRef = useRef<string | null>(null);
+  const savedFeedbackUpdateKeyRef = useRef<string | null>(null);
 
   // Save completed break to storage when session completes
   useEffect(() => {
@@ -94,6 +95,7 @@ function BreakSessionScreen() {
           totalSteps: stats.totalSteps,
           xpEarned: stats.xpEarned,
           rating: state.feedbackRating,
+          reliefScore: state.feedbackReliefScore,
           completedAt: new Date().toISOString(),
         });
 
@@ -120,9 +122,8 @@ function BreakSessionScreen() {
           savedBreakIdRef.current = saveResult.breakId;
         }
 
-        // Sync with user store only after persistence succeeds
-        incrementBreaks();
-        addXP(stats.xpEarned);
+        // BreakHistory now owns progress/streak projection updates.
+        // Keep auxiliary preferences/achievement tracking here.
         trackBreakCompletion(exercise.category, Math.round(stats.totalDuration / 60));
         addRecentBreak(exercise.id);
 
@@ -133,7 +134,7 @@ function BreakSessionScreen() {
         try {
           const todayBreaks = await getTodayBreaks();
           const userStats = await getUserStats();
-          const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), MIN_DAILY_GOAL);
+          const dailyGoal = calculateDailyGoal(userStats.weeklyGoal);
 
           if (todayBreaks.length === dailyGoal) {
             // Just completed daily goal - create in-app notification
@@ -153,8 +154,9 @@ function BreakSessionScreen() {
         }
 
         // Check for streak milestones
-        if (STREAK_MILESTONES.includes(currentStreak as typeof STREAK_MILESTONES[number])) {
-          addNotification(createStreakNotification(currentStreak));
+        const latestStreak = useUserStore.getState().progress.currentStreak;
+        if (STREAK_MILESTONES.includes(latestStreak as typeof STREAK_MILESTONES[number])) {
+          addNotification(createStreakNotification(latestStreak));
         }
       };
 
@@ -164,7 +166,7 @@ function BreakSessionScreen() {
         }
       });
     }
-  }, [state.phase, state.exercise, state.feedbackRating, stats, incrementBreaks, addXP, trackBreakCompletion, addRecentBreak, checkAndUnlockAchievements, addNotification, currentStreak, currentLevel]);
+  }, [state.phase, state.exercise, state.feedbackRating, state.feedbackReliefScore, stats, trackBreakCompletion, addRecentBreak, checkAndUnlockAchievements, addNotification, currentLevel]);
 
   // Check for level up after XP is added
   useEffect(() => {
@@ -178,13 +180,35 @@ function BreakSessionScreen() {
 
   // Update rating on the already-saved break when feedback is submitted
   useEffect(() => {
-    if (state.phase === 'feedback' && state.feedbackRating && savedBreakIdRef.current) {
+    if (
+      state.phase === 'feedback' &&
+      state.feedbackRating &&
+      state.feedbackReliefScore &&
+      savedBreakIdRef.current
+    ) {
+      const feedbackUpdateKey = [
+        savedBreakIdRef.current,
+        state.feedbackRating,
+        state.feedbackReliefScore,
+      ].join(':');
+
+      if (savedFeedbackUpdateKeyRef.current === feedbackUpdateKey) {
+        return;
+      }
+
+      savedFeedbackUpdateKeyRef.current = feedbackUpdateKey;
+
       // Only update the rating on the existing break, don't create a new one
-      updateBreakRating(savedBreakIdRef.current, state.feedbackRating).catch(() => {
+      updateBreakRating(
+        savedBreakIdRef.current,
+        state.feedbackRating,
+        state.feedbackReliefScore
+      ).catch(() => {
         // Silently handle update error - user experience not impacted
+        savedFeedbackUpdateKeyRef.current = null;
       });
     }
-  }, [state.phase, state.feedbackRating]);
+  }, [state.phase, state.feedbackRating, state.feedbackReliefScore]);
 
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -369,6 +393,7 @@ function BreakSessionScreen() {
             <BreakFeedback
               onSubmit={actions.submitFeedback}
               selectedRating={state.feedbackRating}
+              selectedReliefScore={state.feedbackReliefScore}
               color={exercise.color}
             />
 

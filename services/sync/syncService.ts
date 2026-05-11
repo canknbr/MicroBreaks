@@ -20,10 +20,22 @@ const LEGACY_PENDING_QUEUE_KEY = '@microbreaks/sync_pending_queue';
 const SYNC_METADATA_KEY_PREFIX = '@microbreaks/sync_metadata/';
 const PENDING_QUEUE_KEY_PREFIX = '@microbreaks/sync_pending_queue/';
 const SETTINGS_DEBOUNCE_MS = 3000;
+const USER_DOC_DEBOUNCE_MS = 250;
 const MAX_SYNCS_PER_MINUTE = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_BACKOFF_MS = 30000;
 const INITIAL_BACKOFF_MS = 1000;
+
+type UserDocSyncType = 'profile' | 'progress' | 'preferences' | 'achievements';
+
+function isUserDocSyncType(type: SyncDataType): type is UserDocSyncType {
+  return (
+    type === 'profile' ||
+    type === 'progress' ||
+    type === 'preferences' ||
+    type === 'achievements'
+  );
+}
 
 function getSyncMetadataKey(userId: string): string {
   return `${SYNC_METADATA_KEY_PREFIX}${userId}`;
@@ -39,6 +51,7 @@ class SyncService {
   private netInfoUnsubscribe: (() => void) | null = null;
   private appStateSubscription: { remove: () => void } | null = null;
   private settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private userDocDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private isSyncing = false;
   private isInitialized = false;
   private _isSyncPulling = false;
@@ -116,13 +129,48 @@ class SyncService {
     await setItem(storageKey, this.pendingQueue);
   }
 
+  private async pushQueuedUserDocChange(): Promise<void> {
+    if (!this.userId) {
+      return;
+    }
+
+    const netState = await NetInfo.fetch();
+
+    if (!netState.isConnected) {
+      this.pendingQueue.push({ type: 'profile' });
+      await this.savePendingQueue();
+      return;
+    }
+
+    try {
+      await this.pushChange('profile');
+    } catch (error) {
+      this.pendingQueue.push({ type: 'profile' });
+      await this.savePendingQueue();
+      if (__DEV__) {
+        console.warn('[SyncService] User doc push failed, queued for retry');
+      }
+    }
+  }
+
+  private async flushPendingUserDocChange(): Promise<void> {
+    if (!this.userDocDebounceTimer) {
+      return;
+    }
+
+    clearTimeout(this.userDocDebounceTimer);
+    this.userDocDebounceTimer = null;
+
+    await this.pushQueuedUserDocChange();
+  }
+
   /**
    * Initialize sync service after authentication
    */
   async initialize(userId: string): Promise<void> {
     if (this.isInitialized && this.userId === userId) return;
     if (this.isInitialized && this.userId !== userId) {
-      this.shutdown();
+      await this.shutdown();
     }
 
     this.userId = userId;
@@ -275,6 +323,18 @@ class SyncService {
   async queueDataChange(dataType: SyncDataType, data?: unknown): Promise<void> {
     if (!this.userId) return;
 
+    if (isUserDocSyncType(dataType)) {
+      if (this.userDocDebounceTimer) {
+        clearTimeout(this.userDocDebounceTimer);
+      }
+
+      this.userDocDebounceTimer = setTimeout(() => {
+        this.userDocDebounceTimer = null;
+        void this.pushQueuedUserDocChange();
+      }, USER_DOC_DEBOUNCE_MS);
+      return;
+    }
+
     const netState = await NetInfo.fetch();
 
     if (!netState.isConnected) {
@@ -327,6 +387,10 @@ class SyncService {
    * Queue settings change with debounce
    */
   queueSettingsChange(): void {
+    if (!this.userId || !this.isInitialized) {
+      return;
+    }
+
     if (this.settingsDebounceTimer) {
       clearTimeout(this.settingsDebounceTimer);
     }
@@ -335,6 +399,21 @@ class SyncService {
       this.settingsDebounceTimer = null;
       this.queueDataChange('settings');
     }, SETTINGS_DEBOUNCE_MS);
+  }
+
+  /**
+   * Flush any debounced settings change before teardown.
+   * This prevents silent loss of the latest settings mutation on logout/user rotation.
+   */
+  private async flushPendingSettingsChange(): Promise<void> {
+    if (!this.settingsDebounceTimer) {
+      return;
+    }
+
+    clearTimeout(this.settingsDebounceTimer);
+    this.settingsDebounceTimer = null;
+
+    await this.queueDataChange('settings');
   }
 
   /**
@@ -348,11 +427,12 @@ class SyncService {
 
     // Deduplicate by type (only push latest of each type),
     // but never deduplicate 'break' items since each break is unique data
-    const seen = new Set<SyncDataType>();
+    const seen = new Set<string>();
     const deduped = queue.reverse().filter((item) => {
       if (item.type === 'break') return true; // Never deduplicate breaks
-      if (seen.has(item.type)) return false;
-      seen.add(item.type);
+      const dedupeKey = isUserDocSyncType(item.type) ? 'user_doc' : item.type;
+      if (seen.has(dedupeKey)) return false;
+      seen.add(dedupeKey);
       return true;
     });
 
@@ -404,7 +484,10 @@ class SyncService {
   /**
    * Shutdown sync service and cleanup listeners
    */
-  shutdown(): void {
+  async shutdown(): Promise<void> {
+    await this.flushPendingSettingsChange();
+    await this.flushPendingUserDocChange();
+
     if (this.netInfoUnsubscribe) {
       this.netInfoUnsubscribe();
       this.netInfoUnsubscribe = null;
@@ -413,13 +496,10 @@ class SyncService {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
     }
-    if (this.settingsDebounceTimer) {
-      clearTimeout(this.settingsDebounceTimer);
-      this.settingsDebounceTimer = null;
-    }
     this.userId = null;
     this.metadata = { ...DEFAULT_SYNC_METADATA };
     this.pendingQueue = [];
+    this.userDocDebounceTimer = null;
     this.isSyncing = false;
     this.isInitialized = false;
     this._isSyncPulling = false;

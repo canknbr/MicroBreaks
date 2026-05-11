@@ -41,6 +41,23 @@ async function upsertDeviceRegistration(
   );
 }
 
+async function markDeviceNotificationsDisabled(userId: string): Promise<void> {
+  const installationId = await AsyncStorage.getItem(DEVICE_INSTALLATION_ID_KEY);
+  if (!installationId) {
+    return;
+  }
+
+  await getDeviceDoc(userId, installationId).set(
+    {
+      installationId,
+      platform: Platform.OS,
+      notificationsEnabled: false,
+      updatedAt: Date.now(),
+    },
+    { merge: true }
+  );
+}
+
 /**
  * Check whether push notification permission is already granted.
  * This is intentionally non-interactive so app startup never triggers a prompt.
@@ -67,6 +84,7 @@ export async function registerForPushNotifications(userId: string): Promise<stri
     const enabled = await hasPushNotificationPermission();
 
     if (!enabled) {
+      await markDeviceNotificationsDisabled(userId);
       if (__DEV__) {
         console.log('[FCM] Permission not granted, skipping token registration');
       }
@@ -97,6 +115,12 @@ export async function registerForPushNotifications(userId: string): Promise<stri
 export function onTokenRefresh(userId: string): () => void {
   return messaging().onTokenRefresh(async (newToken) => {
     try {
+      const enabled = await hasPushNotificationPermission();
+      if (!enabled) {
+        await markDeviceNotificationsDisabled(userId);
+        return;
+      }
+
       await upsertDeviceRegistration(userId, newToken, true);
 
       if (__DEV__) {

@@ -5,7 +5,7 @@
 
 import { act } from '@testing-library/react-native';
 import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
-import { useOnboardingStore } from '@/store/onboardingStore';
+import { onboardingStoreTestUtils, useOnboardingStore } from '@/store/onboardingStore';
 
 describe('OnboardingStore', () => {
   // Reset store before each test
@@ -37,6 +37,7 @@ describe('OnboardingStore', () => {
       expect(state.data.workRole).toBeNull();
       expect(state.data.screenTime).toBeNull();
       expect(state.data.painAreas).toEqual([]);
+      expect(state.data.painSeverity).toEqual({});
       expect(state.data.workPattern).toBeNull();
       expect(state.data.energyPattern).toBeNull();
       expect(state.data.breakStyle).toEqual([]);
@@ -115,6 +116,19 @@ describe('OnboardingStore', () => {
       expect(useOnboardingStore.getState().data.painAreas).toEqual(['neck', 'back', 'eyes']);
     });
 
+    it('should update painSeverity with a persisted severity map', () => {
+      act(() => {
+        useOnboardingStore.getState().updateData({
+          painSeverity: { neck: 'severe', eyes: 'moderate' },
+        });
+      });
+
+      expect(useOnboardingStore.getState().data.painSeverity).toEqual({
+        neck: 'severe',
+        eyes: 'moderate',
+      });
+    });
+
     it('should update painAreas with empty array', () => {
       act(() => {
         useOnboardingStore.getState().updateData({ painAreas: ['neck'] });
@@ -146,6 +160,14 @@ describe('OnboardingStore', () => {
       });
 
       expect(useOnboardingStore.getState().data.breakStyle).toEqual(['stretch', 'mindful']);
+    });
+
+    it('should normalize legacy breakStyle values to exercise categories', () => {
+      act(() => {
+        useOnboardingStore.getState().updateData({ breakStyle: ['movement', 'breathing', 'mixed'] });
+      });
+
+      expect(useOnboardingStore.getState().data.breakStyle).toEqual(['active', 'stretch', 'mindful']);
     });
 
     it('should update breakInterval', () => {
@@ -195,6 +217,7 @@ describe('OnboardingStore', () => {
           workRole: 'designer',
           screenTime: 6,
           painAreas: ['wrists'],
+          painSeverity: { wrists: 'moderate' },
           breakInterval: 20,
         });
       });
@@ -203,6 +226,7 @@ describe('OnboardingStore', () => {
       expect(data.workRole).toBe('designer');
       expect(data.screenTime).toBe(6);
       expect(data.painAreas).toEqual(['wrists']);
+      expect(data.painSeverity).toEqual({ wrists: 'moderate' });
       expect(data.breakInterval).toBe(20);
     });
 
@@ -397,6 +421,52 @@ describe('OnboardingStore', () => {
 
       expect(useOnboardingStore.getState().isComplete).toBe(false);
       expect(useOnboardingStore.getState().currentStep).toBe(0);
+    });
+  });
+
+  describe('Persistence Safety', () => {
+    it('should sanitize malformed persisted onboarding state', () => {
+      const snapshot = onboardingStoreTestUtils.sanitizePersistedOnboardingState({
+        isComplete: 'yes',
+        currentStep: -4,
+        totalSteps: 999,
+        data: {
+          workRole: 42,
+          screenTime: 'all day',
+          painAreas: ['neck', null, 7],
+          painSeverity: { neck: 'severe', eyes: 'broken' },
+          workPattern: ['deep-work'],
+          energyPattern: 3,
+          breakStyle: ['guided', false],
+          breakInterval: 0,
+          notificationsEnabled: 'sometimes',
+          calendarIntegration: 'soon',
+        },
+      });
+
+      expect(snapshot.isComplete).toBe(false);
+      expect(snapshot.currentStep).toBe(0);
+      expect(snapshot.totalSteps).toBe(ACTIVE_ONBOARDING_TOTAL_STEPS);
+      expect(snapshot.data.workRole).toBeNull();
+      expect(snapshot.data.screenTime).toBeNull();
+      expect(snapshot.data.painAreas).toEqual(['neck']);
+      expect(snapshot.data.painSeverity).toEqual({ neck: 'severe' });
+      expect(snapshot.data.workPattern).toBeNull();
+      expect(snapshot.data.energyPattern).toBeNull();
+      expect(snapshot.data.breakStyle).toEqual([]);
+      expect(snapshot.data.breakInterval).toBe(25);
+      expect(snapshot.data.notificationsEnabled).toBe(true);
+      expect(snapshot.data.calendarIntegration).toBe(false);
+    });
+
+    it('should migrate legacy persisted breakStyle values', () => {
+      const snapshot = onboardingStoreTestUtils.sanitizePersistedOnboardingState({
+        data: {
+          breakStyle: ['movement', 'eye_micro', 'mixed'],
+        },
+      });
+
+      expect(snapshot.data.breakStyle).toEqual(['active', 'stretch', 'quick']);
     });
   });
 

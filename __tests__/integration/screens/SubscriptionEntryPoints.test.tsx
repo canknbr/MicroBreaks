@@ -196,4 +196,21 @@ describe('subscription entry points', () => {
       params: { placement: 'profile' },
     });
   });
+
+  it('opens the link-account modal for anonymous users from profile', () => {
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText('Secure My Progress'));
+
+    expect(screen.getByText('Secure Your Progress')).toBeTruthy();
+  });
+
+  it('opens restore mode from profile for anonymous users', () => {
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText('Restore Linked Account'));
+
+    expect(screen.getByText('Sign In')).toBeTruthy();
+    expect(screen.getByText('Restore Existing')).toBeTruthy();
+  });
 });

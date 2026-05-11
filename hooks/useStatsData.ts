@@ -3,21 +3,24 @@
  * Provides real statistics from break history
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   getBreakHistory,
   getWeeklyChartDataFromHistory,
   getMonthlyChartDataFromHistory,
+  getYearlyChartDataFromHistory,
   getBreakTypeDistributionFromBreaks,
   getUserStats,
   getStreakData,
   getTodayBreaksFromHistory,
   getWeekBreaksFromHistory,
   getMonthBreaksFromHistory,
+  getYearBreaksFromHistory,
   getTimePatternsFromBreaks,
   TimePatternData,
   getRecentBreaksFromHistory,
 } from '@/services/breakHistory';
+import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
 import { CompletedBreak, StreakData, UserStats } from '@/services/storage';
 
 export type StatsPeriod = 'week' | 'month' | 'year';
@@ -46,8 +49,13 @@ export interface WeeklyRecoveryReport {
   averageDurationMinutes: number;
   completionRate: number;
   positiveRatingRate: number | null;
+  reliefImprovementRate: number | null;
   topCategory: string | null;
   topCategoryShare: number;
+  topReliefBreakTitle: string | null;
+  topReliefRate: number | null;
+  lowestReliefBreakTitle: string | null;
+  lowestReliefRate: number | null;
   bestTimeLabel: string | null;
   bestTimeShare: number;
   weekOverWeekChange: number | null;
@@ -102,6 +110,13 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+const RELIEF_SCORE_VALUES: Record<NonNullable<CompletedBreak['reliefScore']>, number> = {
+  worse: -2,
+  same: 0,
+  better: 1,
+  much_better: 2,
+};
+
 function getStartOfWeek(date: Date): Date {
   const result = new Date(date);
   const dayOfWeek = result.getDay();
@@ -143,6 +158,14 @@ function buildWeeklyRecoveryShareMessage(report: Omit<WeeklyRecoveryReport, 'sha
     lines.push(`Best window: ${report.bestTimeLabel}`);
   }
 
+  if (report.reliefImprovementRate != null) {
+    lines.push(`Felt better after: ${report.reliefImprovementRate}% of rated breaks`);
+  }
+
+  if (report.topReliefBreakTitle && report.topReliefRate != null) {
+    lines.push(`Works best: ${report.topReliefBreakTitle} (${report.topReliefRate}% better after)`);
+  }
+
   if (report.topCategory) {
     lines.push(`Top break mix: ${report.topCategory} (${report.topCategoryShare}%)`);
   }
@@ -181,6 +204,80 @@ function buildWeeklyRecoveryReport(
   const ratedBreaks = weekBreaks.filter((item) => item.rating !== null);
   const positiveRatingRate = ratedBreaks.length > 0
     ? Math.round((ratedBreaks.filter((item) => item.rating === 'good').length / ratedBreaks.length) * 100)
+    : null;
+  const reliefRatedBreaks = weekBreaks.filter((item) => item.reliefScore != null);
+  const reliefImprovementRate = reliefRatedBreaks.length > 0
+    ? Math.round(
+        (reliefRatedBreaks.filter(
+          (item) => item.reliefScore === 'better' || item.reliefScore === 'much_better'
+        ).length /
+          reliefRatedBreaks.length) *
+          100
+      )
+    : null;
+  const reliefPerformance = new Map<string, {
+    title: string;
+    count: number;
+    positiveCount: number;
+    scoreTotal: number;
+  }>();
+
+  reliefRatedBreaks.forEach((item) => {
+    if (!item.reliefScore) {
+      return;
+    }
+
+    const entry = reliefPerformance.get(item.breakId) ?? {
+      title: item.title,
+      count: 0,
+      positiveCount: 0,
+      scoreTotal: 0,
+    };
+
+    entry.count += 1;
+    entry.scoreTotal += RELIEF_SCORE_VALUES[item.reliefScore];
+    if (item.reliefScore === 'better' || item.reliefScore === 'much_better') {
+      entry.positiveCount += 1;
+    }
+
+    reliefPerformance.set(item.breakId, entry);
+  });
+
+  const topReliefEntry =
+    Array.from(reliefPerformance.values()).sort((a, b) => {
+      const averageDiff = b.scoreTotal / b.count - a.scoreTotal / a.count;
+      if (averageDiff !== 0) {
+        return averageDiff;
+      }
+
+      const positiveRateDiff = b.positiveCount / b.count - a.positiveCount / a.count;
+      if (positiveRateDiff !== 0) {
+        return positiveRateDiff;
+      }
+
+      return b.count - a.count;
+    })[0] ?? null;
+  const lowestReliefEntry =
+    Array.from(reliefPerformance.values()).sort((a, b) => {
+      const averageDiff = a.scoreTotal / a.count - b.scoreTotal / b.count;
+      if (averageDiff !== 0) {
+        return averageDiff;
+      }
+
+      const positiveRateDiff = a.positiveCount / a.count - b.positiveCount / b.count;
+      if (positiveRateDiff !== 0) {
+        return positiveRateDiff;
+      }
+
+      return b.count - a.count;
+    })[0] ?? null;
+  const topReliefBreakTitle = topReliefEntry?.title ?? null;
+  const topReliefRate = topReliefEntry
+    ? Math.round((topReliefEntry.positiveCount / topReliefEntry.count) * 100)
+    : null;
+  const lowestReliefBreakTitle = lowestReliefEntry?.title ?? null;
+  const lowestReliefRate = lowestReliefEntry
+    ? Math.round((lowestReliefEntry.positiveCount / lowestReliefEntry.count) * 100)
     : null;
 
   const currentWeekStart = getStartOfWeek(new Date());
@@ -266,6 +363,12 @@ function buildWeeklyRecoveryReport(
   } else if (topCategory === 'Quick' && topCategoryShare >= 50) {
     focusArea = 'Balance your break mix';
     recommendation = 'Add a stretch or mindful routine to reduce posture fatigue and improve recovery variety.';
+  } else if (reliefImprovementRate != null && reliefImprovementRate < 50) {
+    focusArea = 'Repeat what actually helps';
+    recommendation = 'Lean on the break types that leave you feeling better and reduce low-relief routines.';
+  } else if (topReliefBreakTitle && topReliefRate != null && topReliefRate >= 70) {
+    focusArea = `Repeat ${topReliefBreakTitle}`;
+    recommendation = `${topReliefBreakTitle} is producing your best relief signal this week. Use it as your default reset when this pattern shows up again.`;
   } else if (positiveRatingRate != null && positiveRatingRate < 50) {
     focusArea = 'Repeat what feels good';
     recommendation = 'Favorite the sessions that feel best and revisit them so your routine improves faster.';
@@ -295,8 +398,13 @@ function buildWeeklyRecoveryReport(
     averageDurationMinutes,
     completionRate,
     positiveRatingRate,
+    reliefImprovementRate,
     topCategory,
     topCategoryShare,
+    topReliefBreakTitle,
+    topReliefRate,
+    lowestReliefBreakTitle,
+    lowestReliefRate,
     bestTimeLabel,
     bestTimeShare,
     weekOverWeekChange,
@@ -352,15 +460,25 @@ function buildRecoveryInsights(report: WeeklyRecoveryReport | null): RecoveryIns
       icon: 'pulse-outline',
       title: 'Quality',
       value:
-        report.positiveRatingRate != null
+        report.reliefImprovementRate != null
+          ? `${report.reliefImprovementRate}% better after`
+          : report.positiveRatingRate != null
           ? `${report.positiveRatingRate}% positive`
           : `${report.completionRate}% complete`,
       detail:
-        report.positiveRatingRate != null
+        report.reliefImprovementRate != null
+          ? 'Based on the relief signal you logged after breaks.'
+          : report.positiveRatingRate != null
           ? 'Based on the breaks you rated this week.'
           : 'Based on how many session steps you completed.',
       tone:
-        report.positiveRatingRate != null
+        report.reliefImprovementRate != null
+          ? report.reliefImprovementRate >= 70
+            ? 'positive'
+            : report.reliefImprovementRate >= 50
+              ? 'neutral'
+              : 'attention'
+          : report.positiveRatingRate != null
           ? report.positiveRatingRate >= 70
             ? 'positive'
             : report.positiveRatingRate >= 50
@@ -370,8 +488,42 @@ function buildRecoveryInsights(report: WeeklyRecoveryReport | null): RecoveryIns
             ? 'positive'
             : report.completionRate >= 60
               ? 'neutral'
-              : 'attention',
+            : 'attention',
     },
+    ...(report.topReliefBreakTitle && report.topReliefRate != null
+      ? [
+          {
+            id: 'relief-winner',
+            icon: 'sparkles-outline',
+            title: 'Works Best',
+            value: report.topReliefBreakTitle,
+            detail: `${report.topReliefRate}% of logged sessions left you feeling better.`,
+            tone:
+              report.topReliefRate >= 70
+                ? 'positive'
+                : report.topReliefRate >= 50
+                  ? 'neutral'
+                  : 'attention',
+          } satisfies RecoveryInsight,
+        ]
+      : []),
+    ...(report.lowestReliefBreakTitle &&
+    report.lowestReliefRate != null &&
+    report.lowestReliefBreakTitle !== report.topReliefBreakTitle
+      ? [
+          {
+            id: 'relief-watch',
+            icon: 'refresh-circle-outline',
+            title: 'Needs Rethink',
+            value: report.lowestReliefBreakTitle,
+            detail: `${report.lowestReliefRate}% of logged sessions left you feeling better.`,
+            tone:
+              report.lowestReliefRate >= 60
+                ? 'neutral'
+                : 'attention',
+          } satisfies RecoveryInsight,
+        ]
+      : []),
   ];
 }
 
@@ -387,8 +539,11 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
   const [weekBreaksData, setWeekBreaksData] = useState<CompletedBreak[]>([]);
   const [todayCount, setTodayCount] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
+  const isMountedRef = useRef(true);
+  const requestIdRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     try {
       const [stats, streak, history] = await Promise.all([
@@ -401,6 +556,11 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
       const week = getWeekBreaksFromHistory(history);
       const recent = getRecentBreaksFromHistory(history, 10);
       const month = getMonthBreaksFromHistory(history);
+      const year = getYearBreaksFromHistory(history);
+
+      if (!isMountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
 
       setUserStats(stats);
       setStreakData(streak);
@@ -428,31 +588,43 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
           minutes: d.minutes,
         }));
       } else {
-        // Year - aggregate by week (simplified)
-        const monthlyData = getMonthlyChartDataFromHistory(history);
-        chart = monthlyData.map((d, i) => ({
-          label: i % 7 === 0 ? d.date : '',
+        const yearlyData = getYearlyChartDataFromHistory(history);
+        chart = yearlyData.map((d) => ({
+          label: d.month,
           value: d.count,
           minutes: d.minutes,
         }));
       }
       setChartData(chart);
 
-      const periodBreaks = period === 'week' ? week : period === 'month' ? month : history;
+      const periodBreaks = period === 'week' ? week : period === 'month' ? month : year;
       setBreakTypes(getBreakTypeDistributionFromBreaks(periodBreaks));
       setTimePatterns(getTimePatternsFromBreaks(periodBreaks));
     } catch (error) {
+      if (!isMountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
+
       if (__DEV__) {
         console.error('Error loading stats:', error);
       }
       // Keep previous data on error - don't reset state
     } finally {
+      if (!isMountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
+
       setIsLoading(false);
     }
   }, [period]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     loadData();
+    return () => {
+      isMountedRef.current = false;
+      requestIdRef.current += 1;
+    };
   }, [loadData]);
 
   const weeklyRecoveryReport = useMemo(
@@ -460,7 +632,7 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
       buildWeeklyRecoveryReport(
         weekBreaksData,
         allBreaks,
-        userStats?.weeklyGoal || 20,
+        userStats?.weeklyGoal || DEFAULT_WEEKLY_GOAL,
         streakData?.currentStreak || 0
       ),
     [allBreaks, streakData, userStats, weekBreaksData]
@@ -481,7 +653,7 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
     weekBreaks: weekCount,
     xpEarned: userStats?.totalXP || 0,
     level: userStats?.level || 1,
-    weeklyGoal: userStats?.weeklyGoal || 20,
+    weeklyGoal: userStats?.weeklyGoal || DEFAULT_WEEKLY_GOAL,
     weeklyProgress: userStats?.weeklyProgress || 0,
     chartData,
     breakTypes,
@@ -508,3 +680,8 @@ export function useStatsData(period: StatsPeriod = 'week'): StatsData {
 }
 
 export default useStatsData;
+
+export const statsDataTestUtils = {
+  buildWeeklyRecoveryReport,
+  buildRecoveryInsights,
+};

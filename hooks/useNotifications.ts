@@ -15,7 +15,6 @@ import {
   saveNotificationSettings,
   scheduleAllNotifications,
   scheduleBreakReminder,
-  cancelAllNotifications,
   addNotificationResponseListener,
   addNotificationReceivedListener,
 } from '@/services/notifications';
@@ -48,6 +47,12 @@ export function useNotifications(): UseNotificationsReturn {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const appState = useRef(AppState.currentState);
 
+  const logNonFatalNotificationError = useCallback((message: string, error: unknown) => {
+    if (__DEV__) {
+      console.warn(message, error);
+    }
+  }, []);
+
   const handleAppStateChange = useCallback((nextAppState: AppStateStatus) => {
     if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
       // App has come to foreground, reschedule break reminder
@@ -67,21 +72,29 @@ export function useNotifications(): UseNotificationsReturn {
       const savedSettings = await getNotificationSettings();
       setSettings(savedSettings);
     } catch (error) {
-      console.error('Error loading notification settings:', error);
+      setSettings(DEFAULT_NOTIFICATION_SETTINGS);
+      logNonFatalNotificationError('Error loading notification settings:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [logNonFatalNotificationError]);
 
   const checkPermission = useCallback(async () => {
-    const { status } = await Notifications.getPermissionsAsync();
-    setHasPermission(status === 'granted');
-  }, []);
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      setHasPermission(status === 'granted');
+    } catch (error) {
+      setHasPermission(false);
+      logNonFatalNotificationError('Failed to check notification permissions:', error);
+    }
+  }, [logNonFatalNotificationError]);
 
   // Load settings on mount
   useEffect(() => {
     void loadSettings();
-    void initializeNotifications();
+    void initializeNotifications().catch((error) => {
+      logNonFatalNotificationError('Failed to initialize notifications:', error);
+    });
     void checkPermission();
 
     // Set up notification response listener
@@ -111,28 +124,52 @@ export function useNotifications(): UseNotificationsReturn {
       receivedSubscription.remove();
       subscription.remove();
     };
-  }, [checkPermission, handleAppStateChange, loadSettings]);
+  }, [checkPermission, handleAppStateChange, loadSettings, logNonFatalNotificationError]);
 
   const requestPermission = useCallback(async () => {
-    const granted = await requestNotificationPermissions();
-    setHasPermission(granted);
+    try {
+      const granted = await requestNotificationPermissions();
+      setHasPermission(granted);
 
-    if (granted) {
+      if (!granted) {
+        return false;
+      }
+
       const userId = getCurrentUserId();
       if (userId) {
-        await registerForPushNotifications(userId);
+        try {
+          await registerForPushNotifications(userId);
+        } catch (error) {
+          logNonFatalNotificationError('Failed to register for push notifications:', error);
+        }
       }
-      await scheduleAllNotifications();
-    }
 
-    return granted;
-  }, []);
+      try {
+        await scheduleAllNotifications();
+      } catch (error) {
+        logNonFatalNotificationError('Failed to schedule notifications after permission grant:', error);
+      }
+
+      return true;
+    } catch (error) {
+      setHasPermission(false);
+      logNonFatalNotificationError('Failed to request notification permission:', error);
+      return false;
+    }
+  }, [logNonFatalNotificationError]);
 
   const updateSettings = useCallback(async (newSettings: Partial<NotificationSettings>) => {
+    const previousSettings = settings;
     const updatedSettings = { ...settings, ...newSettings };
     setSettings(updatedSettings);
-    await saveNotificationSettings(updatedSettings);
-  }, [settings]);
+
+    try {
+      await saveNotificationSettings(updatedSettings);
+    } catch (error) {
+      setSettings(previousSettings);
+      logNonFatalNotificationError('Failed to save notification settings:', error);
+    }
+  }, [logNonFatalNotificationError, settings]);
 
   const toggleNotifications = useCallback(async () => {
     const newEnabled = !settings.enabled;
@@ -143,10 +180,6 @@ export function useNotifications(): UseNotificationsReturn {
     }
 
     await updateSettings({ enabled: newEnabled });
-
-    if (!newEnabled) {
-      await cancelAllNotifications();
-    }
   }, [settings.enabled, hasPermission, requestPermission, updateSettings]);
 
   const toggleBreakReminders = useCallback(async () => {

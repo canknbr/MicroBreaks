@@ -9,11 +9,13 @@ import { Platform } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from './storage';
 import { getTodayBreaks, getStreakData, getUserStats } from './breakHistory';
 import { useSettingsStore } from '@/store/settingsStore';
+import { ONBOARDING_STORE_PERSIST_KEY } from '@/store/onboardingStore';
 import {
   STREAK_REMINDER_HOUR,
   GOAL_REMINDER_HOUR,
-  MIN_DAILY_GOAL,
 } from '@/constants/config';
+import { calculateDailyGoal } from '@/utils/validation';
+import { getEffectiveReminderInterval } from '@/features/workday/patterns';
 
 // Notification channel IDs
 export const NOTIFICATION_CHANNELS = {
@@ -65,6 +67,27 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 
 const SETTINGS_STORE_PERSIST_KEY = 'microbreaks-settings';
 
+interface PersistedOnboardingSnapshot {
+  state?: {
+    data?: {
+      workPattern?: string | null;
+    };
+  };
+}
+
+async function hasGrantedNotificationPermission(): Promise<boolean> {
+  try {
+    const permissions = await Notifications.getPermissionsAsync();
+    return (
+      permissions.status === 'granted' ||
+      permissions.granted === true ||
+      permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL
+    );
+  } catch {
+    return false;
+  }
+}
+
 function mapNotificationSettingsToAppSettings(
   settings: NotificationSettings
 ): Partial<ReturnType<typeof useSettingsStore.getState>['settings']> {
@@ -81,6 +104,13 @@ function mapNotificationSettingsToAppSettings(
     workDaysOnly: settings.workDaysOnly,
     workDays: settings.workDays,
   };
+}
+
+async function getPersistedWorkPattern(): Promise<string | null> {
+  const onboardingSnapshot = await getItem<PersistedOnboardingSnapshot>(
+    ONBOARDING_STORE_PERSIST_KEY
+  );
+  return onboardingSnapshot?.state?.data?.workPattern ?? null;
 }
 
 // Break reminder messages (rotated)
@@ -123,36 +153,47 @@ Notifications.setNotificationHandler({
 
 // Initialize notification channels (Android)
 export async function initializeNotifications(): Promise<void> {
-  if (Platform.OS === 'android') {
-    try {
-      await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.BREAK_REMINDERS, {
-        name: 'Break Reminders',
-        description: 'Reminders to take breaks during work',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#06FFA5',
-      });
+  if (Platform.OS !== 'android') {
+    return;
+  }
 
-      await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.STREAK_ALERTS, {
-        name: 'Streak Alerts',
-        description: 'Alerts to protect your daily streak',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FFD166',
-      });
+  try {
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.BREAK_REMINDERS, {
+      name: 'Break Reminders',
+      description: 'Reminders to take breaks during work',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#06FFA5',
+    });
 
-      await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.GOALS, {
-        name: 'Goal Notifications',
-        description: 'Updates about your daily goals',
-        importance: Notifications.AndroidImportance.DEFAULT,
-        lightColor: '#00E5FF',
-      });
-    } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to initialize notification channels:', error);
-      }
-      // Non-blocking - notifications may still work without custom channels
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.STREAK_ALERTS, {
+      name: 'Streak Alerts',
+      description: 'Alerts to protect your daily streak',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FFD166',
+    });
+
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.GOALS, {
+      name: 'Goal Notifications',
+      description: 'Updates about your daily goals',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      lightColor: '#00E5FF',
+    });
+
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.TIMER_ALERTS, {
+      name: 'Timer Alerts',
+      description: 'Notifications when a focus or break timer completes',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF6B6B',
+      sound: 'default',
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to initialize notification channels:', error);
     }
+    throw error;
   }
 }
 
@@ -283,14 +324,16 @@ export async function saveNotificationSettings(
   await scheduleAllNotifications();
 }
 
-// Check if current time is within quiet hours
-function isQuietHours(settings: NotificationSettings): boolean {
+function isWorkDayForDate(date: Date, settings: NotificationSettings): boolean {
+  if (!settings.workDaysOnly) return true;
+  return settings.workDays.includes(date.getDay());
+}
+
+function isWithinQuietHoursForDate(date: Date, settings: NotificationSettings): boolean {
   if (!settings.quietHoursEnabled) return false;
 
-  const now = new Date();
-  const currentHour = now.getHours();
+  const currentHour = date.getHours();
 
-  // Handle overnight quiet hours (e.g., 22-8)
   if (settings.quietHoursStart > settings.quietHoursEnd) {
     return currentHour >= settings.quietHoursStart || currentHour < settings.quietHoursEnd;
   }
@@ -298,11 +341,91 @@ function isQuietHours(settings: NotificationSettings): boolean {
   return currentHour >= settings.quietHoursStart && currentHour < settings.quietHoursEnd;
 }
 
-// Check if today is a work day
-function isWorkDay(settings: NotificationSettings): boolean {
-  if (!settings.workDaysOnly) return true;
-  const today = new Date().getDay();
-  return settings.workDays.includes(today);
+function moveToQuietHoursEnd(date: Date, settings: NotificationSettings): Date {
+  const quietEnd = new Date(date);
+  quietEnd.setHours(settings.quietHoursEnd, 0, 0, 0);
+
+  if (settings.quietHoursStart > settings.quietHoursEnd && date.getHours() >= settings.quietHoursStart) {
+    quietEnd.setDate(quietEnd.getDate() + 1);
+  } else if (settings.quietHoursStart <= settings.quietHoursEnd && quietEnd <= date) {
+    quietEnd.setDate(quietEnd.getDate() + 1);
+  }
+
+  return quietEnd;
+}
+
+function isSameLocalDay(left: Date, right: Date): boolean {
+  return left.getFullYear() === right.getFullYear()
+    && left.getMonth() === right.getMonth()
+    && left.getDate() === right.getDate();
+}
+
+interface ScheduledHourOptions {
+  allowNextDayIfPast: boolean;
+  allowCrossDayQuietHoursShift: boolean;
+}
+
+function getNextScheduledTimeForHour(
+  settings: NotificationSettings,
+  targetHour: number,
+  options: ScheduledHourOptions
+): Date | null {
+  const now = new Date();
+  let candidate = new Date(now);
+  candidate.setHours(targetHour, 0, 0, 0);
+
+  if (candidate <= now) {
+    if (!options.allowNextDayIfPast) {
+      return null;
+    }
+
+    candidate.setDate(candidate.getDate() + 1);
+    candidate.setHours(targetHour, 0, 0, 0);
+  }
+
+  for (let attempts = 0; attempts < 14; attempts += 1) {
+    if (!isWorkDayForDate(candidate, settings)) {
+      if (!options.allowNextDayIfPast) {
+        return null;
+      }
+
+      candidate.setDate(candidate.getDate() + 1);
+      candidate.setHours(targetHour, 0, 0, 0);
+      continue;
+    }
+
+    if (isWithinQuietHoursForDate(candidate, settings)) {
+      const adjusted = moveToQuietHoursEnd(candidate, settings);
+      if (!options.allowCrossDayQuietHoursShift && !isSameLocalDay(adjusted, candidate)) {
+        return null;
+      }
+
+      candidate = adjusted;
+      if (candidate <= now) {
+        if (!options.allowNextDayIfPast) {
+          return null;
+        }
+
+        candidate.setDate(candidate.getDate() + 1);
+        candidate.setHours(targetHour, 0, 0, 0);
+        continue;
+      }
+
+      if (!isWorkDayForDate(candidate, settings)) {
+        if (!options.allowNextDayIfPast) {
+          return null;
+        }
+
+        candidate.setDate(candidate.getDate() + 1);
+        candidate.setHours(targetHour, 0, 0, 0);
+        continue;
+      }
+    }
+
+    return candidate;
+  }
+
+  return null;
 }
 
 // Get next valid notification time
@@ -310,26 +433,18 @@ function getNextNotificationTime(settings: NotificationSettings): Date {
   const now = new Date();
   let nextTime = new Date(now.getTime() + settings.reminderIntervalMinutes * 60 * 1000);
 
-  // If in quiet hours, schedule for end of quiet hours
-  if (settings.quietHoursEnabled) {
-    const quietEnd = new Date(now);
-    quietEnd.setHours(settings.quietHoursEnd, 0, 0, 0);
-
-    // If quiet hours end is tomorrow
-    if (quietEnd <= now) {
-      quietEnd.setDate(quietEnd.getDate() + 1);
+  for (let attempts = 0; attempts < 14; attempts += 1) {
+    if (!isWorkDayForDate(nextTime, settings)) {
+      nextTime.setDate(nextTime.getDate() + 1);
+      continue;
     }
 
-    // If next notification would be in quiet hours
-    const nextTimeHour = nextTime.getHours();
-    const inQuietPeriod =
-      settings.quietHoursStart > settings.quietHoursEnd
-        ? nextTimeHour >= settings.quietHoursStart || nextTimeHour < settings.quietHoursEnd
-        : nextTimeHour >= settings.quietHoursStart && nextTimeHour < settings.quietHoursEnd;
-
-    if (inQuietPeriod) {
-      nextTime = quietEnd;
+    if (isWithinQuietHoursForDate(nextTime, settings)) {
+      nextTime = moveToQuietHoursEnd(nextTime, settings);
+      continue;
     }
+
+    return nextTime;
   }
 
   return nextTime;
@@ -339,19 +454,22 @@ function getNextNotificationTime(settings: NotificationSettings): Date {
 export async function scheduleBreakReminder(): Promise<string | null> {
   const settings = await getNotificationSettings();
 
-  if (!settings.enabled || !settings.breakReminders) {
-    return null;
-  }
-
-  // Cancel existing break reminder
+  // Cancel existing break reminder first so disabled settings do not leave stale reminders behind
   await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.BREAK_REMINDER);
 
-  // Don't schedule if in quiet hours or not a work day
-  if (isQuietHours(settings) || !isWorkDay(settings)) {
+  const hasPermission = await hasGrantedNotificationPermission();
+  if (!hasPermission || !settings.enabled || !settings.breakReminders) {
     return null;
   }
 
-  const nextTime = getNextNotificationTime(settings);
+  const workPattern = await getPersistedWorkPattern();
+  const nextTime = getNextNotificationTime({
+    ...settings,
+    reminderIntervalMinutes: getEffectiveReminderInterval(
+      settings.reminderIntervalMinutes,
+      workPattern
+    ),
+  });
   const message = BREAK_REMINDER_MESSAGES[Math.floor(Math.random() * BREAK_REMINDER_MESSAGES.length)];
 
   const identifier = await Notifications.scheduleNotificationAsync({
@@ -377,12 +495,12 @@ export async function scheduleBreakReminder(): Promise<string | null> {
 export async function scheduleStreakProtection(): Promise<string | null> {
   const settings = await getNotificationSettings();
 
-  if (!settings.enabled || !settings.streakAlerts) {
+  await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.STREAK_PROTECTION);
+
+  const hasPermission = await hasGrantedNotificationPermission();
+  if (!hasPermission || !settings.enabled || !settings.streakAlerts) {
     return null;
   }
-
-  // Cancel existing streak notification
-  await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.STREAK_PROTECTION);
 
   // Check if user has taken breaks today
   const todayBreaks = await getTodayBreaks();
@@ -396,14 +514,13 @@ export async function scheduleStreakProtection(): Promise<string | null> {
     return null; // No streak to protect
   }
 
-  // Schedule for streak reminder hour if no breaks taken
-  const now = new Date();
-  const reminderTime = new Date(now);
-  reminderTime.setHours(STREAK_REMINDER_HOUR, 0, 0, 0);
+  const reminderTime = getNextScheduledTimeForHour(settings, STREAK_REMINDER_HOUR, {
+    allowNextDayIfPast: true,
+    allowCrossDayQuietHoursShift: true,
+  });
 
-  // If it's already past 7 PM, schedule for tomorrow
-  if (now >= reminderTime) {
-    reminderTime.setDate(reminderTime.getDate() + 1);
+  if (!reminderTime) {
+    return null;
   }
 
   const identifier = await Notifications.scheduleNotificationAsync({
@@ -428,16 +545,16 @@ export async function scheduleStreakProtection(): Promise<string | null> {
 export async function scheduleDailyGoalReminder(): Promise<string | null> {
   const settings = await getNotificationSettings();
 
-  if (!settings.enabled || !settings.goalNotifications) {
+  await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.DAILY_GOAL);
+
+  const hasPermission = await hasGrantedNotificationPermission();
+  if (!hasPermission || !settings.enabled || !settings.goalNotifications) {
     return null;
   }
 
-  // Cancel existing goal notification
-  await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.DAILY_GOAL);
-
   const todayBreaks = await getTodayBreaks();
   const userStats = await getUserStats();
-  const dailyGoal = Math.max(Math.round(userStats.weeklyGoal / 7), MIN_DAILY_GOAL);
+  const dailyGoal = calculateDailyGoal(userStats.weeklyGoal);
 
   // If already met goal, don't remind
   if (todayBreaks.length >= dailyGoal) {
@@ -447,13 +564,12 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
   // Calculate remaining breaks
   const remaining = dailyGoal - todayBreaks.length;
 
-  // Schedule for goal reminder hour
-  const now = new Date();
-  const reminderTime = new Date(now);
-  reminderTime.setHours(GOAL_REMINDER_HOUR, 0, 0, 0);
+  const reminderTime = getNextScheduledTimeForHour(settings, GOAL_REMINDER_HOUR, {
+    allowNextDayIfPast: false,
+    allowCrossDayQuietHoursShift: false,
+  });
 
-  // If past the reminder hour, don't schedule
-  if (now >= reminderTime) {
+  if (!reminderTime) {
     return null;
   }
 
@@ -478,8 +594,9 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
 // Schedule all notifications
 export async function scheduleAllNotifications(): Promise<void> {
   const settings = await getNotificationSettings();
+  const hasPermission = await hasGrantedNotificationPermission();
 
-  if (!settings.enabled) {
+  if (!settings.enabled || !hasPermission) {
     await cancelAllNotifications();
     return;
   }

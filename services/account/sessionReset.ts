@@ -21,6 +21,7 @@ import {
   deleteAuthAccount,
   getCurrentUserId,
   refreshAnonymousSession,
+  signInWithEmailPassword,
   signOut,
 } from '@/services/firebase/auth';
 import { deleteAllUserData } from '@/services/firebase/firestore';
@@ -103,7 +104,7 @@ export async function replaceWithFreshAnonymousSession(options?: {
 }): Promise<void> {
   const userId = getCurrentUserId();
 
-  syncService.shutdown();
+  await syncService.shutdown();
 
   if (!options?.deleteRemoteUserData && userId) {
     await unregisterPushNotifications(userId);
@@ -124,5 +125,29 @@ export async function replaceWithFreshAnonymousSession(options?: {
   const freshUser = await refreshAnonymousSession();
   if (!freshUser) {
     throw new Error('Could not start a fresh anonymous session.');
+  }
+}
+
+export async function signInWithRecoveredAccount(email: string, password: string): Promise<void> {
+  const userId = getCurrentUserId();
+
+  await syncService.shutdown();
+
+  if (userId) {
+    await unregisterPushNotifications(userId);
+  }
+
+  await clearLocalSessionState();
+  await signOut();
+
+  try {
+    await signInWithEmailPassword(email, password);
+  } catch (error) {
+    const recoveredUser = await refreshAnonymousSession();
+    if (!recoveredUser) {
+      throw error;
+    }
+
+    throw error;
   }
 }

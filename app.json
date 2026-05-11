@@ -55,9 +55,7 @@
       "versionCode": 1,
       "permissions": [
         "com.android.vending.BILLING",
-        "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "SCHEDULE_EXACT_ALARM",
         "POST_NOTIFICATIONS"
       ],
       "intentFilters": [

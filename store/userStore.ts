@@ -7,12 +7,16 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
 import { syncService } from '@/services/sync';
+import { syncStoredUserStatsFromProgress } from '@/services/storage';
+import { calculateDailyGoal } from '@/utils/validation';
 
 export interface UserProfile {
   name: string;
   avatar: string | null; // emoji or image URI
   email: string | null;
+  emailVerified: boolean;
   joinedAt: string;
   updatedAt?: number;
 }
@@ -75,6 +79,7 @@ export const initialUserProfile: UserProfile = {
   name: 'User',
   avatar: null,
   email: null,
+  emailVerified: false,
   joinedAt: new Date().toISOString(),
 };
 
@@ -84,8 +89,8 @@ export const initialUserProgress: UserProgress = {
   totalBreaks: 0,
   currentStreak: 0,
   longestStreak: 0,
-  weeklyGoal: 35,
-  dailyGoal: 5,
+  weeklyGoal: DEFAULT_WEEKLY_GOAL,
+  dailyGoal: calculateDailyGoal(DEFAULT_WEEKLY_GOAL),
 };
 
 export const initialUserPreferences: UserPreferences = {
@@ -99,6 +104,170 @@ export const initialUserAchievements: UserAchievements = {
   categoryBreaks: {},
   totalMinutes: 0,
 };
+
+let progressSideEffectsScheduled = false;
+
+function scheduleProgressSideEffects(): void {
+  if (progressSideEffectsScheduled) {
+    return;
+  }
+
+  progressSideEffectsScheduled = true;
+
+  const flush = () => {
+    progressSideEffectsScheduled = false;
+    const progress = useUserStore.getState().progress;
+
+    void syncStoredUserStatsFromProgress(progress);
+
+    if (!syncService.isSyncPulling()) {
+      void syncService.queueDataChange('progress');
+    }
+  };
+
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(flush);
+    return;
+  }
+
+  setTimeout(flush, 0);
+}
+
+function sanitizeProfile(value: unknown): UserProfile {
+  const profile = value && typeof value === 'object' ? value as Partial<UserProfile> : {};
+
+  return {
+    name: typeof profile.name === 'string' && profile.name.trim().length > 0
+      ? profile.name
+      : initialUserProfile.name,
+    avatar: typeof profile.avatar === 'string' ? profile.avatar : null,
+    email: typeof profile.email === 'string' ? profile.email : null,
+    emailVerified: profile.emailVerified === true,
+    joinedAt:
+      typeof profile.joinedAt === 'string' && !Number.isNaN(Date.parse(profile.joinedAt))
+        ? profile.joinedAt
+        : new Date().toISOString(),
+    updatedAt:
+      typeof profile.updatedAt === 'number' && Number.isFinite(profile.updatedAt)
+        ? profile.updatedAt
+        : undefined,
+  };
+}
+
+function sanitizeProgress(value: unknown): UserProgress {
+  const progress = value && typeof value === 'object' ? value as Partial<UserProgress> : {};
+  const weeklyGoal =
+    typeof progress.weeklyGoal === 'number' && Number.isFinite(progress.weeklyGoal) && progress.weeklyGoal > 0
+      ? Math.round(progress.weeklyGoal)
+      : initialUserProgress.weeklyGoal;
+
+  return {
+    level:
+      typeof progress.level === 'number' && Number.isFinite(progress.level)
+        ? Math.max(1, Math.round(progress.level))
+        : initialUserProgress.level,
+    totalXP:
+      typeof progress.totalXP === 'number' && Number.isFinite(progress.totalXP)
+        ? Math.max(0, Math.round(progress.totalXP))
+        : initialUserProgress.totalXP,
+    totalBreaks:
+      typeof progress.totalBreaks === 'number' && Number.isFinite(progress.totalBreaks)
+        ? Math.max(0, Math.round(progress.totalBreaks))
+        : initialUserProgress.totalBreaks,
+    currentStreak:
+      typeof progress.currentStreak === 'number' && Number.isFinite(progress.currentStreak)
+        ? Math.max(0, Math.round(progress.currentStreak))
+        : initialUserProgress.currentStreak,
+    longestStreak:
+      typeof progress.longestStreak === 'number' && Number.isFinite(progress.longestStreak)
+        ? Math.max(
+            typeof progress.currentStreak === 'number' && Number.isFinite(progress.currentStreak)
+              ? Math.max(0, Math.round(progress.currentStreak))
+              : initialUserProgress.currentStreak,
+            Math.round(progress.longestStreak)
+          )
+        : initialUserProgress.longestStreak,
+    weeklyGoal,
+    dailyGoal:
+      typeof progress.dailyGoal === 'number' && Number.isFinite(progress.dailyGoal) && progress.dailyGoal > 0
+        ? Math.round(progress.dailyGoal)
+        : calculateDailyGoal(weeklyGoal),
+  };
+}
+
+function sanitizePreferences(value: unknown): UserPreferences {
+  const preferences = value && typeof value === 'object' ? value as Partial<UserPreferences> : {};
+
+  return {
+    favoriteBreaks: Array.isArray(preferences.favoriteBreaks)
+      ? Array.from(new Set(preferences.favoriteBreaks.filter((id): id is string => typeof id === 'string')))
+      : [],
+    recentBreaks: Array.isArray(preferences.recentBreaks)
+      ? preferences.recentBreaks
+          .filter((id): id is string => typeof id === 'string')
+          .slice(0, 10)
+      : [],
+  };
+}
+
+function sanitizeAchievements(value: unknown): UserAchievements {
+  const achievements = value && typeof value === 'object'
+    ? value as Partial<UserAchievements>
+    : {};
+  const unlockedIds = Array.isArray(achievements.unlockedIds)
+    ? Array.from(new Set(achievements.unlockedIds.filter((id): id is string => typeof id === 'string')))
+    : [];
+  const unlockedAtSource =
+    achievements.unlockedAt && typeof achievements.unlockedAt === 'object' && !Array.isArray(achievements.unlockedAt)
+      ? achievements.unlockedAt
+      : {};
+  const categoryBreaksSource =
+    achievements.categoryBreaks &&
+    typeof achievements.categoryBreaks === 'object' &&
+    !Array.isArray(achievements.categoryBreaks)
+      ? achievements.categoryBreaks
+      : {};
+
+  const unlockedAt: Record<string, string> = {};
+  for (const id of unlockedIds) {
+    const value = (unlockedAtSource as Record<string, unknown>)[id];
+    if (typeof value === 'string' && !Number.isNaN(Date.parse(value))) {
+      unlockedAt[id] = value;
+    }
+  }
+
+  const categoryBreaks: Record<string, number> = {};
+  for (const [key, value] of Object.entries(categoryBreaksSource as Record<string, unknown>)) {
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+      categoryBreaks[key] = Math.round(value);
+    }
+  }
+
+  return {
+    unlockedIds,
+    unlockedAt,
+    categoryBreaks,
+    totalMinutes:
+      typeof achievements.totalMinutes === 'number' && Number.isFinite(achievements.totalMinutes)
+        ? Math.max(0, Math.round(achievements.totalMinutes))
+        : initialUserAchievements.totalMinutes,
+  };
+}
+
+function sanitizePersistedUserState(state: unknown): Pick<
+  UserState,
+  'profile' | 'progress' | 'preferences' | 'achievements' | 'isAuthenticated'
+> {
+  const persisted = state && typeof state === 'object' ? state as Partial<UserState> : {};
+
+  return {
+    profile: sanitizeProfile(persisted.profile),
+    progress: sanitizeProgress(persisted.progress),
+    preferences: sanitizePreferences(persisted.preferences),
+    achievements: sanitizeAchievements(persisted.achievements),
+    isAuthenticated: persisted.isAuthenticated === true,
+  };
+}
 
 // Granular selectors for performance optimization
 export const useUserProfile = () => useUserStore((state) => state.profile);
@@ -178,20 +347,30 @@ export const useUserStore = create<UserState>()(
       },
 
       // Progress Actions
-      updateProgress: (data) =>
+      updateProgress: (data) => {
         set((state) => ({
           progress: { ...state.progress, ...data },
-        })),
+        }));
+        scheduleProgressSideEffects();
+      },
 
-      setWeeklyGoal: (goal) =>
+      setWeeklyGoal: (goal) => {
         set((state) => ({
-          progress: { ...state.progress, weeklyGoal: goal, dailyGoal: Math.max(Math.round(goal / 7), 3) },
-        })),
+          progress: {
+            ...state.progress,
+            weeklyGoal: goal,
+            dailyGoal: calculateDailyGoal(goal),
+          },
+        }));
+        scheduleProgressSideEffects();
+      },
 
-      setDailyGoal: (goal) =>
+      setDailyGoal: (goal) => {
         set((state) => ({
           progress: { ...state.progress, dailyGoal: goal },
-        })),
+        }));
+        scheduleProgressSideEffects();
+      },
 
       addXP: (amount) => {
         set((state) => {
@@ -205,9 +384,7 @@ export const useUserStore = create<UserState>()(
             },
           };
         });
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('progress');
-        }
+        scheduleProgressSideEffects();
       },
 
       incrementBreaks: () => {
@@ -217,9 +394,7 @@ export const useUserStore = create<UserState>()(
             totalBreaks: state.progress.totalBreaks + 1,
           },
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('progress');
-        }
+        scheduleProgressSideEffects();
       },
 
       updateStreak: (streak) => {
@@ -230,15 +405,15 @@ export const useUserStore = create<UserState>()(
             longestStreak: Math.max(state.progress.longestStreak, streak),
           },
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('progress');
-        }
+        scheduleProgressSideEffects();
       },
 
-      resetProgress: () =>
+      resetProgress: () => {
         set({
           progress: initialUserProgress,
-        }),
+        });
+        scheduleProgressSideEffects();
+      },
 
       signOut: () =>
         set({
@@ -332,8 +507,14 @@ export const useUserStore = create<UserState>()(
     {
       name: 'microbreaks-user',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (persistedState) => sanitizePersistedUserState(persistedState),
     }
   )
 );
+
+export const userStoreTestUtils = {
+  sanitizePersistedUserState,
+};
 
 export default useUserStore;

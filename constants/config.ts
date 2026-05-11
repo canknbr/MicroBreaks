@@ -7,8 +7,12 @@
 // STORAGE LIMITS
 // ==========================================
 
-/** Maximum number of breaks to store in history */
-export const MAX_BREAK_HISTORY = 500;
+/**
+ * Maximum number of breaks to store in history.
+ * 5000 supports multi-year usage at a 5-breaks-per-day rhythm without
+ * truncating the "year" analytics surface into misleading data.
+ */
+export const MAX_BREAK_HISTORY = 5000;
 
 /** Maximum number of days to keep in streak history */
 export const MAX_STREAK_HISTORY_DAYS = 90;
@@ -65,8 +69,8 @@ export const DEFAULT_QUIET_HOURS_END = 8; // 8 AM
 /** Minimum daily goal (breaks per day) */
 export const MIN_DAILY_GOAL = 3;
 
-/** Default weekly goal (breaks per week) */
-export const DEFAULT_WEEKLY_GOAL = 20;
+/** Default weekly goal (breaks per week). Targets a realistic 5 resets per day. */
+export const DEFAULT_WEEKLY_GOAL = 35;
 
 /** Streak milestones for special notifications */
 export const STREAK_MILESTONES = [7, 14, 30, 60, 100] as const;

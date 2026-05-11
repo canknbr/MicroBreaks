@@ -5,6 +5,14 @@
 
 import '@testing-library/react-native/extend-expect';
 
+if (typeof global.setImmediate !== 'function') {
+  global.setImmediate = (callback, ...args) => setTimeout(callback, 0, ...args);
+}
+
+if (typeof global.clearImmediate !== 'function') {
+  global.clearImmediate = (handle) => clearTimeout(handle);
+}
+
 // ============================================
 // React Native Core Mocks
 // ============================================
@@ -306,6 +314,17 @@ jest.mock('react-native-reanimated', () => {
 // React Native Gesture Handler
 jest.mock('react-native-gesture-handler', () => {
   const View = require('react-native').View;
+  const createGestureBuilder = () => {
+    const builder = {
+      enabled: jest.fn(() => builder),
+      onBegin: jest.fn(() => builder),
+      onFinalize: jest.fn(() => builder),
+      onEnd: jest.fn(() => builder),
+    };
+
+    return builder;
+  };
+
   return {
     Swipeable: View,
     DrawerLayout: View,
@@ -330,6 +349,10 @@ jest.mock('react-native-gesture-handler', () => {
     RotationGestureHandler: View,
     TapGestureHandler: View,
     GestureHandlerRootView: View,
+    GestureDetector: View,
+    Gesture: {
+      Tap: jest.fn(() => createGestureBuilder()),
+    },
     Directions: {},
     gestureHandlerRootHOC: jest.fn((Component) => Component),
   };

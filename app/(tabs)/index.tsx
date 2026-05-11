@@ -64,6 +64,7 @@ import {
   useAmbientColors,
   useFormattedDate,
 } from '@/hooks/useHomeData';
+import { getSuggestedBreak } from '@/services/recommendations/engine';
 import { getExerciseById } from '@/data/exercises';
 import {
   BREAK_TYPES,
@@ -72,8 +73,10 @@ import {
   formatNextBreakWindow,
   formatRelativeMinutes,
   getDefaultRecoveryStateId,
+  getRecommendationContextForRecoveryState,
   getRecoveryReason,
 } from '@/features/recovery/states';
+import { getWorkPatternTimingHint } from '@/features/workday/patterns';
 import { useNotificationStore, useOnboardingStore } from '@/store';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useTheme } from '@/hooks/useTheme';
@@ -101,7 +104,7 @@ export default function HomeScreen() {
     hasCompletedGoal,
     shouldCelebrate,
     clearCelebration,
-  } = useHomeData();
+  } = useHomeData({ workPattern: onboardingData.workPattern });
 
   // Notification count from store
   const unreadCount = useNotificationStore((state) => state.notifications.filter((n) => !n.read).length);
@@ -111,7 +114,11 @@ export default function HomeScreen() {
   const timerActions = useTimerActions();
   const [showPresetPicker, setShowPresetPicker] = useState(false);
   const [selectedRecoveryStateId, setSelectedRecoveryStateId] = useState<RecoveryStateId>(
-    getDefaultRecoveryStateId(onboardingData.painAreas, onboardingData.breakStyle)
+    getDefaultRecoveryStateId(
+      onboardingData.painAreas,
+      onboardingData.breakStyle,
+      onboardingData.energyPattern
+    )
   );
 
   // Dynamic content hooks
@@ -142,8 +149,13 @@ export default function HomeScreen() {
   }, [data]);
 
   const defaultRecoveryStateId = useMemo(
-    () => getDefaultRecoveryStateId(onboardingData.painAreas, onboardingData.breakStyle),
-    [onboardingData.breakStyle, onboardingData.painAreas]
+    () =>
+      getDefaultRecoveryStateId(
+        onboardingData.painAreas,
+        onboardingData.breakStyle,
+        onboardingData.energyPattern
+      ),
+    [onboardingData.breakStyle, onboardingData.energyPattern, onboardingData.painAreas]
   );
 
   useEffect(() => {
@@ -157,9 +169,27 @@ export default function HomeScreen() {
     [selectedRecoveryStateId]
   );
 
+  const adaptiveRecommendation = useMemo(() => {
+    if (!data) {
+      return null;
+    }
+
+    const recommendationContext = getRecommendationContextForRecoveryState(selectedRecoveryState.id);
+    return getSuggestedBreak(
+      recommendationContext.painAreas,
+      recommendationContext.painSeverity,
+      recommendationContext.breakStyle,
+      data.recommendationSignals.recentBreakIds,
+      data.dailyProgress.breaksTaken,
+      data.recommendationSignals.historicalOutcomes
+    );
+  }, [data, selectedRecoveryState.id]);
+
+  const recommendedBreakId = adaptiveRecommendation?.exercise.id ?? selectedRecoveryState.breakId;
+
   const recommendedExercise = useMemo(
-    () => getExerciseById(selectedRecoveryState.breakId),
-    [selectedRecoveryState.breakId]
+    () => getExerciseById(recommendedBreakId),
+    [recommendedBreakId]
   );
 
   const recommendedDuration = useMemo(
@@ -170,15 +200,34 @@ export default function HomeScreen() {
     [recommendedExercise]
   );
 
+  const workPatternHint = useMemo(
+    () => getWorkPatternTimingHint(onboardingData.workPattern),
+    [onboardingData.workPattern]
+  );
+
   const recoveryReason = useMemo(
-    () =>
-      getRecoveryReason(
+    () => {
+      const baseReason = getRecoveryReason(
         selectedRecoveryState.id,
         data?.dailyProgress.lastBreakMinutesAgo ?? 999,
         data?.dailyProgress.breaksTaken ?? 0,
         isNewUser
-      ),
-    [selectedRecoveryState.id, data?.dailyProgress.lastBreakMinutesAgo, data?.dailyProgress.breaksTaken, isNewUser]
+      );
+
+      if (!adaptiveRecommendation || adaptiveRecommendation.reason === 'Recommended for you') {
+        return workPatternHint ? `${baseReason} ${workPatternHint}` : baseReason;
+      }
+
+      return `${adaptiveRecommendation.reason}. ${baseReason}${workPatternHint ? ` ${workPatternHint}` : ''}`;
+    },
+    [
+      adaptiveRecommendation,
+      selectedRecoveryState.id,
+      data?.dailyProgress.lastBreakMinutesAgo,
+      data?.dailyProgress.breaksTaken,
+      isNewUser,
+      workPatternHint,
+    ]
   );
 
   const lastResetLabel = useMemo(
@@ -534,7 +583,7 @@ export default function HomeScreen() {
             <View style={styles.recommendedActions}>
               <Pressable
                 style={styles.primaryResetAction}
-                onPress={() => handleBreakPress(selectedRecoveryState.breakId)}
+                onPress={() => handleBreakPress(recommendedBreakId)}
                 accessibilityRole="button"
                 accessibilityLabel={`Start ${recommendedExercise?.title ?? selectedRecoveryState.title}`}
               >
@@ -670,7 +719,7 @@ export default function HomeScreen() {
                   duration={breakType.duration}
                   color={breakType.color}
                   onPress={() => handleBreakPress(breakType.id)}
-                  isRecommended={breakType.id === selectedRecoveryState.breakId}
+                  isRecommended={breakType.id === recommendedBreakId}
                   accessibilityLabel={`Start ${breakType.title} break, ${breakType.duration}`}
                   accessibilityHint="Double tap to begin this exercise"
                 />

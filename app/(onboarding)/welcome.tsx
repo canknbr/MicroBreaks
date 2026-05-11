@@ -15,6 +15,7 @@ import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText, DisplayText } from './components/AnimatedText';
 import { ZenColors, ZenSpacing } from './constants/design';
+import { AccountAccessModal, type AccountAccessMode } from '@/components/profile';
 import {
   ACTIVE_ONBOARDING_TOTAL_STEPS,
   PRIMARY_NEEDS,
@@ -52,12 +53,14 @@ const NEED_DEFAULTS: Record<
 
 function deriveInitialNeed(
   painAreas: string[],
-  breakStyle: string[]
+  breakStyle: string[],
+  energyPattern?: string | null
 ): PrimaryNeedId | null {
   if (painAreas.includes('eyes')) return 'eyes';
   if (painAreas.includes('neck') || painAreas.includes('shoulders')) return 'neck';
   if (breakStyle.includes('mindful')) return 'focus';
   if (breakStyle.includes('active')) return 'energy';
+  if (energyPattern === 'afternoon_slump') return 'energy';
   return null;
 }
 
@@ -67,8 +70,14 @@ export default function WelcomeScreen() {
   const onboardingData = useOnboardingStore((state) => state.data);
   const updateData = useOnboardingStore((state) => state.updateData);
   const [selectedNeed, setSelectedNeed] = useState<PrimaryNeedId | null>(
-    deriveInitialNeed(onboardingData.painAreas, onboardingData.breakStyle)
+    deriveInitialNeed(
+      onboardingData.painAreas,
+      onboardingData.breakStyle,
+      onboardingData.energyPattern
+    )
   );
+  const [showAccountAccess, setShowAccountAccess] = useState(false);
+  const [accountAccessMode, setAccountAccessMode] = useState<AccountAccessMode>('sign_in');
 
   const logoScale = useSharedValue(0.9);
   const logoOpacity = useSharedValue(0);
@@ -118,6 +127,20 @@ export default function WelcomeScreen() {
   };
 
   const handleBrowse = () => {
+    skipOnboarding();
+    router.replace('/(tabs)');
+  };
+
+  const handleRestoreAccount = () => {
+    setAccountAccessMode('sign_in');
+    setShowAccountAccess(true);
+  };
+
+  const handleAccountAccessSuccess = (mode: AccountAccessMode) => {
+    if (mode !== 'sign_in') {
+      return;
+    }
+
     skipOnboarding();
     router.replace('/(tabs)');
   };
@@ -191,8 +214,20 @@ export default function WelcomeScreen() {
             onPress={handleBrowse}
             variant="muted"
           />
+          <SecondaryButton
+            title="Restore linked account"
+            onPress={handleRestoreAccount}
+            variant="accent"
+          />
         </Animated.View>
       </View>
+      <AccountAccessModal
+        visible={showAccountAccess}
+        mode={accountAccessMode}
+        onModeChange={setAccountAccessMode}
+        onSuccess={handleAccountAccessSuccess}
+        onClose={() => setShowAccountAccess(false)}
+      />
     </OnboardingLayout>
   );
 }

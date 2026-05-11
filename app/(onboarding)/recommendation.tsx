@@ -1,6 +1,6 @@
 /**
- * ONB_012: AI Recommendation
- * Premium zen design with animated personalized plan
+ * Recommendation screen
+ * Presents the user's starting plan with an animated first-reset suggestion.
  */
 
 import React, { useEffect } from 'react';

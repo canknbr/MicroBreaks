@@ -1,8 +1,9 @@
-import { pullBreakHistory } from '@/services/sync/breakSync';
-import { getBreaksCollection } from '@/services/firebase/firestore';
+import { pullBreakHistory, pushBreakHistory } from '@/services/sync/breakSync';
+import { firestore, getBreaksCollection } from '@/services/firebase/firestore';
 import { getBreakHistory } from '@/services/breakHistory';
 import { mergeBreakHistories } from '@/services/sync/merger';
 import { setItem, STORAGE_KEYS } from '@/services/storage';
+import type { CompletedBreak } from '@/services/storage';
 
 jest.mock('@/services/firebase/firestore', () => ({
   getBreaksCollection: jest.fn(),
@@ -24,7 +25,7 @@ jest.mock('@/services/storage', () => ({
   setItem: jest.fn(() => Promise.resolve(true)),
 }));
 
-function createRemoteBreak(index: number) {
+function createRemoteBreak(index: number): CompletedBreak {
   return {
     id: `break-${index}`,
     breakId: `pack-${index}`,
@@ -38,6 +39,7 @@ function createRemoteBreak(index: number) {
     xpEarned: 10,
     rating: 'good' as const,
     completedAt: new Date(Date.now() - index * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - index * 1000).toISOString(),
   };
 }
 
@@ -80,10 +82,48 @@ describe('pullBreakHistory', () => {
 
     await pullBreakHistory('user-1', Date.now() - 60_000);
 
+    expect(query.where).toHaveBeenCalledWith('updatedAt', '>', expect.any(String));
+    expect(query.orderBy).toHaveBeenCalledWith('updatedAt', 'desc');
     expect(query.startAfter).toHaveBeenCalledTimes(1);
     expect(mergeBreakHistories).toHaveBeenCalledWith([], expect.any(Array));
     expect((mergeBreakHistories as jest.Mock).mock.calls[0][1]).toHaveLength(620);
     expect(setItem).toHaveBeenCalledWith(STORAGE_KEYS.BREAK_HISTORY, expect.any(Array));
     expect(getBreakHistory).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('pushBreakHistory', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('pushes breaks updated after the last push timestamp', async () => {
+    const olderBreak = createRemoteBreak(1);
+    olderBreak.updatedAt = '2024-01-01T10:00:00.000Z';
+
+    const updatedBreak = createRemoteBreak(2);
+    updatedBreak.updatedAt = '2024-01-01T10:05:00.000Z';
+    updatedBreak.rating = 'bad';
+
+    (getBreakHistory as jest.Mock).mockResolvedValueOnce([olderBreak, updatedBreak]);
+
+    const set = jest.fn();
+    const commit = jest.fn().mockResolvedValue(undefined);
+    const batch = { set, commit };
+    (firestore as unknown as jest.Mock).mockReturnValue({
+      batch: () => batch,
+    });
+    (getBreaksCollection as jest.Mock).mockReturnValue({
+      doc: (id: string) => ({ id }),
+    });
+
+    await pushBreakHistory('user-1', new Date('2024-01-01T10:03:00.000Z').getTime());
+
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ id: updatedBreak.id }),
+      expect.objectContaining({ rating: 'bad', updatedAt: '2024-01-01T10:05:00.000Z' })
+    );
+    expect(commit).toHaveBeenCalledTimes(1);
   });
 });

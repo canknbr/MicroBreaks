@@ -10,7 +10,9 @@ import {
   getTodayBreaks,
   getWeekBreaks,
   getMonthBreaks,
+  getYearlyChartData,
   saveCompletedBreak,
+  updateBreakRating,
   getStreakData,
   getUserStats,
   getWeeklyChartData,
@@ -20,13 +22,24 @@ import {
   checkStreakStatus,
   getTimePatterns,
   getBestBreakTime,
+  getYearBreaksFromHistory,
+  getYearlyChartDataFromHistory,
 } from '@/services/breakHistory';
 import { STORAGE_KEYS, DEFAULT_STREAK_DATA, DEFAULT_USER_STATS } from '@/services/storage';
+import { syncService } from '@/services/sync';
+import { useUserStore } from '@/store/userStore';
+import { MAX_BREAK_HISTORY } from '@/constants/config';
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+jest.mock('@/services/sync', () => ({
+  syncService: {
+    queueDataChange: jest.fn(),
+  },
+}));
 
 // Helper to create mock break data
 function createMockBreak(overrides: Partial<{
@@ -42,6 +55,7 @@ function createMockBreak(overrides: Partial<{
   xpEarned: number;
   rating: 'good' | 'neutral' | 'bad' | null;
   completedAt: string;
+  updatedAt: string;
 }> = {}) {
   return {
     id: overrides.id || `break_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
@@ -56,6 +70,7 @@ function createMockBreak(overrides: Partial<{
     xpEarned: overrides.xpEarned || 15,
     rating: overrides.rating !== undefined ? overrides.rating : 'good',
     completedAt: overrides.completedAt || new Date().toISOString(),
+    updatedAt: overrides.updatedAt || overrides.completedAt || new Date().toISOString(),
   };
 }
 
@@ -71,6 +86,7 @@ describe('Break History Service', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     jest.clearAllMocks();
+    useUserStore.getState().signOut();
   });
 
   describe('getBreakHistory', () => {
@@ -99,6 +115,7 @@ describe('Break History Service', () => {
       const result = await getBreakHistory();
 
       expect(result).toEqual([]);
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.BREAK_HISTORY)).toBe(JSON.stringify([]));
       consoleSpy.mockRestore();
     });
   });
@@ -265,6 +282,7 @@ describe('Break History Service', () => {
         totalSteps: 2,
         xpEarned: 15,
         rating: 'good' as const,
+        reliefScore: 'better' as const,
         completedAt: new Date().toISOString(),
       };
 
@@ -277,6 +295,7 @@ describe('Break History Service', () => {
       expect(history[0].breakId).toBe('eye-rest');
       expect(history[0].id).toBeDefined();
       expect(history[0].id).toMatch(/^break_[0-9a-f-]+$/);
+      expect(history[0].reliefScore).toBe('better');
     });
 
     it('should add new breaks to the beginning', async () => {
@@ -303,9 +322,9 @@ describe('Break History Service', () => {
       expect(history[1].id).toBe('first'); // Old break moved
     });
 
-    it('should limit history to 500 breaks', async () => {
-      // Create 500 existing breaks
-      const existingBreaks = Array.from({ length: 500 }, (_, i) =>
+    it('should limit history to MAX_BREAK_HISTORY breaks', async () => {
+      // Create MAX_BREAK_HISTORY existing breaks
+      const existingBreaks = Array.from({ length: MAX_BREAK_HISTORY }, (_, i) =>
         createMockBreak({ id: `break-${i}` })
       );
       await AsyncStorage.setItem(STORAGE_KEYS.BREAK_HISTORY, JSON.stringify(existingBreaks));
@@ -326,7 +345,7 @@ describe('Break History Service', () => {
       });
 
       const history = await getBreakHistory();
-      expect(history.length).toBe(500);
+      expect(history.length).toBe(MAX_BREAK_HISTORY);
       expect(history[0].breakId).toBe('new-break'); // New break at front
     });
 
@@ -381,6 +400,31 @@ describe('Break History Service', () => {
       expect(stats.totalBreaks).toBeGreaterThanOrEqual(1);
       expect(stats.totalMinutes).toBeGreaterThanOrEqual(2); // 120/60
       expect(stats.totalXP).toBeGreaterThanOrEqual(25);
+    });
+
+    it('should synchronize user store progress projection after a successful save', async () => {
+      await saveCompletedBreak({
+        breakId: 'eye-rest',
+        title: 'Eye Rest',
+        category: 'quick',
+        icon: '👁️',
+        color: '#06FFA5',
+        duration: 120,
+        stepsCompleted: 1,
+        totalSteps: 1,
+        xpEarned: 25,
+        rating: 'good' as const,
+        completedAt: new Date().toISOString(),
+      });
+
+      const progress = useUserStore.getState().progress;
+      expect(progress.totalBreaks).toBe(1);
+      expect(progress.totalXP).toBe(25);
+      expect(progress.level).toBe(1);
+      expect(progress.currentStreak).toBe(1);
+      expect(progress.longestStreak).toBe(1);
+      expect(progress.weeklyGoal).toBe(DEFAULT_USER_STATS.weeklyGoal);
+      expect(progress.dailyGoal).toBe(5);
     });
 
     it('should return false and log error on failure', async () => {
@@ -469,6 +513,49 @@ describe('Break History Service', () => {
       expect(result.longestStreak).toBe(10);
       expect(result.lastBreakDate).toBe('2024-01-15');
     });
+
+    it('should self-heal corrupted streak data', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.STREAK_DATA, 'invalid-json');
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const result = await getStreakData();
+
+      expect(result).toEqual(DEFAULT_STREAK_DATA);
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.STREAK_DATA)).toBe(JSON.stringify(DEFAULT_STREAK_DATA));
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('updateBreakRating', () => {
+    it('updates a saved break rating and queues a break sync', async () => {
+      const breakEntry = createMockBreak({ id: 'break-1', rating: null });
+      await AsyncStorage.setItem(STORAGE_KEYS.BREAK_HISTORY, JSON.stringify([breakEntry]));
+
+      await updateBreakRating('break-1', 'good', 'much_better');
+
+      const stored = await AsyncStorage.getItem(STORAGE_KEYS.BREAK_HISTORY);
+      const parsed = JSON.parse(stored as string);
+      expect(parsed[0].rating).toBe('good');
+      expect(parsed[0].reliefScore).toBe('much_better');
+      expect(parsed[0].updatedAt).toBeDefined();
+      expect(syncService.queueDataChange).toHaveBeenCalledWith(
+        'break',
+        expect.objectContaining({
+          id: 'break-1',
+          rating: 'good',
+          reliefScore: 'much_better',
+        })
+      );
+    });
+
+    it('does not queue sync when the rating is unchanged', async () => {
+      const breakEntry = createMockBreak({ id: 'break-1', rating: 'good' });
+      await AsyncStorage.setItem(STORAGE_KEYS.BREAK_HISTORY, JSON.stringify([breakEntry]));
+
+      await updateBreakRating('break-1', 'good');
+
+      expect(syncService.queueDataChange).not.toHaveBeenCalled();
+    });
   });
 
   describe('getUserStats', () => {
@@ -492,6 +579,17 @@ describe('Break History Service', () => {
       expect(result.totalBreaks).toBe(50);
       expect(result.totalXP).toBe(750);
       expect(result.level).toBe(8);
+    });
+
+    it('should self-heal corrupted stored user stats', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, 'invalid-json');
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const result = await getUserStats();
+
+      expect(result).toEqual(DEFAULT_USER_STATS);
+      expect(await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS)).toBe(JSON.stringify(DEFAULT_USER_STATS));
+      consoleSpy.mockRestore();
     });
   });
 
@@ -651,6 +749,52 @@ describe('Break History Service', () => {
 
       expect(todayData.count).toBe(2);
       expect(todayData.minutes).toBe(3); // 60/60 + 120/60 = 1 + 2
+    });
+  });
+
+  describe('Year Analytics', () => {
+    it('should filter year breaks to the last 12 months', () => {
+      const now = new Date();
+      const withinYear = createMockBreak({
+        id: 'within-year',
+        completedAt: new Date(now.getFullYear(), now.getMonth() - 11, 15).toISOString(),
+      });
+      const olderThanYear = createMockBreak({
+        id: 'older-than-year',
+        completedAt: new Date(now.getFullYear(), now.getMonth() - 12, 1).toISOString(),
+      });
+
+      const result = getYearBreaksFromHistory([withinYear, olderThanYear]);
+      expect(result.map((item) => item.id)).toContain('within-year');
+      expect(result.map((item) => item.id)).not.toContain('older-than-year');
+    });
+
+    it('should build 12 monthly buckets for yearly chart data', async () => {
+      const now = new Date();
+      const currentMonthBreak = createMockBreak({
+        id: 'current-month',
+        duration: 120,
+        completedAt: new Date(now.getFullYear(), now.getMonth(), 10).toISOString(),
+      });
+      const previousMonthBreak = createMockBreak({
+        id: 'previous-month',
+        duration: 60,
+        completedAt: new Date(now.getFullYear(), now.getMonth() - 1, 12).toISOString(),
+      });
+
+      const chart = getYearlyChartDataFromHistory([currentMonthBreak, previousMonthBreak]);
+      expect(chart).toHaveLength(12);
+      expect(chart[10].count).toBe(1);
+      expect(chart[10].minutes).toBe(1);
+      expect(chart[11].count).toBe(1);
+      expect(chart[11].minutes).toBe(2);
+
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.BREAK_HISTORY,
+        JSON.stringify([currentMonthBreak, previousMonthBreak])
+      );
+      const persistedChart = await getYearlyChartData();
+      expect(persistedChart).toHaveLength(12);
     });
   });
 

@@ -101,7 +101,9 @@ export default function PainAssessmentScreen() {
   const [selectedAreas, setSelectedAreas] = useState<Set<string>>(
     new Set(onboardingData.painAreas)
   );
-  const [severity, setSeverity] = useState<Record<string, Severity>>({});
+  const [severity, setSeverity] = useState<Record<string, Severity>>(
+    onboardingData.painSeverity
+  );
 
   const toggleArea = (areaId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -131,13 +133,23 @@ export default function PainAssessmentScreen() {
 
   const handleContinue = () => {
     const painAreas = selectedAreas.size > 0 ? Array.from(selectedAreas) : ['none'];
-    updateData({ painAreas });
+    const painSeverity = painAreas.includes('none')
+      ? {}
+      : painAreas.reduce<Record<string, Severity>>((acc, areaId) => {
+          if (severity[areaId]) {
+            acc[areaId] = severity[areaId];
+          }
+          return acc;
+        }, {});
+
+    updateData({ painAreas, painSeverity });
     router.push('./recommendation');
   };
 
   const handleNoPain = () => {
     setSelectedAreas(new Set(['none']));
-    updateData({ painAreas: ['none'] });
+    setSeverity({});
+    updateData({ painAreas: ['none'], painSeverity: {} });
     router.push('./recommendation');
   };
 

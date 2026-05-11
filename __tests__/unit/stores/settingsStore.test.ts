@@ -5,6 +5,8 @@
 
 import { act, renderHook } from '@testing-library/react-native';
 import {
+  defaultAppSettings,
+  settingsStoreTestUtils,
   useSettingsStore,
   useSettings,
   useThemeSetting,
@@ -588,6 +590,56 @@ describe('SettingsStore', () => {
       });
 
       expect(useSettingsStore.getState().settings.theme).toBe('system');
+    });
+  });
+
+  describe('Persistence Safety', () => {
+    it('should sanitize malformed persisted settings state', () => {
+      const snapshot = settingsStoreTestUtils.sanitizePersistedSettingsState({
+        settings: {
+          theme: 'neon',
+          accentColor: '',
+          soundEnabled: 'yes',
+          hapticsEnabled: false,
+          voiceGuidanceEnabled: 'sometimes',
+          notificationsEnabled: false,
+          breakReminders: 'later',
+          reminderIntervalMinutes: 999,
+          streakAlerts: true,
+          goalNotifications: 'no',
+          quietHoursEnabled: true,
+          quietHoursStart: 99,
+          quietHoursEnd: -5,
+          workDaysOnly: false,
+          workDays: [1, 2, 2, 8, 'fri'],
+          defaultBreakDuration: 0,
+          autoStartNextStep: 'auto',
+          showStepPreview: false,
+          analyticsEnabled: 'maybe',
+          crashReportingEnabled: false,
+        },
+        settingsUpdatedAt: -100,
+      });
+
+      expect(snapshot.settings.theme).toBe(defaultAppSettings.theme);
+      expect(snapshot.settings.accentColor).toBe(defaultAppSettings.accentColor);
+      expect(snapshot.settings.soundEnabled).toBe(defaultAppSettings.soundEnabled);
+      expect(snapshot.settings.hapticsEnabled).toBe(false);
+      expect(snapshot.settings.voiceGuidanceEnabled).toBe(defaultAppSettings.voiceGuidanceEnabled);
+      expect(snapshot.settings.notificationsEnabled).toBe(false);
+      expect(snapshot.settings.breakReminders).toBe(defaultAppSettings.breakReminders);
+      expect(snapshot.settings.reminderIntervalMinutes).toBe(120);
+      expect(snapshot.settings.goalNotifications).toBe(defaultAppSettings.goalNotifications);
+      expect(snapshot.settings.quietHoursStart).toBe(23);
+      expect(snapshot.settings.quietHoursEnd).toBe(0);
+      expect(snapshot.settings.workDaysOnly).toBe(false);
+      expect(snapshot.settings.workDays).toEqual([1, 2]);
+      expect(snapshot.settings.defaultBreakDuration).toBe(15);
+      expect(snapshot.settings.autoStartNextStep).toBe(defaultAppSettings.autoStartNextStep);
+      expect(snapshot.settings.showStepPreview).toBe(false);
+      expect(snapshot.settings.analyticsEnabled).toBe(defaultAppSettings.analyticsEnabled);
+      expect(snapshot.settings.crashReportingEnabled).toBe(false);
+      expect(snapshot.settingsUpdatedAt).toBe(0);
     });
   });
 });

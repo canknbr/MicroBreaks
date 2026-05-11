@@ -93,6 +93,118 @@ export const defaultAppSettings: AppSettings = {
   crashReportingEnabled: true,
 };
 
+function sanitizeTheme(value: unknown): AppSettings['theme'] {
+  return value === 'light' || value === 'system' || value === 'dark'
+    ? value
+    : defaultAppSettings.theme;
+}
+
+function sanitizeWorkDays(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [...defaultAppSettings.workDays];
+  }
+
+  const days = value
+    .filter((day): day is number => typeof day === 'number' && Number.isInteger(day))
+    .filter((day) => day >= 0 && day <= 6);
+
+  return Array.from(new Set(days));
+}
+
+function sanitizePersistedSettingsState(state: unknown): Pick<
+  SettingsState,
+  'settings' | 'settingsUpdatedAt'
+> {
+  const persisted = state && typeof state === 'object' ? state as Partial<SettingsState> : {};
+  const settings = persisted.settings && typeof persisted.settings === 'object'
+    ? persisted.settings as Partial<AppSettings>
+    : {};
+
+  return {
+    settings: {
+      ...defaultAppSettings,
+      theme: sanitizeTheme(settings.theme),
+      accentColor:
+        typeof settings.accentColor === 'string' && settings.accentColor.trim().length > 0
+          ? settings.accentColor
+          : defaultAppSettings.accentColor,
+      soundEnabled:
+        typeof settings.soundEnabled === 'boolean'
+          ? settings.soundEnabled
+          : defaultAppSettings.soundEnabled,
+      hapticsEnabled:
+        typeof settings.hapticsEnabled === 'boolean'
+          ? settings.hapticsEnabled
+          : defaultAppSettings.hapticsEnabled,
+      voiceGuidanceEnabled:
+        typeof settings.voiceGuidanceEnabled === 'boolean'
+          ? settings.voiceGuidanceEnabled
+          : defaultAppSettings.voiceGuidanceEnabled,
+      notificationsEnabled:
+        typeof settings.notificationsEnabled === 'boolean'
+          ? settings.notificationsEnabled
+          : defaultAppSettings.notificationsEnabled,
+      breakReminders:
+        typeof settings.breakReminders === 'boolean'
+          ? settings.breakReminders
+          : defaultAppSettings.breakReminders,
+      reminderIntervalMinutes:
+        typeof settings.reminderIntervalMinutes === 'number' && Number.isFinite(settings.reminderIntervalMinutes)
+          ? Math.max(5, Math.min(120, Math.round(settings.reminderIntervalMinutes)))
+          : defaultAppSettings.reminderIntervalMinutes,
+      streakAlerts:
+        typeof settings.streakAlerts === 'boolean'
+          ? settings.streakAlerts
+          : defaultAppSettings.streakAlerts,
+      goalNotifications:
+        typeof settings.goalNotifications === 'boolean'
+          ? settings.goalNotifications
+          : defaultAppSettings.goalNotifications,
+      quietHoursEnabled:
+        typeof settings.quietHoursEnabled === 'boolean'
+          ? settings.quietHoursEnabled
+          : defaultAppSettings.quietHoursEnabled,
+      quietHoursStart:
+        typeof settings.quietHoursStart === 'number' && Number.isFinite(settings.quietHoursStart)
+          ? Math.max(0, Math.min(23, Math.round(settings.quietHoursStart)))
+          : defaultAppSettings.quietHoursStart,
+      quietHoursEnd:
+        typeof settings.quietHoursEnd === 'number' && Number.isFinite(settings.quietHoursEnd)
+          ? Math.max(0, Math.min(23, Math.round(settings.quietHoursEnd)))
+          : defaultAppSettings.quietHoursEnd,
+      workDaysOnly:
+        typeof settings.workDaysOnly === 'boolean'
+          ? settings.workDaysOnly
+          : defaultAppSettings.workDaysOnly,
+      workDays: sanitizeWorkDays(settings.workDays),
+      defaultBreakDuration:
+        typeof settings.defaultBreakDuration === 'number' && Number.isFinite(settings.defaultBreakDuration)
+          ? Math.max(15, Math.round(settings.defaultBreakDuration))
+          : defaultAppSettings.defaultBreakDuration,
+      autoStartNextStep:
+        typeof settings.autoStartNextStep === 'boolean'
+          ? settings.autoStartNextStep
+          : defaultAppSettings.autoStartNextStep,
+      showStepPreview:
+        typeof settings.showStepPreview === 'boolean'
+          ? settings.showStepPreview
+          : defaultAppSettings.showStepPreview,
+      analyticsEnabled:
+        typeof settings.analyticsEnabled === 'boolean'
+          ? settings.analyticsEnabled
+          : defaultAppSettings.analyticsEnabled,
+      crashReportingEnabled:
+        typeof settings.crashReportingEnabled === 'boolean'
+          ? settings.crashReportingEnabled
+          : defaultAppSettings.crashReportingEnabled,
+    },
+    settingsUpdatedAt:
+      typeof persisted.settingsUpdatedAt === 'number' && Number.isFinite(persisted.settingsUpdatedAt)
+        ? Math.max(0, persisted.settingsUpdatedAt)
+        : 0,
+  };
+}
+
 // Granular selectors for performance optimization
 export const useSettings = () => useSettingsStore((state) => state.settings);
 
@@ -248,14 +360,24 @@ export const useSettingsStore = create<SettingsState>()(
         }
       },
 
-      resetSettings: () =>
-        set({ settings: defaultAppSettings, settingsUpdatedAt: Date.now() }),
+      resetSettings: () => {
+        set({ settings: { ...defaultAppSettings }, settingsUpdatedAt: Date.now() });
+        if (!syncService.isSyncPulling()) {
+          syncService.queueSettingsChange();
+        }
+      },
     }),
     {
       name: 'microbreaks-settings',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (persistedState) => sanitizePersistedSettingsState(persistedState),
     }
   )
 );
+
+export const settingsStoreTestUtils = {
+  sanitizePersistedSettingsState,
+};
 
 export default useSettingsStore;

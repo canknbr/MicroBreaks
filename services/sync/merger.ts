@@ -116,18 +116,28 @@ export function mergeAchievements(local: UserAchievements, remote: UserAchieveme
 /**
  * Merge break histories by ID, deduplicate, sort by date, and limit
  */
+function getBreakMutationTime(breakItem: CompletedBreak): number {
+  return new Date(breakItem.updatedAt ?? breakItem.completedAt).getTime();
+}
+
 export function mergeBreakHistories(
   local: CompletedBreak[],
   remote: CompletedBreak[]
 ): CompletedBreak[] {
   const breakMap = new Map<string, CompletedBreak>();
 
-  // Add remote breaks first (local overwrites if same ID)
+  // Add remote breaks first.
   for (const b of remote) {
     breakMap.set(b.id, b);
   }
+
+  // For duplicate IDs, prefer whichever copy was updated most recently.
+  // If timestamps match, preserve local to keep the current device's latest view.
   for (const b of local) {
-    breakMap.set(b.id, b);
+    const existing = breakMap.get(b.id);
+    if (!existing || getBreakMutationTime(b) >= getBreakMutationTime(existing)) {
+      breakMap.set(b.id, b);
+    }
   }
 
   // Sort by completedAt descending (newest first)

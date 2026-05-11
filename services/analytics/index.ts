@@ -6,6 +6,7 @@
 import Constants from 'expo-constants';
 import firebaseAnalytics from '@react-native-firebase/analytics';
 import { generateId } from '@/utils/generateId';
+import { getItem, removeItem, setItem } from '@/services/storage';
 
 // ============================================
 // Analytics Events
@@ -152,6 +153,11 @@ interface PurchasePayload extends OfferSelectionPayload {
   checkoutSurface?: string;
 }
 
+interface QueuedAnalyticsEvent {
+  event: string;
+  properties: AnalyticsProperties;
+}
+
 const getConfig = (): AnalyticsConfig => ({
   enabled: !__DEV__, // Disable in development
   debugMode: __DEV__,
@@ -159,17 +165,41 @@ const getConfig = (): AnalyticsConfig => ({
   maxQueueSize: 100,
 });
 
+const ANALYTICS_QUEUE_STORAGE_KEY = '@microbreaks/analytics_queue';
+
+function sanitizeQueuedAnalyticsEvents(value: unknown): QueuedAnalyticsEvent[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+
+    const event = (item as Record<string, unknown>).event;
+    const properties = (item as Record<string, unknown>).properties;
+
+    if (typeof event !== 'string' || !properties || typeof properties !== 'object' || Array.isArray(properties)) {
+      return [];
+    }
+
+    return [{ event, properties: properties as AnalyticsProperties }];
+  });
+}
+
 // ============================================
 // Analytics Service
 // ============================================
 
-class AnalyticsService {
+export class AnalyticsService {
   private config: AnalyticsConfig;
   private sessionId: string;
-  private eventQueue: Array<{ event: string; properties: AnalyticsProperties }> = [];
+  private eventQueue: QueuedAnalyticsEvent[] = [];
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private userId: string | null = null;
   private superProperties: Record<string, unknown> = {};
+  private isFlushing = false;
 
   constructor() {
     this.config = getConfig();
@@ -186,9 +216,11 @@ class AnalyticsService {
       return;
     }
 
+    await this.loadPersistedQueue();
+
     // Start flush timer
     this.flushTimer = setInterval(() => {
-      this.flush();
+      void this.flush();
     }, this.config.flushInterval);
 
     // Track app opened
@@ -213,6 +245,20 @@ class AnalyticsService {
    */
   private generateSessionId(): string {
     return generateId('session');
+  }
+
+  private async persistQueue(): Promise<void> {
+    if (this.eventQueue.length === 0) {
+      await removeItem(ANALYTICS_QUEUE_STORAGE_KEY);
+      return;
+    }
+
+    await setItem(ANALYTICS_QUEUE_STORAGE_KEY, this.eventQueue);
+  }
+
+  private async loadPersistedQueue(): Promise<void> {
+    const stored = await getItem<QueuedAnalyticsEvent[]>(ANALYTICS_QUEUE_STORAGE_KEY);
+    this.eventQueue = sanitizeQueuedAnalyticsEvents(stored);
   }
 
   /**
@@ -278,10 +324,11 @@ class AnalyticsService {
 
     // Add to queue
     this.eventQueue.push({ event, properties: enrichedProperties });
+    void this.persistQueue();
 
     // Flush if queue is full
     if (this.eventQueue.length >= this.config.maxQueueSize) {
-      this.flush();
+      void this.flush();
     }
   }
 
@@ -309,12 +356,13 @@ class AnalyticsService {
    * Flush event queue to analytics provider
    */
   async flush(): Promise<void> {
-    if (this.eventQueue.length === 0) {
+    if (this.eventQueue.length === 0 || this.isFlushing) {
       return;
     }
 
-    const events = [...this.eventQueue];
-    this.eventQueue = [];
+    this.isFlushing = true;
+    const queueLengthAtStart = this.eventQueue.length;
+    const events = this.eventQueue.slice(0, queueLengthAtStart);
 
     try {
       const fbAnalytics = firebaseAnalytics();
@@ -331,11 +379,14 @@ class AnalyticsService {
         await fbAnalytics.logEvent(event, params);
       }
 
+      this.eventQueue = this.eventQueue.slice(queueLengthAtStart);
+      await this.persistQueue();
       this.log(`Flushed ${events.length} events to Firebase`);
     } catch (error) {
-      // Put events back in queue on failure
-      this.eventQueue = [...events, ...this.eventQueue];
       console.error('[Analytics] Flush failed:', error);
+      await this.persistQueue();
+    } finally {
+      this.isFlushing = false;
     }
   }
 
@@ -537,6 +588,11 @@ class AnalyticsService {
 // ============================================
 
 export const analytics = new AnalyticsService();
+
+export const analyticsTestUtils = {
+  ANALYTICS_QUEUE_STORAGE_KEY,
+  sanitizeQueuedAnalyticsEvents,
+};
 
 // ============================================
 // React Hook

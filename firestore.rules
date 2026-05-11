@@ -13,6 +13,18 @@ service cloud.firestore {
       return value is string && value.size() > 0 && value.size() <= maxLength;
     }
 
+    function nonNegativeInt(value) {
+      return value is int && value >= 0;
+    }
+
+    function positiveInt(value) {
+      return value is int && value > 0;
+    }
+
+    function boundedInt(value, min, max) {
+      return value is int && value >= min && value <= max;
+    }
+
     function validProfile(profile) {
       return profile is map
         && profile.keys().hasOnly(['name', 'avatar', 'email', 'joinedAt', 'updatedAt'])
@@ -20,7 +32,7 @@ service cloud.firestore {
         && optionalString(profile.avatar, 512)
         && optionalString(profile.email, 254)
         && requiredString(profile.joinedAt, 64)
-        && (!('updatedAt' in profile) || profile.updatedAt is int);
+        && (!('updatedAt' in profile) || nonNegativeInt(profile.updatedAt));
     }
 
     function validProgress(progress) {
@@ -34,13 +46,14 @@ service cloud.firestore {
           'weeklyGoal',
           'dailyGoal'
         ])
-        && progress.level is int
-        && progress.totalXP is int
-        && progress.totalBreaks is int
-        && progress.currentStreak is int
-        && progress.longestStreak is int
-        && progress.weeklyGoal is int
-        && progress.dailyGoal is int;
+        && positiveInt(progress.level)
+        && nonNegativeInt(progress.totalXP)
+        && nonNegativeInt(progress.totalBreaks)
+        && nonNegativeInt(progress.currentStreak)
+        && nonNegativeInt(progress.longestStreak)
+        && progress.longestStreak >= progress.currentStreak
+        && boundedInt(progress.weeklyGoal, 1, 100)
+        && boundedInt(progress.dailyGoal, 1, 20);
     }
 
     function validPreferences(preferences) {
@@ -59,7 +72,7 @@ service cloud.firestore {
         && achievements.unlockedIds.size() <= 200
         && achievements.unlockedAt is map
         && achievements.categoryBreaks is map
-        && achievements.totalMinutes is int;
+        && nonNegativeInt(achievements.totalMinutes);
     }
 
     function validSettings(settings) {
@@ -78,24 +91,24 @@ service cloud.firestore {
           'showStepPreview',
           'updatedAt'
         ])
-        && settings.theme is string
-        && settings.accentColor is string
+        && settings.theme in ['dark', 'light', 'system']
+        && requiredString(settings.accentColor, 32)
         && settings.voiceGuidanceEnabled is bool
         && settings.quietHoursEnabled is bool
-        && settings.quietHoursStart is int
-        && settings.quietHoursEnd is int
+        && boundedInt(settings.quietHoursStart, 0, 23)
+        && boundedInt(settings.quietHoursEnd, 0, 23)
         && settings.workDaysOnly is bool
         && settings.workDays is list
         && settings.workDays.size() <= 7
-        && settings.defaultBreakDuration is int
+        && boundedInt(settings.defaultBreakDuration, 15, 600)
         && settings.autoStartNextStep is bool
         && settings.showStepPreview is bool
-        && settings.updatedAt is int;
+        && nonNegativeInt(settings.updatedAt);
     }
 
     function validLegacyPushFields(data) {
       return (!('fcmToken' in data) || optionalString(data.fcmToken, 4096))
-        && (!('fcmTokenUpdatedAt' in data) || data.fcmTokenUpdatedAt is int);
+        && (!('fcmTokenUpdatedAt' in data) || nonNegativeInt(data.fcmTokenUpdatedAt));
     }
 
     function validUserDoc(data) {
@@ -129,21 +142,26 @@ service cloud.firestore {
           'totalSteps',
           'xpEarned',
           'rating',
-          'completedAt'
+          'completedAt',
+          'updatedAt'
         ])
         && request.resource.data.id == docId
+        && requiredString(request.resource.data.id, 128)
         && requiredString(request.resource.data.breakId, 120)
         && requiredString(request.resource.data.title, 160)
-        && requiredString(request.resource.data.category, 80)
+        && request.resource.data.category in ['quick', 'stretch', 'mindful', 'active']
         && requiredString(request.resource.data.icon, 64)
         && requiredString(request.resource.data.color, 32)
-        && request.resource.data.duration is int
-        && request.resource.data.stepsCompleted is int
-        && request.resource.data.totalSteps is int
-        && request.resource.data.xpEarned is int
+        && boundedInt(request.resource.data.duration, 1, 600)
+        && nonNegativeInt(request.resource.data.stepsCompleted)
+        && positiveInt(request.resource.data.totalSteps)
+        && request.resource.data.stepsCompleted <= request.resource.data.totalSteps
+        && boundedInt(request.resource.data.xpEarned, 0, 1000)
         && (request.resource.data.rating == null
           || request.resource.data.rating in ['good', 'neutral', 'bad'])
-        && requiredString(request.resource.data.completedAt, 64);
+        && requiredString(request.resource.data.completedAt, 64)
+        && (!('updatedAt' in request.resource.data)
+          || requiredString(request.resource.data.updatedAt, 64));
     }
 
     function validDeviceDoc(deviceId) {
@@ -155,10 +173,12 @@ service cloud.firestore {
           'updatedAt'
         ])
         && request.resource.data.installationId == deviceId
-        && requiredString(request.resource.data.token, 4096)
+        && (!('token' in request.resource.data) || requiredString(request.resource.data.token, 4096))
         && request.resource.data.platform in ['ios', 'android']
         && request.resource.data.notificationsEnabled is bool
-        && request.resource.data.updatedAt is int;
+        && (request.resource.data.notificationsEnabled == false
+          || requiredString(request.resource.data.token, 4096))
+        && nonNegativeInt(request.resource.data.updatedAt);
     }
 
     match /users/{userId} {

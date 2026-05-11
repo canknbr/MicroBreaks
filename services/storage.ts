@@ -4,6 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
 import { captureError } from '@/services/firebase/crashlytics-adapter';
 
 // Storage keys
@@ -33,12 +34,21 @@ export interface StorageResult<T> {
   error: StorageError | null;
 }
 
+async function purgeCorruptedItem(key: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch {
+    // Best effort cleanup only.
+  }
+}
+
 // Generic storage operations with improved error handling
 export async function getItem<T>(key: string): Promise<T | null> {
   try {
     const value = await AsyncStorage.getItem(key);
     return value ? JSON.parse(value) : null;
   } catch (error) {
+    await purgeCorruptedItem(key);
     if (__DEV__) {
       console.error(`Storage read error for ${key}:`, error);
     }
@@ -53,6 +63,7 @@ export async function getItemWithError<T>(key: string): Promise<StorageResult<T>
     const value = await AsyncStorage.getItem(key);
     return { data: value ? JSON.parse(value) : null, error: null };
   } catch (error) {
+    await purgeCorruptedItem(key);
     return {
       data: null,
       error: new StorageError(`Failed to read ${key}`, key, 'read', error),
@@ -120,7 +131,9 @@ export interface CompletedBreak {
   totalSteps: number;
   xpEarned: number;
   rating: 'good' | 'neutral' | 'bad' | null;
+  reliefScore?: 'worse' | 'same' | 'better' | 'much_better' | null;
   completedAt: string; // ISO date string
+  updatedAt?: string; // ISO date string for mutable field sync
 }
 
 export interface StreakData {
@@ -139,6 +152,13 @@ export interface UserStats {
   weeklyProgress: number;
 }
 
+export interface UserStatsProgressProjection {
+  totalBreaks: number;
+  totalXP: number;
+  level: number;
+  weeklyGoal: number;
+}
+
 // Default values
 export const DEFAULT_STREAK_DATA: StreakData = {
   currentStreak: 0,
@@ -152,6 +172,76 @@ export const DEFAULT_USER_STATS: UserStats = {
   totalMinutes: 0,
   totalXP: 0,
   level: 1,
-  weeklyGoal: 35,
+  weeklyGoal: DEFAULT_WEEKLY_GOAL,
   weeklyProgress: 0,
 };
+
+function toRoundedNonNegativeNumber(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.round(value));
+}
+
+function toLevel(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(1, Math.round(value));
+}
+
+export function createDefaultUserStats(): UserStats {
+  return {
+    ...DEFAULT_USER_STATS,
+  };
+}
+
+export function sanitizeUserStats(value: unknown): UserStats {
+  const stats = value && typeof value === 'object' ? value as Partial<UserStats> : {};
+
+  return {
+    totalBreaks: toRoundedNonNegativeNumber(stats.totalBreaks, DEFAULT_USER_STATS.totalBreaks),
+    totalMinutes: toRoundedNonNegativeNumber(stats.totalMinutes, DEFAULT_USER_STATS.totalMinutes),
+    totalXP: toRoundedNonNegativeNumber(stats.totalXP, DEFAULT_USER_STATS.totalXP),
+    level: toLevel(stats.level, DEFAULT_USER_STATS.level),
+    weeklyGoal: toRoundedNonNegativeNumber(stats.weeklyGoal, DEFAULT_USER_STATS.weeklyGoal),
+    weeklyProgress: toRoundedNonNegativeNumber(stats.weeklyProgress, DEFAULT_USER_STATS.weeklyProgress),
+  };
+}
+
+export async function getStoredUserStats(): Promise<UserStats> {
+  const result = await getItemWithError<UserStats>(STORAGE_KEYS.USER_STATS);
+  if (result.error) {
+    const fallback = createDefaultUserStats();
+    await setItem(STORAGE_KEYS.USER_STATS, fallback);
+    return fallback;
+  }
+
+  return result.data ? sanitizeUserStats(result.data) : createDefaultUserStats();
+}
+
+export async function updateStoredUserStats(
+  updates: Partial<UserStats>
+): Promise<UserStats> {
+  const currentStats = await getStoredUserStats();
+  const nextStats = sanitizeUserStats({
+    ...currentStats,
+    ...updates,
+  });
+
+  await setItem(STORAGE_KEYS.USER_STATS, nextStats);
+  return nextStats;
+}
+
+export async function syncStoredUserStatsFromProgress(
+  progress: UserStatsProgressProjection
+): Promise<UserStats> {
+  return updateStoredUserStats({
+    totalBreaks: progress.totalBreaks,
+    totalXP: progress.totalXP,
+    level: progress.level,
+    weeklyGoal: progress.weeklyGoal,
+  });
+}

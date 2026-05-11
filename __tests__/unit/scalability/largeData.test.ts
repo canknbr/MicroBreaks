@@ -17,6 +17,7 @@ import {
   getStreakData,
   saveCompletedBreak,
 } from '@/services/breakHistory';
+import { MAX_BREAK_HISTORY } from '@/constants/config';
 import { STORAGE_KEYS, CompletedBreak } from '@/services/storage';
 
 // Mock AsyncStorage
@@ -218,9 +219,9 @@ describe('Large Data Set Tests', () => {
       expect(totalCount).toBe(1000);
     });
 
-    it('should enforce 500 break limit correctly', async () => {
-      // Create 500 existing breaks
-      const existingBreaks = Array.from({ length: 500 }, (_, i) =>
+    it('should enforce the configured break limit correctly', async () => {
+      // Seed history close to the configured retention ceiling.
+      const existingBreaks = Array.from({ length: MAX_BREAK_HISTORY }, (_, i) =>
         createMockBreak({ id: `existing-${i}` })
       );
       await AsyncStorage.setItem(STORAGE_KEYS.BREAK_HISTORY, JSON.stringify(existingBreaks));
@@ -243,7 +244,7 @@ describe('Large Data Set Tests', () => {
       }
 
       const history = await getBreakHistory();
-      expect(history.length).toBe(500);
+      expect(history.length).toBe(MAX_BREAK_HISTORY);
       // New breaks should be at the front
       expect(history[0].breakId).toBe('new-9');
     });

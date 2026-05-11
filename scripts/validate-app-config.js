@@ -118,12 +118,24 @@ if (projectId && updatesUrl) {
 }
 
 const billingProvider = (process.env.EXPO_PUBLIC_BILLING_PROVIDER ?? '').trim();
+const revenueCatIosApiKey = (process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? '').trim();
+const revenueCatAndroidApiKey = (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ?? '').trim();
 if (profile === 'production' && billingProvider === 'preview') {
   errors.push('Production builds cannot use EXPO_PUBLIC_BILLING_PROVIDER=preview.');
 }
 
-if (profile === 'production' && billingProvider === 'none') {
-  warnings.push('Production build is configured with billing disabled.');
+if (profile === 'production' && billingProvider !== 'revenuecat') {
+  errors.push(
+    'Production builds must set EXPO_PUBLIC_BILLING_PROVIDER=revenuecat. Billing-disabled or preview production builds are blocked.'
+  );
+}
+
+if (profile === 'production' && revenueCatIosApiKey.length === 0) {
+  errors.push('Production builds require EXPO_PUBLIC_REVENUECAT_IOS_API_KEY.');
+}
+
+if (profile === 'production' && revenueCatAndroidApiKey.length === 0) {
+  errors.push('Production builds require EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY.');
 }
 
 const reportLines = [

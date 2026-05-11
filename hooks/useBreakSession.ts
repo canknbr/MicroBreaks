@@ -25,6 +25,7 @@ export type SessionPhase =
   | 'feedback';
 
 export type FeedbackRating = 'good' | 'neutral' | 'bad';
+export type ReliefScore = 'worse' | 'same' | 'better' | 'much_better';
 
 export interface SessionState {
   phase: SessionPhase;
@@ -36,6 +37,7 @@ export interface SessionState {
   isPaused: boolean;
   isVoiceEnabled: boolean;
   feedbackRating: FeedbackRating | null;
+  feedbackReliefScore: ReliefScore | null;
 }
 
 export interface SessionActions {
@@ -45,7 +47,7 @@ export interface SessionActions {
   skipStep: () => void;
   endSession: () => void;
   toggleVoice: () => void;
-  submitFeedback: (rating: FeedbackRating) => void;
+  submitFeedback: (rating: FeedbackRating, reliefScore: ReliefScore) => void;
 }
 
 export interface SessionStats {
@@ -75,6 +77,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
   const [isPaused, setIsPaused] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [feedbackRating, setFeedbackRating] = useState<FeedbackRating | null>(null);
+  const [feedbackReliefScore, setFeedbackReliefScore] = useState<ReliefScore | null>(null);
 
   // Refs for timer management
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -299,8 +302,9 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [stopSpeech]);
 
-  const submitFeedback = useCallback((rating: FeedbackRating) => {
+  const submitFeedback = useCallback((rating: FeedbackRating, reliefScore: ReliefScore) => {
     setFeedbackRating(rating);
+    setFeedbackReliefScore(reliefScore);
     setPhase('feedback');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, []);
@@ -316,6 +320,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     isPaused,
     isVoiceEnabled,
     feedbackRating,
+    feedbackReliefScore,
   };
 
   const actions: SessionActions = {

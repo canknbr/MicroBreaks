@@ -14,10 +14,12 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 
 export type FeedbackRating = 'good' | 'neutral' | 'bad';
+export type ReliefScore = 'worse' | 'same' | 'better' | 'much_better';
 
 interface BreakFeedbackProps {
-  onSubmit: (_rating: FeedbackRating) => void;
+  onSubmit: (_rating: FeedbackRating, _reliefScore: ReliefScore) => void;
   selectedRating: FeedbackRating | null;
+  selectedReliefScore: ReliefScore | null;
   color: string;
 }
 
@@ -27,27 +29,70 @@ const FEEDBACK_OPTIONS: { rating: FeedbackRating; emoji: string; label: string }
   { rating: 'bad', emoji: '😟', label: 'Not helpful' },
 ];
 
+const RELIEF_OPTIONS: { score: ReliefScore; emoji: string; label: string }[] = [
+  { score: 'worse', emoji: '😣', label: 'Worse' },
+  { score: 'same', emoji: '🙂', label: 'Same' },
+  { score: 'better', emoji: '😌', label: 'Better' },
+  { score: 'much_better', emoji: '🤩', label: 'Much better' },
+];
+
 export default function BreakFeedback({
   onSubmit,
   selectedRating,
+  selectedReliefScore,
   color,
 }: BreakFeedbackProps) {
+  const [pendingRating, setPendingRating] = React.useState<FeedbackRating | null>(selectedRating);
+  const [pendingReliefScore, setPendingReliefScore] = React.useState<ReliefScore | null>(
+    selectedReliefScore
+  );
+
+  React.useEffect(() => {
+    setPendingRating(selectedRating);
+  }, [selectedRating]);
+
+  React.useEffect(() => {
+    setPendingReliefScore(selectedReliefScore);
+  }, [selectedReliefScore]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>How did that feel?</Text>
-      <Text style={styles.subtitle}>Your feedback helps us improve</Text>
+      <Text style={styles.subtitle}>Your feedback helps us personalize better resets</Text>
 
       <View style={styles.options}>
         {FEEDBACK_OPTIONS.map((option) => (
           <FeedbackButton
             key={option.rating}
             {...option}
-            isSelected={selectedRating === option.rating}
-            onPress={() => onSubmit(option.rating)}
+            isSelected={pendingRating === option.rating}
+            onPress={() => setPendingRating(option.rating)}
             color={color}
           />
         ))}
       </View>
+
+      {pendingRating ? (
+        <>
+          <Text style={styles.secondaryTitle}>How much better do you feel now?</Text>
+          <View style={[styles.options, styles.reliefOptions]}>
+            {RELIEF_OPTIONS.map((option) => (
+              <FeedbackButton
+                key={option.score}
+                emoji={option.emoji}
+                label={option.label}
+                isSelected={pendingReliefScore === option.score}
+                onPress={() => {
+                  setPendingReliefScore(option.score);
+                  onSubmit(pendingRating, option.score);
+                }}
+                color={color}
+                compact
+              />
+            ))}
+          </View>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -58,12 +103,14 @@ function FeedbackButton({
   isSelected,
   onPress,
   color,
+  compact = false,
 }: {
   emoji: string;
   label: string;
   isSelected: boolean;
   onPress: () => void;
   color: string;
+  compact?: boolean;
 }) {
   const scale = useSharedValue(1);
 
@@ -93,6 +140,7 @@ function FeedbackButton({
       <Animated.View
         style={[
           styles.button,
+          compact && styles.compactButton,
           isSelected && { borderColor: color, backgroundColor: `${color}20` },
           animatedStyle,
         ]}
@@ -128,9 +176,22 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: 'center',
   },
+  secondaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginTop: 28,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
   options: {
     flexDirection: 'row',
     gap: 12,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  reliefOptions: {
+    gap: 10,
   },
   button: {
     width: 100,
@@ -141,6 +202,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     backgroundColor: 'rgba(30, 30, 40, 0.6)',
+  },
+  compactButton: {
+    width: 88,
+    paddingVertical: 16,
   },
   androidFallback: {
     backgroundColor: 'rgba(25, 25, 35, 0.9)',

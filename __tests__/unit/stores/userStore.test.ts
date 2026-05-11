@@ -3,9 +3,11 @@
  * Comprehensive tests for user state management
  */
 
-import { act, renderHook } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useUserStore,
+  userStoreTestUtils,
   useUserProfile,
   useUserProgress,
   useUserLevel,
@@ -13,10 +15,12 @@ import {
   useUserStreak,
   useFavoriteBreaks,
 } from '@/store/userStore';
+import { STORAGE_KEYS } from '@/services/storage';
 
 describe('UserStore', () => {
   // Reset store before each test
-  beforeEach(() => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
     act(() => {
       useUserStore.getState().signOut();
     });
@@ -130,13 +134,18 @@ describe('UserStore', () => {
       expect(useUserStore.getState().progress.longestStreak).toBe(5); // Should keep highest
     });
 
-    it('should set weekly goal and calculate daily goal', () => {
+    it('should set weekly goal and calculate daily goal', async () => {
       act(() => {
         useUserStore.getState().setWeeklyGoal(42);
       });
 
       expect(useUserStore.getState().progress.weeklyGoal).toBe(42);
       expect(useUserStore.getState().progress.dailyGoal).toBe(6); // 42 / 7 = 6
+
+      await waitFor(async () => {
+        const storedStats = JSON.parse((await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS)) ?? '{}');
+        expect(storedStats.weeklyGoal).toBe(42);
+      });
     });
 
     it('should set daily goal independently', () => {
@@ -147,7 +156,7 @@ describe('UserStore', () => {
       expect(useUserStore.getState().progress.dailyGoal).toBe(10);
     });
 
-    it('should reset progress to initial values', () => {
+    it('should reset progress to initial values', async () => {
       act(() => {
         useUserStore.getState().addXP(500);
         useUserStore.getState().incrementBreaks();
@@ -160,6 +169,13 @@ describe('UserStore', () => {
       expect(progress.totalXP).toBe(0);
       expect(progress.totalBreaks).toBe(0);
       expect(progress.currentStreak).toBe(0);
+
+      await waitFor(async () => {
+        const storedStats = JSON.parse((await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS)) ?? '{}');
+        expect(storedStats.totalXP).toBe(0);
+        expect(storedStats.totalBreaks).toBe(0);
+        expect(storedStats.weeklyGoal).toBe(35);
+      });
     });
   });
 
@@ -277,6 +293,70 @@ describe('UserStore', () => {
       expect(state.preferences.favoriteBreaks).toEqual([]);
       expect(state.achievements.unlockedIds).toEqual([]);
       expect(state.isAuthenticated).toBe(false);
+    });
+  });
+
+  describe('Persistence Safety', () => {
+    it('should sanitize malformed persisted user state', () => {
+      const snapshot = userStoreTestUtils.sanitizePersistedUserState({
+        profile: {
+          name: '',
+          avatar: 42,
+          email: ['user@example.com'],
+          joinedAt: 'not-a-date',
+          updatedAt: 'later',
+        },
+        progress: {
+          level: 0,
+          totalXP: -10,
+          totalBreaks: -5,
+          currentStreak: 6,
+          longestStreak: 2,
+          weeklyGoal: 0,
+          dailyGoal: -2,
+        },
+        preferences: {
+          favoriteBreaks: ['neck-reset', 'neck-reset', null],
+          recentBreaks: ['latest', 3, 'older'],
+        },
+        achievements: {
+          unlockedIds: ['starter', 'starter', 3],
+          unlockedAt: {
+            starter: '2026-01-01T00:00:00.000Z',
+            broken: 'nope',
+          },
+          categoryBreaks: {
+            mobility: 4,
+            broken: -2,
+          },
+          totalMinutes: -50,
+        },
+        isAuthenticated: 'yes',
+      });
+
+      expect(snapshot.profile.name).toBe('User');
+      expect(snapshot.profile.avatar).toBeNull();
+      expect(snapshot.profile.email).toBeNull();
+      expect(snapshot.profile.joinedAt).toBeDefined();
+
+      expect(snapshot.progress.level).toBe(1);
+      expect(snapshot.progress.totalXP).toBe(0);
+      expect(snapshot.progress.totalBreaks).toBe(0);
+      expect(snapshot.progress.currentStreak).toBe(6);
+      expect(snapshot.progress.longestStreak).toBe(6);
+      expect(snapshot.progress.weeklyGoal).toBe(35);
+      expect(snapshot.progress.dailyGoal).toBe(5);
+
+      expect(snapshot.preferences.favoriteBreaks).toEqual(['neck-reset']);
+      expect(snapshot.preferences.recentBreaks).toEqual(['latest', 'older']);
+
+      expect(snapshot.achievements.unlockedIds).toEqual(['starter']);
+      expect(snapshot.achievements.unlockedAt).toEqual({
+        starter: '2026-01-01T00:00:00.000Z',
+      });
+      expect(snapshot.achievements.categoryBreaks).toEqual({ mobility: 4 });
+      expect(snapshot.achievements.totalMinutes).toBe(0);
+      expect(snapshot.isAuthenticated).toBe(false);
     });
   });
 

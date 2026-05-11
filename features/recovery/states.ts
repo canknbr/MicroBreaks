@@ -24,6 +24,12 @@ export interface RecoveryState {
   color: string;
 }
 
+export interface RecoveryRecommendationContext {
+  painAreas: string[];
+  painSeverity: Record<string, 'mild' | 'moderate' | 'severe'>;
+  breakStyle: string[];
+}
+
 export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'eyes',
@@ -83,7 +89,8 @@ export const RECOVERY_STATES: RecoveryState[] = [
 
 export function getDefaultRecoveryStateId(
   painAreas: string[],
-  breakStyle: string[]
+  breakStyle: string[],
+  energyPattern?: string | null
 ): RecoveryStateId {
   if (painAreas.includes('eyes')) return 'eyes';
   if (painAreas.includes('neck') || painAreas.includes('shoulders')) return 'neck';
@@ -91,7 +98,59 @@ export function getDefaultRecoveryStateId(
   if (breakStyle.includes('mindful')) return 'focus';
   if (breakStyle.includes('active')) return 'energy';
   if (breakStyle.includes('stretch')) return 'posture';
+  if (energyPattern === 'afternoon_slump') return 'energy';
+  if (energyPattern === 'night_owl') return 'stress';
+  if (energyPattern === 'morning_person') return 'focus';
   return 'eyes';
+}
+
+export function getRecommendationContextForRecoveryState(
+  stateId: RecoveryStateId
+): RecoveryRecommendationContext {
+  switch (stateId) {
+    case 'eyes':
+      return {
+        painAreas: ['eyes'],
+        painSeverity: { eyes: 'moderate' },
+        breakStyle: ['quick'],
+      };
+    case 'neck':
+      return {
+        painAreas: ['neck', 'shoulders'],
+        painSeverity: { neck: 'moderate', shoulders: 'moderate' },
+        breakStyle: ['quick', 'stretch'],
+      };
+    case 'posture':
+      return {
+        painAreas: ['upper_back', 'lower_back'],
+        painSeverity: { upper_back: 'moderate', lower_back: 'moderate' },
+        breakStyle: ['stretch', 'active'],
+      };
+    case 'focus':
+      return {
+        painAreas: ['head'],
+        painSeverity: { head: 'mild' },
+        breakStyle: ['mindful', 'quick'],
+      };
+    case 'energy':
+      return {
+        painAreas: [],
+        painSeverity: {},
+        breakStyle: ['active'],
+      };
+    case 'stress':
+      return {
+        painAreas: ['head'],
+        painSeverity: { head: 'moderate' },
+        breakStyle: ['mindful'],
+      };
+    default:
+      return {
+        painAreas: [],
+        painSeverity: {},
+        breakStyle: [],
+      };
+  }
 }
 
 export function formatRelativeMinutes(minutes: number): string {

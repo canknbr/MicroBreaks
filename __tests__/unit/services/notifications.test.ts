@@ -29,6 +29,7 @@ import {
   addNotificationReceivedListener,
 } from '@/services/notifications';
 import { STORAGE_KEYS } from '@/services/storage';
+import { ONBOARDING_STORE_PERSIST_KEY } from '@/store/onboardingStore';
 
 // Mock dependencies
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -76,9 +77,14 @@ import { getTodayBreaks, getStreakData, getUserStats } from '@/services/breakHis
 
 describe('Notification Service', () => {
   beforeEach(async () => {
+    jest.restoreAllMocks();
     await AsyncStorage.clear();
     jest.clearAllMocks();
     (Device as any).isDevice = true;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('Constants', () => {
@@ -88,6 +94,7 @@ describe('Notification Service', () => {
         expect(NOTIFICATION_CHANNELS.STREAK_ALERTS).toBe('streak-alerts');
         expect(NOTIFICATION_CHANNELS.GOALS).toBe('goals');
         expect(NOTIFICATION_CHANNELS.GENERAL).toBe('general');
+        expect(NOTIFICATION_CHANNELS.TIMER_ALERTS).toBe('timer-alerts');
       });
     });
 
@@ -123,7 +130,7 @@ describe('Notification Service', () => {
 
       await initializeNotifications();
 
-      expect(Notifications.setNotificationChannelAsync).toHaveBeenCalledTimes(3);
+      expect(Notifications.setNotificationChannelAsync).toHaveBeenCalledTimes(4);
       expect(Notifications.setNotificationChannelAsync).toHaveBeenCalledWith(
         'break-reminders',
         expect.objectContaining({
@@ -143,6 +150,13 @@ describe('Notification Service', () => {
           name: 'Goal Notifications',
         })
       );
+      expect(Notifications.setNotificationChannelAsync).toHaveBeenCalledWith(
+        'timer-alerts',
+        expect.objectContaining({
+          name: 'Timer Alerts',
+          importance: Notifications.AndroidImportance.HIGH,
+        })
+      );
     });
 
     it('should not set up channels on iOS', async () => {
@@ -152,6 +166,15 @@ describe('Notification Service', () => {
       await initializeNotifications();
 
       expect(Notifications.setNotificationChannelAsync).not.toHaveBeenCalled();
+    });
+
+    it('should surface Android channel initialization failures', async () => {
+      (Platform as any).OS = 'android';
+      (Notifications.setNotificationChannelAsync as jest.Mock).mockRejectedValueOnce(
+        new Error('channel init failed')
+      );
+
+      await expect(initializeNotifications()).rejects.toThrow('channel init failed');
     });
   });
 
@@ -239,6 +262,9 @@ describe('Notification Service', () => {
 
       const result = await scheduleBreakReminder();
       expect(result).toBeNull();
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(
+        NOTIFICATION_IDS.BREAK_REMINDER
+      );
     });
 
     it('should return null when break reminders are disabled', async () => {
@@ -249,6 +275,9 @@ describe('Notification Service', () => {
 
       const result = await scheduleBreakReminder();
       expect(result).toBeNull();
+      expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(
+        NOTIFICATION_IDS.BREAK_REMINDER
+      );
     });
 
     it('should schedule notification when enabled', async () => {
@@ -277,6 +306,42 @@ describe('Notification Service', () => {
       await scheduleBreakReminder();
 
       expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(NOTIFICATION_IDS.BREAK_REMINDER);
+    });
+
+    it('should adapt reminder timing to a persisted deep-focus work pattern', async () => {
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+        reminderIntervalMinutes: 25,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+      await AsyncStorage.setItem(
+        ONBOARDING_STORE_PERSIST_KEY,
+        JSON.stringify({
+          state: {
+            data: {
+              workPattern: 'deep_focus',
+            },
+          },
+        })
+      );
+
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-16T10:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
+
+      await scheduleBreakReminder();
+
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0].trigger.date as Date;
+      expect(scheduledDate.getHours()).toBe(10);
+      expect(scheduledDate.getMinutes()).toBe(35);
+
+      jest.restoreAllMocks();
     });
 
     it('should include sound when enabled', async () => {
@@ -370,10 +435,13 @@ describe('Notification Service', () => {
         streakHistory: [],
       });
 
-      // Mock current time to be before 7 PM
-      const mockDate = new Date();
-      mockDate.setHours(10, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-16T10:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleStreakProtection();
 
@@ -390,9 +458,13 @@ describe('Notification Service', () => {
         streakHistory: [],
       });
 
-      const mockDate = new Date();
-      mockDate.setHours(10, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-16T10:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       await scheduleStreakProtection();
 
@@ -403,6 +475,39 @@ describe('Notification Service', () => {
           }),
         })
       );
+
+      jest.restoreAllMocks();
+    });
+
+    it('should move streak protection from a non-work day to the next valid work day', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        workDaysOnly: true,
+        workDays: [1, 2, 3, 4, 5],
+        quietHoursEnabled: false,
+      }));
+      (getTodayBreaks as jest.Mock).mockResolvedValueOnce([]);
+      (getStreakData as jest.Mock).mockResolvedValueOnce({
+        currentStreak: 4,
+        longestStreak: 4,
+        lastBreakDate: '2024-01-06',
+        streakHistory: [],
+      });
+
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-07T10:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
+
+      const result = await scheduleStreakProtection();
+
+      expect(result).toBe('notification-id');
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0].trigger.date as Date;
+      expect(scheduledDate.getDay()).toBe(1);
+      expect(scheduledDate.getHours()).toBe(19);
 
       jest.restoreAllMocks();
     });
@@ -449,9 +554,13 @@ describe('Notification Service', () => {
         weeklyProgress: 0,
       });
 
-      const mockDate = new Date();
-      mockDate.setHours(18, 0, 0, 0); // 6 PM
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-16T18:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleDailyGoalReminder();
       expect(result).toBeNull();
@@ -470,9 +579,7 @@ describe('Notification Service', () => {
       const RealDate = Date;
       jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
         if (args.length === 0) {
-          const d = new RealDate();
-          d.setHours(10, 0, 0, 0);
-          return d;
+          return new RealDate('2024-01-16T10:00:00');
         }
         return new (RealDate as any)(...args);
       });
@@ -493,9 +600,7 @@ describe('Notification Service', () => {
       const RealDate = Date;
       jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
         if (args.length === 0) {
-          const d = new RealDate();
-          d.setHours(10, 0, 0, 0);
-          return d;
+          return new RealDate('2024-01-16T10:00:00');
         }
         return new (RealDate as any)(...args);
       });
@@ -512,6 +617,65 @@ describe('Notification Service', () => {
 
       jest.restoreAllMocks();
     });
+
+    it('should not schedule a daily goal reminder on non-work days when workDaysOnly is enabled', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        workDaysOnly: true,
+        workDays: [1, 2, 3, 4, 5],
+        quietHoursEnabled: false,
+      }));
+      (getTodayBreaks as jest.Mock).mockResolvedValueOnce([]);
+      (getUserStats as jest.Mock).mockResolvedValueOnce({
+        weeklyGoal: 21,
+        weeklyProgress: 0,
+      });
+
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-07T10:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
+
+      const result = await scheduleDailyGoalReminder();
+
+      expect(result).toBeNull();
+
+      jest.restoreAllMocks();
+    });
+
+    it('should move a daily goal reminder out of quiet hours when the adjusted time stays on the same day', async () => {
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        workDaysOnly: false,
+        quietHoursEnabled: true,
+        quietHoursStart: 16,
+        quietHoursEnd: 18,
+      }));
+      (getTodayBreaks as jest.Mock).mockResolvedValueOnce([]);
+      (getUserStats as jest.Mock).mockResolvedValueOnce({
+        weeklyGoal: 21,
+        weeklyProgress: 0,
+      });
+
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-16T10:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
+
+      const result = await scheduleDailyGoalReminder();
+
+      expect(result).toBe('notification-id');
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0].trigger.date as Date;
+      expect(scheduledDate.getHours()).toBe(18);
+
+      jest.restoreAllMocks();
+    });
   });
 
   describe('scheduleAllNotifications', () => {
@@ -520,6 +684,14 @@ describe('Notification Service', () => {
         ...DEFAULT_NOTIFICATION_SETTINGS,
         enabled: false,
       }));
+
+      await scheduleAllNotifications();
+
+      expect(Notifications.cancelAllScheduledNotificationsAsync).toHaveBeenCalled();
+    });
+
+    it('should cancel all notifications when permission is not granted', async () => {
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ status: 'denied' });
 
       await scheduleAllNotifications();
 
@@ -729,7 +901,7 @@ describe('Notification Service', () => {
   });
 
   describe('Quiet Hours Logic', () => {
-    it('should not schedule during overnight quiet hours (e.g., 22-8)', async () => {
+    it('should move overnight quiet-hour reminders to quiet-hours end', async () => {
       const settings = {
         ...DEFAULT_NOTIFICATION_SETTINGS,
         quietHoursEnabled: true,
@@ -739,18 +911,30 @@ describe('Notification Service', () => {
       };
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 
-      // Mock time to be 23:00 (within quiet hours)
-      const mockDate = new Date();
-      mockDate.setHours(23, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-03T23:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleBreakReminder();
 
-      expect(result).toBeNull();
+      expect(result).toBe('notification-id');
+      expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          trigger: expect.objectContaining({
+            date: expect.anything(),
+          }),
+        })
+      );
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0].trigger.date as Date;
+      expect(scheduledDate.getHours()).toBe(8);
       jest.restoreAllMocks();
     });
 
-    it('should not schedule during daytime quiet hours (e.g., 9-17)', async () => {
+    it('should move daytime quiet-hour reminders to quiet-hours end', async () => {
       const settings = {
         ...DEFAULT_NOTIFICATION_SETTINGS,
         quietHoursEnabled: true,
@@ -760,14 +944,19 @@ describe('Notification Service', () => {
       };
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 
-      // Mock time to be 12:00 (within quiet hours)
-      const mockDate = new Date();
-      mockDate.setHours(12, 0, 0, 0);
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-03T12:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleBreakReminder();
 
-      expect(result).toBeNull();
+      expect(result).toBe('notification-id');
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0].trigger.date as Date;
+      expect(scheduledDate.getHours()).toBe(17);
       jest.restoreAllMocks();
     });
 
@@ -786,7 +975,7 @@ describe('Notification Service', () => {
   });
 
   describe('Work Days Logic', () => {
-    it('should not schedule on non-work days when workDaysOnly is enabled', async () => {
+    it('should move reminders from non-work days to the next valid work day', async () => {
       const settings = {
         ...DEFAULT_NOTIFICATION_SETTINGS,
         workDaysOnly: true,
@@ -795,13 +984,19 @@ describe('Notification Service', () => {
       };
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 
-      // Mock to be Saturday (day 6)
-      const mockDate = new Date('2024-01-06T12:00:00'); // Saturday
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-06T12:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleBreakReminder();
 
-      expect(result).toBeNull();
+      expect(result).toBe('notification-id');
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock).mock.calls[0][0].trigger.date as Date;
+      expect(scheduledDate.getDay()).toBe(1);
       jest.restoreAllMocks();
     });
 
@@ -814,9 +1009,13 @@ describe('Notification Service', () => {
       };
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 
-      // Mock to be Wednesday (day 3)
-      const mockDate = new Date('2024-01-03T12:00:00'); // Wednesday
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-03T12:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleBreakReminder();
 
@@ -832,9 +1031,13 @@ describe('Notification Service', () => {
       };
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 
-      // Mock to be Sunday (day 0)
-      const mockDate = new Date('2024-01-07T12:00:00'); // Sunday
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as Date);
+      const RealDate = Date;
+      jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
+        if (args.length === 0) {
+          return new RealDate('2024-01-07T12:00:00');
+        }
+        return new (RealDate as any)(...args);
+      });
 
       const result = await scheduleBreakReminder();
 
@@ -891,9 +1094,7 @@ describe('Notification Service', () => {
       const RealDate = Date;
       jest.spyOn(global, 'Date').mockImplementation((...args: unknown[]) => {
         if (args.length === 0) {
-          const d = new RealDate();
-          d.setHours(10, 0, 0, 0);
-          return d;
+          return new RealDate('2024-01-16T10:00:00');
         }
         return new (RealDate as any)(...args);
       });

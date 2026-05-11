@@ -12,6 +12,7 @@ import {
 } from '@/services/sync/merger';
 import type { UserProfile, UserProgress, UserPreferences, UserAchievements } from '@/store/userStore';
 import type { CompletedBreak } from '@/services/storage';
+import { MAX_BREAK_HISTORY } from '@/constants/config';
 
 describe('Sync Merger', () => {
   // =============================================
@@ -22,6 +23,7 @@ describe('Sync Merger', () => {
       name: 'Local User',
       avatar: null,
       email: null,
+      emailVerified: false,
       joinedAt: '2024-01-01T00:00:00.000Z',
     };
 
@@ -249,7 +251,11 @@ describe('Sync Merger', () => {
   // mergeBreakHistories - Merge by ID, deduplicate
   // =============================================
   describe('mergeBreakHistories', () => {
-    const makeBreak = (id: string, completedAt: string): CompletedBreak => ({
+    const makeBreak = (
+      id: string,
+      completedAt: string,
+      updatedAt = completedAt
+    ): CompletedBreak => ({
       id,
       breakId: 'b1',
       title: 'Test Break',
@@ -262,6 +268,7 @@ describe('Sync Merger', () => {
       xpEarned: 10,
       rating: 'good',
       completedAt,
+      updatedAt,
     });
 
     it('should merge and deduplicate breaks by ID', () => {
@@ -290,28 +297,40 @@ describe('Sync Merger', () => {
       expect(result[1].id).toBe('break-old');
     });
 
-    it('should prefer local data when same ID exists', () => {
-      const local = [makeBreak('break-1', '2024-01-01T10:00:00Z')];
+    it('should prefer local data when local copy is newer', () => {
+      const local = [makeBreak('break-1', '2024-01-01T10:00:00Z', '2024-01-01T10:05:00Z')];
       local[0].rating = 'good';
 
-      const remote = [makeBreak('break-1', '2024-01-01T10:00:00Z')];
+      const remote = [makeBreak('break-1', '2024-01-01T10:00:00Z', '2024-01-01T10:00:00Z')];
       remote[0].rating = null;
 
       const result = mergeBreakHistories(local, remote);
       expect(result.length).toBe(1);
-      expect(result[0].rating).toBe('good'); // local overwrites
+      expect(result[0].rating).toBe('good');
+    });
+
+    it('should prefer remote data when remote copy is newer', () => {
+      const local = [makeBreak('break-1', '2024-01-01T10:00:00Z', '2024-01-01T10:00:00Z')];
+      local[0].rating = null;
+
+      const remote = [makeBreak('break-1', '2024-01-01T10:00:00Z', '2024-01-01T10:05:00Z')];
+      remote[0].rating = 'good';
+
+      const result = mergeBreakHistories(local, remote);
+      expect(result.length).toBe(1);
+      expect(result[0].rating).toBe('good');
     });
 
     it('should limit to MAX_BREAK_HISTORY', () => {
-      const local = Array.from({ length: 300 }, (_, i) =>
+      const local = Array.from({ length: Math.ceil(MAX_BREAK_HISTORY / 2) }, (_, i) =>
         makeBreak(`local-${i}`, new Date(2024, 0, 1 + i).toISOString())
       );
-      const remote = Array.from({ length: 300 }, (_, i) =>
+      const remote = Array.from({ length: Math.ceil(MAX_BREAK_HISTORY / 2) }, (_, i) =>
         makeBreak(`remote-${i}`, new Date(2024, 0, 1 + i).toISOString())
       );
 
       const result = mergeBreakHistories(local, remote);
-      expect(result.length).toBeLessThanOrEqual(500);
+      expect(result.length).toBeLessThanOrEqual(MAX_BREAK_HISTORY);
     });
 
     it('should handle empty histories', () => {

@@ -7,6 +7,7 @@ import React, { ReactElement, ReactNode } from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
 
 // ============================================
 // Custom Render with Providers
@@ -22,14 +23,16 @@ interface AllTheProvidersProps {
 function AllTheProviders({ children }: AllTheProvidersProps) {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider
-        initialMetrics={{
-          frame: { x: 0, y: 0, width: 390, height: 844 },
-          insets: { top: 59, left: 0, right: 0, bottom: 34 },
-        }}
-      >
-        {children}
-      </SafeAreaProvider>
+      <NavigationContainer>
+        <SafeAreaProvider
+          initialMetrics={{
+            frame: { x: 0, y: 0, width: 390, height: 844 },
+            insets: { top: 59, left: 0, right: 0, bottom: 34 },
+          }}
+        >
+          {children}
+        </SafeAreaProvider>
+      </NavigationContainer>
     </GestureHandlerRootView>
   );
 }

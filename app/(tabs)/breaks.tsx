@@ -14,6 +14,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,7 @@ import { Spacing } from '@/theme';
 import { useHasActiveSubscription, useOnboardingStore, useUserStore } from '@/store';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
 import { ALL_EXERCISES, ExerciseCategory } from '@/data/exercises';
+import { getBreakHistory } from '@/services/breakHistory';
 import {
   PRO_LIBRARY_HIGHLIGHTS,
 } from '@/constants/subscription';
@@ -48,6 +50,12 @@ import {
   getDefaultOutcomePackId,
   isStarterExercise,
 } from '@/features/recovery/outcomePacks';
+import {
+  getBreakOutcomeBadge,
+  mapBreakHistoryToOutcomeSignals,
+  sortBreakListByOutcome,
+} from '@/features/recovery/personalization';
+import type { RecommendationOutcomeSignal } from '@/services/recommendations/scoring';
 
 // Duration filter options
 const DURATION_FILTERS = [
@@ -484,6 +492,7 @@ export default function BreaksScreen() {
   const [selectedPackId, setSelectedPackId] = useState<OutcomePackId>(
     getDefaultOutcomePackId(onboardingData.painAreas, onboardingData.breakStyle)
   );
+  const [historicalOutcomes, setHistoricalOutcomes] = useState<RecommendationOutcomeSignal[]>([]);
   const hasActiveSubscription = useHasActiveSubscription();
 
   // Favorites from store
@@ -505,6 +514,27 @@ export default function BreaksScreen() {
   useEffect(() => {
     setSelectedPackId(defaultPackId);
   }, [defaultPackId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const hydrateBreakOutcomeSignals = async () => {
+        const history = await getBreakHistory();
+        if (!isActive) {
+          return;
+        }
+
+        setHistoricalOutcomes(mapBreakHistoryToOutcomeSignals(history));
+      };
+
+      void hydrateBreakOutcomeSignals();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const library = useMemo<BreakListItem[]>(
     () =>
@@ -529,13 +559,65 @@ export default function BreaksScreen() {
     [selectedPackId]
   );
 
-  const featuredBreak = useMemo(
+  const sortedPackBreaks = useMemo(
     () =>
+      sortBreakListByOutcome(
+        library.filter((item) => item.category === selectedPack.category),
+        historicalOutcomes,
+        selectedPack.featuredBreakId,
+        hasActiveSubscription
+      ),
+    [hasActiveSubscription, historicalOutcomes, library, selectedPack.category, selectedPack.featuredBreakId]
+  );
+
+  const featuredBreak = useMemo(() => {
+    const defaultFeaturedBreak =
       library.find((item) => item.id === selectedPack.featuredBreakId) ??
       library.find((item) => item.id === FEATURED_EXERCISE_ID) ??
+      sortedPackBreaks[0] ??
       library[0] ??
-      null,
-    [library, selectedPack.featuredBreakId]
+      null;
+
+    if (!defaultFeaturedBreak) {
+      return null;
+    }
+
+    if (!hasActiveSubscription && defaultFeaturedBreak.isLocked) {
+      return sortedPackBreaks.find((item) => !item.isLocked) ?? defaultFeaturedBreak;
+    }
+
+    const featuredOutcomeBadge = getBreakOutcomeBadge(
+      defaultFeaturedBreak.id,
+      defaultFeaturedBreak.category,
+      historicalOutcomes
+    );
+
+    if (featuredOutcomeBadge?.tone === 'warning') {
+      return (
+        sortedPackBreaks.find((item) => item.id !== defaultFeaturedBreak.id) ??
+        defaultFeaturedBreak
+      );
+    }
+
+    return defaultFeaturedBreak;
+  }, [
+    hasActiveSubscription,
+    historicalOutcomes,
+    library,
+    selectedPack.featuredBreakId,
+    sortedPackBreaks,
+  ]);
+
+  const featuredBreakBadge = useMemo(
+    () =>
+      featuredBreak
+        ? getBreakOutcomeBadge(
+            featuredBreak.id,
+            featuredBreak.category,
+            historicalOutcomes
+          )
+        : null,
+    [featuredBreak, historicalOutcomes]
   );
 
   const lockedExerciseCount = useMemo(
@@ -562,8 +644,8 @@ export default function BreaksScreen() {
   );
 
   const libraryByCategory = useMemo(
-    () =>
-      library.reduce<Record<ExerciseCategory, BreakListItem[]>>(
+    () => {
+      const grouped = library.reduce<Record<ExerciseCategory, BreakListItem[]>>(
         (acc, item) => {
           acc[item.category].push(item);
           return acc;
@@ -574,8 +656,36 @@ export default function BreaksScreen() {
           mindful: [],
           active: [],
         }
-      ),
-    [library]
+      );
+
+      return {
+        quick: sortBreakListByOutcome(
+          grouped.quick,
+          historicalOutcomes,
+          FEATURED_EXERCISE_ID,
+          hasActiveSubscription
+        ),
+        stretch: sortBreakListByOutcome(
+          grouped.stretch,
+          historicalOutcomes,
+          FEATURED_EXERCISE_ID,
+          hasActiveSubscription
+        ),
+        mindful: sortBreakListByOutcome(
+          grouped.mindful,
+          historicalOutcomes,
+          FEATURED_EXERCISE_ID,
+          hasActiveSubscription
+        ),
+        active: sortBreakListByOutcome(
+          grouped.active,
+          historicalOutcomes,
+          FEATURED_EXERCISE_ID,
+          hasActiveSubscription
+        ),
+      };
+    },
+    [hasActiveSubscription, historicalOutcomes, library]
   );
 
   const openProPreview = useCallback(() => {
@@ -835,6 +945,20 @@ export default function BreaksScreen() {
                   </View>
                   <Text style={styles.featuredIcon}>{selectedPack.icon}</Text>
                   <Text style={styles.featuredTitle}>{selectedPack.title}</Text>
+                  {featuredBreakBadge && (
+                    <View
+                      style={[
+                        styles.featuredInsightPill,
+                        featuredBreakBadge.tone === 'positive'
+                          ? styles.featuredInsightPillPositive
+                          : styles.featuredInsightPillWarning,
+                      ]}
+                    >
+                      <Text style={styles.featuredInsightText}>
+                        {featuredBreakBadge.label}
+                      </Text>
+                    </View>
+                  )}
                   <Text style={styles.featuredDescription}>
                     {selectedPack.description} Start with {featuredBreak.title} for a fast {featuredBreak.duration} guided reset.
                   </Text>
@@ -1018,6 +1142,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000',
     marginBottom: 4,
+  },
+  featuredInsightPill: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 10,
+  },
+  featuredInsightPillPositive: {
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+  },
+  featuredInsightPillWarning: {
+    backgroundColor: 'rgba(255, 107, 107, 0.18)',
+  },
+  featuredInsightText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000',
+    letterSpacing: 0.2,
   },
   featuredDescription: {
     fontSize: 14,

@@ -9,7 +9,12 @@ import {
   MIN_WEEKLY_GOAL,
   MAX_WEEKLY_GOAL,
   MIN_DAILY_GOAL,
+  DEFAULT_REMINDER_INTERVAL,
 } from '@/constants/config';
+
+const GOAL_REFERENCE_WORKDAY_MINUTES = 8 * 60;
+const GOAL_INTERVAL_NORMALIZATION_FACTOR = 4;
+const MAX_RECOMMENDED_DAILY_GOAL = 8;
 
 /**
  * Validate break duration in seconds
@@ -87,6 +92,50 @@ export function validateWeeklyGoal(goal: number): {
 export function calculateDailyGoal(weeklyGoal: number): number {
   const { value: validatedGoal } = validateWeeklyGoal(weeklyGoal);
   return Math.max(Math.round(validatedGoal / 7), MIN_DAILY_GOAL);
+}
+
+/**
+ * Derive a realistic daily goal from the user's break reminder interval.
+ * We normalize theoretical "all-day" reminders into a sustainable number of
+ * intentional resets a user can actually hit during a workday.
+ */
+export function calculateDailyGoalFromBreakInterval(intervalMinutes: number): number {
+  const normalizedInterval =
+    typeof intervalMinutes === 'number' && isFinite(intervalMinutes) && intervalMinutes > 0
+      ? intervalMinutes
+      : DEFAULT_REMINDER_INTERVAL;
+
+  const safeInterval = Math.max(5, Math.round(normalizedInterval));
+  const theoreticalBreaksPerDay = GOAL_REFERENCE_WORKDAY_MINUTES / safeInterval;
+  const recommendedDailyGoal = Math.round(
+    theoreticalBreaksPerDay / GOAL_INTERVAL_NORMALIZATION_FACTOR
+  );
+
+  return Math.min(
+    MAX_RECOMMENDED_DAILY_GOAL,
+    Math.max(MIN_DAILY_GOAL, recommendedDailyGoal)
+  );
+}
+
+/**
+ * Convert a daily goal into the app's weekly-goal representation.
+ */
+export function calculateWeeklyGoalFromDailyGoal(dailyGoal: number): number {
+  const safeDailyGoal =
+    typeof dailyGoal === 'number' && isFinite(dailyGoal)
+      ? Math.max(MIN_DAILY_GOAL, Math.round(dailyGoal))
+      : MIN_DAILY_GOAL;
+
+  return safeDailyGoal * 7;
+}
+
+/**
+ * Derive the weekly goal directly from the user's preferred reminder interval.
+ */
+export function calculateWeeklyGoalFromBreakInterval(intervalMinutes: number): number {
+  return calculateWeeklyGoalFromDailyGoal(
+    calculateDailyGoalFromBreakInterval(intervalMinutes)
+  );
 }
 
 /**
