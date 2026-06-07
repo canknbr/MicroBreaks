@@ -18,6 +18,9 @@
         "UIBackgroundModes": ["fetch", "remote-notification"],
         "CFBundleAllowMixedLocalizations": true
       },
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.cankanbur.MicroBreaks"]
+      },
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -106,7 +109,8 @@
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/auth",
       "@react-native-firebase/messaging",
-      "expo-audio"
+      "expo-audio",
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true,
