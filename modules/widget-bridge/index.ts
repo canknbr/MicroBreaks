@@ -47,6 +47,13 @@ export interface LiveActivityEndParams {
   stepLabel?: string;
 }
 
+export interface PendingShortcut {
+  action: string;
+  payload?: string | null;
+  /** Epoch ms when the App Intent ran. */
+  requestedAt: number;
+}
+
 interface WidgetBridgeNative {
   writeSnapshot(key: string, json: string): Promise<boolean>;
   reloadTimelines(): Promise<void>;
@@ -55,6 +62,8 @@ interface WidgetBridgeNative {
   updateBreakActivity(params: LiveActivityUpdateParams): Promise<void>;
   endBreakActivity(params: LiveActivityEndParams): Promise<void>;
   areActivitiesEnabled(): boolean;
+  readPendingShortcut(): Promise<PendingShortcut | null>;
+  clearPendingShortcut(): Promise<void>;
 }
 
 let nativeModule: WidgetBridgeNative | null = null;
@@ -163,6 +172,37 @@ export async function endBreakActivity(
   if (!nativeModule) return;
   try {
     await nativeModule.endBreakActivity(params);
+  } catch {
+    /* swallow */
+  }
+}
+
+// ===========================================================
+// Pending Shortcut handoff (App Intents → JS)
+// ===========================================================
+
+/**
+ * Reads the most recent shortcut descriptor an App Intent wrote to the
+ * App Group, or `null` if nothing is pending. Returns `null` on every
+ * non-iOS platform.
+ */
+export async function readPendingShortcut(): Promise<PendingShortcut | null> {
+  if (!nativeModule) return null;
+  try {
+    return await nativeModule.readPendingShortcut();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clear the pending shortcut after the JS side has routed to the
+ * matching screen. Safe to call when nothing is pending.
+ */
+export async function clearPendingShortcut(): Promise<void> {
+  if (!nativeModule) return;
+  try {
+    await nativeModule.clearPendingShortcut();
   } catch {
     /* swallow */
   }

@@ -1,0 +1,7 @@
+{
+  "name": "with-app-intents",
+  "version": "1.0.0",
+  "description": "Adds Siri-compatible App Intents to the main iOS app target on every prebuild.",
+  "main": "plugin.js",
+  "private": true
+}

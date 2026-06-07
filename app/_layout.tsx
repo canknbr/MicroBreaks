@@ -34,6 +34,10 @@ import { registerForPushNotifications, onTokenRefresh } from '@/services/firebas
 import { syncService } from '@/services/sync';
 import { initializeTimerService, shutdownTimerService } from '@/services/timerService';
 import { widgetDataBridge } from '@/services/widgets/widgetDataBridge';
+import {
+  initializeShortcutHandler,
+  shutdownShortcutHandler,
+} from '@/services/shortcuts/handler';
 import { useUserStore, flushProgressSideEffects } from '@/store/userStore';
 import OfflineBanner from '@/components/common/OfflineBanner';
 
@@ -263,6 +267,7 @@ export default function RootLayout() {
 
     shutdownTimerService();
     widgetDataBridge.shutdown();
+    shutdownShortcutHandler();
   }, [reportOptionalBootstrapFailure, teardownUserSession]);
 
   const prepareApp = useCallback(async () => {
@@ -339,6 +344,14 @@ export default function RootLayout() {
           run: async () => {
             // Best-effort: a widget snapshot failure must not block boot.
             await widgetDataBridge.initialize();
+          },
+        },
+        {
+          name: 'shortcut_handler',
+          run: () => {
+            // Bridges Siri / Spotlight / Action Button App Intents
+            // into expo-router. No-op on Android + before prebuild.
+            initializeShortcutHandler();
           },
         },
         {

@@ -112,7 +112,8 @@
       "@react-native-firebase/auth",
       "@react-native-firebase/messaging",
       "expo-audio",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "./plugins/with-app-intents/plugin.js"
     ],
     "experiments": {
       "typedRoutes": true,

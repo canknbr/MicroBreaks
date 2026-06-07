@@ -235,5 +235,33 @@ public class WidgetBridgeModule: Module {
       }
       return false
     }
+
+    // MARK: - Pending Shortcut handoff
+    //
+    // App Intents (Siri / Spotlight / Action Button) cannot reach the JS
+    // bridge directly — the intent's `perform()` runs before the React
+    // Native runtime is reliably alive. Instead, the intent writes a
+    // small "pending shortcut" descriptor into the App Group, and the
+    // JS side reads + clears it on launch and on every foreground.
+
+    /// Reads the most recent pending shortcut (or null). Does NOT clear
+    /// it — call `clearPendingShortcut` after the JS side has routed.
+    AsyncFunction("readPendingShortcut") { () -> [String: Any]? in
+      guard let defaults = UserDefaults(suiteName: self.appGroupId),
+            let raw = defaults.string(forKey: "@microbreaks/pending_shortcut"),
+            let data = raw.data(using: .utf8),
+            let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        return nil
+      }
+      return parsed
+    }
+
+    /// Clears the pending shortcut after the JS side has consumed it.
+    /// Safe to call when nothing is pending.
+    AsyncFunction("clearPendingShortcut") { () -> Void in
+      guard let defaults = UserDefaults(suiteName: self.appGroupId) else { return }
+      defaults.removeObject(forKey: "@microbreaks/pending_shortcut")
+      defaults.synchronize()
+    }
   }
 }
