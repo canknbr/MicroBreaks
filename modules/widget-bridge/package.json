@@ -1,0 +1,7 @@
+{
+  "name": "widget-bridge",
+  "version": "1.0.0",
+  "description": "Local Expo Module that bridges the JS WidgetSnapshot writer to the iOS App Group + WidgetCenter.",
+  "main": "index.ts",
+  "private": true
+}

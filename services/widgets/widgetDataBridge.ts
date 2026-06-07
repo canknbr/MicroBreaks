@@ -24,6 +24,7 @@ import { useUserStore } from '@/store/userStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { getBreakHistory } from '@/services/breakHistory';
 import { getSuggestedBreak } from '@/services/recommendations/engine';
+import * as widgetBridge from '../../modules/widget-bridge';
 import { buildWidgetSnapshot } from './snapshot';
 import {
   EMPTY_WIDGET_SNAPSHOT,
@@ -40,20 +41,37 @@ interface NativeWidgetBridge {
 }
 
 /**
- * Default no-op bridge. The real implementation lands when the Widget
- * Extension target ships in Wave 2; it bridges `UserDefaults(suiteName:
- * "group.com.cankanbur.MicroBreaks")` + `WidgetCenter.shared.reloadAllTimelines()`.
+ * Default no-op bridge. Used on Android, web, in Jest, and on iOS
+ * before `expo prebuild` has materialised the local `widget-bridge`
+ * module. Calls are silent — nothing crashes, nothing blocks.
  */
 const noopNativeBridge: NativeWidgetBridge = {
   async writeSnapshot() {
-    /* no-op until the App Group + native module ship */
+    /* no-op when the native module is unavailable */
   },
   async reloadTimelines() {
     /* no-op */
   },
 };
 
-let nativeBridge: NativeWidgetBridge = noopNativeBridge;
+/**
+ * Adapter that forwards to the local `widget-bridge` Expo module. The
+ * module already handles its own platform / availability gates and
+ * returns safe defaults when the native side is not present, so this
+ * adapter does no defensive work of its own.
+ */
+const iosNativeBridge: NativeWidgetBridge = {
+  async writeSnapshot(json) {
+    await widgetBridge.writeSnapshot(WIDGET_SNAPSHOT_STORAGE_KEY, json);
+  },
+  async reloadTimelines() {
+    await widgetBridge.reloadTimelines();
+  },
+};
+
+let nativeBridge: NativeWidgetBridge = widgetBridge.widgetBridgeIsAvailable
+  ? iosNativeBridge
+  : noopNativeBridge;
 
 /**
  * Inject a real native bridge once Wave 2 is wired. Kept exported so
