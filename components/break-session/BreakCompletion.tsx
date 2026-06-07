@@ -18,9 +18,10 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/i18n/hooks';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
+import { breakSounds } from '@/services/audio/breakSounds';
 
 interface BreakCompletionProps {
   title: string;
@@ -42,6 +43,7 @@ export default function BreakCompletion({
 }: BreakCompletionProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const { completionFanfare } = useHapticChoreography();
   const iconScale = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const statsOpacity = useSharedValue(0);
@@ -50,12 +52,12 @@ export default function BreakCompletion({
   const ringRotation = useSharedValue(0);
 
   useEffect(() => {
-    // Reward the user with a single success haptic exactly once when the
-    // completion screen mounts. Combined with the on-screen "Great Job!"
-    // moment, this gives the finished break a tangible end beat.
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {
-      // Some test runs / unsupported devices — silent.
-    });
+    // Sprint 9 visceral polish: the single Success haptic is replaced by
+    // a 3-beat fanfare (Success → Medium → Heavy, 140ms apart) plus a
+    // completion sound. This is the moment the user feels "I earned
+    // that" — single biggest perceived-quality upgrade per cost.
+    completionFanfare();
+    void breakSounds.play('session-complete');
 
     // Staggered entrance animation
     iconScale.value = withSpring(1, { damping: 12, stiffness: 100 });
@@ -80,7 +82,7 @@ export default function BreakCompletion({
       -1,
       false
     );
-  }, [confettiOpacity, glowPulse, iconScale, ringRotation, statsOpacity, titleOpacity]);
+  }, [completionFanfare, confettiOpacity, glowPulse, iconScale, ringRotation, statsOpacity, titleOpacity]);
 
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }],

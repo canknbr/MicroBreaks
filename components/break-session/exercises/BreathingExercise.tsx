@@ -17,6 +17,8 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { AnimationType } from '@/data/exercises';
 import { useTheme } from '@/hooks/useTheme';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
+import { breakSounds } from '@/services/audio/breakSounds';
 
 interface BreathingExerciseProps {
   animation: AnimationType;
@@ -30,6 +32,7 @@ export default function BreathingExercise({
   color,
 }: BreathingExerciseProps) {
   const theme = useTheme();
+  const { breathingPulse, cancel: cancelHaptics } = useHapticChoreography();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0.5);
   const innerScale = useSharedValue(0.6);
@@ -39,6 +42,20 @@ export default function BreathingExercise({
 
   useEffect(() => {
     const duration = 4000; // 4 seconds per phase
+
+    // Sync haptic + sound with the visual breath phase. The phone now
+    // breathes WITH the user — this is the single biggest visceral
+    // upgrade in Sprint 9 (Quality Roadmap). The sound layer is a stub
+    // until the audio assets ship; the haptic chain is real today.
+    if (animation === 'breathe-in' || animation === 'breathe-hold' || animation === 'breathe-out') {
+      const phaseKey = animation === 'breathe-in' ? 'in' : animation === 'breathe-out' ? 'out' : 'hold';
+      breathingPulse({ phase: phaseKey, durationMs: duration });
+      void breakSounds.play(animation === 'breathe-in'
+        ? 'breathe-in'
+        : animation === 'breathe-out'
+          ? 'breathe-out'
+          : 'breathe-hold');
+    }
 
     // Continuous subtle ring rotation
     ringRotation.value = withRepeat(
@@ -114,7 +131,17 @@ export default function BreathingExercise({
         );
         break;
     }
-  }, [animation, glowIntensity, innerScale, opacity, particleOffset, ringRotation, scale]);
+    return () => {
+      cancelHaptics();
+      if (animation === 'breathe-in' || animation === 'breathe-out' || animation === 'breathe-hold') {
+        void breakSounds.stop(animation === 'breathe-in'
+          ? 'breathe-in'
+          : animation === 'breathe-out'
+            ? 'breathe-out'
+            : 'breathe-hold');
+      }
+    };
+  }, [animation, breathingPulse, cancelHaptics, glowIntensity, innerScale, opacity, particleOffset, ringRotation, scale]);
 
   const outerCircleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
