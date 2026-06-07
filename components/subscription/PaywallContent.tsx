@@ -8,10 +8,12 @@ import {
   Text,
   View,
 } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
+import { usePressScale } from '@/hooks/usePressScale';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 import { billingService } from '@/services/billing';
 import { analytics } from '@/services/analytics';
 import {
@@ -221,6 +223,9 @@ export default function PaywallContent({
   const isLoading = useSubscriptionStore((state) => state.isLoading);
   const lastError = useSubscriptionStore((state) => state.lastError);
   const lastSyncedAt = useSubscriptionStore((state) => state.lastSyncedAt);
+  const { tapBack, confirmTap, selectionTick, successTick } = useHapticChoreography();
+  const primaryPress = usePressScale({ pressedScale: 0.97 });
+  const secondaryPress = usePressScale({ pressedScale: 0.97 });
 
   const defaultOfferId = offers.find((offer) => offer.recommended)?.id ?? offers[0]?.id ?? null;
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(defaultOfferId);
@@ -299,7 +304,7 @@ export default function PaywallContent({
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    confirmTap();
 
     analytics.trackOfferSelected({
       paywallId: MAIN_PAYWALL_ID,
@@ -322,7 +327,7 @@ export default function PaywallContent({
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    successTick();
     Alert.alert(
       'Access Updated',
       result.message,
@@ -342,7 +347,7 @@ export default function PaywallContent({
   };
 
   const handleRestore = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tapBack();
     const result = await billingService.restorePurchases();
 
     if (!result.success) {
@@ -350,7 +355,7 @@ export default function PaywallContent({
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    successTick();
     Alert.alert('Restore Purchases', result.message);
   };
 
@@ -444,7 +449,10 @@ export default function PaywallContent({
           return (
             <Pressable
               key={offer.id}
-              onPress={() => setSelectedOfferId(offer.id)}
+              onPress={() => {
+                selectionTick();
+                setSelectedOfferId(offer.id);
+              }}
               style={[
                 styles.offerCard,
                 {
@@ -615,43 +623,52 @@ export default function PaywallContent({
         <Text style={[styles.inlineError, { color: theme.accent.error }]}>{lastError}</Text>
       )}
 
-      <Pressable
-        style={[
-          styles.primaryButton,
-          { backgroundColor: theme.accent.warning, opacity: isLoading ? 0.7 : 1 },
-        ]}
-        onPress={handlePurchase}
-        disabled={isLoading}
-        accessibilityRole="button"
-        accessibilityLabel={primaryButtonLabel}
-      >
-        {isLoading ? (
-          <ActivityIndicator size="small" color={theme.text.inverse} />
-        ) : (
-          <Text style={[styles.primaryButtonText, { color: theme.text.inverse }]}>
-            {primaryButtonLabel}
-          </Text>
-        )}
-      </Pressable>
+      <Animated.View style={primaryPress.style}>
+        <Pressable
+          {...primaryPress.handlers}
+          style={[
+            styles.primaryButton,
+            { backgroundColor: theme.accent.warning, opacity: isLoading ? 0.7 : 1 },
+          ]}
+          onPress={handlePurchase}
+          disabled={isLoading}
+          accessibilityRole="button"
+          accessibilityLabel={primaryButtonLabel}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color={theme.text.inverse} />
+          ) : (
+            <Text style={[styles.primaryButtonText, { color: theme.text.inverse }]}>
+              {primaryButtonLabel}
+            </Text>
+          )}
+        </Pressable>
+      </Animated.View>
 
       {/* Continue free is rendered as a real secondary button with the same
           width and a visible border so it is not hidden as a low-contrast
           link — this is the dark-pattern Calm/Headspace get flagged for in
           mindfulness app reviews. */}
       {!hasActiveSubscription && (
-        <Pressable
-          style={[
-            styles.secondaryButton,
-            { borderColor: theme.border.subtle, backgroundColor: 'transparent' },
-          ]}
-          onPress={onContinueFree}
-          accessibilityRole="button"
-          accessibilityLabel={copy.primaryFallback}
-        >
-          <Text style={[styles.secondaryButtonText, { color: theme.text.primary }]}>
-            {copy.primaryFallback}
-          </Text>
-        </Pressable>
+        <Animated.View style={secondaryPress.style}>
+          <Pressable
+            {...secondaryPress.handlers}
+            style={[
+              styles.secondaryButton,
+              { borderColor: theme.border.subtle, backgroundColor: 'transparent' },
+            ]}
+            onPress={() => {
+              tapBack();
+              onContinueFree();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={copy.primaryFallback}
+          >
+            <Text style={[styles.secondaryButtonText, { color: theme.text.primary }]}>
+              {copy.primaryFallback}
+            </Text>
+          </Pressable>
+        </Animated.View>
       )}
 
       <Pressable

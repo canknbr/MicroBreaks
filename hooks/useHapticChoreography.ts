@@ -181,6 +181,25 @@ export function useHapticChoreography() {
   }, [hapticsEnabled]);
 
   /**
+   * Confirm tap — Medium-strength impact for commit moments (purchase,
+   * "Start session", "Save changes"). Heavier than tapBack so the user
+   * feels the weight of the action they just took.
+   */
+  const confirmTap = useCallback(() => {
+    if (!hapticsEnabled) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+  }, [hapticsEnabled]);
+
+  /**
+   * Success notification — Apple's "you did the thing" feedback. Routes
+   * through the same hapticsEnabled gate so callers don't have to.
+   */
+  const successTick = useCallback(() => {
+    if (!hapticsEnabled) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  }, [hapticsEnabled]);
+
+  /**
    * Cancel any currently-scheduled choreography. Call from a parent
    * effect cleanup when you're swapping phases rapidly.
    */
@@ -194,6 +213,8 @@ export function useHapticChoreography() {
     milestone,
     selectionTick,
     tapBack,
+    confirmTap,
+    successTick,
     cancel,
   };
 }

@@ -7,14 +7,10 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  SharedValue,
-} from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import Animated from 'react-native-reanimated';
 import { useTranslation } from '@/i18n/hooks';
+import { usePressScale } from '@/hooks/usePressScale';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 
 interface BreakControlsProps {
   isPaused: boolean;
@@ -34,92 +30,95 @@ export default function BreakControls({
   color,
 }: BreakControlsProps) {
   const { t } = useTranslation();
-  const pauseScale = useSharedValue(1);
-  const skipScale = useSharedValue(1);
-  const endScale = useSharedValue(1);
+  const { tapBack } = useHapticChoreography();
+  // Slightly deeper press scale than the global default so the in-session
+  // controls feel weighty — these are the most intentional taps in the app.
+  const pausePress = usePressScale({ pressedScale: 0.9 });
+  const skipPress = usePressScale({ pressedScale: 0.9 });
+  const endPress = usePressScale({ pressedScale: 0.9 });
 
-  const createPressHandlers = (
-    scale: SharedValue<number>,
-    onPress: () => void
-  ) => ({
-    onPressIn: () => {
-      scale.value = withSpring(0.9);
-    },
-    onPressOut: () => {
-      scale.value = withSpring(1);
-    },
-    onPress: () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onPress();
-    },
-  });
+  const handlePauseToggle = () => {
+    tapBack();
+    if (isPaused) {
+      onResume();
+    } else {
+      onPause();
+    }
+  };
 
-  const pauseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pauseScale.value }],
-  }));
+  const handleSkip = () => {
+    tapBack();
+    onSkip();
+  };
 
-  const skipStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: skipScale.value }],
-  }));
-
-  const endStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: endScale.value }],
-  }));
+  const handleEnd = () => {
+    tapBack();
+    onEnd();
+  };
 
   return (
     <View style={styles.container} accessibilityRole="toolbar" accessibilityLabel={t('breakSession.controls.end')}>
       {/* End Button */}
-      <Pressable
-        {...createPressHandlers(endScale, onEnd)}
-        accessibilityRole="button"
-        accessibilityLabel={t('breakSession.controls.end')}
-        accessibilityHint="Ends the current exercise session and returns to home"
-      >
-        <Animated.View style={[styles.secondaryButton, endStyle]}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-          )}
-          <Ionicons name="stop" size={20} color="rgba(255, 255, 255, 0.85)" />
-          <Text style={styles.secondaryButtonText}>{t('breakSession.controls.end').replace(' Session', '')}</Text>
-        </Animated.View>
-      </Pressable>
+      <Animated.View style={endPress.style}>
+        <Pressable
+          {...endPress.handlers}
+          onPress={handleEnd}
+          accessibilityRole="button"
+          accessibilityLabel={t('breakSession.controls.end')}
+          accessibilityHint="Ends the current exercise session and returns to home"
+        >
+          <View style={styles.secondaryButton}>
+            {Platform.OS === 'ios' ? (
+              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+            )}
+            <Ionicons name="stop" size={20} color="rgba(255, 255, 255, 0.85)" />
+            <Text style={styles.secondaryButtonText}>{t('breakSession.controls.end').replace(' Session', '')}</Text>
+          </View>
+        </Pressable>
+      </Animated.View>
 
       {/* Pause/Resume Button (Main) */}
-      <Pressable
-        {...createPressHandlers(pauseScale, isPaused ? onResume : onPause)}
-        accessibilityRole="button"
-        accessibilityLabel={isPaused ? t('breakSession.controls.resume') : t('breakSession.controls.pause')}
-        accessibilityHint={isPaused ? "Resumes the exercise" : "Pauses the current exercise"}
-        accessibilityState={{ expanded: !isPaused }}
-      >
-        <Animated.View style={[styles.mainButton, { backgroundColor: color }, pauseStyle]}>
-          <Ionicons
-            name={isPaused ? 'play' : 'pause'}
-            size={32}
-            color="#000"
-          />
-        </Animated.View>
-      </Pressable>
+      <Animated.View style={pausePress.style}>
+        <Pressable
+          {...pausePress.handlers}
+          onPress={handlePauseToggle}
+          accessibilityRole="button"
+          accessibilityLabel={isPaused ? t('breakSession.controls.resume') : t('breakSession.controls.pause')}
+          accessibilityHint={isPaused ? "Resumes the exercise" : "Pauses the current exercise"}
+          accessibilityState={{ expanded: !isPaused }}
+        >
+          <View style={[styles.mainButton, { backgroundColor: color }]}>
+            <Ionicons
+              name={isPaused ? 'play' : 'pause'}
+              size={32}
+              color="#000"
+            />
+          </View>
+        </Pressable>
+      </Animated.View>
 
       {/* Skip Button */}
-      <Pressable
-        {...createPressHandlers(skipScale, onSkip)}
-        accessibilityRole="button"
-        accessibilityLabel={t('breakSession.controls.skip')}
-        accessibilityHint="Skips to the next step in the exercise"
-      >
-        <Animated.View style={[styles.secondaryButton, skipStyle]}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-          )}
-          <Ionicons name="play-skip-forward" size={20} color="rgba(255, 255, 255, 0.85)" />
-          <Text style={styles.secondaryButtonText}>{t('breakSession.controls.skip')}</Text>
-        </Animated.View>
-      </Pressable>
+      <Animated.View style={skipPress.style}>
+        <Pressable
+          {...skipPress.handlers}
+          onPress={handleSkip}
+          accessibilityRole="button"
+          accessibilityLabel={t('breakSession.controls.skip')}
+          accessibilityHint="Skips to the next step in the exercise"
+        >
+          <View style={styles.secondaryButton}>
+            {Platform.OS === 'ios' ? (
+              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            ) : (
+              <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
+            )}
+            <Ionicons name="play-skip-forward" size={20} color="rgba(255, 255, 255, 0.85)" />
+            <Text style={styles.secondaryButtonText}>{t('breakSession.controls.skip')}</Text>
+          </View>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }

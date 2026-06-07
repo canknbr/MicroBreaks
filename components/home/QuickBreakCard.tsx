@@ -17,8 +17,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 
 interface QuickBreakCardProps {
   icon: string;
@@ -42,6 +42,7 @@ function QuickBreakCard({
   accessibilityHint,
 }: QuickBreakCardProps) {
   const theme = useTheme();
+  const { tapBack } = useHapticChoreography();
   const scale = useSharedValue(1);
   const pressed = useSharedValue(0);
 
@@ -49,7 +50,7 @@ function QuickBreakCard({
     .onBegin(() => {
       scale.value = withTiming(0.95, { duration: 100, easing: Easing.out(Easing.cubic) });
       pressed.value = withTiming(1, { duration: 100 });
-      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
+      runOnJS(tapBack)();
     })
     .onFinalize(() => {
       scale.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) });
