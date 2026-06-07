@@ -20,8 +20,8 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
 import { useTranslation } from '@/i18n/hooks';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -295,6 +295,7 @@ export default function ConfettiCelebration({
 }: ConfettiCelebrationProps) {
   const config = CELEBRATION_CONFIGS[type];
   const { t } = useTranslation();
+  const { completionFanfare, tapBack } = useHapticChoreography();
   const localizedTitle = t(`home.celebrations.${type}.title`, { defaultValue: config.title });
   const localizedSubtitle = t(`home.celebrations.${type}.subtitle`, {
     defaultValue: config.subtitle,
@@ -324,16 +325,17 @@ export default function ConfettiCelebration({
   }, [config]);
 
   const handleDismiss = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tapBack();
     overlayOpacity.value = withTiming(0, { duration: 300 });
     contentOpacity.value = withTiming(0, { duration: 200 });
     contentScale.value = withTiming(0.8, { duration: 300 });
     setTimeout(onDismiss, 300);
-  }, [contentOpacity, contentScale, onDismiss, overlayOpacity]);
+  }, [contentOpacity, contentScale, onDismiss, overlayOpacity, tapBack]);
 
   useEffect(() => {
-    // Trigger haptic
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Trigger haptic — full 3-beat cascade for the big celebration. The
+    // choreography hook handles hapticsEnabled + Reduce Motion gating.
+    completionFanfare();
 
     // Overlay fade in
     overlayOpacity.value = withTiming(1, { duration: 400 });
@@ -402,6 +404,7 @@ export default function ConfettiCelebration({
   }, [
     autoHide,
     autoHideDelay,
+    completionFanfare,
     contentOpacity,
     contentScale,
     emojiScale,
@@ -548,12 +551,13 @@ export function MiniCelebration({
   color = '#06FFA5',
   onHide,
 }: MiniCelebrationProps) {
+  const { successTick } = useHapticChoreography();
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      successTick();
       opacity.value = withTiming(1, { duration: 300 });
       translateY.value = withSpring(0, { damping: 12 });
 
@@ -567,7 +571,7 @@ export function MiniCelebration({
       return () => clearTimeout(timeout);
     }
     return undefined;
-  }, [onHide, opacity, translateY, visible]);
+  }, [onHide, opacity, successTick, translateY, visible]);
 
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

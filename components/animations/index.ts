@@ -17,3 +17,4 @@ export {
   TimerAnimation,
   SuccessAnimation,
 } from './OnboardingAnimations';
+export { default as MilestoneCelebration } from './MilestoneCelebration';

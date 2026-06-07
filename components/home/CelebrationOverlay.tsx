@@ -15,8 +15,8 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -146,14 +146,17 @@ export default function CelebrationOverlay({
 }: CelebrationOverlayProps) {
   const config = CELEBRATION_CONFIG[type];
   const reduceMotion = useReduceMotion();
+  const { successTick, tapBack } = useHapticChoreography();
   const overlayOpacity = useSharedValue(0);
   const contentScale = useSharedValue(0.5);
   const contentOpacity = useSharedValue(0);
   const iconScale = useSharedValue(0);
 
   const triggerHaptic = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, []);
+    // Gated through the choreography hook so the user's hapticsEnabled
+    // setting is honoured. Previously fired regardless of preference.
+    successTick();
+  }, [successTick]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -198,7 +201,7 @@ export default function CelebrationOverlay({
   }));
 
   const handleDismiss = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tapBack();
     overlayOpacity.value = withTiming(0, { duration: 200 });
     contentOpacity.value = withTiming(0, { duration: 200 });
     setTimeout(onDismiss, 200);
