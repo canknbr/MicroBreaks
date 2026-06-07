@@ -2,25 +2,28 @@
  * Break Sounds Service
  *
  * Named registry of every sound the app intends to play during a break,
- * a celebration, or a UI moment. The runtime implementation is a no-op
- * stub today — the real `expo-audio` (or `expo-av`) playback will be
- * wired in once the team drops the `.wav` / `.m4a` assets into
- * `assets/audio/`.
+ * a celebration, or a UI moment, backed by `expo-audio`.
  *
- * The API is stable: call sites do `breakSounds.play('breathe-in')`
- * regardless of whether playback is connected. This means we can ship
- * the choreography work TODAY and turn the audio on tomorrow without
- * touching a single component.
+ * The API surface is the same one wave 1 shipped with — components do
+ * `breakSounds.play('breathe-in')` and never see the playback engine. The
+ * implementation underneath is now a real `expo-audio` `AudioPlayer`
+ * cache: each named sound is lazily created on first play, kept warm for
+ * the lifetime of the app, and reused across calls.
  *
- * ## Adding the real implementation
- * 1. `npx expo install expo-audio`
- * 2. Drop the asset files into `assets/audio/<sound-name>.m4a`
- *    matching the names in `SOUND_REGISTRY` below.
- * 3. Replace the stub `play/preload/stop` bodies with the expo-audio
- *    `useAudioPlayer` / `createAudioPlayer` calls. The function
- *    signatures already match the expo-audio shape.
+ * ## Adding a sound file
+ *
+ * 1. Drop the `.m4a` / `.wav` into `assets/audio/<name>.m4a` matching the
+ *    name in `SOUND_REGISTRY`.
+ * 2. Uncomment the matching `require(...)` in `SOURCE_MAP` below.
+ * 3. Done. Every call site lights up automatically — no component changes
+ *    needed.
+ *
+ * Until an asset is bundled, `SOURCE_MAP[name]` returns `null` and the
+ * service falls back to a no-op (logging in dev). Choreography work
+ * shipped without waiting on the audio team this way.
  */
 
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { useSettingsStore } from '@/store/settingsStore';
 
 export type BreakSoundName =
@@ -69,6 +72,30 @@ export const SOUND_REGISTRY: Record<BreakSoundName, SoundMeta> = {
   'ambient-chime':      { assetPath: 'assets/audio/ambient-chime.m4a',      loop: true,  baseVolume: 0.2 },
 };
 
+/**
+ * Maps each sound name to its bundled `require(...)` source — or `null`
+ * if the asset has not been added yet. When the audio team drops a new
+ * file, change the right-hand side here and every existing call site
+ * lights up.
+ *
+ * NOTE: these MUST be `require(...)` calls (not string paths). Metro
+ * resolves them at bundle time, so we ship the audio bytes with the app.
+ */
+const SOURCE_MAP: Record<BreakSoundName, number | null> = {
+  'breathe-in':        null, // require('../../assets/audio/breathe-in.m4a'),
+  'breathe-hold':      null, // require('../../assets/audio/breathe-hold.m4a'),
+  'breathe-out':       null, // require('../../assets/audio/breathe-out.m4a'),
+  'breathe-complete':  null, // require('../../assets/audio/breathe-complete.m4a'),
+  'tap-soft':          null, // require('../../assets/audio/tap-soft.m4a'),
+  'tap-confirm':       null, // require('../../assets/audio/tap-confirm.m4a'),
+  'tap-success':       null, // require('../../assets/audio/tap-success.m4a'),
+  'session-start':     null, // require('../../assets/audio/session-start.m4a'),
+  'session-complete':  null, // require('../../assets/audio/session-complete.m4a'),
+  'session-milestone': null, // require('../../assets/audio/session-milestone.m4a'),
+  'ambient-nature':    null, // require('../../assets/audio/ambient-nature.m4a'),
+  'ambient-chime':     null, // require('../../assets/audio/ambient-chime.m4a'),
+};
+
 interface BreakSoundsService {
   /**
    * Play a sound by name. Resolves immediately whether or not playback
@@ -76,7 +103,7 @@ interface BreakSoundsService {
    * fire-and-forget without `try`.
    */
   play(name: BreakSoundName, opts?: { volumeMultiplier?: number }): Promise<void>;
-  /** Pre-warm one or more sounds. No-op until playback is wired. */
+  /** Pre-warm one or more sounds. No-op for sounds without a bundled source. */
   preload(names: BreakSoundName[]): Promise<void>;
   /** Stop a specific looped sound; safe to call when nothing is playing. */
   stop(name: BreakSoundName): Promise<void>;
@@ -92,29 +119,97 @@ function isSoundEnabled(): boolean {
   }
 }
 
-class StubBreakSoundsService implements BreakSoundsService {
-  async play(name: BreakSoundName, _opts?: { volumeMultiplier?: number }): Promise<void> {
-    if (!isSoundEnabled()) return;
-    if (__DEV__) {
-      // Surface so we can see the choreography fire in dev tools even
-      // while the audio engine is still a stub.
-      console.log(`[breakSounds] play ${name}`);
+class ExpoAudioBreakSoundsService implements BreakSoundsService {
+  /** AudioPlayer cache. One player per registered sound, created lazily. */
+  private players = new Map<BreakSoundName, AudioPlayer>();
+
+  /**
+   * Returns a ready-to-play `AudioPlayer` for the named sound, or `null`
+   * when no asset is bundled yet (in which case callers no-op). Failure
+   * to create the player (corrupted source, native issue) is swallowed
+   * and logged — we never want a missing sound asset to take down a
+   * session.
+   */
+  private ensurePlayer(name: BreakSoundName): AudioPlayer | null {
+    const cached = this.players.get(name);
+    if (cached) return cached;
+
+    const source = SOURCE_MAP[name];
+    if (source == null) {
+      if (__DEV__) {
+        console.log(`[breakSounds] no asset bundled for "${name}" — skipping`);
+      }
+      return null;
+    }
+
+    try {
+      const meta = SOUND_REGISTRY[name];
+      const player = createAudioPlayer(source);
+      player.loop = meta.loop;
+      player.volume = meta.baseVolume;
+      this.players.set(name, player);
+      return player;
+    } catch (err) {
+      if (__DEV__) {
+        console.warn(`[breakSounds] failed to create player for "${name}":`, err);
+      }
+      return null;
     }
   }
 
-  async preload(_names: BreakSoundName[]): Promise<void> {
-    /* no-op until expo-audio is wired */
+  async play(name: BreakSoundName, opts?: { volumeMultiplier?: number }): Promise<void> {
+    if (!isSoundEnabled()) return;
+    const player = this.ensurePlayer(name);
+    if (!player) return;
+
+    try {
+      // Re-apply volume each call so a per-call multiplier sticks (e.g.
+      // a "soft" tap-confirm during a quiet phase).
+      const baseVolume = SOUND_REGISTRY[name].baseVolume;
+      const multiplier = opts?.volumeMultiplier ?? 1;
+      player.volume = Math.max(0, Math.min(1, baseVolume * multiplier));
+
+      // Rewind so re-triggering a one-shot (tap-soft, session-start)
+      // always plays from the top instead of resuming mid-clip.
+      await player.seekTo(0);
+      player.play();
+    } catch (err) {
+      if (__DEV__) {
+        console.warn(`[breakSounds] play "${name}" failed:`, err);
+      }
+    }
+  }
+
+  async preload(names: BreakSoundName[]): Promise<void> {
+    // Touching the player constructor is enough — expo-audio loads the
+    // sample on creation. We don't need a separate prefetch step.
+    for (const name of names) {
+      this.ensurePlayer(name);
+    }
   }
 
   async stop(name: BreakSoundName): Promise<void> {
-    if (__DEV__) {
-      console.log(`[breakSounds] stop ${name}`);
+    const player = this.players.get(name);
+    if (!player) return;
+    try {
+      player.pause();
+      await player.seekTo(0);
+    } catch (err) {
+      if (__DEV__) {
+        console.warn(`[breakSounds] stop "${name}" failed:`, err);
+      }
     }
   }
 
   async stopAll(): Promise<void> {
-    /* no-op */
+    for (const player of this.players.values()) {
+      try {
+        player.pause();
+      } catch {
+        /* one bad player must not block the others */
+      }
+    }
   }
 }
 
-export const breakSounds: BreakSoundsService = new StubBreakSoundsService();
+export const breakSounds: BreakSoundsService = new ExpoAudioBreakSoundsService();

@@ -47,6 +47,36 @@ jest.mock('expo-haptics', () => ({
   },
 }));
 
+// Expo Audio — mock with a minimal AudioPlayer shape so the breakSounds
+// service can be exercised without binding to native modules in tests.
+jest.mock('expo-audio', () => {
+  const createMockPlayer = () => ({
+    id: Math.floor(Math.random() * 10000),
+    playing: false,
+    muted: false,
+    loop: false,
+    paused: true,
+    isLoaded: true,
+    isBuffering: false,
+    currentTime: 0,
+    duration: 0,
+    volume: 1,
+    playbackRate: 1,
+    play: jest.fn(),
+    pause: jest.fn(),
+    replace: jest.fn(),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+    setPlaybackRate: jest.fn(),
+    setAudioSamplingEnabled: jest.fn(),
+    remove: jest.fn(),
+  });
+  return {
+    createAudioPlayer: jest.fn(createMockPlayer),
+    setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  };
+});
+
 // Expo Speech
 jest.mock('expo-speech', () => ({
   speak: jest.fn(),
