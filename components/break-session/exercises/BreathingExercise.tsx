@@ -14,11 +14,11 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { AnimationType } from '@/data/exercises';
 import { useTheme } from '@/hooks/useTheme';
 import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 import { breakSounds } from '@/services/audio/breakSounds';
+import SkiaBreathingCircle from './SkiaBreathingCircle';
 
 interface BreathingExerciseProps {
   animation: AnimationType;
@@ -33,9 +33,9 @@ export default function BreathingExercise({
 }: BreathingExerciseProps) {
   const theme = useTheme();
   const { breathingPulse, cancel: cancelHaptics } = useHapticChoreography();
-  const scale = useSharedValue(1);
-  const opacity = useSharedValue(0.5);
-  const innerScale = useSharedValue(0.6);
+  // The orb's scale / opacity / inner-fill are owned by SkiaBreathingCircle
+  // now; we only keep the ambient layers (glow, particles, dashed ring)
+  // that surround the Skia canvas.
   const glowIntensity = useSharedValue(0);
   const ringRotation = useSharedValue(0);
   const particleOffset = useSharedValue(0);
@@ -74,25 +74,14 @@ export default function BreathingExercise({
       true
     );
 
+    // Drive only the ambient glow with the breath phase; the Skia orb has
+    // its own internal phase progress so it stays in sync without us
+    // re-piping any of the orb-shape values.
     switch (animation) {
       case 'breathe-in':
-        // Expand with glow
-        scale.value = withTiming(1.35, { duration, easing: Easing.inOut(Easing.ease) });
-        innerScale.value = withTiming(0.95, { duration, easing: Easing.inOut(Easing.ease) });
-        opacity.value = withTiming(0.9, { duration, easing: Easing.inOut(Easing.ease) });
         glowIntensity.value = withTiming(1, { duration, easing: Easing.inOut(Easing.ease) });
         break;
-
       case 'breathe-hold':
-        // Subtle pulse while holding
-        scale.value = withRepeat(
-          withSequence(
-            withTiming(1.38, { duration: 600, easing: Easing.inOut(Easing.ease) }),
-            withTiming(1.32, { duration: 600, easing: Easing.inOut(Easing.ease) })
-          ),
-          -1,
-          true
-        );
         glowIntensity.value = withRepeat(
           withSequence(
             withTiming(1.1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
@@ -102,25 +91,10 @@ export default function BreathingExercise({
           true
         );
         break;
-
       case 'breathe-out':
-        // Contract
-        scale.value = withTiming(1, { duration, easing: Easing.inOut(Easing.ease) });
-        innerScale.value = withTiming(0.5, { duration, easing: Easing.inOut(Easing.ease) });
-        opacity.value = withTiming(0.4, { duration, easing: Easing.inOut(Easing.ease) });
         glowIntensity.value = withTiming(0.2, { duration, easing: Easing.inOut(Easing.ease) });
         break;
-
       default:
-        // Gentle idle animation
-        scale.value = withRepeat(
-          withSequence(
-            withTiming(1.08, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
-            withTiming(1, { duration: 2500, easing: Easing.inOut(Easing.ease) })
-          ),
-          -1,
-          true
-        );
         glowIntensity.value = withRepeat(
           withSequence(
             withTiming(0.5, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
@@ -141,16 +115,7 @@ export default function BreathingExercise({
             : 'breathe-hold');
       }
     };
-  }, [animation, breathingPulse, cancelHaptics, glowIntensity, innerScale, opacity, particleOffset, ringRotation, scale]);
-
-  const outerCircleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  const innerCircleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: innerScale.value }],
-  }));
+  }, [animation, breathingPulse, cancelHaptics, glowIntensity, particleOffset, ringRotation]);
 
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(glowIntensity.value, [0, 1], [0.1, 0.4]),
@@ -203,34 +168,23 @@ export default function BreathingExercise({
       {/* Outer rotating ring */}
       <Animated.View style={[styles.rotatingRing, { borderColor: color }, ringStyle]} />
 
-      {/* Outer glow ring */}
-      <Animated.View style={[styles.outerCircle, outerCircleStyle]}>
-        <LinearGradient
-          colors={[`${color}60`, `${color}20`, 'transparent']}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-        />
-      </Animated.View>
+      {/* Skia-rendered breathing orb — replaces the prior layered Linear
+          gradient stack. Owns its own phase-progress animation. */}
+      <View style={styles.skiaWrapper} pointerEvents="none">
+        <SkiaBreathingCircle animation={animation} color={color} size={280} />
+      </View>
 
-      {/* Main circle */}
-      <Animated.View style={[styles.mainCircle, { borderColor: color, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.8)' }]}>
-        <LinearGradient
-          colors={[`${color}30`, `${color}08`]}
-          style={StyleSheet.absoluteFill}
-        />
-
-        {/* Inner pulsing circle */}
-        <Animated.View
-          style={[styles.innerCircle, { backgroundColor: `${color}40` }, innerCircleStyle]}
-        />
-
-        {/* Center dot */}
-        <View style={[styles.centerDot, { backgroundColor: color }]} />
-
-        {/* Phase text */}
+      {/* Phase text — same position the previous mainCircle text held,
+          rendered above the canvas so the user reads the cue clearly. */}
+      <View
+        style={styles.phaseTextWrapper}
+        pointerEvents="none"
+        accessible
+        accessibilityRole="text"
+        accessibilityLabel={getPhaseText()}
+      >
         <Text style={[styles.phaseText, { color }]}>{getPhaseText()}</Text>
-      </Animated.View>
+      </View>
 
       {/* Instruction */}
       <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
@@ -275,40 +229,24 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     opacity: 0.3,
   },
-  outerCircle: {
-    position: 'absolute',
+  skiaWrapper: {
     width: 280,
     height: 280,
-    borderRadius: 140,
-  },
-  mainCircle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
-  innerCircle: {
+  phaseTextWrapper: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  centerDot: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    opacity: 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   phaseText: {
     fontSize: 18,
     fontWeight: '600',
     letterSpacing: 1,
-    zIndex: 1,
-    marginTop: 50,
+    textShadowColor: 'rgba(0, 0, 0, 0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   instruction: {
     marginTop: 48,
