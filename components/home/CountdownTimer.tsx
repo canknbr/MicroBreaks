@@ -134,18 +134,30 @@ function CountdownTimer({
       )}
 
       {/* Content */}
-      <View style={styles.content}>
+      <View
+        style={styles.content}
+        accessible
+        accessibilityRole="timer"
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={`Next break in ${Math.floor(timeLeft / 60)} minutes ${timeLeft % 60} seconds${isUrgent ? ', less than a minute remaining' : ''}`}
+      >
         <View style={styles.header}>
-          <Text style={styles.icon}>{isUrgent ? '⚡' : '⏱️'}</Text>
+          <Text style={styles.icon} accessibilityElementsHidden importantForAccessibility="no">
+            {isUrgent ? '⚡' : '⏱️'}
+          </Text>
           <Text style={[styles.label, { color: theme.text.secondary }]}>Next break in</Text>
         </View>
 
-        <Text style={[styles.time, { color: theme.text.primary }, isUrgent && { color: theme.accent.warning }]}>
+        <Text
+          style={[styles.time, { color: theme.text.primary }, isUrgent && { color: theme.accent.warning }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        >
           {formatTime(timeLeft)}
         </Text>
 
         {/* Progress bar */}
-        <View style={styles.progressContainer}>
+        <View style={styles.progressContainer} importantForAccessibility="no">
           <View style={[styles.progressTrack, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium }]}>
             <LinearGradient
               colors={isUrgent ? ['#FFD166', '#FF9F1C'] : [theme.accent.primary, theme.accent.secondary]}

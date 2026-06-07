@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist } from 'zustand/middleware';
+import { createMmkvStorage } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import {
   DEFAULT_BILLING_PROVIDER,
   DEFAULT_SUBSCRIPTION_OFFERS,
@@ -557,13 +558,18 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const expiresAt = new Date(customer.expiresAt).getTime();
         const trialEndsAt = customer.trialEndsAt ? new Date(customer.trialEndsAt).getTime() : null;
 
+        // Trial → premium transition (C-BUG5).
+        // We compare with `>= now` so the boundary case where trialEndsAt
+        // and expiresAt are the same instant (a trial that converts to a
+        // paid subscription with no gap) still flips the status. The
+        // previous strict `>` left the user stuck on "Trial" forever.
         if (
           customer.status === 'trial' &&
           trialEndsAt != null &&
           !Number.isNaN(trialEndsAt) &&
           trialEndsAt <= now &&
           !Number.isNaN(expiresAt) &&
-          expiresAt > now
+          expiresAt >= now
         ) {
           set((state) => ({
             customer: {
@@ -602,8 +608,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         }),
     }),
     {
-      name: 'microbreaks-subscription',
-      storage: createJSONStorage(() => AsyncStorage),
+      name: ZUSTAND_PERSIST_KEYS.SUBSCRIPTION,
+      storage: createMmkvStorage(),
       version: 1,
       partialize: (state) => getPersistedSubscriptionSnapshot(state),
       merge: (persistedState, currentState) => {

@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '@/i18n/hooks';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -293,6 +294,14 @@ export default function ConfettiCelebration({
   autoHideDelay = 5000,
 }: ConfettiCelebrationProps) {
   const config = CELEBRATION_CONFIGS[type];
+  const { t } = useTranslation();
+  const localizedTitle = t(`home.celebrations.${type}.title`, { defaultValue: config.title });
+  const localizedSubtitle = t(`home.celebrations.${type}.subtitle`, {
+    defaultValue: config.subtitle,
+  });
+  const dismissHint = t('home.celebrations.dismissHint', {
+    defaultValue: 'Tap anywhere to continue',
+  });
 
   // Animation values
   const overlayOpacity = useSharedValue(0);
@@ -505,17 +514,17 @@ export default function ConfettiCelebration({
 
         {/* Text content */}
         <Animated.View style={textStyle}>
-          <Text style={styles.title}>{config.title}</Text>
+          <Text style={styles.title}>{localizedTitle}</Text>
           <Text style={styles.subtitle}>
             {type === 'streak_milestone' && value
-              ? `${value} ${config.subtitle}`
-              : config.subtitle}
+              ? `${value} ${localizedSubtitle}`
+              : localizedSubtitle}
           </Text>
         </Animated.View>
 
         {/* Dismiss hint */}
         <View style={styles.dismissHint}>
-          <Text style={styles.dismissText}>Tap anywhere to continue</Text>
+          <Text style={styles.dismissText}>{dismissHint}</Text>
         </View>
       </Animated.View>
     </Pressable>

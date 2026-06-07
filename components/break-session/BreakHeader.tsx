@@ -90,6 +90,7 @@ export default function BreakHeader({
         <Pressable
           style={styles.closeButton}
           onPress={handleClose}
+          accessibilityRole="button"
           accessibilityLabel="End session"
           accessibilityHint="Ends the current break session"
         >
@@ -97,13 +98,27 @@ export default function BreakHeader({
         </Pressable>
 
         {/* Title Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.icon}>{icon}</Text>
+        <View
+          style={styles.titleSection}
+          accessibilityRole="header"
+          accessibilityLabel={title}
+        >
+          <Text style={styles.icon} accessibilityElementsHidden importantForAccessibility="no">
+            {icon}
+          </Text>
           <Text style={styles.title}>{title}</Text>
         </View>
 
         {/* Timer */}
-        <Animated.View style={[styles.timerContainer, timerStyle]}>
+        <Animated.View
+          style={[styles.timerContainer, timerStyle]}
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={
+            isPaused
+              ? `Timer paused at ${formatTime(timeRemaining)}`
+              : `Time remaining ${Math.floor(timeRemaining / 60)} minutes ${timeRemaining % 60} seconds`
+          }
+        >
           <Text style={[styles.timer, { color }]}>{formatTime(timeRemaining)}</Text>
           {isPaused && (
             <View style={styles.pausedBadge}>
@@ -116,7 +131,9 @@ export default function BreakHeader({
         <Pressable
           style={[styles.voiceButton, !isVoiceEnabled && styles.voiceButtonDisabled]}
           onPress={handleToggleVoice}
+          accessibilityRole="button"
           accessibilityLabel={isVoiceEnabled ? 'Disable voice guidance' : 'Enable voice guidance'}
+          accessibilityState={{ selected: isVoiceEnabled }}
         >
           <Ionicons
             name={isVoiceEnabled ? 'volume-high' : 'volume-mute'}

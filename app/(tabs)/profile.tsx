@@ -703,26 +703,6 @@ export default function ProfileScreen() {
                 index={1}
                 theme={theme}
               />
-              <SettingItem
-                icon="volume-high"
-                label="Timer Sound"
-                type="toggle"
-                isEnabled={timerPreferences.soundEnabled}
-                onToggle={() => timerAct.toggleTimerSound()}
-                delay={400}
-                index={2}
-                theme={theme}
-              />
-              <SettingItem
-                icon="phone-portrait"
-                label="Timer Vibration"
-                type="toggle"
-                isEnabled={timerPreferences.vibrationEnabled}
-                onToggle={() => timerAct.toggleTimerVibration()}
-                delay={400}
-                index={3}
-                theme={theme}
-              />
             </View>
           </View>
 
@@ -760,6 +740,20 @@ export default function ProfileScreen() {
                 index={0}
                 theme={theme}
               />
+              {notificationsDisabled && (
+                <View style={{ paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm }}>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: theme.text.muted,
+                      fontStyle: 'italic',
+                    }}
+                    accessibilityRole="text"
+                  >
+                    Turn on Push Notifications to manage the options below.
+                  </Text>
+                </View>
+              )}
               <SettingItem
                 icon="alarm"
                 label="Break Reminders"
@@ -1023,23 +1017,51 @@ export default function ProfileScreen() {
                 label="Delete Account"
                 type="arrow"
                 onPress={() => {
+                  // Two-step confirmation (B-UX11): a single Alert tap is too
+                  // easy to fire accidentally. The first dialog explains the
+                  // consequences in plain language; only after the user
+                  // acknowledges those does the second dialog ask for an
+                  // explicit destructive confirmation.
                   Alert.alert(
-                    'Delete Account',
-                    'This will permanently delete all your data and cannot be undone. Are you sure?',
+                    'Delete Account?',
+                    'This permanently removes:\n\n' +
+                      '• Your profile, streaks, achievements\n' +
+                      '• Every break in your history\n' +
+                      '• Your subscription state on this device\n\n' +
+                      'You cannot recover any of this. Continue?',
                     [
-                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Keep my account', style: 'cancel' },
                       {
-                        text: 'Delete',
+                        text: 'Continue',
                         style: 'destructive',
-                        onPress: async () => {
-                          try {
-                            await replaceWithFreshAnonymousSession({
-                              deleteRemoteUserData: true,
-                            });
-                            router.replace('/');
-                          } catch (_error) {
-                            Alert.alert('Error', 'Could not delete account. Please try again.');
-                          }
+                        onPress: () => {
+                          Alert.alert(
+                            'Final confirmation',
+                            'Tap "Delete forever" to permanently erase your account. There is no undo.',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              {
+                                text: 'Delete forever',
+                                style: 'destructive',
+                                onPress: async () => {
+                                  Haptics.notificationAsync(
+                                    Haptics.NotificationFeedbackType.Warning
+                                  );
+                                  try {
+                                    await replaceWithFreshAnonymousSession({
+                                      deleteRemoteUserData: true,
+                                    });
+                                    router.replace('/');
+                                  } catch (_error) {
+                                    Alert.alert(
+                                      'Error',
+                                      'Could not delete account. Please try again.'
+                                    );
+                                  }
+                                },
+                              },
+                            ]
+                          );
                         },
                       },
                     ]

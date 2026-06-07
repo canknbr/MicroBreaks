@@ -1,0 +1,18 @@
+# Notification cold-start — exercises B2 (hooks/useNotificationDeepLinks)
+# by simulating a tap on a break_reminder push while the app is not running.
+# source: hooks/useNotificationDeepLinks.ts
+
+appId: com.cankanbur.MicroBreaks
+---
+- stopApp
+- launchApp:
+    arguments:
+      # Push notification simulation — these arguments mirror the data
+      # payload the production scheduler sends in services/notifications.ts
+      # scheduleBreakReminder.
+      type: "break_reminder"
+
+# We expect the app to deep-link straight into the Breaks tab on cold start
+# rather than the default Home tab.
+- assertVisible: "Browse Breaks"
+    timeout: 8000

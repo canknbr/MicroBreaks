@@ -403,6 +403,52 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+// MMKV — provide an in-memory implementation that matches the subset of the
+// API used by Zustand's persist adapter (getString / set / delete). The
+// native module is not loadable in Jest's jsdom environment.
+jest.mock('react-native-mmkv', () => {
+  const buckets = new Map();
+  const getBucket = (id) => {
+    if (!buckets.has(id)) buckets.set(id, new Map());
+    return buckets.get(id);
+  };
+  const createInstance = (id) => {
+    const store = getBucket(id);
+    return {
+      id,
+      get size() {
+        return store.size;
+      },
+      isReadOnly: false,
+      getString(key) {
+        return store.has(key) ? store.get(key) : undefined;
+      },
+      set(key, value) {
+        store.set(key, String(value));
+      },
+      remove(key) {
+        const existed = store.has(key);
+        store.delete(key);
+        return existed;
+      },
+      clearAll() {
+        store.clear();
+      },
+      getAllKeys() {
+        return Array.from(store.keys());
+      },
+      contains(key) {
+        return store.has(key);
+      },
+    };
+  };
+  return {
+    createMMKV: jest.fn((config = {}) => createInstance(config.id ?? 'mmkv.default')),
+    existsMMKV: jest.fn(() => false),
+    deleteMMKV: jest.fn(),
+  };
+});
+
 // Lottie
 jest.mock('lottie-react-native', () => 'LottieView');
 

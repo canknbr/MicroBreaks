@@ -8,6 +8,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from './storage';
 import { getTodayBreaks, getStreakData, getUserStats } from './breakHistory';
+import { addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
 import { useSettingsStore } from '@/store/settingsStore';
 import { ONBOARDING_STORE_PERSIST_KEY } from '@/store/onboardingStore';
 import {
@@ -71,6 +72,7 @@ interface PersistedOnboardingSnapshot {
   state?: {
     data?: {
       workPattern?: string | null;
+      painAreas?: string[];
     };
   };
 }
@@ -106,40 +108,78 @@ function mapNotificationSettingsToAppSettings(
   };
 }
 
-async function getPersistedWorkPattern(): Promise<string | null> {
-  const onboardingSnapshot = await getItem<PersistedOnboardingSnapshot>(
-    ONBOARDING_STORE_PERSIST_KEY
-  );
-  return onboardingSnapshot?.state?.data?.workPattern ?? null;
+// Break reminder messages. Each message is tagged with the body area it
+// addresses so we can prefer messages relevant to the user's onboarding
+// painAreas. `tags: []` means a generic message that fits any user.
+type PainTag = 'eyes' | 'neck' | 'shoulders' | 'upper_back' | 'lower_back' | 'wrists';
+
+interface BreakReminderMessage {
+  title: string;
+  body: string;
+  tags: PainTag[];
 }
 
-// Break reminder messages (rotated)
-const BREAK_REMINDER_MESSAGES = [
-  {
-    title: 'Time for a break! 🧘',
-    body: "You've been working hard. Give your body a quick stretch.",
-  },
-  {
-    title: 'Break time! 👁️',
-    body: 'Your eyes need rest. Try the 20-20-20 rule.',
-  },
-  {
-    title: 'Stand up and move! 🚶',
-    body: 'A short walk can boost your energy and focus.',
-  },
-  {
-    title: 'Breathe deeply 🌬️',
-    body: 'Take a moment for some calming breaths.',
-  },
-  {
-    title: 'Stretch break! 💪',
-    body: 'Your muscles are waiting for some movement.',
-  },
-  {
-    title: 'Quick break time! ⏰',
-    body: 'Even 1 minute can make a difference.',
-  },
+const BREAK_REMINDER_MESSAGES: BreakReminderMessage[] = [
+  // Generic — always candidates
+  { title: 'Time for a reset 🧘', body: "You've been at it a while. Give your body a quick stretch.", tags: [] },
+  { title: 'Quick break time ⏰', body: 'Even 60 seconds resets your focus.', tags: [] },
+  { title: 'Breathe deeply 🌬️', body: 'Three slow breaths — that is all you need right now.', tags: [] },
+  { title: 'Step away for a moment 🌿', body: 'A short pause now keeps you sharp later.', tags: [] },
+  { title: 'Pause and notice 🪷', body: 'Drop your shoulders. Unclench your jaw. Breathe.', tags: [] },
+  { title: 'Hydrate + reset 💧', body: 'Grab some water and stretch your arms overhead.', tags: [] },
+
+  // Eye strain
+  { title: '20-20-20 time 👁️', body: 'Look at something 20 feet away for 20 seconds.', tags: ['eyes'] },
+  { title: 'Eye reset 👀', body: 'Soften your gaze and blink fully a few times.', tags: ['eyes'] },
+  { title: 'Screen break 📵', body: 'Close your eyes and rest your palms over them for 30 seconds.', tags: ['eyes'] },
+
+  // Neck and shoulders
+  { title: 'Roll your shoulders 🤸', body: 'Roll back 5 times, then forward 5 — release that tension.', tags: ['neck', 'shoulders'] },
+  { title: 'Neck reset 🧘', body: 'Slow chin tucks for 30 seconds — your neck will thank you.', tags: ['neck'] },
+  { title: 'Stand tall 💪', body: 'Pull your shoulders back, open your chest, breathe.', tags: ['shoulders', 'upper_back'] },
+
+  // Back
+  { title: 'Posture check 🪑', body: 'Sit up tall — crown of your head reaching for the ceiling.', tags: ['upper_back', 'lower_back'] },
+  { title: 'Cat-cow at your chair 🐈', body: 'Arch and round your spine 5 times — instant relief.', tags: ['upper_back', 'lower_back'] },
+
+  // Wrists
+  { title: 'Wrist circles 🤲', body: 'Roll your wrists 10 times each direction — easy reset.', tags: ['wrists'] },
 ];
+
+/**
+ * Pick a break reminder message with a soft bias toward the user's pain
+ * areas. Each matching tag gives the message a weight of 2; untagged
+ * generic messages always count as weight 1. This keeps the rotation
+ * fresh (no infinite repetition of one message) while making it feel
+ * personally relevant.
+ */
+function pickBreakReminderMessage(painAreas: string[]): BreakReminderMessage {
+  const knownAreas: PainTag[] = (painAreas as PainTag[]).filter((area) =>
+    ['eyes', 'neck', 'shoulders', 'upper_back', 'lower_back', 'wrists'].includes(area)
+  );
+
+  const weighted = BREAK_REMINDER_MESSAGES.map((message) => {
+    if (message.tags.length === 0) {
+      return { message, weight: 1 };
+    }
+    const matches = message.tags.filter((tag) => knownAreas.includes(tag)).length;
+    return { message, weight: matches > 0 ? 2 + matches : 0.5 };
+  });
+
+  const total = weighted.reduce((sum, item) => sum + item.weight, 0);
+  if (total <= 0) {
+    return BREAK_REMINDER_MESSAGES[0];
+  }
+
+  let roll = Math.random() * total;
+  for (const item of weighted) {
+    roll -= item.weight;
+    if (roll <= 0) {
+      return item.message;
+    }
+  }
+  return weighted[weighted.length - 1].message;
+}
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -341,6 +381,15 @@ function isWithinQuietHoursForDate(date: Date, settings: NotificationSettings): 
   return currentHour >= settings.quietHoursStart && currentHour < settings.quietHoursEnd;
 }
 
+/**
+ * Test-only export so suites can exercise the cross-midnight branches of
+ * the quiet-hours check without going through the full scheduler stack
+ * (audit task C-TEST5).
+ */
+export const __notificationsTestUtils = {
+  isWithinQuietHoursForDate,
+};
+
 function moveToQuietHoursEnd(date: Date, settings: NotificationSettings): Date {
   const quietEnd = new Date(date);
   quietEnd.setHours(settings.quietHoursEnd, 0, 0, 0);
@@ -363,6 +412,7 @@ function isSameLocalDay(left: Date, right: Date): boolean {
 interface ScheduledHourOptions {
   allowNextDayIfPast: boolean;
   allowCrossDayQuietHoursShift: boolean;
+  scheduleLabel?: string;
 }
 
 function getNextScheduledTimeForHour(
@@ -425,6 +475,21 @@ function getNextScheduledTimeForHour(
     return candidate;
   }
 
+  // C-BUG6: 14 sliding-day attempts exhausted without finding a slot —
+  // typically because of a quiet-hours config that swallows the entire
+  // working day. Surface this to Crashlytics so we notice when users get
+  // silently dropped, and bubble up null to the caller (which already
+  // handles "no scheduled reminder").
+  addBreadcrumb(
+    `Quiet hours exhausted scheduling attempts for ${options.scheduleLabel ?? 'reminder'}`,
+    'notifications',
+    'warning',
+    {
+      quietHoursStart: settings.quietHoursStart,
+      quietHoursEnd: settings.quietHoursEnd,
+      workDaysOnly: settings.workDaysOnly,
+    }
+  );
   return null;
 }
 
@@ -447,6 +512,18 @@ function getNextNotificationTime(settings: NotificationSettings): Date {
     return nextTime;
   }
 
+  addBreadcrumb(
+    'Quiet hours exhausted scheduling attempts for break reminder',
+    'notifications',
+    'warning',
+    {
+      quietHoursStart: settings.quietHoursStart,
+      quietHoursEnd: settings.quietHoursEnd,
+      workDaysOnly: settings.workDaysOnly,
+      reminderIntervalMinutes: settings.reminderIntervalMinutes,
+    }
+  );
+
   return nextTime;
 }
 
@@ -462,7 +539,10 @@ export async function scheduleBreakReminder(): Promise<string | null> {
     return null;
   }
 
-  const workPattern = await getPersistedWorkPattern();
+  const onboarding = await getItem<PersistedOnboardingSnapshot>(ONBOARDING_STORE_PERSIST_KEY);
+  const workPattern = onboarding?.state?.data?.workPattern ?? null;
+  const painAreas = onboarding?.state?.data?.painAreas ?? [];
+
   const nextTime = getNextNotificationTime({
     ...settings,
     reminderIntervalMinutes: getEffectiveReminderInterval(
@@ -470,7 +550,7 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       workPattern
     ),
   });
-  const message = BREAK_REMINDER_MESSAGES[Math.floor(Math.random() * BREAK_REMINDER_MESSAGES.length)];
+  const message = pickBreakReminderMessage(painAreas);
 
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {

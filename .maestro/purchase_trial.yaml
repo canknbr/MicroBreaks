@@ -1,0 +1,44 @@
+# Sandbox purchase — exercises components/subscription/PaywallContent.tsx
+# end-to-end. Requires StoreKit / Play Billing test environment to be
+# configured on the device.
+# source: components/subscription/PaywallContent.tsx, services/billing/*.
+
+appId: com.cankanbur.MicroBreaks
+---
+- launchApp
+- tapOn: "Profile"
+- assertVisible:
+    text: "Premium"
+    contains: true
+    timeout: 6000
+- tapOn:
+    text: "Premium"
+    contains: true
+
+# Paywall
+- assertVisible:
+    text: "Annual"
+    contains: true
+- tapOn:
+    text: "Annual"
+    contains: true
+- tapOn:
+    text: "Start"
+    contains: true
+
+# Sandbox confirmation
+- runFlow:
+    when:
+      visible:
+        text: "Confirm"
+        contains: true
+    commands:
+      - tapOn:
+          text: "Confirm"
+          contains: true
+
+# After purchase succeeds, the paywall closes and the Pro badge should appear.
+- assertVisible:
+    text: "Pro"
+    contains: true
+    timeout: 10000

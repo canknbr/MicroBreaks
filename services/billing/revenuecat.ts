@@ -146,6 +146,18 @@ async function getPurchasesModule() {
   return module.default ?? module;
 }
 
+/**
+ * Internal helpers exposed for tests. Production code must not use this
+ * namespace — call the named exports below instead.
+ */
+export const __internals = {
+  mapPackageToOffer,
+  mapRevenueCatCustomerInfo,
+  mapRevenueCatOfferingToOffers,
+  getTrialDays,
+  mapPackageToBillingPeriod,
+};
+
 export async function ensureRevenueCatConfigured(appUserId: string): Promise<void> {
   if (!IS_REVENUECAT_CONFIGURED || !REVENUECAT_API_KEY) {
     throw new Error('RevenueCat API key is missing for this platform.');

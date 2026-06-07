@@ -4,9 +4,10 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createMmkvStorage } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import { syncService } from '@/services/sync';
 
 export interface AppSettings {
@@ -368,8 +369,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: 'microbreaks-settings',
-      storage: createJSONStorage(() => AsyncStorage),
+      name: ZUSTAND_PERSIST_KEYS.SETTINGS,
+      storage: createMmkvStorage(),
       version: 1,
       migrate: (persistedState) => sanitizePersistedSettingsState(persistedState),
     }

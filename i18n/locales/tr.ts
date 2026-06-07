@@ -93,6 +93,43 @@ export default {
       subtitle: 'Saglik yolculugunuza ilk molanizla baslayin',
       action: 'Ilk Molami Al',
     },
+    motivationalQuotes: [
+      { text: 'Kucuk molalar, buyuk farklar yaratir.', author: 'Sagligin Sirri' },
+      { text: 'Bedenin her seyi hatirlar. Onu dinle.', author: 'Hareketin Onemi' },
+      { text: 'Dinlenmek tembellik degil, sarj olmaktir.', author: 'Bilincli Yasam' },
+      { text: 'Her germe daha saglikli bir adimdir.', author: 'Beden Dengesi' },
+      { text: 'Dur. Nefes al. Daha guclu devam et.', author: 'Odak Akisi' },
+      { text: 'Mola icin en iyi zaman 5 dakika onceydi. Ikincisi simdi.', author: 'Daha Iyi Molalar' },
+      { text: 'Gelecekteki sen bu mola icin tesekkur edecek.', author: 'Oz Bakim' },
+      { text: 'Hareket, zihnin ilacidir.', author: 'Aktif Zihin' },
+    ],
+    celebrations: {
+      dismissHint: 'Devam etmek icin dokun',
+      goal_complete: {
+        title: 'Hedef Tamamlandi!',
+        subtitle: 'Gunluk hedefini ucurdun',
+      },
+      new_level: {
+        title: 'Seviye Atladin!',
+        subtitle: 'Yeni bir seviyeye ulastin',
+      },
+      streak_milestone: {
+        title: 'Seri Donum Noktasi!',
+        subtitle: 'gun ust uste - inanilmaz!',
+      },
+      first_break: {
+        title: 'Ilk Mola!',
+        subtitle: 'Saglik yolculugun basliyor',
+      },
+      achievement: {
+        title: 'Basari Kazandin!',
+        subtitle: 'Yeni bir rozet kazandin',
+      },
+      perfect_week: {
+        title: 'Mukemmel Hafta!',
+        subtitle: 'Tum gunluk hedefleri tamamladin',
+      },
+    },
   },
 
   // ============================================
@@ -167,12 +204,25 @@ export default {
       title: 'Bu mola nasild?',
       subtitle: 'Geri bildiriminiz gelistirmemize yardimci olur',
       thankYou: 'Tesekkurler!',
+      heading: 'Nasil hissettin?',
+      reliefHeading: 'Simdi ne kadar iyi hissediyorsun?',
       ratings: {
         1: 'Kotu',
         2: 'Orta',
         3: 'Iyi',
         4: 'Cok Iyi',
         5: 'Mukemmel',
+      },
+      buttons: {
+        good: 'Faydali',
+        neutral: 'Idare eder',
+        bad: 'Faydasiz',
+      },
+      relief: {
+        worse: 'Daha kotu',
+        same: 'Ayni',
+        better: 'Daha iyi',
+        muchBetter: 'Cok daha iyi',
       },
     },
     confirmEnd: {
@@ -629,6 +679,12 @@ export default {
     presetPicker: {
       title: 'Odak On Ayari',
       subtitle: 'Calisma ritminizi secin',
+    },
+    pushNotifications: {
+      workCompleteTitle: 'Odak seansi tamamlandi!',
+      workCompleteBody: 'Mola zamani!',
+      breakCompleteTitle: 'Mola bitti!',
+      breakCompleteBody: 'Odaklanmaya hazir misin?',
     },
   },
 

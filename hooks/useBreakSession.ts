@@ -202,24 +202,41 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
   const moveToNextPhaseRef = useRef(moveToNextPhase);
   moveToNextPhaseRef.current = moveToNextPhase;
 
-  // Timer effect
+  // Timer effect — gated by a per-interval cancellation flag so we cannot
+  // double-count seconds when the user fires `skipStep` mid-tick or when
+  // the natural phase transition fires from inside the setState callback
+  // (C-BUG9).
   useEffect(() => {
     if (isPaused || phase === 'loading' || phase === 'completion' || phase === 'feedback') {
       return;
     }
 
+    let cancelled = false;
+
     timerRef.current = setInterval(() => {
+      if (cancelled) return;
+      let advancedPhase = false;
       setTimeRemaining((prev) => {
         if (prev <= 1) {
+          advancedPhase = true;
+          cancelled = true;
           moveToNextPhaseRef.current();
           return 0;
         }
         return prev - 1;
       });
-      setTotalTimeElapsed((prev) => prev + 1);
+      // Only credit a second of elapsed time if we did not just transition
+      // to a new phase — otherwise the next phase's interval will start
+      // accruing time on its own, and double-counting can drift the stats.
+      if (!advancedPhase) {
+        setTotalTimeElapsed((prev) => prev + 1);
+      }
     }, 1000);
 
-    return () => clearTimer();
+    return () => {
+      cancelled = true;
+      clearTimer();
+    };
   }, [phase, isPaused, clearTimer]);
 
   // Initialize session when exercise loads

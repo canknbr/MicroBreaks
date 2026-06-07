@@ -1,0 +1,31 @@
+# Account delete — exercises services/account/sessionReset.ts
+# replaceWithFreshAnonymousSession({ deleteRemoteUserData: true }) plus the
+# Cloud Function fallback in functions/src/index.ts.
+# source: app/(tabs)/profile.tsx
+
+appId: com.cankanbur.MicroBreaks
+---
+- launchApp
+- tapOn: "Profile"
+- scrollUntilVisible:
+    element:
+      text: "Delete Account"
+      contains: true
+    direction: DOWN
+- tapOn:
+    text: "Delete Account"
+    contains: true
+
+# Confirmation modal — B-UX11 will tighten this further to require typing
+# DELETE; today the flow uses a plain alert confirm.
+- assertVisible:
+    text: "Delete"
+    contains: true
+- tapOn:
+    text: "Delete"
+    contains: true
+
+# We should be put back into a fresh anonymous session — the onboarding
+# welcome screen reappears.
+- assertVisible: "Welcome to MicroBreaks"
+    timeout: 10000

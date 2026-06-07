@@ -33,6 +33,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import i18n from 'i18next';
 import { Spacing } from '@/theme';
 import {
   useStatsData,
@@ -380,7 +381,9 @@ function RecentBreakItem({
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+    // D-I18N3: use the active i18n language for the formatted date so the
+    // stats screen and notification card agree across locales.
+    return date.toLocaleDateString(i18n.language || 'en');
   };
 
   return (

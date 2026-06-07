@@ -201,17 +201,17 @@ MicroBreaks/
 
 ## 🎨 Design System
 
-MicroBreaks features a modern, minimalist design system inspired by "How We Feel" - focusing on clarity, emotional connection, and accessibility.
+MicroBreaks is a **modern, vibrant productivity wellness app** — designed to energize the user with a saturated, expressive palette rather than fade into the background. We trade the "ambient/calm tech" aesthetic for clear, high-contrast moments that catch the eye when it's time to reset.
 
 ### Visual Style
 
-- **Pure Black Background**: `#000000` for the main interface, creating a modern, premium feel
+- **Pure Black Background**: `#000000` for the main interface, premium OLED-friendly feel
 - **Clean White Elements**: White text and buttons for maximum contrast and readability
-- **Vibrant Emotion Colors**: Bright, saturated colors for emotion-based features
-  - **Energized/Positive**: Yellows and oranges (`#FFD166`, `#FF9F1C`)
-  - **Calm/Peaceful**: Teals and greens (`#4ECDC4`, `#06FFA5`)
-  - **Stressed/Alert**: Reds and corals (`#EF476F`, `#E63946`)
-  - **Neutral/Low Energy**: Blues and purples (`#118AB2`, `#7B68EE`)
+- **Vibrant Accent Colors**: Bright, saturated tones that signal action and emotional state
+  - **Energized / Goal-positive**: Yellows and oranges (`#FFD166`, `#FF9F1C`)
+  - **Focus / Wellness**: Teals and greens (`#4ECDC4`, `#06FFA5`)
+  - **Alert / Streak-at-risk**: Reds and corals (`#EF476F`, `#E63946`)
+  - **Premium / Calm-down moments**: Blues and purples (`#118AB2`, `#7B68EE`)
 
 ### Typography
 
@@ -229,11 +229,11 @@ MicroBreaks features a modern, minimalist design system inspired by "How We Feel
 
 ### Design Principles
 
-1. **Calm Technology**: Non-intrusive, respectful of user attention
-2. **Emotional Connection**: Colors that reflect feelings and states
-3. **Accessibility First**: WCAG AA compliant, minimum contrast ratios met
-4. **Smooth Animations**: Subtle spring physics for natural feel
-5. **Consistent Design Language**: Unified experience across all touchpoints
+1. **Confident & Vibrant**: Saturated accents earn attention at the right moments — no apology for being expressive
+2. **Emotional Connection**: Colors that reflect feelings and progress states
+3. **Accessibility First**: WCAG AA contrast targets, Reduce Motion respected, screen-reader labels on every interactive element
+4. **Purposeful Motion**: Spring physics for moments that matter; no animation for animation's sake
+5. **Consistent Design Language**: One palette, one icon system, one motion language across every surface
 
 ---
 

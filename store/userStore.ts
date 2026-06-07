@@ -4,9 +4,10 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createMmkvStorage } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
 import { syncService } from '@/services/sync';
 import { syncStoredUserStatsFromProgress } from '@/services/storage';
@@ -105,32 +106,57 @@ export const initialUserAchievements: UserAchievements = {
   totalMinutes: 0,
 };
 
-let progressSideEffectsScheduled = false;
+// Pending side-effect promise. We coalesce repeated scheduling calls into a
+// single microtask, but expose the underlying promise so critical callers
+// (tests, the bootstrap unmount path, the account-delete flow) can wait for
+// the side effects to actually finish before continuing.
+let progressSideEffectsPromise: Promise<void> | null = null;
 
-function scheduleProgressSideEffects(): void {
-  if (progressSideEffectsScheduled) {
-    return;
+function scheduleProgressSideEffects(): Promise<void> {
+  if (progressSideEffectsPromise) {
+    return progressSideEffectsPromise;
   }
 
-  progressSideEffectsScheduled = true;
+  progressSideEffectsPromise = new Promise<void>((resolve) => {
+    const flush = async () => {
+      try {
+        const progress = useUserStore.getState().progress;
+        const tasks: Promise<unknown>[] = [
+          Promise.resolve(syncStoredUserStatsFromProgress(progress)).catch(() => undefined),
+        ];
 
-  const flush = () => {
-    progressSideEffectsScheduled = false;
-    const progress = useUserStore.getState().progress;
+        if (!syncService.isSyncPulling()) {
+          tasks.push(Promise.resolve(syncService.queueDataChange('progress')).catch(() => undefined));
+        }
 
-    void syncStoredUserStatsFromProgress(progress);
+        await Promise.all(tasks);
+      } finally {
+        progressSideEffectsPromise = null;
+        resolve();
+      }
+    };
 
-    if (!syncService.isSyncPulling()) {
-      void syncService.queueDataChange('progress');
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(() => {
+        void flush();
+      });
+    } else {
+      setTimeout(() => {
+        void flush();
+      }, 0);
     }
-  };
+  });
 
-  if (typeof queueMicrotask === 'function') {
-    queueMicrotask(flush);
-    return;
-  }
+  return progressSideEffectsPromise;
+}
 
-  setTimeout(flush, 0);
+/**
+ * Await any pending progress side effects (sync push, stats projection).
+ * Resolves immediately when nothing is queued. Use this from teardown paths
+ * (sign out, account delete) to avoid losing the last mutation on crash.
+ */
+export function flushProgressSideEffects(): Promise<void> {
+  return progressSideEffectsPromise ?? Promise.resolve();
 }
 
 function sanitizeProfile(value: unknown): UserProfile {
@@ -505,8 +531,8 @@ export const useUserStore = create<UserState>()(
       },
     }),
     {
-      name: 'microbreaks-user',
-      storage: createJSONStorage(() => AsyncStorage),
+      name: ZUSTAND_PERSIST_KEYS.USER,
+      storage: createMmkvStorage(),
       version: 1,
       migrate: (persistedState) => sanitizePersistedUserState(persistedState),
     }

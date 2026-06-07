@@ -118,6 +118,10 @@ describe('OnboardingStore', () => {
 
     it('should update painSeverity with a persisted severity map', () => {
       act(() => {
+        // painSeverity is only kept for currently-selected pain areas (see
+        // C-BUG8 sanitization in onboardingStore). Seed painAreas first so
+        // the assignment is not pruned.
+        useOnboardingStore.getState().updateData({ painAreas: ['neck', 'eyes'] });
         useOnboardingStore.getState().updateData({
           painSeverity: { neck: 'severe', eyes: 'moderate' },
         });
@@ -126,6 +130,21 @@ describe('OnboardingStore', () => {
       expect(useOnboardingStore.getState().data.painSeverity).toEqual({
         neck: 'severe',
         eyes: 'moderate',
+      });
+    });
+
+    it('prunes painSeverity entries when their pain area is dropped', () => {
+      act(() => {
+        useOnboardingStore.getState().updateData({
+          painAreas: ['neck', 'eyes'],
+          painSeverity: { neck: 'severe', eyes: 'moderate' },
+        });
+        // User drops 'eyes' — severity for it should be cleared.
+        useOnboardingStore.getState().updateData({ painAreas: ['neck'] });
+      });
+
+      expect(useOnboardingStore.getState().data.painSeverity).toEqual({
+        neck: 'severe',
       });
     });
 

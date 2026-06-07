@@ -94,6 +94,18 @@ for (const [index, soundPath] of (notificationsConfig.sounds ?? []).entries()) {
 const projectId = expoConfig.extra?.eas?.projectId;
 const updatesUrl = expoConfig.updates?.url;
 
+const rawProjectId = baseConfig.expo?.extra?.eas?.projectId;
+const rawUpdatesUrl = baseConfig.expo?.updates?.url;
+const rawHasPlaceholder =
+  (typeof rawProjectId === 'string' && rawProjectId.includes('your-project-id')) ||
+  (typeof rawUpdatesUrl === 'string' && rawUpdatesUrl.includes('your-project-id'));
+
+if (rawHasPlaceholder) {
+  warnings.push(
+    'app.json still contains the literal "your-project-id" placeholder. Run `npx eas-cli init` and commit the resolved projectId or rely on EAS_PROJECT_ID env var.'
+  );
+}
+
 if (profile !== 'development') {
   if (isPlaceholder(projectId)) {
     errors.push(

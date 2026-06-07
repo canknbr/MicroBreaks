@@ -26,6 +26,10 @@ type EmptyStateType = 'no_breaks_today' | 'no_streak' | 'new_user' | 'error';
 interface EmptyStateProps {
   type: EmptyStateType;
   onAction?: () => void;
+  /** Optional secondary action (B-UX12) — surfaces "Get help" alongside Retry on the error state. */
+  onSecondaryAction?: () => void;
+  /** Timestamp of the last successful load. Rendered on the error variant so the user knows how fresh the cached data is. */
+  lastUpdatedAt?: number | null;
 }
 
 const EMPTY_STATE_CONFIG: Record<EmptyStateType, {
@@ -65,9 +69,26 @@ const EMPTY_STATE_CONFIG: Record<EmptyStateType, {
   },
 };
 
-export default function EmptyState({ type, onAction }: EmptyStateProps) {
+function formatRelativeTime(timestamp: number): string {
+  const diffMs = Date.now() - timestamp;
+  if (diffMs < 60_000) return 'just now';
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+}
+
+export default function EmptyState({
+  type,
+  onAction,
+  onSecondaryAction,
+  lastUpdatedAt = null,
+}: EmptyStateProps) {
   const theme = useTheme();
   const config = EMPTY_STATE_CONFIG[type];
+  const isError = type === 'error';
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.9);
   const iconPulse = useSharedValue(1);
@@ -145,6 +166,15 @@ export default function EmptyState({ type, onAction }: EmptyStateProps) {
       <Text style={[styles.title, { color: theme.text.primary }]}>{config.title}</Text>
       <Text style={[styles.message, { color: theme.text.secondary }]}>{config.message}</Text>
 
+      {isError && lastUpdatedAt && (
+        <Text
+          style={[styles.lastUpdated, { color: theme.text.muted }]}
+          accessibilityLabel={`Last updated ${formatRelativeTime(lastUpdatedAt)}`}
+        >
+          Last updated {formatRelativeTime(lastUpdatedAt)}
+        </Text>
+      )}
+
       <Pressable
         style={({ pressed }) => [
           styles.actionButton,
@@ -163,6 +193,27 @@ export default function EmptyState({ type, onAction }: EmptyStateProps) {
         <Text style={styles.actionLabel}>{config.actionLabel}</Text>
         <Ionicons name="arrow-forward" size={18} color="#000" />
       </Pressable>
+
+      {isError && onSecondaryAction && (
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onSecondaryAction();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Get help"
+        >
+          <Ionicons
+            name="help-circle-outline"
+            size={16}
+            color={theme.text.secondary}
+          />
+          <Text style={[styles.secondaryLabel, { color: theme.text.secondary }]}>
+            Get help
+          </Text>
+        </Pressable>
+      )}
     </Animated.View>
   );
 }
@@ -221,5 +272,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
     marginRight: 8,
+  },
+  lastUpdated: {
+    fontSize: 12,
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  secondaryLabel: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

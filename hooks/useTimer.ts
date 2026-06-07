@@ -13,6 +13,7 @@ import {
   useTimerStats,
   useTimerPreferences,
 } from '@/store/timerStore';
+import { useHapticsEnabled } from '@/store/settingsStore';
 import { startTicking, stopTicking } from '@/services/timerService';
 import { PHASE_COLORS, PHASE_ICONS, TIMER_PRESETS } from '@/constants/timer';
 import type { TimerPhase } from '@/constants/timer';
@@ -23,6 +24,7 @@ export function useTimer() {
   const progress = useTimerProgress();
   const stats = useTimerStats();
   const preferences = useTimerPreferences();
+  const hapticsEnabled = useHapticsEnabled();
   const prevPhaseRef = useRef<TimerPhase>(session.phase);
 
   // Manage tick interval based on session state
@@ -45,7 +47,7 @@ export function useTimer() {
       prevPhaseRef.current = session.phase;
 
       // Haptic feedback on phase change
-      if (preferences.vibrationEnabled) {
+      if (hapticsEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
@@ -54,7 +56,7 @@ export function useTimer() {
         // Break started — could navigate to break-session
       }
     }
-  }, [session.phase, preferences.vibrationEnabled]);
+  }, [session.phase, hapticsEnabled]);
 
   const start = useCallback(() => {
     actions.startWorkSession();
@@ -124,7 +126,5 @@ export function useTimer() {
     setCustomDurations: actions.setCustomDurations,
     toggleAutoStartBreak: actions.toggleAutoStartBreak,
     toggleAutoStartWork: actions.toggleAutoStartWork,
-    toggleTimerSound: actions.toggleTimerSound,
-    toggleTimerVibration: actions.toggleTimerVibration,
   };
 }

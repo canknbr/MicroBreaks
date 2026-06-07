@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -111,6 +112,7 @@ export function SplashScreen({
   onAnimationComplete,
   minimumDuration = 3000,
 }: SplashScreenProps) {
+  const reduceMotion = useReduceMotion();
   // Animation Values
   const containerOpacity = useSharedValue(1);
   const containerScale = useSharedValue(1);
@@ -155,6 +157,31 @@ export function SplashScreen({
   }, [onAnimationComplete]);
 
   useEffect(() => {
+    if (reduceMotion) {
+      // Snap to the final composed state and skip the multi-phase
+      // entrance choreography. The minimum-duration timer below still
+      // gives bootstrap work the same window to complete.
+      logoOpacity.value = 1;
+      logoScale.value = 1;
+      ring1Progress.value = 1;
+      ring2Progress.value = 1;
+      ring3Progress.value = 1;
+      centerDotScale.value = 1;
+      pulseScale.value = 1;
+      letterAnimations.forEach((anim) => {
+        anim.value = 1;
+      });
+      taglineOpacity.value = 1;
+      progressWidth.value = 1;
+
+      const exitTimer = setTimeout(() => {
+        containerOpacity.value = 0;
+        runOnJS(handleComplete)();
+      }, minimumDuration);
+
+      return () => clearTimeout(exitTimer);
+    }
+
     // Glow pulse animation
     RNAnimated.loop(
       RNAnimated.sequence([
@@ -226,6 +253,7 @@ export function SplashScreen({
     minimumDuration,
     progressWidth,
     pulseScale,
+    reduceMotion,
     ring1Progress,
     ring2Progress,
     ring3Progress,

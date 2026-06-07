@@ -15,6 +15,7 @@ module.exports = defineConfig([
       '__tests__/**/*',
       'jest.setup.js',
       'landing-page/**/*.js',
+      'functions/**/*',
     ],
   },
   {

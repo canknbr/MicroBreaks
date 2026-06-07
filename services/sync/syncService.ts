@@ -8,6 +8,7 @@ import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { generateId } from '@/utils/generateId';
 import { getItem, setItem } from '@/services/storage';
 import { getUserDoc } from '@/services/firebase/firestore';
+import { addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
 import { pushUserProfile, pullUserProfile } from './userSync';
 import { pushBreakHistory, pullBreakHistory, pushSingleBreak } from './breakSync';
 import { pushSettings, pullSettings } from './settingsSync';
@@ -25,6 +26,7 @@ const MAX_SYNCS_PER_MINUTE = 10;
 const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_BACKOFF_MS = 30000;
 const INITIAL_BACKOFF_MS = 1000;
+const MAX_PENDING_QUEUE_SIZE = 100;
 
 type UserDocSyncType = 'profile' | 'progress' | 'preferences' | 'achievements';
 
@@ -137,7 +139,7 @@ class SyncService {
     const netState = await NetInfo.fetch();
 
     if (!netState.isConnected) {
-      this.pendingQueue.push({ type: 'profile' });
+      this.enqueuePending({ type: 'profile' });
       await this.savePendingQueue();
       return;
     }
@@ -145,7 +147,7 @@ class SyncService {
     try {
       await this.pushChange('profile');
     } catch (error) {
-      this.pendingQueue.push({ type: 'profile' });
+      this.enqueuePending({ type: 'profile' });
       await this.savePendingQueue();
       if (__DEV__) {
         console.warn('[SyncService] User doc push failed, queued for retry');
@@ -338,7 +340,7 @@ class SyncService {
     const netState = await NetInfo.fetch();
 
     if (!netState.isConnected) {
-      this.pendingQueue.push({ type: dataType, data });
+      this.enqueuePending({ type: dataType, data });
       await this.savePendingQueue();
       return;
     }
@@ -347,11 +349,30 @@ class SyncService {
       await this.pushChange(dataType, data);
     } catch (error) {
       // Failed to push - queue for retry
-      this.pendingQueue.push({ type: dataType, data });
+      this.enqueuePending({ type: dataType, data });
       await this.savePendingQueue();
       if (__DEV__) {
         console.warn('[SyncService] Push failed, queued for retry:', dataType);
       }
+    }
+  }
+
+  /**
+   * Enqueue with a hard cap. Once the cap is exceeded we drop the oldest
+   * pending entry instead of letting the queue grow unbounded — both for
+   * memory safety on long offline streaks and to keep Firestore write
+   * bursts predictable when we come back online (D-PERF6).
+   */
+  private enqueuePending(entry: { type: SyncDataType; data?: unknown }): void {
+    this.pendingQueue.push(entry);
+    if (this.pendingQueue.length > MAX_PENDING_QUEUE_SIZE) {
+      const dropped = this.pendingQueue.shift();
+      addBreadcrumb(
+        `Sync pending queue capped at ${MAX_PENDING_QUEUE_SIZE}; dropped oldest`,
+        'sync',
+        'warning',
+        { droppedType: dropped?.type ?? 'unknown', queueSize: this.pendingQueue.length }
+      );
     }
   }
 
@@ -441,7 +462,7 @@ class SyncService {
         await this.pushChange(item.type, item.data);
       } catch (error) {
         // Re-queue if still failing
-        this.pendingQueue.push(item);
+        this.enqueuePending(item);
       }
     }
 
@@ -466,6 +487,15 @@ class SyncService {
   private handleAppStateChange = (state: AppStateStatus): void => {
     if (state === 'active' && this.userId && !this.isSyncing) {
       this.performIncrementalSync();
+      return;
+    }
+
+    if (state === 'background' || state === 'inactive') {
+      // Force-flush any debounced writes before the OS suspends the JS
+      // runtime. Without this, a fast home-button press immediately after
+      // changing a setting drops the change on the floor (C-BUG7).
+      void this.flushPendingSettingsChange().catch(() => {});
+      void this.flushPendingUserDocChange().catch(() => {});
     }
   };
 
@@ -512,7 +542,17 @@ class SyncService {
   }
 }
 
+export { SyncService };
 export const syncService = new SyncService();
+
+/**
+ * Reset the shared `syncService` instance so a test suite gets a clean
+ * slate. Production code MUST NOT call this — it tears down internal
+ * timers and listeners.
+ */
+export async function __resetSyncServiceForTests(): Promise<void> {
+  await syncService.shutdown();
+}
 export const syncStorageTestUtils = {
   getSyncMetadataKey,
   getPendingQueueKey,

@@ -4,9 +4,10 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createMmkvStorage } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import type { TimerPhase } from '@/constants/timer';
 import { TIMER_PRESETS, DEFAULT_PRESET_ID } from '@/constants/timer';
 
@@ -36,8 +37,6 @@ interface TimerPreferences {
   customSessionsUntilLongBreak: number;
   autoStartBreak: boolean;
   autoStartWork: boolean;
-  soundEnabled: boolean;
-  vibrationEnabled: boolean;
 }
 
 interface TimerState {
@@ -51,6 +50,7 @@ interface TimerState {
   resume: () => void;
   tick: () => void;
   completePhase: () => void;
+  skipPhase: () => void;
   skip: () => void;
   reset: () => void;
 
@@ -62,8 +62,6 @@ interface TimerState {
   setCustomDurations: (work: number, breakMins: number, longBreak: number, sessions: number) => void;
   toggleAutoStartBreak: () => void;
   toggleAutoStartWork: () => void;
-  toggleTimerSound: () => void;
-  toggleTimerVibration: () => void;
 }
 
 function getTodayKey(): string {
@@ -134,8 +132,6 @@ export const initialTimerPreferences: TimerPreferences = {
   customSessionsUntilLongBreak: 4,
   autoStartBreak: false,
   autoStartWork: false,
-  soundEnabled: true,
-  vibrationEnabled: true,
 };
 
 // Granular selectors
@@ -162,6 +158,7 @@ export const useTimerActions = () =>
       resume: state.resume,
       tick: state.tick,
       completePhase: state.completePhase,
+      skipPhase: state.skipPhase,
       skip: state.skip,
       reset: state.reset,
       handleForegroundResume: state.handleForegroundResume,
@@ -169,8 +166,6 @@ export const useTimerActions = () =>
       setCustomDurations: state.setCustomDurations,
       toggleAutoStartBreak: state.toggleAutoStartBreak,
       toggleAutoStartWork: state.toggleAutoStartWork,
-      toggleTimerSound: state.toggleTimerSound,
-      toggleTimerVibration: state.toggleTimerVibration,
     }))
   );
 
@@ -300,9 +295,53 @@ export const useTimerStore = create<TimerState>()(
         }
       },
 
+      skipPhase: () => {
+        // Advance to the next phase without crediting focus stats. Used when
+        // the user voluntarily aborts a work phase early so the gamification
+        // numbers stay honest.
+        const { session, preferences } = get();
+        const preset = getActivePreset(preferences);
+        const sessionsUntilLongBreak = preset.sessionsUntilLongBreak;
+
+        if (session.phase === 'work') {
+          const isLongBreakDue = session.currentSession % sessionsUntilLongBreak === 0;
+          const nextPhase: TimerPhase = isLongBreakDue ? 'longBreak' : 'break';
+          const nextDuration = getPhaseDuration(nextPhase, preferences);
+
+          set((state) => ({
+            session: {
+              isActive: preferences.autoStartBreak,
+              isPaused: false,
+              phase: nextPhase,
+              remainingSeconds: nextDuration,
+              phaseDurationSeconds: nextDuration,
+              currentSession: state.session.currentSession,
+              phaseStartedAt: preferences.autoStartBreak ? Date.now() : null,
+              pausedAt: null,
+            },
+          }));
+        } else {
+          const nextSession = session.phase === 'longBreak' ? 1 : session.currentSession + 1;
+          const nextDuration = getPhaseDuration('work', preferences);
+
+          set({
+            session: {
+              isActive: preferences.autoStartWork,
+              isPaused: false,
+              phase: 'work',
+              remainingSeconds: nextDuration,
+              phaseDurationSeconds: nextDuration,
+              currentSession: nextSession,
+              phaseStartedAt: preferences.autoStartWork ? Date.now() : null,
+              pausedAt: null,
+            },
+          });
+        }
+      },
+
       skip: () => {
-        // Skip current phase without tracking stats
-        get().completePhase();
+        // Backwards-compatible alias — delegates to the stats-free skip.
+        get().skipPhase();
       },
 
       reset: () => {
@@ -348,14 +387,31 @@ export const useTimerStore = create<TimerState>()(
       },
 
       setCustomDurations: (work, breakMins, longBreak, sessions) => {
+        // Clamp NaN/non-finite inputs to the lower bound so an invalid form
+        // entry cannot produce a 0-second phase that bursts through completePhase.
+        const safe = (value: number, min: number, max: number, fallback: number) => {
+          const numeric = Number.isFinite(value) ? value : fallback;
+          return Math.max(min, Math.min(max, numeric));
+        };
+
         set((state) => ({
           preferences: {
             ...state.preferences,
             selectedPresetId: 'custom',
-            customWorkMinutes: Math.max(1, Math.min(120, work)),
-            customBreakMinutes: Math.max(1, Math.min(60, breakMins)),
-            customLongBreakMinutes: Math.max(1, Math.min(60, longBreak)),
-            customSessionsUntilLongBreak: Math.max(1, Math.min(12, sessions)),
+            customWorkMinutes: safe(work, 1, 120, state.preferences.customWorkMinutes),
+            customBreakMinutes: safe(breakMins, 1, 60, state.preferences.customBreakMinutes),
+            customLongBreakMinutes: safe(
+              longBreak,
+              1,
+              60,
+              state.preferences.customLongBreakMinutes
+            ),
+            customSessionsUntilLongBreak: safe(
+              sessions,
+              1,
+              12,
+              state.preferences.customSessionsUntilLongBreak
+            ),
           },
         }));
         // Reset session with new durations
@@ -379,20 +435,28 @@ export const useTimerStore = create<TimerState>()(
         set((state) => ({
           preferences: { ...state.preferences, autoStartWork: !state.preferences.autoStartWork },
         })),
-
-      toggleTimerSound: () =>
-        set((state) => ({
-          preferences: { ...state.preferences, soundEnabled: !state.preferences.soundEnabled },
-        })),
-
-      toggleTimerVibration: () =>
-        set((state) => ({
-          preferences: { ...state.preferences, vibrationEnabled: !state.preferences.vibrationEnabled },
-        })),
     }),
     {
-      name: 'microbreaks-timer',
-      storage: createJSONStorage(() => AsyncStorage),
+      name: ZUSTAND_PERSIST_KEYS.TIMER,
+      storage: createMmkvStorage(),
+      version: 2,
+      migrate: (persistedState, version) => {
+        // v1 → v2: sound/vibration moved to settingsStore (single source of
+        // truth). Drop the duplicated fields so they no longer round-trip.
+        if (version < 2 && persistedState && typeof persistedState === 'object') {
+          const state = persistedState as {
+            preferences?: Record<string, unknown> & {
+              soundEnabled?: unknown;
+              vibrationEnabled?: unknown;
+            };
+          };
+          if (state.preferences) {
+            const { soundEnabled: _s, vibrationEnabled: _v, ...rest } = state.preferences;
+            state.preferences = rest;
+          }
+        }
+        return persistedState as TimerState;
+      },
     }
   )
 );

@@ -3,7 +3,7 @@
  * Daily wellness quotes with fade animation
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,25 +13,34 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/i18n/hooks';
 
-const QUOTES = [
-  { text: "Small breaks lead to big breakthroughs.", author: "Wellness Wisdom" },
-  { text: "Your body keeps the score. Listen to it.", author: "Movement Matters" },
-  { text: "Rest is not idleness, it's recharging.", author: "Mindful Living" },
-  { text: "Every stretch is a step toward better health.", author: "Body Balance" },
-  { text: "Pause. Breathe. Continue stronger.", author: "Focus Flow" },
-  { text: "The best time to take a break was 5 minutes ago. The second best time is now.", author: "Break Better" },
-  { text: "Your future self will thank you for this break.", author: "Self Care" },
-  { text: "Movement is medicine for the mind.", author: "Active Mind" },
-];
+interface Quote {
+  text: string;
+  author: string;
+}
+
+const FALLBACK_QUOTE: Quote = {
+  text: 'Small breaks lead to big breakthroughs.',
+  author: 'Wellness Wisdom',
+};
 
 interface MotivationalQuoteProps {
   delay?: number;
 }
 
+// React.memo wrapper removed (audit D-PERF5): with the React Compiler
+// enabled in app.json experiments, prop-equality memoization for primitive
+// props is handled automatically. The manual wrapper was redundant.
 function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
   const theme = useTheme();
-  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+  const { t } = useTranslation();
+  const quote = useMemo<Quote>(() => {
+    const list = t('home.motivationalQuotes', { returnObjects: true }) as unknown;
+    const quotes = Array.isArray(list) ? (list as Quote[]) : [];
+    if (quotes.length === 0) return FALLBACK_QUOTE;
+    return quotes[Math.floor(Math.random() * quotes.length)] ?? FALLBACK_QUOTE;
+  }, [t]);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(15);
 
@@ -54,7 +63,7 @@ function MotivationalQuote({ delay = 0 }: MotivationalQuoteProps) {
   );
 }
 
-export default React.memo(MotivationalQuote);
+export default MotivationalQuote;
 
 const styles = StyleSheet.create({
   container: {

@@ -286,10 +286,22 @@ export function scoreExercise(exercise: Exercise, context: ScoringContext): numb
     context.historicalOutcomes ?? []
   );
   if (outcomeSummary.exactAverage !== null) {
-    score += clamp(Math.round(outcomeSummary.exactAverage), -16, 16);
+    // Asymmetric weighting (audit task C-BUG11): positive evidence is
+    // applied at face value and capped at +16 so one great session does
+    // not lock the user into a single exercise forever. Negative evidence
+    // is doubled before being clamped so a clearly bad outcome
+    // (~bad + worse ≈ -16) can subtract up to 32 — enough to outweigh even
+    // the highest pain-severity boost (+48 for matched + categorical hit).
+    const exact = outcomeSummary.exactAverage;
+    score += exact >= 0
+      ? clamp(Math.round(exact), 0, 16)
+      : clamp(Math.round(exact * 2), -32, 0);
   }
   if (outcomeSummary.categoryAverage !== null) {
-    score += clamp(Math.round(outcomeSummary.categoryAverage * 0.4), -6, 6);
+    const category = outcomeSummary.categoryAverage;
+    score += category >= 0
+      ? clamp(Math.round(category * 0.4), 0, 6)
+      : clamp(Math.round(category * 0.6), -10, 0);
   }
 
   return Math.max(0, Math.min(100, score));

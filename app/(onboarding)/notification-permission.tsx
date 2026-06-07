@@ -14,7 +14,6 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
@@ -32,10 +31,17 @@ import { registerForPushNotifications } from '@/services/firebase/messaging';
 import { applyOnboardingNotificationChoice } from '@/features/onboarding/runtime';
 
 const BENEFITS = [
-  { icon: 'notifications-outline', text: 'Short nudges between work blocks' },
-  { icon: 'options-outline', text: 'You can tune or mute them anytime' },
-  { icon: 'sparkles-outline', text: 'They respect workdays and quiet hours' },
+  { icon: 'eye-outline', text: 'Stay focused without burning out your eyes' },
+  { icon: 'options-outline', text: 'Mute or change frequency in one tap' },
+  { icon: 'moon-outline', text: 'Silenced on weekends and in quiet hours' },
 ];
+
+const SAMPLE_NOTIFICATION = {
+  appName: 'MicroBreaks',
+  title: 'Time for a 30 sec reset',
+  body: 'Look 20 feet away for 20 seconds — your eyes will thank you.',
+  meta: 'now',
+};
 
 export default function NotificationPermissionScreen() {
   const router = useRouter();
@@ -159,14 +165,27 @@ export default function NotificationPermissionScreen() {
           They help the habit stick, but you stay in control and can change this later.
         </SubheadText>
 
-        {/* Bell Icon */}
-        <Animated.View style={[styles.bellContainer, bellAnimatedStyle]}>
-          <LinearGradient
-            colors={[ZenColors.primary.glow, 'transparent']}
-            style={styles.bellGlow}
-          />
-          <View style={styles.bellInner}>
-            <Ionicons name="notifications" size={64} color={ZenColors.primary.main} />
+        {/* Sample notification preview — sets accurate expectations about
+            cadence and tone before the user grants permission. */}
+        <Animated.View
+          style={[styles.sampleContainer, bellAnimatedStyle]}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={`Preview: ${SAMPLE_NOTIFICATION.title}. ${SAMPLE_NOTIFICATION.body}`}
+        >
+          <Text style={styles.sampleHint}>You&apos;ll see something like this:</Text>
+          <View style={styles.sampleBanner}>
+            <View style={styles.sampleIcon}>
+              <Ionicons name="notifications" size={20} color={ZenColors.primary.main} />
+            </View>
+            <View style={styles.sampleContent}>
+              <View style={styles.sampleHeader}>
+                <Text style={styles.sampleAppName}>{SAMPLE_NOTIFICATION.appName}</Text>
+                <Text style={styles.sampleMeta}>{SAMPLE_NOTIFICATION.meta}</Text>
+              </View>
+              <Text style={styles.sampleTitle}>{SAMPLE_NOTIFICATION.title}</Text>
+              <Text style={styles.sampleBody}>{SAMPLE_NOTIFICATION.body}</Text>
+            </View>
           </View>
         </Animated.View>
 
@@ -201,14 +220,14 @@ export default function NotificationPermissionScreen() {
         <View style={styles.spacer} />
 
         <PrimaryButton
-          title="Keep Reminders On"
+          title="Enable Reminders"
           onPress={handleEnable}
           variant="primary"
           disabled={isSubmitting}
           loading={isSubmitting}
         />
         <SecondaryButton
-          title="I'll set this later"
+          title="No reminders, thanks"
           onPress={handleLater}
           variant="muted"
           disabled={isSubmitting}
@@ -222,26 +241,59 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  bellContainer: {
-    alignItems: 'center',
-    marginTop: ZenSpacing.xl,
-    marginBottom: ZenSpacing.lg,
+  sampleContainer: {
+    marginTop: ZenSpacing.lg,
+    marginBottom: ZenSpacing.md,
   },
-  bellGlow: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+  sampleHint: {
+    ...ZenTypography.caption,
+    color: ZenColors.text.muted,
+    textAlign: 'center',
+    marginBottom: ZenSpacing.xs,
   },
-  bellInner: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  sampleBanner: {
+    flexDirection: 'row',
     backgroundColor: ZenColors.background.card,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: ZenRadius.lg,
+    padding: ZenSpacing.sm,
     borderWidth: 1,
     borderColor: ZenColors.border.subtle,
+    gap: ZenSpacing.sm,
+  },
+  sampleIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: ZenRadius.sm,
+    backgroundColor: ZenColors.background.elevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sampleContent: {
+    flex: 1,
+  },
+  sampleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  sampleAppName: {
+    ...ZenTypography.caption,
+    color: ZenColors.text.muted,
+    fontWeight: '600',
+  },
+  sampleMeta: {
+    ...ZenTypography.caption,
+    color: ZenColors.text.muted,
+  },
+  sampleTitle: {
+    ...ZenTypography.body.medium,
+    color: ZenColors.text.primary,
+    fontWeight: '600',
+  },
+  sampleBody: {
+    ...ZenTypography.caption,
+    color: ZenColors.text.secondary,
+    marginTop: 1,
   },
   benefits: {
     backgroundColor: ZenColors.background.card,

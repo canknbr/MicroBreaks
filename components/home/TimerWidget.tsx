@@ -111,9 +111,6 @@ function TimerWidget({ onPresetPress }: TimerWidgetProps) {
         },
         pulseStyle,
       ]}
-      accessible
-      accessibilityRole="timer"
-      accessibilityLabel={`${phaseLabel} timer: ${formattedTime} remaining. Session ${session.currentSession}. ${session.isActive ? (session.isPaused ? 'Paused' : 'Running') : 'Stopped'}`}
     >
       {theme.isDark && (
         Platform.OS === 'ios' ? (
@@ -147,7 +144,20 @@ function TimerWidget({ onPresetPress }: TimerWidgetProps) {
       </View>
 
       {/* Timer display */}
-      <Pressable onPress={handleMainButton} style={styles.timerDisplay}>
+      <Pressable
+        onPress={handleMainButton}
+        style={styles.timerDisplay}
+        accessibilityRole="timer"
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={`${phaseLabel} timer, ${formattedTime} remaining. ${
+          session.isActive
+            ? session.isPaused
+              ? 'Paused. Tap to resume.'
+              : 'Running. Tap to pause.'
+            : 'Stopped. Tap to start.'
+        }`}
+        accessibilityHint="Toggles the focus timer"
+      >
         <Text style={[styles.timerText, { color: theme.text.primary }]}>
           {formattedTime}
         </Text>

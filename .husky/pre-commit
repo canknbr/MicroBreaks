@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# Husky pre-commit guard (audit task E-PROD6).
+# Runs lint + typecheck on the staged subset so PRs cannot land obvious
+# regressions. Full test suite runs in CI (eas-build.yml).
+
+# 1. Lint + auto-fix staged TS/TSX files.
+npx --no-install lint-staged
+
+# 2. Typecheck the entire project — fast (~2-3s) and catches breakages that
+#    lint-staged misses because they live in files outside the staged set.
+npm run typecheck

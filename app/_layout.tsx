@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useEffectiveTheme } from '@/hooks/useTheme';
+import { useNotificationDeepLinks } from '@/hooks/useNotificationDeepLinks';
 import { useTranslation } from 'react-i18next';
 import { BootstrapStatusScreen } from '@/components/bootstrap';
 import { SplashScreen } from '@/components/splash';
@@ -32,7 +33,7 @@ import { initializeFirestore } from '@/services/firebase/firestore';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
 import { initializeTimerService, shutdownTimerService } from '@/services/timerService';
-import { useUserStore } from '@/store/userStore';
+import { useUserStore, flushProgressSideEffects } from '@/store/userStore';
 import OfflineBanner from '@/components/common/OfflineBanner';
 
 // Prevent the native splash screen from auto-hiding
@@ -96,6 +97,7 @@ function syncAuthenticatedUserState(user: FirebaseAuthTypes.User): boolean {
 export default function RootLayout() {
   const effectiveTheme = useEffectiveTheme();
   const { i18n } = useTranslation();
+  useNotificationDeepLinks();
   const [showSplash, setShowSplash] = useState(true);
   const [bootstrapPhase, setBootstrapPhase] = useState<BootstrapPhase>('loading');
   const [bootstrapIssues, setBootstrapIssues] = useState<BootstrapIssue[]>([]);
@@ -110,6 +112,11 @@ export default function RootLayout() {
       tokenRefreshUnsubRef.current();
       tokenRefreshUnsubRef.current = null;
     }
+
+    // Flush any in-flight progress side effects so the sync queue gets the
+    // last mutation before we shut down. Without this, a rapid sign-out can
+    // drop the very last write — see audit task A8.
+    await flushProgressSideEffects();
 
     await syncService.shutdown();
     useUserStore.setState((state) => ({
@@ -188,7 +195,7 @@ export default function RootLayout() {
       auth_type: user.isAnonymous ? 'anonymous' : 'authenticated',
       sync_enabled: true,
     });
-    setCrashlyticsUser(user.uid, user.email ?? undefined);
+    setCrashlyticsUser(user.uid);
 
     const reportIssue = (step: string, error: unknown) => {
       const issue = {

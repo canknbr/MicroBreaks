@@ -4,8 +4,9 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist } from 'zustand/middleware';
+import { createMmkvStorage } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 import { normalizeBreakStylePreferences } from '@/services/recommendations/scoring';
 
@@ -37,7 +38,7 @@ interface OnboardingState {
   skipOnboarding: () => void;
 }
 
-export const ONBOARDING_STORE_PERSIST_KEY = 'microbreaks-onboarding';
+export const ONBOARDING_STORE_PERSIST_KEY = ZUSTAND_PERSIST_KEYS.ONBOARDING;
 
 export const initialOnboardingData: OnboardingData = {
   workRole: null,
@@ -134,15 +135,33 @@ export const useOnboardingStore = create<OnboardingState>()(
       setCurrentStep: (step) => set({ currentStep: step }),
 
       updateData: (newData) =>
-        set((state) => ({
-          data: {
+        set((state) => {
+          const merged: OnboardingData = {
             ...state.data,
             ...newData,
             breakStyle: Array.isArray(newData.breakStyle)
               ? normalizeBreakStylePreferences(newData.breakStyle)
               : state.data.breakStyle,
-          },
-        })),
+          };
+
+          // C-BUG8: when painAreas is rewritten, prune any painSeverity
+          // entries that no longer correspond to a selected area so the
+          // recommendation engine does not see zombie severity signals.
+          const painAreasRewritten = Array.isArray(newData.painAreas);
+          const severityRewritten = newData.painSeverity !== undefined;
+          if (painAreasRewritten || severityRewritten) {
+            const allowed = new Set(merged.painAreas);
+            const pruned: OnboardingData['painSeverity'] = {};
+            for (const [area, severity] of Object.entries(merged.painSeverity)) {
+              if (allowed.has(area)) {
+                pruned[area] = severity;
+              }
+            }
+            merged.painSeverity = pruned;
+          }
+
+          return { data: merged };
+        }),
 
       completeOnboarding: () =>
         set({
@@ -166,7 +185,7 @@ export const useOnboardingStore = create<OnboardingState>()(
     }),
     {
       name: ONBOARDING_STORE_PERSIST_KEY,
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createMmkvStorage(),
       version: 1,
       migrate: (persistedState) => sanitizePersistedOnboardingState(persistedState),
     }

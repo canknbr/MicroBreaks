@@ -16,6 +16,22 @@ function getBreakMutationTimestamp(breakItem: CompletedBreak): number {
   return new Date(breakItem.updatedAt ?? breakItem.completedAt).getTime();
 }
 
+// IDs pushed at the most recent lastPushAt boundary timestamp. We hold them
+// in memory so a mutation that lands on the exact same millisecond as the
+// last sync (rare but possible) is detected as new on the next push instead
+// of being silently filtered out (C-BUG4).
+const boundaryPushedIds = new Set<string>();
+let boundaryTimestamp: number | null = null;
+
+/**
+ * Test helper — clears the dedup set so suites can exercise the boundary
+ * path repeatedly without pollution.
+ */
+export function __resetBreakPushDedupForTests(): void {
+  boundaryPushedIds.clear();
+  boundaryTimestamp = null;
+}
+
 /**
  * Push local break history to Firestore
  * Uses batch writes for efficiency
@@ -23,10 +39,25 @@ function getBreakMutationTimestamp(breakItem: CompletedBreak): number {
 export async function pushBreakHistory(userId: string, lastPushAt: number | null): Promise<void> {
   const localBreaks = await getBreakHistory();
 
-  // Filter to breaks created or mutated after the last push
-  const newBreaks = lastPushAt
-    ? localBreaks.filter((b) => getBreakMutationTimestamp(b) > lastPushAt)
-    : localBreaks;
+  // Filter to breaks created or mutated since the last push. We use `>=` at
+  // the boundary so a mutation that lands on the exact same millisecond as
+  // the last sync isn't dropped — see C-BUG4 — and rely on
+  // `boundaryPushedIds` to skip the records we already wrote at that
+  // instant.
+  let newBreaks: CompletedBreak[];
+  if (lastPushAt === null) {
+    newBreaks = localBreaks;
+  } else {
+    const boundaryActive = boundaryTimestamp === lastPushAt;
+    newBreaks = localBreaks.filter((b) => {
+      const ts = getBreakMutationTimestamp(b);
+      if (ts > lastPushAt) return true;
+      if (ts === lastPushAt && boundaryActive) {
+        return !boundaryPushedIds.has(b.id);
+      }
+      return ts === lastPushAt;
+    });
+  }
 
   if (newBreaks.length === 0) return;
 
@@ -44,6 +75,22 @@ export async function pushBreakHistory(userId: string, lastPushAt: number | null
     }
 
     await batch.commit();
+  }
+
+  // Refresh the boundary dedup set. The new boundary is the most recent
+  // mutation timestamp we just pushed.
+  const maxTimestamp = newBreaks.reduce(
+    (max, b) => Math.max(max, getBreakMutationTimestamp(b)),
+    0
+  );
+  if (boundaryTimestamp !== maxTimestamp) {
+    boundaryTimestamp = maxTimestamp;
+    boundaryPushedIds.clear();
+  }
+  for (const b of newBreaks) {
+    if (getBreakMutationTimestamp(b) === maxTimestamp) {
+      boundaryPushedIds.add(b.id);
+    }
   }
 
   if (__DEV__) {

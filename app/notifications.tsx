@@ -8,10 +8,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Platform,
 } from 'react-native';
+import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
@@ -26,6 +26,12 @@ import * as Haptics from 'expo-haptics';
 import { useNotificationStore, AppNotification } from '@/store';
 import { Spacing } from '@/theme';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
+import i18n from 'i18next';
+
+function localeBcp47(): string {
+  // i18next's language code (e.g. "en", "tr") maps 1:1 to BCP-47 here.
+  return i18n.language || 'en';
+}
 
 // Get color based on notification type
 function getNotificationColor(type: AppNotification['type']): string {
@@ -61,7 +67,9 @@ function formatRelativeTime(dateString: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  // D-I18N3: explicit locale so the date format matches the active app
+  // language, even when the device's locale differs.
+  return date.toLocaleDateString(localeBcp47());
 }
 
 // Notification Item Component
@@ -208,6 +216,26 @@ export default function NotificationsScreen() {
     return groups;
   }, [notifications]);
 
+  // Flatten grouped notifications into a single FlashList feed. Section
+  // headers become row entries so the virtualizer can recycle them like any
+  // other cell.
+  type FeedItem =
+    | { kind: 'header'; title: string }
+    | { kind: 'item'; notification: AppNotification; positionalIndex: number };
+
+  const feedData = useMemo<FeedItem[]>(() => {
+    const rows: FeedItem[] = [];
+    let positional = 0;
+    for (const group of groupedNotifications) {
+      rows.push({ kind: 'header', title: group.title });
+      for (const notification of group.data) {
+        rows.push({ kind: 'item', notification, positionalIndex: positional });
+        positional += 1;
+      }
+    }
+    return rows;
+  }, [groupedNotifications]);
+
   // Handlers
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -288,29 +316,38 @@ export default function NotificationsScreen() {
         {notifications.length === 0 ? (
           <EmptyState theme={theme} />
         ) : (
-          <ScrollView
-            style={styles.scrollView}
+          <FlashList
+            data={feedData}
+            renderItem={(({ item }) => {
+              if (item.kind === 'header') {
+                return (
+                  <View style={styles.group}>
+                    <Text
+                      style={[styles.groupTitle, { color: theme.text.muted }]}
+                      accessibilityRole="header"
+                    >
+                      {item.title}
+                    </Text>
+                  </View>
+                );
+              }
+              return (
+                <NotificationItem
+                  notification={item.notification}
+                  onPress={() => handleNotificationPress(item.notification)}
+                  index={item.positionalIndex}
+                  theme={theme}
+                />
+              );
+            }) as ListRenderItem<FeedItem>}
+            keyExtractor={(item, index) =>
+              item.kind === 'header' ? `header-${item.title}` : item.notification.id ?? `row-${index}`
+            }
+            getItemType={(item) => item.kind}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
-          >
-            {groupedNotifications.map((group, groupIndex) => (
-              <View key={group.title} style={styles.group}>
-                <Text style={[styles.groupTitle, { color: theme.text.muted }]}>{group.title}</Text>
-                {group.data.map((notification, index) => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onPress={() => handleNotificationPress(notification)}
-                    index={groupIndex * 10 + index}
-                    theme={theme}
-                  />
-                ))}
-              </View>
-            ))}
-
-            {/* Bottom spacer */}
-            <View style={styles.bottomSpacer} />
-          </ScrollView>
+            ListFooterComponent={<View style={styles.bottomSpacer} />}
+          />
         )}
       </SafeAreaView>
     </View>

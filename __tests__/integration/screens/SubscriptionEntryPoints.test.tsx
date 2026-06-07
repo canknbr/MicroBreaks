@@ -59,14 +59,10 @@ jest.mock('@/store/timerStore', () => ({
   useTimerPreferences: () => ({
     autoStartBreak: false,
     autoStartWork: false,
-    soundEnabled: true,
-    vibrationEnabled: true,
   }),
   useTimerActions: () => ({
     toggleAutoStartBreak: jest.fn(),
     toggleAutoStartWork: jest.fn(),
-    toggleTimerSound: jest.fn(),
-    toggleTimerVibration: jest.fn(),
   }),
 }));
 

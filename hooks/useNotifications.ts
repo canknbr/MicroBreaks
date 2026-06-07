@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { router } from 'expo-router';
 import {
   NotificationSettings,
   DEFAULT_NOTIFICATION_SETTINGS,
@@ -15,8 +14,6 @@ import {
   saveNotificationSettings,
   scheduleAllNotifications,
   scheduleBreakReminder,
-  addNotificationResponseListener,
-  addNotificationReceivedListener,
 } from '@/services/notifications';
 import * as Notifications from 'expo-notifications';
 import { getCurrentUserId } from '@/services/firebase/auth';
@@ -89,7 +86,9 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [logNonFatalNotificationError]);
 
-  // Load settings on mount
+  // Load settings on mount. The response/received listeners live in the root
+  // layout via useNotificationDeepLinks so they survive cold start and stay
+  // active regardless of which screen is mounted.
   useEffect(() => {
     void loadSettings();
     void initializeNotifications().catch((error) => {
@@ -97,31 +96,9 @@ export function useNotifications(): UseNotificationsReturn {
     });
     void checkPermission();
 
-    // Set up notification response listener
-    const responseSubscription = addNotificationResponseListener((response) => {
-      const data = response.notification.request.content.data;
-
-      // Navigate based on notification type
-      if (data?.type === 'break_reminder') {
-        router.push('/breaks');
-      } else if (data?.type === 'streak_protection') {
-        router.push('/breaks');
-      } else if (data?.type === 'daily_goal') {
-        router.push('/stats');
-      }
-    });
-
-    // Set up foreground notification listener
-    const receivedSubscription = addNotificationReceivedListener((_notification) => {
-      // Notification received in foreground - handled silently
-    });
-
-    // Handle app state changes to reschedule notifications
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
-      responseSubscription.remove();
-      receivedSubscription.remove();
       subscription.remove();
     };
   }, [checkPermission, handleAppStateChange, loadSettings, logNonFatalNotificationError]);

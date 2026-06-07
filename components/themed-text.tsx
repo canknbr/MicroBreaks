@@ -13,12 +13,17 @@ export function ThemedText({
   lightColor,
   darkColor,
   type = 'default',
+  maxFontSizeMultiplier,
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
   return (
     <Text
+      // Cap dynamic type scaling so 200%+ system font does not overflow
+      // multi-line layouts (D-A11Y3). Callers can still pass a different
+      // ceiling for surfaces that genuinely accept more scale.
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? 1.5}
       style={[
         { color },
         type === 'default' ? styles.default : undefined,

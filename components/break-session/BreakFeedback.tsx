@@ -12,6 +12,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '@/i18n/hooks';
 
 export type FeedbackRating = 'good' | 'neutral' | 'bad';
 export type ReliefScore = 'worse' | 'same' | 'better' | 'much_better';
@@ -23,17 +24,17 @@ interface BreakFeedbackProps {
   color: string;
 }
 
-const FEEDBACK_OPTIONS: { rating: FeedbackRating; emoji: string; label: string }[] = [
-  { rating: 'good', emoji: '😊', label: 'Helpful' },
-  { rating: 'neutral', emoji: '😐', label: 'Okay' },
-  { rating: 'bad', emoji: '😟', label: 'Not helpful' },
+const FEEDBACK_OPTIONS: { rating: FeedbackRating; emoji: string; labelKey: string; fallback: string }[] = [
+  { rating: 'good', emoji: '😊', labelKey: 'breakSession.feedback.buttons.good', fallback: 'Helpful' },
+  { rating: 'neutral', emoji: '😐', labelKey: 'breakSession.feedback.buttons.neutral', fallback: 'Okay' },
+  { rating: 'bad', emoji: '😟', labelKey: 'breakSession.feedback.buttons.bad', fallback: 'Not helpful' },
 ];
 
-const RELIEF_OPTIONS: { score: ReliefScore; emoji: string; label: string }[] = [
-  { score: 'worse', emoji: '😣', label: 'Worse' },
-  { score: 'same', emoji: '🙂', label: 'Same' },
-  { score: 'better', emoji: '😌', label: 'Better' },
-  { score: 'much_better', emoji: '🤩', label: 'Much better' },
+const RELIEF_OPTIONS: { score: ReliefScore; emoji: string; labelKey: string; fallback: string }[] = [
+  { score: 'worse', emoji: '😣', labelKey: 'breakSession.feedback.relief.worse', fallback: 'Worse' },
+  { score: 'same', emoji: '🙂', labelKey: 'breakSession.feedback.relief.same', fallback: 'Same' },
+  { score: 'better', emoji: '😌', labelKey: 'breakSession.feedback.relief.better', fallback: 'Better' },
+  { score: 'much_better', emoji: '🤩', labelKey: 'breakSession.feedback.relief.muchBetter', fallback: 'Much better' },
 ];
 
 export default function BreakFeedback({
@@ -42,6 +43,7 @@ export default function BreakFeedback({
   selectedReliefScore,
   color,
 }: BreakFeedbackProps) {
+  const { t } = useTranslation();
   const [pendingRating, setPendingRating] = React.useState<FeedbackRating | null>(selectedRating);
   const [pendingReliefScore, setPendingReliefScore] = React.useState<ReliefScore | null>(
     selectedReliefScore
@@ -57,14 +59,25 @@ export default function BreakFeedback({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>How did that feel?</Text>
-      <Text style={styles.subtitle}>Your feedback helps us personalize better resets</Text>
+      <Text style={styles.title} accessibilityRole="header">
+        {t('breakSession.feedback.heading', { defaultValue: 'How did that feel?' })}
+      </Text>
+      <Text style={styles.subtitle}>
+        {t('breakSession.feedback.subtitle', {
+          defaultValue: 'Your feedback helps us personalize better resets',
+        })}
+      </Text>
 
-      <View style={styles.options}>
+      <View
+        style={styles.options}
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('breakSession.feedback.heading', { defaultValue: 'How did that feel?' })}
+      >
         {FEEDBACK_OPTIONS.map((option) => (
           <FeedbackButton
             key={option.rating}
-            {...option}
+            emoji={option.emoji}
+            label={t(option.labelKey, { defaultValue: option.fallback })}
             isSelected={pendingRating === option.rating}
             onPress={() => setPendingRating(option.rating)}
             color={color}
@@ -74,13 +87,23 @@ export default function BreakFeedback({
 
       {pendingRating ? (
         <>
-          <Text style={styles.secondaryTitle}>How much better do you feel now?</Text>
-          <View style={[styles.options, styles.reliefOptions]}>
+          <Text style={styles.secondaryTitle} accessibilityRole="header">
+            {t('breakSession.feedback.reliefHeading', {
+              defaultValue: 'How much better do you feel now?',
+            })}
+          </Text>
+          <View
+            style={[styles.options, styles.reliefOptions]}
+            accessibilityRole="radiogroup"
+            accessibilityLabel={t('breakSession.feedback.reliefHeading', {
+              defaultValue: 'How much better do you feel now?',
+            })}
+          >
             {RELIEF_OPTIONS.map((option) => (
               <FeedbackButton
                 key={option.score}
                 emoji={option.emoji}
-                label={option.label}
+                label={t(option.labelKey, { defaultValue: option.fallback })}
                 isSelected={pendingReliefScore === option.score}
                 onPress={() => {
                   setPendingReliefScore(option.score);
@@ -136,6 +159,9 @@ function FeedbackButton({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
+      accessibilityRole="radio"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: isSelected, checked: isSelected }}
     >
       <Animated.View
         style={[
@@ -150,8 +176,20 @@ function FeedbackButton({
         ) : !isSelected ? (
           <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
         ) : null}
-        <Text style={styles.emoji}>{emoji}</Text>
-        <Text style={[styles.label, isSelected && { color }]}>{label}</Text>
+        <Text
+          style={styles.emoji}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        >
+          {emoji}
+        </Text>
+        <Text
+          style={[styles.label, isSelected && { color }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        >
+          {label}
+        </Text>
       </Animated.View>
     </Pressable>
   );

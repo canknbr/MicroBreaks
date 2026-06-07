@@ -5,6 +5,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { AppState, AppStateStatus } from 'react-native';
+import i18n from 'i18next';
 import { useTimerStore } from '@/store/timerStore';
 import {
   TIMER_TICK_MS,
@@ -47,13 +48,19 @@ export async function schedulePhaseEndNotification(): Promise<void> {
   // Cancel any existing timer notification
   await cancelPhaseEndNotification();
 
-  const phaseLabel = session.phase === 'work' ? 'Focus session' : 'Break';
-  const nextAction = session.phase === 'work' ? 'Time for a break!' : 'Ready to focus?';
+  const titleKey =
+    session.phase === 'work'
+      ? 'timer.pushNotifications.workCompleteTitle'
+      : 'timer.pushNotifications.breakCompleteTitle';
+  const bodyKey =
+    session.phase === 'work'
+      ? 'timer.pushNotifications.workCompleteBody'
+      : 'timer.pushNotifications.breakCompleteBody';
 
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: `${phaseLabel} complete!`,
-      body: nextAction,
+      title: i18n.t(titleKey),
+      body: i18n.t(bodyKey),
       sound: 'default',
       data: { type: 'timer_phase_end', phase: session.phase },
     },

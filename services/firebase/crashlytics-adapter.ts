@@ -40,13 +40,15 @@ class CrashlyticsService {
     }
   }
 
-  setUser(userId: string | null, email?: string): void {
+  setUser(userId: string | null): void {
+    // We deliberately do NOT forward email / display name / any other PII to
+    // Crashlytics. The Firebase UID is a pseudonymous identifier per GDPR
+    // recital 26 — sufficient to correlate sessions without exposing personal
+    // data in crash reports. The legacy second argument (email) is accepted
+    // for callsite compatibility but ignored.
     try {
       if (userId) {
         crashlytics().setUserId(userId);
-        if (email) {
-          crashlytics().setAttribute('email', email);
-        }
       } else {
         crashlytics().setUserId('');
       }
@@ -188,7 +190,7 @@ export const addBreadcrumb = (
   level?: 'debug' | 'info' | 'warning' | 'error' | 'fatal',
   data?: Record<string, unknown>
 ) => crashlyticsService.addBreadcrumb(message, category, level, data);
-export const setUser = (userId: string | null, email?: string) =>
-  crashlyticsService.setUser(userId, email);
+export const setUser = (userId: string | null, _legacyEmail?: string) =>
+  crashlyticsService.setUser(userId);
 export const setContext = (name: string, context: Record<string, unknown>) =>
   crashlyticsService.setContext(name, context);

@@ -48,7 +48,8 @@ jest.mock('@/services/notifications', () => ({
 
 jest.mock('@/services/sync', () => ({
   syncService: {
-    shutdown: jest.fn(),
+    shutdown: jest.fn(() => Promise.resolve()),
+    initialize: jest.fn(() => Promise.resolve()),
   },
 }));
 
@@ -203,25 +204,45 @@ describe('replaceWithFreshAnonymousSession', () => {
     ).toBeLessThan((deleteAuthAccount as jest.Mock).mock.invocationCallOrder[0]);
   });
 
-  it('clears the local session before signing in to a recovered account', async () => {
+  it('verifies credentials before clearing the local session', async () => {
     await signInWithRecoveredAccount('recover@example.com', 'secret123');
 
+    // Credentials must be verified before any destructive cleanup runs.
+    const signInOrder = (signInWithEmailPassword as jest.Mock).mock.invocationCallOrder[0];
+    const clearOrder = (cancelAllNotifications as jest.Mock).mock.invocationCallOrder[0];
+    expect(signInOrder).toBeLessThan(clearOrder);
+
     expect(syncService.shutdown).toHaveBeenCalledTimes(1);
+    expect(signInWithEmailPassword).toHaveBeenCalledWith('recover@example.com', 'secret123');
     expect(unregisterPushNotifications).toHaveBeenCalledWith('user-1');
     expect(cancelAllNotifications).toHaveBeenCalledTimes(1);
-    expect(signOut).toHaveBeenCalledTimes(1);
-    expect(signInWithEmailPassword).toHaveBeenCalledWith('recover@example.com', 'secret123');
+    // No fallback path is needed on success.
+    expect(signOut).not.toHaveBeenCalled();
     expect(refreshAnonymousSession).not.toHaveBeenCalled();
     expect(await AsyncStorage.getItem('@microbreaks/break_history')).toBeNull();
   });
 
-  it('recovers a fresh anonymous session when sign-in restoration fails', async () => {
-    (signInWithEmailPassword as jest.Mock).mockRejectedValueOnce(new Error('restore failed'));
+  it('preserves local data when sign-in fails so the user can retry', async () => {
+    (signInWithEmailPassword as jest.Mock).mockRejectedValueOnce(new Error('wrong password'));
 
     await expect(
       signInWithRecoveredAccount('recover@example.com', 'secret123')
-    ).rejects.toThrow('restore failed');
+    ).rejects.toThrow('wrong password');
 
-    expect(refreshAnonymousSession).toHaveBeenCalledTimes(1);
+    // Local state must survive a failed recovery attempt.
+    expect(cancelAllNotifications).not.toHaveBeenCalled();
+    expect(unregisterPushNotifications).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+    expect(refreshAnonymousSession).not.toHaveBeenCalled();
+
+    expect(await AsyncStorage.getItem('@microbreaks/break_history')).toBe(
+      JSON.stringify([{ id: 'b1' }])
+    );
+    expect(useUserStore.getState().profile.name).toBe('Can');
+    expect(useTimerStore.getState().session.remainingSeconds).toBe(123);
+
+    // Sync is restored for the still-signed-in anonymous user.
+    expect(syncService.shutdown).toHaveBeenCalledTimes(1);
+    expect(syncService.initialize).toHaveBeenCalledWith('user-1');
   });
 });

@@ -128,6 +128,32 @@ jobs:
           PROFILE=${{ github.event.inputs.profile || 'production' }}
           eas build --platform ios --profile $PROFILE --non-interactive
 
+      # Crashlytics dSYM upload — the @react-native-firebase/crashlytics
+      # build phase uploads symbols automatically when GoogleService-Info.plist
+      # is present at build time. We additionally trigger an explicit upload
+      # so symbols are guaranteed to be available before a release is
+      # promoted, even if Apple processes a fresh dSYM out-of-band.
+      - name: Upload iOS Crashlytics symbols
+        if: env.FIREBASE_APP_ID_IOS != ''
+        env:
+          FIREBASE_APP_ID_IOS: ${{ secrets.FIREBASE_APP_ID_IOS }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -e
+          npm install --no-save firebase-tools@latest
+          # EAS provides the build dSYM tarball via `eas build:list --latest`.
+          BUILD_ARTIFACT_URL=$(eas build:list --platform ios --limit 1 --json --non-interactive | jq -r '.[0].artifacts.applicationArchiveUrl')
+          if [ -z "$BUILD_ARTIFACT_URL" ] || [ "$BUILD_ARTIFACT_URL" = "null" ]; then
+            echo "Could not resolve iOS build artifact URL — skipping symbol upload."
+            exit 0
+          fi
+          curl -L -o ios-build.tar.gz "$BUILD_ARTIFACT_URL"
+          mkdir -p ios-symbols && tar -xzf ios-build.tar.gz -C ios-symbols || true
+          npx firebase crashlytics:symbols:upload \
+            --app=$FIREBASE_APP_ID_IOS \
+            --token=$FIREBASE_TOKEN \
+            ios-symbols || echo "Crashlytics symbol upload failed (non-fatal). Investigate before next release."
+
       - name: Submit to App Store
         if: |
           github.event.inputs.submit == 'true' ||
@@ -182,6 +208,29 @@ jobs:
         run: |
           PROFILE=${{ github.event.inputs.profile || 'production' }}
           eas build --platform android --profile $PROFILE --non-interactive
+
+      # ProGuard / R8 mapping upload — when minification is on (E-SEC2 set this
+      # to true in gradle.properties), Crashlytics needs the mapping file to
+      # deobfuscate stack traces. The Gradle plugin uploads automatically when
+      # configured, but we trigger an explicit upload here so it survives a
+      # plugin misconfiguration silently dropping mappings.
+      - name: Upload Android Crashlytics mapping file
+        if: env.FIREBASE_APP_ID_ANDROID != ''
+        env:
+          FIREBASE_APP_ID_ANDROID: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -e
+          MAPPING_PATH="android/app/build/outputs/mapping/release/mapping.txt"
+          if [ ! -f "$MAPPING_PATH" ]; then
+            echo "ProGuard mapping not produced locally (build ran on EAS workers). Skipping local upload."
+            exit 0
+          fi
+          npm install --no-save firebase-tools@latest
+          npx firebase crashlytics:mappingfile:upload \
+            --app=$FIREBASE_APP_ID_ANDROID \
+            --token=$FIREBASE_TOKEN \
+            "$MAPPING_PATH" || echo "Crashlytics mapping upload failed (non-fatal). Investigate before next release."
 
       - name: Submit to Google Play
         if: |

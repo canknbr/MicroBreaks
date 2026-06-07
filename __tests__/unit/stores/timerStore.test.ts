@@ -35,8 +35,6 @@ describe('TimerStore', () => {
           customSessionsUntilLongBreak: 4,
           autoStartBreak: false,
           autoStartWork: false,
-          soundEnabled: true,
-          vibrationEnabled: true,
         },
       });
     });
@@ -62,8 +60,6 @@ describe('TimerStore', () => {
       const { preferences } = useTimerStore.getState();
       expect(preferences.autoStartBreak).toBe(false);
       expect(preferences.autoStartWork).toBe(false);
-      expect(preferences.soundEnabled).toBe(true);
-      expect(preferences.vibrationEnabled).toBe(true);
     });
 
     it('should have zero stats', () => {
@@ -295,6 +291,58 @@ describe('TimerStore', () => {
       // Should have moved to break phase
       expect(useTimerStore.getState().session.phase).toBe('break');
     });
+
+    it('should not credit focus stats when work phase is skipped early', () => {
+      act(() => {
+        useTimerStore.getState().startWorkSession();
+        // simulate only a few seconds elapsed
+        useTimerStore.getState().tick();
+        useTimerStore.getState().tick();
+        useTimerStore.getState().skipPhase();
+      });
+
+      const { stats, session } = useTimerStore.getState();
+      expect(session.phase).toBe('break');
+      expect(stats.todayFocusMinutes).toBe(0);
+      expect(stats.todaySessionsCompleted).toBe(0);
+      expect(stats.totalFocusMinutes).toBe(0);
+    });
+
+    it('completePhase still credits stats for an honest work finish', () => {
+      act(() => {
+        useTimerStore.getState().startWorkSession();
+        useTimerStore.getState().completePhase();
+      });
+
+      const { stats } = useTimerStore.getState();
+      expect(stats.todaySessionsCompleted).toBe(1);
+      expect(stats.todayFocusMinutes).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Custom durations input validation', () => {
+    it('falls back to the previous duration when given NaN', () => {
+      act(() => {
+        useTimerStore.getState().setCustomDurations(25, 5, 15, 4);
+        // simulate a form sending parseInt('abc') = NaN
+        useTimerStore.getState().setCustomDurations(Number.NaN, 5, 15, 4);
+      });
+
+      const { preferences } = useTimerStore.getState();
+      expect(preferences.customWorkMinutes).toBe(25);
+    });
+
+    it('clamps oversized values into range', () => {
+      act(() => {
+        useTimerStore.getState().setCustomDurations(9999, -10, 0, 50);
+      });
+
+      const { preferences } = useTimerStore.getState();
+      expect(preferences.customWorkMinutes).toBe(120);
+      expect(preferences.customBreakMinutes).toBe(1);
+      expect(preferences.customLongBreakMinutes).toBe(1);
+      expect(preferences.customSessionsUntilLongBreak).toBe(12);
+    });
   });
 
   describe('Reset', () => {
@@ -402,22 +450,6 @@ describe('TimerStore', () => {
         useTimerStore.getState().toggleAutoStartWork();
       });
       expect(useTimerStore.getState().preferences.autoStartWork).toBe(true);
-    });
-
-    it('should toggle sound', () => {
-      expect(useTimerStore.getState().preferences.soundEnabled).toBe(true);
-      act(() => {
-        useTimerStore.getState().toggleTimerSound();
-      });
-      expect(useTimerStore.getState().preferences.soundEnabled).toBe(false);
-    });
-
-    it('should toggle vibration', () => {
-      expect(useTimerStore.getState().preferences.vibrationEnabled).toBe(true);
-      act(() => {
-        useTimerStore.getState().toggleTimerVibration();
-      });
-      expect(useTimerStore.getState().preferences.vibrationEnabled).toBe(false);
     });
   });
 

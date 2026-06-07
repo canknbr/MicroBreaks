@@ -5,14 +5,16 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
-import { captureError } from '@/services/firebase/crashlytics-adapter';
+import { addBreadcrumb, captureError } from '@/services/firebase/crashlytics-adapter';
+import { SERVICE_STORAGE_KEYS } from '@/constants/storageKeys';
 
-// Storage keys
+// Re-exported for backwards-compat — new code should import from
+// `@/constants/storageKeys` directly so the registry stays the single source.
 export const STORAGE_KEYS = {
-  BREAK_HISTORY: '@microbreaks/break_history',
-  USER_STATS: '@microbreaks/user_stats',
-  STREAK_DATA: '@microbreaks/streak_data',
-  SETTINGS: '@microbreaks/settings',
+  BREAK_HISTORY: SERVICE_STORAGE_KEYS.BREAK_HISTORY,
+  USER_STATS: SERVICE_STORAGE_KEYS.USER_STATS,
+  STREAK_DATA: SERVICE_STORAGE_KEYS.STREAK_DATA,
+  SETTINGS: SERVICE_STORAGE_KEYS.SETTINGS,
 } as const;
 
 // Error types for better error handling
@@ -40,6 +42,34 @@ async function purgeCorruptedItem(key: string): Promise<void> {
   } catch {
     // Best effort cleanup only.
   }
+}
+
+/**
+ * Classify an error from the underlying storage layer so we can route quota
+ * exhaustion (out of disk / blocked by OS) separately from JSON corruption
+ * or unrelated I/O failures.
+ */
+function isStorageQuotaError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const message = (error as { message?: unknown }).message;
+  if (typeof message !== 'string') return false;
+  return /quota|disk full|no space|enospc/i.test(message);
+}
+
+function reportStorageWriteFailure(key: string, error: unknown): void {
+  if (isStorageQuotaError(error)) {
+    addBreadcrumb(
+      `Storage write quota exceeded for ${key}`,
+      'storage',
+      'warning',
+      { key }
+    );
+    return;
+  }
+  captureError(
+    error instanceof Error ? error : new Error(`Storage write error for ${key}`),
+    { component: 'storage', action: 'setItem' }
+  );
 }
 
 // Generic storage operations with improved error handling
@@ -79,6 +109,7 @@ export async function setItem<T>(key: string, value: T): Promise<boolean> {
     if (__DEV__) {
       console.error(`Storage write error for ${key}:`, error);
     }
+    reportStorageWriteFailure(key, error);
     return false;
   }
 }
@@ -89,6 +120,7 @@ export async function setItemWithError<T>(key: string, value: T): Promise<Storag
     await AsyncStorage.setItem(key, JSON.stringify(value));
     return null;
   } catch (error) {
+    reportStorageWriteFailure(key, error);
     return new StorageError(`Failed to save ${key}`, key, 'write', error);
   }
 }

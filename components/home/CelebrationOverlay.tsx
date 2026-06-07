@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -64,10 +65,12 @@ function Particle({
   index,
   color,
   startDelay,
+  reduceMotion,
 }: {
   index: number;
   color: string;
   startDelay: number;
+  reduceMotion: boolean;
 }) {
   const translateY = useSharedValue(0);
   const translateX = useSharedValue(0);
@@ -80,6 +83,12 @@ function Particle({
   const size = 8 + Math.random() * 12;
 
   useEffect(() => {
+    if (reduceMotion) {
+      // Skip the falling-confetti loop entirely — leave the particle invisible.
+      opacity.value = 0;
+      return;
+    }
+
     const delay = startDelay + index * 30;
 
     scale.value = withDelay(delay, withSpring(1));
@@ -99,7 +108,7 @@ function Particle({
       delay + 1500,
       withTiming(0, { duration: 500 })
     );
-  }, [endX, index, opacity, rotation, scale, startDelay, startX, translateX, translateY]);
+  }, [endX, index, opacity, reduceMotion, rotation, scale, startDelay, startX, translateX, translateY]);
 
   const style = useAnimatedStyle(() => ({
     transform: [
@@ -136,6 +145,7 @@ export default function CelebrationOverlay({
   onDismiss,
 }: CelebrationOverlayProps) {
   const config = CELEBRATION_CONFIG[type];
+  const reduceMotion = useReduceMotion();
   const overlayOpacity = useSharedValue(0);
   const contentScale = useSharedValue(0.5);
   const contentOpacity = useSharedValue(0);
@@ -146,6 +156,16 @@ export default function CelebrationOverlay({
   }, []);
 
   useEffect(() => {
+    if (reduceMotion) {
+      // Snap to final state instead of animating in/scaling/bouncing.
+      overlayOpacity.value = 1;
+      contentOpacity.value = 1;
+      contentScale.value = 1;
+      iconScale.value = 1;
+      runOnJS(triggerHaptic)();
+      return;
+    }
+
     overlayOpacity.value = withTiming(1, { duration: 300 });
     contentOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
     contentScale.value = withDelay(
@@ -162,7 +182,7 @@ export default function CelebrationOverlay({
 
     // Trigger haptic
     runOnJS(triggerHaptic)();
-  }, [contentOpacity, contentScale, iconScale, overlayOpacity, triggerHaptic]);
+  }, [contentOpacity, contentScale, iconScale, overlayOpacity, reduceMotion, triggerHaptic]);
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
@@ -197,15 +217,18 @@ export default function CelebrationOverlay({
     <Pressable style={styles.container} onPress={handleDismiss}>
       <Animated.View style={[styles.overlay, overlayStyle]} />
 
-      {/* Particles */}
-      {Array.from({ length: 30 }).map((_, i) => (
-        <Particle
-          key={i}
-          index={i}
-          color={particleColors[i % particleColors.length]}
-          startDelay={300}
-        />
-      ))}
+      {/* Particles — suppressed entirely when Reduce Motion is on so users
+          with vestibular sensitivity do not see flying confetti. */}
+      {!reduceMotion &&
+        Array.from({ length: 30 }).map((_, i) => (
+          <Particle
+            key={i}
+            index={i}
+            color={particleColors[i % particleColors.length]}
+            startDelay={300}
+            reduceMotion={reduceMotion}
+          />
+        ))}
 
       <Animated.View style={[styles.content, contentStyle]}>
         <Animated.View

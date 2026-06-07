@@ -8,12 +8,12 @@ import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
-import { saveCompletedBreak, updateBreakRating, getTodayBreaks, getUserStats } from '@/services/breakHistory';
+import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
 import { STREAK_MILESTONES } from '@/constants/config';
 import { calculateDailyGoal } from '@/utils/validation';
 import { getLevelTitle } from '@/constants/levels';
@@ -70,103 +70,109 @@ function BreakSessionScreen() {
   const savedRef = useRef(false);
   const previousLevelRef = useRef(currentLevel);
 
-  // Track the saved break ID so we can update it with rating later
-  const savedBreakIdRef = useRef<string | null>(null);
-  const savedFeedbackUpdateKeyRef = useRef<string | null>(null);
+  // Persisting the break is deferred until the user either submits feedback
+  // (so rating + reliefScore land in the record) or explicitly finishes from
+  // the completion screen. This avoids the historic two-step save+update flow
+  // that briefly exposed rating=null records to the recommendation engine.
+  const persistBreakRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Save completed break to storage when session completes
   useEffect(() => {
-    if (state.phase === 'completion' && state.exercise && !savedRef.current) {
+    persistBreakRef.current = async () => {
+      if (savedRef.current) return;
+      const exercise = state.exercise;
+      if (!exercise) return;
+      if (state.phase !== 'completion' && state.phase !== 'feedback') return;
+
       savedRef.current = true;
 
-      // Capture exercise in a local const to avoid stale references in async code
-      const exercise = state.exercise;
+      const saveResult = await saveCompletedBreak({
+        breakId: exercise.id,
+        title: exercise.title,
+        category: exercise.category,
+        icon: exercise.icon,
+        color: exercise.color,
+        duration: stats.totalDuration,
+        stepsCompleted: stats.stepsCompleted,
+        totalSteps: stats.totalSteps,
+        xpEarned: stats.xpEarned,
+        rating: state.feedbackRating,
+        reliefScore: state.feedbackReliefScore,
+        completedAt: new Date().toISOString(),
+      });
 
-      const saveAndNotify = async () => {
-        // Save the completed break to history
-        const saveResult = await saveCompletedBreak({
-          breakId: exercise.id,
-          title: exercise.title,
-          category: exercise.category,
-          icon: exercise.icon,
-          color: exercise.color,
-          duration: stats.totalDuration,
-          stepsCompleted: stats.stepsCompleted,
-          totalSteps: stats.totalSteps,
-          xpEarned: stats.xpEarned,
-          rating: state.feedbackRating,
-          reliefScore: state.feedbackReliefScore,
-          completedAt: new Date().toISOString(),
-        });
-
-        if (!saveResult.success && __DEV__) {
+      if (!saveResult.success) {
+        // Allow a retry on the next trigger (e.g., user taps Done again).
+        savedRef.current = false;
+        if (__DEV__) {
           console.warn('Failed to save break to history:', saveResult.error);
         }
+        return;
+      }
 
-        // Schedule next break reminder with error handling
-        try {
-          await scheduleBreakReminder();
-        } catch (error) {
-          if (__DEV__) {
-            console.warn('Failed to schedule break reminder:', error);
-          }
-          // Non-blocking - continue with the rest of the flow
+      try {
+        await scheduleBreakReminder();
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Failed to schedule break reminder:', error);
         }
+      }
 
-        if (!saveResult.success) {
-          return;
-        }
+      trackBreakCompletion(exercise.category, Math.round(stats.totalDuration / 60));
+      addRecentBreak(exercise.id);
+      checkAndUnlockAchievements();
 
-        // Store the saved break ID for later rating update
-        if (saveResult.breakId) {
-          savedBreakIdRef.current = saveResult.breakId;
-        }
+      try {
+        const todayBreaks = await getTodayBreaks();
+        const userStats = await getUserStats();
+        const dailyGoal = calculateDailyGoal(userStats.weeklyGoal);
 
-        // BreakHistory now owns progress/streak projection updates.
-        // Keep auxiliary preferences/achievement tracking here.
-        trackBreakCompletion(exercise.category, Math.round(stats.totalDuration / 60));
-        addRecentBreak(exercise.id);
-
-        // Check for new achievements
-        checkAndUnlockAchievements();
-
-        // Check if daily goal is complete with error handling
-        try {
-          const todayBreaks = await getTodayBreaks();
-          const userStats = await getUserStats();
-          const dailyGoal = calculateDailyGoal(userStats.weeklyGoal);
-
-          if (todayBreaks.length === dailyGoal) {
-            // Just completed daily goal - create in-app notification
-            addNotification(createGoalNotification());
-            try {
-              await sendGoalCompletedNotification();
-            } catch (notifError) {
-              if (__DEV__) {
-                console.warn('Failed to send goal notification:', notifError);
-              }
+        if (todayBreaks.length === dailyGoal) {
+          addNotification(createGoalNotification());
+          try {
+            await sendGoalCompletedNotification();
+          } catch (notifError) {
+            if (__DEV__) {
+              console.warn('Failed to send goal notification:', notifError);
             }
           }
-        } catch (error) {
-          if (__DEV__) {
-            console.warn('Failed to check daily goal:', error);
-          }
         }
-
-        // Check for streak milestones
-        const latestStreak = useUserStore.getState().progress.currentStreak;
-        if (STREAK_MILESTONES.includes(latestStreak as typeof STREAK_MILESTONES[number])) {
-          addNotification(createStreakNotification(latestStreak));
-        }
-      };
-
-      saveAndNotify().catch((error) => {
+      } catch (error) {
         if (__DEV__) {
-          console.error('Error in saveAndNotify:', error);
+          console.warn('Failed to check daily goal:', error);
+        }
+      }
+
+      const latestStreak = useUserStore.getState().progress.currentStreak;
+      if (STREAK_MILESTONES.includes(latestStreak as typeof STREAK_MILESTONES[number])) {
+        addNotification(createStreakNotification(latestStreak));
+      }
+    };
+  });
+
+  // Persist immediately when the user submits feedback so the recommendation
+  // engine sees the rating and reliefScore on the first read.
+  useEffect(() => {
+    if (state.phase === 'feedback' && !savedRef.current) {
+      void persistBreakRef.current?.().catch((error) => {
+        if (__DEV__) {
+          console.error('Error persisting break after feedback:', error);
         }
       });
     }
-  }, [state.phase, state.exercise, state.feedbackRating, state.feedbackReliefScore, stats, trackBreakCompletion, addRecentBreak, checkAndUnlockAchievements, addNotification, currentLevel]);
+  }, [state.phase]);
+
+  // Final safety net: if the screen unmounts without an explicit save (e.g.,
+  // hardware back gesture from the completion screen), persist whatever state
+  // we have so the break still counts toward today's stats and streak.
+  useEffect(() => {
+    return () => {
+      if (!savedRef.current) {
+        void persistBreakRef.current?.().catch(() => {
+          // Silent — unmount path, nothing to surface to the user.
+        });
+      }
+    };
+  }, []);
 
   // Check for level up after XP is added
   useEffect(() => {
@@ -178,45 +184,22 @@ function BreakSessionScreen() {
     }
   }, [currentLevel, addNotification]);
 
-  // Update rating on the already-saved break when feedback is submitted
-  useEffect(() => {
-    if (
-      state.phase === 'feedback' &&
-      state.feedbackRating &&
-      state.feedbackReliefScore &&
-      savedBreakIdRef.current
-    ) {
-      const feedbackUpdateKey = [
-        savedBreakIdRef.current,
-        state.feedbackRating,
-        state.feedbackReliefScore,
-      ].join(':');
-
-      if (savedFeedbackUpdateKeyRef.current === feedbackUpdateKey) {
-        return;
-      }
-
-      savedFeedbackUpdateKeyRef.current = feedbackUpdateKey;
-
-      // Only update the rating on the existing break, don't create a new one
-      updateBreakRating(
-        savedBreakIdRef.current,
-        state.feedbackRating,
-        state.feedbackReliefScore
-      ).catch(() => {
-        // Silently handle update error - user experience not impacted
-        savedFeedbackUpdateKeyRef.current = null;
-      });
-    }
-  }, [state.phase, state.feedbackRating, state.feedbackReliefScore]);
-
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     actions.endSession();
   }, [actions]);
 
-  const handleFinish = useCallback(() => {
+  const handleFinish = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!savedRef.current) {
+      try {
+        await persistBreakRef.current?.();
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Error persisting break on finish:', error);
+        }
+      }
+    }
     router.back();
   }, [router]);
 
@@ -325,8 +308,8 @@ function BreakSessionScreen() {
       case 'preparation':
         return (
           <Animated.View
-            entering={FadeIn.duration(300)}
-            exiting={FadeOut.duration(200)}
+            entering={FadeIn.duration(300).reduceMotion(ReduceMotion.System)}
+            exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.System)}
             style={styles.preparationContainer}
           >
             <Text style={[styles.preparationTitle, { color: theme.text.secondary }]}>{t('breakSession.preparation.title')}</Text>
@@ -348,7 +331,7 @@ function BreakSessionScreen() {
       case 'transition':
         return (
           <Animated.View
-            entering={FadeIn.duration(300)}
+            entering={FadeIn.duration(300).reduceMotion(ReduceMotion.System)}
             style={styles.exerciseContainer}
           >
             {/* Progress */}
@@ -379,7 +362,7 @@ function BreakSessionScreen() {
       case 'completion':
         return (
           <Animated.View
-            entering={FadeIn.duration(400)}
+            entering={FadeIn.duration(400).reduceMotion(ReduceMotion.System)}
             style={styles.completionContainer}
           >
             <BreakCompletion
@@ -412,7 +395,7 @@ function BreakSessionScreen() {
       case 'feedback':
         return (
           <Animated.View
-            entering={FadeIn.duration(300)}
+            entering={FadeIn.duration(300).reduceMotion(ReduceMotion.System)}
             style={styles.completionContainer}
           >
             <View style={styles.feedbackComplete}>

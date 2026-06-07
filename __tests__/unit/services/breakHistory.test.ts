@@ -524,6 +524,82 @@ describe('Break History Service', () => {
       expect(await AsyncStorage.getItem(STORAGE_KEYS.STREAK_DATA)).toBe(JSON.stringify(DEFAULT_STREAK_DATA));
       consoleSpy.mockRestore();
     });
+
+    it('increments streak across a spring-forward DST transition', async () => {
+      // Pre-seed: yesterday was 2026-03-07 (the Saturday before the typical US
+      // spring-forward window) — using an explicit date string.
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.STREAK_DATA,
+        JSON.stringify({
+          currentStreak: 3,
+          longestStreak: 5,
+          lastBreakDate: '2026-03-07',
+          streakHistory: [{ date: '2026-03-07', count: 1 }],
+        })
+      );
+
+      // Today: 2026-03-08, just after the DST jump (local 03:00).
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(2026, 2, 8, 9, 0, 0));
+
+      try {
+        await saveCompletedBreak({
+          breakId: 'eye-rest',
+          title: 'Eye Rest',
+          category: 'quick',
+          icon: '👁️',
+          color: '#06FFA5',
+          duration: 60,
+          stepsCompleted: 1,
+          totalSteps: 1,
+          xpEarned: 10,
+          rating: 'good' as const,
+          completedAt: new Date().toISOString(),
+        });
+
+        const data = await getStreakData();
+        expect(data.lastBreakDate).toBe('2026-03-08');
+        expect(data.currentStreak).toBe(4);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('keeps streak unchanged for a second break on the same day across DST', async () => {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.STREAK_DATA,
+        JSON.stringify({
+          currentStreak: 4,
+          longestStreak: 5,
+          lastBreakDate: '2026-03-08',
+          streakHistory: [{ date: '2026-03-08', count: 1 }],
+        })
+      );
+
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(2026, 2, 8, 23, 30, 0));
+
+      try {
+        await saveCompletedBreak({
+          breakId: 'eye-rest',
+          title: 'Eye Rest',
+          category: 'quick',
+          icon: '👁️',
+          color: '#06FFA5',
+          duration: 60,
+          stepsCompleted: 1,
+          totalSteps: 1,
+          xpEarned: 10,
+          rating: 'good' as const,
+          completedAt: new Date().toISOString(),
+        });
+
+        const data = await getStreakData();
+        expect(data.currentStreak).toBe(4);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   describe('updateBreakRating', () => {

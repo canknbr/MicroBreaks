@@ -33,9 +33,15 @@ export default function BreakProgress({
   }));
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}, ${Math.round(progress)} percent complete`}
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(progress) }}
+    >
       {/* Step Counter */}
-      <View style={styles.stepCounter}>
+      <View style={styles.stepCounter} importantForAccessibility="no">
         <Text style={styles.stepLabel}>Step</Text>
         <Text style={[styles.stepNumber, { color }]}>
           {currentStep + 1}
@@ -44,7 +50,7 @@ export default function BreakProgress({
       </View>
 
       {/* Progress Bar */}
-      <View style={styles.progressBar}>
+      <View style={styles.progressBar} importantForAccessibility="no">
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressFill, progressStyle]}>
             <LinearGradient
@@ -58,7 +64,9 @@ export default function BreakProgress({
       </View>
 
       {/* Percentage */}
-      <Text style={styles.percentage}>{Math.round(progress)}%</Text>
+      <Text style={styles.percentage} importantForAccessibility="no">
+        {Math.round(progress)}%
+      </Text>
     </View>
   );
 }

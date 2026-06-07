@@ -93,6 +93,43 @@ export default {
       subtitle: 'Start your wellness journey by taking your first break',
       action: 'Take First Break',
     },
+    motivationalQuotes: [
+      { text: 'Small breaks lead to big breakthroughs.', author: 'Wellness Wisdom' },
+      { text: 'Your body keeps the score. Listen to it.', author: 'Movement Matters' },
+      { text: 'Rest is not idleness, it is recharging.', author: 'Mindful Living' },
+      { text: 'Every stretch is a step toward better health.', author: 'Body Balance' },
+      { text: 'Pause. Breathe. Continue stronger.', author: 'Focus Flow' },
+      { text: 'The best time to take a break was 5 minutes ago. The second best time is now.', author: 'Break Better' },
+      { text: 'Your future self will thank you for this break.', author: 'Self Care' },
+      { text: 'Movement is medicine for the mind.', author: 'Active Mind' },
+    ],
+    celebrations: {
+      dismissHint: 'Tap anywhere to continue',
+      goal_complete: {
+        title: 'Goal Complete!',
+        subtitle: "You've crushed your daily goal",
+      },
+      new_level: {
+        title: 'Level Up!',
+        subtitle: 'You reached a new level',
+      },
+      streak_milestone: {
+        title: 'Streak Milestone!',
+        subtitle: 'days in a row — incredible!',
+      },
+      first_break: {
+        title: 'First Break!',
+        subtitle: 'Your wellness journey begins',
+      },
+      achievement: {
+        title: 'Achievement Unlocked!',
+        subtitle: 'You earned a new badge',
+      },
+      perfect_week: {
+        title: 'Perfect Week!',
+        subtitle: 'You completed all daily goals',
+      },
+    },
   },
 
   // ============================================
@@ -167,12 +204,25 @@ export default {
       title: 'How was this break?',
       subtitle: 'Your feedback helps us improve',
       thankYou: 'Thank you!',
+      heading: 'How did that feel?',
+      reliefHeading: 'How much better do you feel now?',
       ratings: {
         1: 'Poor',
         2: 'Fair',
         3: 'Good',
         4: 'Great',
         5: 'Excellent',
+      },
+      buttons: {
+        good: 'Helpful',
+        neutral: 'Okay',
+        bad: 'Not helpful',
+      },
+      relief: {
+        worse: 'Worse',
+        same: 'Same',
+        better: 'Better',
+        muchBetter: 'Much better',
       },
     },
     confirmEnd: {
@@ -629,6 +679,12 @@ export default {
     presetPicker: {
       title: 'Focus Preset',
       subtitle: 'Choose your work rhythm',
+    },
+    pushNotifications: {
+      workCompleteTitle: 'Focus session complete!',
+      workCompleteBody: 'Time for a break!',
+      breakCompleteTitle: 'Break complete!',
+      breakCompleteBody: 'Ready to focus?',
     },
   },
 

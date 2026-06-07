@@ -181,4 +181,71 @@ describe('recommendation severity weighting', () => {
     expect(suggestion?.exercise.id).not.toBe('eye-rest');
     expect(getMatchedPainAreas(suggestion?.exercise ?? eyeFigure8, ['eyes'])).toContain('eyes');
   });
+
+  // Table-driven coverage requested by audit task C-BUG11: a single recent
+  // outcome should not be able to invert the ordering between two
+  // pain-targeted exercises when the outcome direction is decisive.
+  describe('outcome-direction × severity matrix', () => {
+    type Severity = 'mild' | 'moderate' | 'severe';
+    type Rating = 'good' | 'neutral' | 'bad';
+    type Relief = 'worse' | 'same' | 'better' | 'much_better';
+
+    const cases: Array<{
+      label: string;
+      severity: Severity;
+      rating: Rating;
+      relief: Relief;
+      expectsRecommendingSame: boolean;
+    }> = [
+      // A clearly bad past outcome on eye-rest should *never* end with eye-rest
+      // as the suggestion regardless of severity.
+      { label: 'mild + bad/worse → switch', severity: 'mild', rating: 'bad', relief: 'worse', expectsRecommendingSame: false },
+      { label: 'moderate + bad/worse → switch', severity: 'moderate', rating: 'bad', relief: 'worse', expectsRecommendingSame: false },
+      { label: 'severe + bad/worse → switch', severity: 'severe', rating: 'bad', relief: 'worse', expectsRecommendingSame: false },
+
+      // A neutral past outcome is allowed to keep eye-rest in the running.
+      // We only assert the engine continues to return *some* eye-targeted
+      // exercise — direction agnostic.
+      { label: 'mild + neutral/same → eye-area suggested', severity: 'mild', rating: 'neutral', relief: 'same', expectsRecommendingSame: true },
+      { label: 'moderate + neutral/same → eye-area suggested', severity: 'moderate', rating: 'neutral', relief: 'same', expectsRecommendingSame: true },
+
+      // A strongly positive past outcome should keep eye-rest at the top.
+      { label: 'mild + good/much_better → reinforces eye-rest', severity: 'mild', rating: 'good', relief: 'much_better', expectsRecommendingSame: true },
+      { label: 'severe + good/much_better → reinforces eye-rest', severity: 'severe', rating: 'good', relief: 'much_better', expectsRecommendingSame: true },
+    ];
+
+    it.each(cases)(
+      '$label',
+      ({ severity, rating, relief, expectsRecommendingSame }) => {
+        const suggestion = getSuggestedBreak(
+          ['eyes'],
+          { eyes: severity },
+          ['quick'],
+          [],
+          0,
+          [
+            {
+              breakId: 'eye-rest',
+              category: 'quick',
+              rating,
+              reliefScore: relief,
+            },
+          ]
+        );
+
+        expect(suggestion).not.toBeNull();
+
+        if (expectsRecommendingSame) {
+          // We do not require an *exact* match — eye-rest may legitimately tie
+          // with another eye-targeted option — but the recommendation must
+          // still address the user's eye-area need.
+          expect(
+            getMatchedPainAreas(suggestion?.exercise as Exercise, ['eyes'])
+          ).toContain('eyes');
+        } else {
+          expect(suggestion?.exercise.id).not.toBe('eye-rest');
+        }
+      }
+    );
+  });
 });

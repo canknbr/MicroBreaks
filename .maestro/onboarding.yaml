@@ -1,0 +1,53 @@
+# Onboarding happy path — Welcome → Permissions → first screen.
+# source: app/(onboarding)/*.tsx
+
+appId: com.cankanbur.MicroBreaks
+---
+- clearState
+- launchApp
+
+# Welcome
+- assertVisible: "Welcome to MicroBreaks"
+- tapOn: "Get Started"
+
+# Pain area selection (multi-select)
+- assertVisible:
+    text: "Where do you feel it most?"
+- tapOn: "Eyes"
+- tapOn: "Continue"
+
+# Severity question
+- assertVisible:
+    text: "How severe is it"
+    contains: true
+- tapOn: "Moderate"
+- tapOn: "Continue"
+
+# Notification permission — verify the new sample banner from B-UX3
+- assertVisible: "Do you want reset reminders on by default?"
+- assertVisible: "You'll see something like this:"
+- tapOn: "Enable Reminders"
+
+# System permission prompt (granted by emulator preset)
+- runFlow:
+    when:
+      visible:
+        text: "Allow"
+    commands:
+      - tapOn: "Allow"
+
+# Premium pitch — pick free for E2E
+- assertVisible:
+    text: "Continue"
+    contains: true
+- tapOn:
+    text: "Continue"
+    contains: true
+- runFlow:
+    when:
+      visible: "Continue Free"
+    commands:
+      - tapOn: "Continue Free"
+
+# We should land on the home tab
+- assertVisible: "Take a Break"

@@ -115,15 +115,19 @@ export const Colors = {
     },
 
     // Status Colors
+    // The `*Background` tokens are the muted surface variant of each status
+    // colour — used as a chip / banner background under the matching solid
+    // text colour. They were previously called `*Light` which read wrong in
+    // dark mode where they map to a dark surface (B-UX7).
     status: {
       error: ColorPalette.brand.red,
-      errorLight: '#FEE2E2',
+      errorBackground: '#FEE2E2',
       warning: ColorPalette.brand.orange,
-      warningLight: '#FEF3C7',
+      warningBackground: '#FEF3C7',
       success: ColorPalette.brand.teal,
-      successLight: '#D1FAE5',
+      successBackground: '#D1FAE5',
       info: ColorPalette.brand.blue,
-      infoLight: '#DBEAFE',
+      infoBackground: '#DBEAFE',
     },
 
     // Border & Divider
@@ -224,13 +228,13 @@ export const Colors = {
     // Status Colors
     status: {
       error: ColorPalette.brand.coral,
-      errorLight: ColorPalette.neutral.darkGray,
+      errorBackground: ColorPalette.neutral.darkGray,
       warning: ColorPalette.brand.orange,
-      warningLight: ColorPalette.neutral.darkGray,
+      warningBackground: ColorPalette.neutral.darkGray,
       success: ColorPalette.brand.teal,
-      successLight: ColorPalette.neutral.darkGray,
+      successBackground: ColorPalette.neutral.darkGray,
       info: ColorPalette.brand.lightBlue,
-      infoLight: ColorPalette.neutral.darkGray,
+      infoBackground: ColorPalette.neutral.darkGray,
     },
 
     // Border & Divider

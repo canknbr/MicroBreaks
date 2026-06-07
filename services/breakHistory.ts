@@ -44,12 +44,22 @@ function getLocalDateString(date: Date): string {
 }
 
 /**
- * Get the start of day in local timezone
+ * Whole-calendar-day distance between two YYYY-MM-DD strings.
+ * Uses UTC midnight of the parsed Y/M/D so DST shifts (23h/25h days)
+ * do not collapse "yesterday" into "today" or drop a streak.
  */
-function getLocalStartOfDay(date: Date): Date {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
+function calendarDayDiff(laterStr: string, earlierStr: string): number {
+  const [ly, lm, ld] = laterStr.split('-').map(Number);
+  const [ey, em, ed] = earlierStr.split('-').map(Number);
+  if (
+    !Number.isFinite(ly) || !Number.isFinite(lm) || !Number.isFinite(ld) ||
+    !Number.isFinite(ey) || !Number.isFinite(em) || !Number.isFinite(ed)
+  ) {
+    return Number.NaN;
+  }
+  const laterUTC = Date.UTC(ly, lm - 1, ld);
+  const earlierUTC = Date.UTC(ey, em - 1, ed);
+  return Math.round((laterUTC - earlierUTC) / 86_400_000);
 }
 
 function createDefaultStreakData(): StreakData {
@@ -261,8 +271,7 @@ export async function getStreakData(): Promise<StreakData> {
 // Update streak based on break history
 async function updateStreak(): Promise<StreakData> {
   const streakData = await getStreakData();
-  const today = getLocalStartOfDay(new Date());
-  const todayStr = getLocalDateString(today);
+  const todayStr = getLocalDateString(new Date());
 
   const lastBreakDate = streakData.lastBreakDate;
 
@@ -272,12 +281,7 @@ async function updateStreak(): Promise<StreakData> {
     streakData.longestStreak = 1;
     streakData.lastBreakDate = todayStr;
   } else {
-    // Parse the stored date string as local date (YYYY-MM-DD format)
-    const [year, month, day] = lastBreakDate.split('-').map(Number);
-    const lastDate = new Date(year, month - 1, day);
-    lastDate.setHours(0, 0, 0, 0);
-
-    const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = calendarDayDiff(todayStr, lastBreakDate);
 
     if (diffDays === 0) {
       // Same day, streak unchanged

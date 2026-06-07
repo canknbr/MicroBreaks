@@ -18,7 +18,9 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/i18n/hooks';
 
 interface BreakCompletionProps {
   title: string;
@@ -39,6 +41,7 @@ export default function BreakCompletion({
   stats,
 }: BreakCompletionProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const iconScale = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const statsOpacity = useSharedValue(0);
@@ -47,6 +50,13 @@ export default function BreakCompletion({
   const ringRotation = useSharedValue(0);
 
   useEffect(() => {
+    // Reward the user with a single success haptic exactly once when the
+    // completion screen mounts. Combined with the on-screen "Great Job!"
+    // moment, this gives the finished break a tangible end beat.
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {
+      // Some test runs / unsupported devices — silent.
+    });
+
     // Staggered entrance animation
     iconScale.value = withSpring(1, { damping: 12, stiffness: 100 });
     titleOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
@@ -137,9 +147,21 @@ export default function BreakCompletion({
       </View>
 
       {/* Title */}
-      <Animated.View style={titleStyle}>
-        <Text style={[styles.title, { color: theme.text.primary }]}>Great Job!</Text>
-        <Text style={[styles.subtitle, { color: theme.text.secondary }]}>You completed {title}</Text>
+      <Animated.View
+        style={titleStyle}
+        accessibilityLiveRegion="polite"
+        accessibilityRole="header"
+        accessibilityLabel={`${t('breakSession.completion.greatJob', { defaultValue: 'Great Job!' })} ${t(
+          'breakSession.completion.youCompleted',
+          { title, defaultValue: `You completed ${title}` }
+        )}`}
+      >
+        <Text style={[styles.title, { color: theme.text.primary }]}>
+          {t('breakSession.completion.greatJob', { defaultValue: 'Great Job!' })}
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
+          {t('breakSession.completion.youCompleted', { title, defaultValue: `You completed ${title}` })}
+        </Text>
       </Animated.View>
 
       {/* Stats Card */}

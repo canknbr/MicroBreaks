@@ -634,28 +634,37 @@ export default function PaywallContent({
         )}
       </Pressable>
 
-      <View style={styles.secondaryActions}>
+      {/* Continue free is rendered as a real secondary button with the same
+          width and a visible border so it is not hidden as a low-contrast
+          link — this is the dark-pattern Calm/Headspace get flagged for in
+          mindfulness app reviews. */}
+      {!hasActiveSubscription && (
         <Pressable
-          onPress={handleRestore}
-          disabled={isLoading}
-          accessibilityRole="button"
-          accessibilityLabel="Restore purchases"
-        >
-          <Text style={[styles.linkButton, { color: theme.accent.secondary }]}>
-            Restore Purchases
-          </Text>
-        </Pressable>
-
-        <Pressable
+          style={[
+            styles.secondaryButton,
+            { borderColor: theme.border.subtle, backgroundColor: 'transparent' },
+          ]}
           onPress={onContinueFree}
           accessibilityRole="button"
           accessibilityLabel={copy.primaryFallback}
         >
-          <Text style={[styles.linkButton, { color: theme.text.muted }]}>
+          <Text style={[styles.secondaryButtonText, { color: theme.text.primary }]}>
             {copy.primaryFallback}
           </Text>
         </Pressable>
-      </View>
+      )}
+
+      <Pressable
+        onPress={handleRestore}
+        disabled={isLoading}
+        style={styles.restoreRow}
+        accessibilityRole="button"
+        accessibilityLabel="Restore purchases"
+      >
+        <Text style={[styles.linkButton, { color: theme.accent.secondary }]}>
+          Restore Purchases
+        </Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -894,16 +903,29 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
     paddingHorizontal: 20,
   },
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '800',
   },
-  secondaryActions: {
+  secondaryButton: {
+    minHeight: 56,
+    borderRadius: 20,
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 14,
+    borderWidth: 1.5,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  restoreRow: {
+    alignItems: 'center',
+    paddingVertical: 6,
   },
   linkButton: {
     fontSize: 14,

@@ -204,23 +204,26 @@ export const Typography = {
     letterSpacing: LetterSpacing.normal,
   },
 
-  // Headline Styles (24-32px) - Serif for main headings
+  // Headline Styles (24-32px) — Inter (sans-serif) for mobile legibility.
+  // The serif is reserved for the display tier (36px+) where it reads as
+  // intentional editorial rather than as awkward small-size serif (audit
+  // B-UX8). The bold weight + tight letter spacing keep the same hierarchy.
   headlineLarge: {
-    fontFamily: FontFamily.serifBold,
+    fontFamily: FontFamily.bold,
     fontSize: FontSize.headline.large,
     lineHeight: LineHeight.headline.large,
     fontWeight: FontWeight.bold,
-    letterSpacing: LetterSpacing.normal,
+    letterSpacing: LetterSpacing.tight,
   },
   headlineMedium: {
-    fontFamily: FontFamily.serifBold,
+    fontFamily: FontFamily.bold,
     fontSize: FontSize.headline.medium,
     lineHeight: LineHeight.headline.medium,
     fontWeight: FontWeight.bold,
-    letterSpacing: LetterSpacing.normal,
+    letterSpacing: LetterSpacing.tight,
   },
   headlineSmall: {
-    fontFamily: FontFamily.serifBold,
+    fontFamily: FontFamily.bold,
     fontSize: FontSize.headline.small,
     lineHeight: LineHeight.headline.small,
     fontWeight: FontWeight.bold,

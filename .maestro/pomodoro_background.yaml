@@ -1,0 +1,30 @@
+# Pomodoro background recovery — confirms B-UX2 and the timer
+# foreground-resume logic in services/timerService.ts.
+# source: components/home/TimerWidget.tsx, services/timerService.ts
+
+appId: com.cankanbur.MicroBreaks
+---
+- launchApp
+
+# Make sure we are on the home tab so the timer widget is visible.
+- assertVisible: "Take a Break"
+
+# Start the timer
+- tapOn: "Start Focus"
+- assertVisible:
+    text: "25:"
+    contains: true
+
+# Note the visible time, send to background, wait, come back.
+- pressKey: "Home"
+- waitForAnimationToEnd:
+    timeout: 6000
+- launchApp:
+    arguments: {}
+
+# Timer should still be active and showing < 25:00 — at least the seconds
+# digit should have moved.
+- assertVisible:
+    text: "24:"
+    contains: true
+    timeout: 8000
