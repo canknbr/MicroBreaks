@@ -33,6 +33,7 @@ import { initializeFirestore } from '@/services/firebase/firestore';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
 import { initializeTimerService, shutdownTimerService } from '@/services/timerService';
+import { widgetDataBridge } from '@/services/widgets/widgetDataBridge';
 import { useUserStore, flushProgressSideEffects } from '@/store/userStore';
 import OfflineBanner from '@/components/common/OfflineBanner';
 
@@ -261,6 +262,7 @@ export default function RootLayout() {
     }
 
     shutdownTimerService();
+    widgetDataBridge.shutdown();
   }, [reportOptionalBootstrapFailure, teardownUserSession]);
 
   const prepareApp = useCallback(async () => {
@@ -330,6 +332,13 @@ export default function RootLayout() {
           name: 'timer_service',
           run: () => {
             initializeTimerService();
+          },
+        },
+        {
+          name: 'widget_data_bridge',
+          run: async () => {
+            // Best-effort: a widget snapshot failure must not block boot.
+            await widgetDataBridge.initialize();
           },
         },
         {
