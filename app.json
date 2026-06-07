@@ -16,7 +16,9 @@
       "associatedDomains": ["applinks:microbreaks.app"],
       "infoPlist": {
         "UIBackgroundModes": ["fetch", "remote-notification"],
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "NSSupportsLiveActivities": true,
+        "NSSupportsLiveActivitiesFrequentUpdates": true
       },
       "entitlements": {
         "com.apple.security.application-groups": ["group.com.cankanbur.MicroBreaks"]

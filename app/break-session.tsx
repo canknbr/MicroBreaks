@@ -45,6 +45,7 @@ import {
 import { AnimationType } from '@/data/exercises';
 import { ScreenErrorBoundary } from '@/components/error';
 import { resolveBreakSessionBreakId } from '@/features/break-session/sessionParams';
+import { useBreakLiveActivity } from '@/services/widgets/liveActivity';
 
 function BreakSessionScreen() {
   const router = useRouter();
@@ -54,6 +55,31 @@ function BreakSessionScreen() {
   const resolvedBreakId = resolveBreakSessionBreakId(breakId);
 
   const { state, actions, stats, progress } = useBreakSession(resolvedBreakId);
+
+  // Live Activity (iOS Dynamic Island + Lock Screen) — bridges the
+  // session timer into the system Activity API. No-ops on Android, web,
+  // and pre-prebuild iOS so call sites stay platform-agnostic.
+  useBreakLiveActivity({
+    sessionKey: state.exercise ? `${state.exercise.id}-${state.currentStepIndex}` : null,
+    context: state.exercise
+      ? {
+          breakId: state.exercise.id,
+          title: state.exercise.title,
+          icon: state.exercise.icon,
+          colorHex: state.exercise.color,
+          totalSeconds: state.exercise.totalDuration,
+        }
+      : null,
+    state: state.currentStep
+      ? {
+          timeRemainingSec: state.timeRemaining,
+          isPaused: state.isPaused,
+          progress: Math.max(0, Math.min(1, progress / 100)),
+          stepLabel: state.currentStep.instruction,
+        }
+      : null,
+    isFinished: state.phase === 'completion' || state.phase === 'feedback',
+  });
 
   // User store actions
   const trackBreakCompletion = useUserStore((state) => state.trackBreakCompletion);

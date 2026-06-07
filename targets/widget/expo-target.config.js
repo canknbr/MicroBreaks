@@ -22,5 +22,7 @@ module.exports = {
   entitlements: {
     'com.apple.security.application-groups': ['group.com.cankanbur.MicroBreaks'],
   },
-  deploymentTarget: '16.0',
+  // 16.2 unlocks Live Activity frequent push updates (the timer needs
+  // sub-second granularity in the last 10 seconds) and Dynamic Island.
+  deploymentTarget: '16.2',
 };

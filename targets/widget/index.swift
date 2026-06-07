@@ -12,5 +12,8 @@ struct MicroBreaksWidgetBundle: WidgetBundle {
   var body: some Widget {
     MicroBreaksHomeWidget()
     MicroBreaksLockScreenWidget()
+    if #available(iOS 16.2, *) {
+      BreakLiveActivity()
+    }
   }
 }
