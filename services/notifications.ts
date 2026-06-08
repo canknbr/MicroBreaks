@@ -17,6 +17,7 @@ import {
 } from '@/constants/config';
 import { calculateDailyGoal } from '@/utils/validation';
 import { getEffectiveReminderInterval } from '@/features/workday/patterns';
+import { composeAdaptiveCopy, type PainTag as AdaptivePainTag } from './notifications/adaptiveCopy';
 
 // Notification channel IDs
 export const NOTIFICATION_CHANNELS = {
@@ -550,7 +551,40 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       workPattern
     ),
   });
-  const message = pickBreakReminderMessage(painAreas);
+
+  // Resolve adaptive context — these reads are best-effort. If any data
+  // source fails we fall back to the legacy pool so the notification
+  // still fires with a reasonable string.
+  let message: { title: string; body: string } | null = null;
+  try {
+    const [todayBreaks, streakData, userStats] = await Promise.all([
+      getTodayBreaks(),
+      getStreakData(),
+      getUserStats(),
+    ]);
+    const dailyGoal = calculateDailyGoal(userStats.weeklyGoal);
+    const lastBreakAt = todayBreaks
+      .map((b) => new Date(b.completedAt).getTime())
+      .filter((n) => Number.isFinite(n))
+      .sort((a, b) => b - a)[0] ?? null;
+
+    const adaptive = composeAdaptiveCopy({
+      now: nextTime,
+      currentStreak: streakData.currentStreak,
+      todayBreakCount: todayBreaks.length,
+      dailyGoal,
+      lastBreakAt,
+      painAreas: painAreas as AdaptivePainTag[],
+    });
+    message = { title: adaptive.title, body: adaptive.body };
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('[notifications] adaptive copy failed, falling back', err);
+    }
+  }
+  if (!message) {
+    message = pickBreakReminderMessage(painAreas);
+  }
 
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
