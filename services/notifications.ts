@@ -19,6 +19,8 @@ import { calculateDailyGoal } from '@/utils/validation';
 import { getEffectiveReminderInterval } from '@/features/workday/patterns';
 import { composeAdaptiveCopy, type PainTag as AdaptivePainTag } from './notifications/adaptiveCopy';
 import { decideNotificationAction } from './notifications/predictiveDetection';
+import { findNextFreeSlot } from './notifications/calendarAwareness';
+import { getBusyWindows } from './notifications/calendarSource';
 
 // Notification channel IDs
 export const NOTIFICATION_CHANNELS = {
@@ -545,13 +547,51 @@ export async function scheduleBreakReminder(): Promise<string | null> {
   const workPattern = onboarding?.state?.data?.workPattern ?? null;
   const painAreas = onboarding?.state?.data?.painAreas ?? [];
 
-  const nextTime = getNextNotificationTime({
+  let nextTime = getNextNotificationTime({
     ...settings,
     reminderIntervalMinutes: getEffectiveReminderInterval(
       settings.reminderIntervalMinutes,
       workPattern
     ),
   });
+
+  // Calendar-aware shift: if the proposed reminder lands inside a
+  // meeting, push it to the next free slot. Fails open — empty
+  // busy windows leave nextTime untouched.
+  try {
+    const busy = await getBusyWindows(
+      new Date(nextTime.getTime() - 5 * 60_000),
+      new Date(nextTime.getTime() + 90 * 60_000)
+    );
+    if (busy.length > 0) {
+      const shifted = findNextFreeSlot(nextTime, busy);
+      if (shifted == null) {
+        addBreadcrumb(
+          'Break reminder skipped — no free slot within 90 min of proposed time',
+          'notifications',
+          'info',
+          { proposedHour: nextTime.getHours(), busyCount: busy.length }
+        );
+        return null;
+      }
+      if (shifted.getTime() !== nextTime.getTime()) {
+        addBreadcrumb(
+          'Break reminder shifted past a calendar event',
+          'notifications',
+          'info',
+          {
+            shiftMinutes: Math.round((shifted.getTime() - nextTime.getTime()) / 60_000),
+            busyCount: busy.length,
+          }
+        );
+        nextTime = shifted;
+      }
+    }
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('[notifications] calendar awareness failed, continuing', err);
+    }
+  }
 
   // Resolve adaptive context — these reads are best-effort. If any data
   // source fails we fall back to the legacy pool so the notification

@@ -73,7 +73,15 @@ jest.mock('@/services/breakHistory', () => ({
   getUserStats: jest.fn().mockResolvedValue({ totalBreaks: 0, totalMinutes: 0, totalXP: 0, level: 1, weeklyGoal: 20, weeklyProgress: 0 }),
 }));
 
+// Mock calendar source so tests can drive busy-window scenarios.
+// Default: no calendar events (matches the real behavior when
+// expo-calendar isn't installed).
+jest.mock('@/services/notifications/calendarSource', () => ({
+  getBusyWindows: jest.fn().mockResolvedValue([]),
+}));
+
 import { getTodayBreaks, getStreakData, getUserStats } from '@/services/breakHistory';
+import { getBusyWindows } from '@/services/notifications/calendarSource';
 
 describe('Notification Service', () => {
   beforeEach(async () => {
@@ -473,6 +481,80 @@ describe('Notification Service', () => {
 
       expect(result).toBe('notification-id');
       expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+    });
+
+    it('should shift the reminder past a calendar meeting at the proposed time', async () => {
+      // Build a meeting that brackets the default 25-min reminder time.
+      const interval = DEFAULT_NOTIFICATION_SETTINGS.reminderIntervalMinutes;
+      const nowMs = Date.now();
+      const meetingStart = nowMs + (interval - 5) * 60_000;
+      const meetingEnd = nowMs + (interval + 15) * 60_000;
+
+      (getBusyWindows as jest.Mock).mockResolvedValueOnce([
+        { startMs: meetingStart, endMs: meetingEnd, title: 'Standup' },
+      ]);
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+      expect(result).toBe('notification-id');
+
+      const scheduledDate = (Notifications.scheduleNotificationAsync as jest.Mock)
+        .mock.calls[0][0].trigger.date as Date;
+      // Must be at or after the meeting's end (+buffer).
+      expect(scheduledDate.getTime()).toBeGreaterThanOrEqual(meetingEnd);
+    });
+
+    it('should skip scheduling when every slot within lookahead is busy', async () => {
+      // 3 hours of solid meetings — past the 90 min lookahead budget.
+      const nowMs = Date.now();
+      (getBusyWindows as jest.Mock).mockResolvedValueOnce([
+        { startMs: nowMs, endMs: nowMs + 3 * 60 * 60_000, title: 'Wall of meetings' },
+      ]);
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+      expect(result).toBeNull();
+      expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+    });
+
+    it('should keep the original time when calendar reports no busy windows', async () => {
+      (getBusyWindows as jest.Mock).mockResolvedValueOnce([]);
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+      expect(result).toBe('notification-id');
+    });
+
+    it('should continue when calendar lookup throws (fail-open)', async () => {
+      (getBusyWindows as jest.Mock).mockRejectedValueOnce(new Error('calendar permission denied'));
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+      expect(result).toBe('notification-id');
     });
   });
 
