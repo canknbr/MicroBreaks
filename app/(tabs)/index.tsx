@@ -57,7 +57,9 @@ import {
   CelebrationOverlay,
   TimerWidget,
   PresetPicker,
+  MissionsCard,
 } from '@/components/home';
+import { useDailyMissions } from '@/hooks/useDailyMissions';
 import {
   useHomeData,
   useGreeting,
@@ -108,6 +110,9 @@ export default function HomeScreen() {
 
   // Notification count from store
   const unreadCount = useNotificationStore((state) => state.notifications.filter((n) => !n.read).length);
+
+  // Daily missions
+  const dailyMissions = useDailyMissions();
 
   // Timer state
   const timerPreferences = useTimerPreferences();
@@ -726,6 +731,13 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
           </View>
+
+          <MissionsCard
+            missions={dailyMissions.missions}
+            bonusXPEarned={dailyMissions.bonusXPEarned}
+            completedCount={dailyMissions.completedCount}
+            delay={600}
+          />
 
           <TimerWidget onPresetPress={() => setShowPresetPicker(true)} />
 
