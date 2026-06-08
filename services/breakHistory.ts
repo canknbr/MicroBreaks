@@ -27,6 +27,7 @@ import { syncService } from '@/services/sync';
 import { useUserStore } from '@/store/userStore';
 import { toMindfulSample } from '@/services/health/mindfulMinutes';
 import { writeMindfulSession } from '@/services/health/healthKitSource';
+import { useMissionsStore } from '@/store/missionsStore';
 
 // Result type for save operations
 export interface SaveBreakResult {
@@ -228,6 +229,28 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
 
       // Update user stats
       const userStats = await updateUserStats(newBreak);
+
+      // Evaluate daily missions against today's break history. Bonus
+      // XP from missions that just completed is credited on top of
+      // the break's own xpEarned. Done before the projection so the
+      // UI sees the combined total in one paint.
+      let missionXP = 0;
+      try {
+        const todayBreaks = getTodayBreaksFromHistory(history);
+        const completed = useMissionsStore
+          .getState()
+          .recordBreak(newBreak, todayBreaks);
+        missionXP = completed.reduce((sum, m) => sum + m.bonusXP, 0);
+        if (missionXP > 0) {
+          userStats.totalXP += missionXP;
+          userStats.level = Math.floor(userStats.totalXP / 100) + 1;
+          await updateStoredUserStats(userStats);
+        }
+      } catch (err) {
+        if (__DEV__) {
+          console.warn('[breakHistory] missions evaluation failed', err);
+        }
+      }
 
       syncUserProgressProjection(userStats, streakData);
 
