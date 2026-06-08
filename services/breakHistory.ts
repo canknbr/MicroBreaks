@@ -24,6 +24,8 @@ import {
 import { calculateDailyGoal, validateBreakDuration, validateXP } from '@/utils/validation';
 import { syncService } from '@/services/sync';
 import { useUserStore } from '@/store/userStore';
+import { toMindfulSample } from '@/services/health/mindfulMinutes';
+import { writeMindfulSession } from '@/services/health/healthKitSource';
 
 // Result type for save operations
 export interface SaveBreakResult {
@@ -216,6 +218,18 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
 
       // Sync new break to cloud
       syncService.queueDataChange('break', newBreak);
+
+      // Mirror mindful breaks into Apple Health as a courtesy. Fire
+      // and forget — HealthKit availability and permission are both
+      // optional, and a failed write must never affect the save flow
+      // that the user actually triggered.
+      const sample = toMindfulSample(newBreak);
+      if (sample) {
+        void writeMindfulSession(sample).catch(() => {
+          // The adapter already swallows + logs; this catch is
+          // defense in depth in case it ever stops doing so.
+        });
+      }
 
       return { success: true, breakId };
     } catch (error) {
