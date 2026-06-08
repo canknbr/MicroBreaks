@@ -20,6 +20,7 @@ import {
 import {
   MAX_BREAK_HISTORY,
   MAX_STREAK_HISTORY_DAYS,
+  MAX_GRACES_PER_WEEK,
 } from '@/constants/config';
 import { calculateDailyGoal, validateBreakDuration, validateXP } from '@/utils/validation';
 import { syncService } from '@/services/sync';
@@ -69,6 +70,20 @@ function createDefaultStreakData(): StreakData {
     ...DEFAULT_STREAK_DATA,
     streakHistory: [],
   };
+}
+
+/**
+ * Return the Monday of the ISO week containing `date` as a local
+ * YYYY-MM-DD string. Used to anchor the grace-day reset boundary.
+ * JS getDay(): Sunday=0, Monday=1, … Saturday=6. We shift back so
+ * Sunday rolls into the previous Monday rather than the next.
+ */
+function getWeekStartDateString(date: Date): string {
+  const d = new Date(date);
+  const day = d.getDay();
+  const shift = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + shift);
+  return getLocalDateString(d);
 }
 
 function syncUserProgressProjection(stats: UserStats, streakData: StreakData): void {
@@ -285,7 +300,18 @@ export async function getStreakData(): Promise<StreakData> {
 // Update streak based on break history
 async function updateStreak(): Promise<StreakData> {
   const streakData = await getStreakData();
-  const todayStr = getLocalDateString(new Date());
+  const today = new Date();
+  const todayStr = getLocalDateString(today);
+  const currentWeekStart = getWeekStartDateString(today);
+
+  // Roll the grace counter over at each ISO week boundary so a user
+  // who burned a grace last week starts the new week fresh. We do
+  // this before the diff check so a grace earned by the rollover is
+  // immediately spendable.
+  if (streakData.weekStartDate !== currentWeekStart) {
+    streakData.gracesUsedThisWeek = 0;
+    streakData.weekStartDate = currentWeekStart;
+  }
 
   const lastBreakDate = streakData.lastBreakDate;
 
@@ -296,11 +322,21 @@ async function updateStreak(): Promise<StreakData> {
     streakData.lastBreakDate = todayStr;
   } else {
     const diffDays = calendarDayDiff(todayStr, lastBreakDate);
+    const gracesUsed = streakData.gracesUsedThisWeek ?? 0;
 
     if (diffDays === 0) {
       // Same day, streak unchanged
     } else if (diffDays === 1) {
       // Consecutive day, increment streak
+      streakData.currentStreak += 1;
+      if (streakData.currentStreak > streakData.longestStreak) {
+        streakData.longestStreak = streakData.currentStreak;
+      }
+    } else if (diffDays === 2 && gracesUsed < MAX_GRACES_PER_WEEK) {
+      // One missed day — spend a grace to keep the streak alive.
+      // We treat the missed day as if the user had broken on it,
+      // so the streak still grows by exactly one.
+      streakData.gracesUsedThisWeek = gracesUsed + 1;
       streakData.currentStreak += 1;
       if (streakData.currentStreak > streakData.longestStreak) {
         streakData.longestStreak = streakData.currentStreak;

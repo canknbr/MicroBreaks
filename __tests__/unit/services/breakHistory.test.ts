@@ -766,6 +766,144 @@ describe('Break History Service', () => {
     });
   });
 
+  describe('Grace Day Logic', () => {
+    function localDateString(date: Date): string {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function weekStartString(date: Date): string {
+      const d = new Date(date);
+      const day = d.getDay();
+      const shift = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + shift);
+      return localDateString(d);
+    }
+
+    async function seedStreak(opts: {
+      currentStreak: number;
+      lastBreakDate: string;
+      gracesUsedThisWeek: number;
+      weekStartDate: string;
+      longestStreak?: number;
+    }) {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.STREAK_DATA,
+        JSON.stringify({
+          currentStreak: opts.currentStreak,
+          longestStreak: opts.longestStreak ?? opts.currentStreak,
+          lastBreakDate: opts.lastBreakDate,
+          streakHistory: [],
+          gracesUsedThisWeek: opts.gracesUsedThisWeek,
+          weekStartDate: opts.weekStartDate,
+        })
+      );
+    }
+
+    it('spends a grace to keep a streak alive across a single missed day', async () => {
+      const today = new Date();
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+      await seedStreak({
+        currentStreak: 4,
+        lastBreakDate: localDateString(twoDaysAgo),
+        gracesUsedThisWeek: 0,
+        weekStartDate: weekStartString(today),
+      });
+
+      await saveCompletedBreak(createMockBreak({ completedAt: today.toISOString() }));
+
+      const streak = await getStreakData();
+      expect(streak.currentStreak).toBe(5);
+      expect(streak.gracesUsedThisWeek).toBe(1);
+    });
+
+    it('lets the streak break when no grace is available', async () => {
+      const today = new Date();
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+      await seedStreak({
+        currentStreak: 4,
+        lastBreakDate: localDateString(twoDaysAgo),
+        gracesUsedThisWeek: 1, // already spent this week
+        weekStartDate: weekStartString(today),
+      });
+
+      await saveCompletedBreak(createMockBreak({ completedAt: today.toISOString() }));
+
+      const streak = await getStreakData();
+      expect(streak.currentStreak).toBe(1);
+      expect(streak.gracesUsedThisWeek).toBe(1);
+    });
+
+    it('does not save a grace on a 3-day gap', async () => {
+      const today = new Date();
+      const threeDaysAgo = new Date(today);
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+      await seedStreak({
+        currentStreak: 7,
+        lastBreakDate: localDateString(threeDaysAgo),
+        gracesUsedThisWeek: 0,
+        weekStartDate: weekStartString(today),
+      });
+
+      await saveCompletedBreak(createMockBreak({ completedAt: today.toISOString() }));
+
+      const streak = await getStreakData();
+      expect(streak.currentStreak).toBe(1);
+      expect(streak.gracesUsedThisWeek).toBe(0);
+    });
+
+    it('resets the grace counter when a new ISO week begins', async () => {
+      const today = new Date();
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const lastWeekMonday = new Date(today);
+      lastWeekMonday.setDate(lastWeekMonday.getDate() - 14);
+
+      await seedStreak({
+        currentStreak: 8,
+        lastBreakDate: localDateString(twoDaysAgo),
+        gracesUsedThisWeek: 1, // burned last week
+        weekStartDate: weekStartString(lastWeekMonday), // stale week
+      });
+
+      await saveCompletedBreak(createMockBreak({ completedAt: today.toISOString() }));
+
+      const streak = await getStreakData();
+      // Rollover resets gracesUsedThisWeek → grace is available → spend
+      // to cover the 2-day gap and grow the streak.
+      expect(streak.currentStreak).toBe(9);
+      expect(streak.gracesUsedThisWeek).toBe(1);
+      expect(streak.weekStartDate).toBe(weekStartString(today));
+    });
+
+    it('still increments longestStreak when grace saves the streak', async () => {
+      const today = new Date();
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+      await seedStreak({
+        currentStreak: 9,
+        longestStreak: 9,
+        lastBreakDate: localDateString(twoDaysAgo),
+        gracesUsedThisWeek: 0,
+        weekStartDate: weekStartString(today),
+      });
+
+      await saveCompletedBreak(createMockBreak({ completedAt: today.toISOString() }));
+
+      const streak = await getStreakData();
+      expect(streak.currentStreak).toBe(10);
+      expect(streak.longestStreak).toBe(10);
+    });
+  });
+
   describe('getWeeklyChartData', () => {
     it('should return 7 days of data', async () => {
       const result = await getWeeklyChartData();

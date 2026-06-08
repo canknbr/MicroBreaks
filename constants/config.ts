@@ -17,6 +17,13 @@ export const MAX_BREAK_HISTORY = 5000;
 /** Maximum number of days to keep in streak history */
 export const MAX_STREAK_HISTORY_DAYS = 90;
 
+/**
+ * Grace days a user can spend per ISO week to keep their streak alive
+ * across a single missed day. The window resets every Monday. Pricing-
+ * gated experiments may later expose this as a paid lever.
+ */
+export const MAX_GRACES_PER_WEEK = 1;
+
 // ==========================================
 // XP AND LEVELING
 // ==========================================

@@ -173,6 +173,17 @@ export interface StreakData {
   longestStreak: number;
   lastBreakDate: string | null; // ISO date string
   streakHistory: { date: string; count: number }[];
+  /**
+   * Grace days the user has consumed in the current ISO week to keep
+   * their streak alive across a single missed day. Reset every Monday.
+   * Optional for back-compat with pre-grace persistence snapshots.
+   */
+  gracesUsedThisWeek?: number;
+  /**
+   * Local date string (YYYY-MM-DD) for the Monday that anchors the
+   * current grace window. Used to detect rollover into a fresh week.
+   */
+  weekStartDate?: string;
 }
 
 export interface UserStats {
