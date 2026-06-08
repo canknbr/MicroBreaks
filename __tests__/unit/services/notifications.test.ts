@@ -383,6 +383,97 @@ describe('Notification Service', () => {
         })
       );
     });
+
+    it('should suppress scheduling when the daily goal is already met', async () => {
+      // weeklyGoal=14 → dailyGoal=2, give the user 3 breaks today → already at goal
+      (getUserStats as jest.Mock).mockResolvedValueOnce({
+        totalBreaks: 3,
+        totalMinutes: 0,
+        totalXP: 0,
+        level: 1,
+        weeklyGoal: 14,
+        weeklyProgress: 0,
+      });
+      (getTodayBreaks as jest.Mock).mockResolvedValueOnce([
+        { completedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
+        { completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+        { completedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
+      ]);
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+
+      expect(result).toBeNull();
+      expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+    });
+
+    it('should suppress when the user just broke (interval < MIN_GAP_MIN at fire time)', async () => {
+      // 5-min reminder interval + a break 22 minutes ago → at fire time
+      // it's 27 min. Push the break closer (2 min ago) so at fire time
+      // (7 min from now) it's still under the 25-min threshold.
+      (getTodayBreaks as jest.Mock).mockResolvedValueOnce([
+        { completedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString() },
+      ]);
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+        reminderIntervalMinutes: 5,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+
+      expect(result).toBeNull();
+      expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+    });
+
+    it('should still schedule when predictive gate boosts (long silence)', async () => {
+      // Last break was 4 hours ago → past the 120-min boost threshold.
+      // boost still falls through to scheduling, just with the rationale
+      // recorded for upstream copy adjustments.
+      (getTodayBreaks as jest.Mock).mockResolvedValueOnce([
+        { completedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
+      ]);
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+
+      expect(result).toBe('notification-id');
+      expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+    });
+
+    it('should still schedule when the predictive helper throws (fail-open)', async () => {
+      // If data reads blow up the catch falls through to the legacy
+      // pool — we must never silently swallow a scheduled reminder
+      // because of an unrelated bug in adaptive context.
+      (getStreakData as jest.Mock).mockRejectedValueOnce(new Error('boom'));
+
+      const settings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        quietHoursEnabled: false,
+        workDaysOnly: false,
+      };
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+      const result = await scheduleBreakReminder();
+
+      expect(result).toBe('notification-id');
+      expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+    });
   });
 
   describe('scheduleStreakProtection', () => {

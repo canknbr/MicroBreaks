@@ -18,6 +18,7 @@ import {
 import { calculateDailyGoal } from '@/utils/validation';
 import { getEffectiveReminderInterval } from '@/features/workday/patterns';
 import { composeAdaptiveCopy, type PainTag as AdaptivePainTag } from './notifications/adaptiveCopy';
+import { decideNotificationAction } from './notifications/predictiveDetection';
 
 // Notification channel IDs
 export const NOTIFICATION_CHANNELS = {
@@ -563,6 +564,30 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       getUserStats(),
     ]);
     const dailyGoal = calculateDailyGoal(userStats.weeklyGoal);
+
+    // Predictive gate: ask whether the reminder still makes sense at
+    // the time it would actually fire. The composer chooses the words;
+    // this decides whether to send anything at all.
+    const decision = decideNotificationAction({
+      now: nextTime,
+      todayBreaks,
+      dailyGoal,
+      quietHoursEnabled: settings.quietHoursEnabled,
+    });
+
+    if (decision.action === 'suppress' || decision.action === 'quiet') {
+      addBreadcrumb(
+        'Break reminder suppressed by predictive gate',
+        'notifications',
+        'info',
+        {
+          rationale: decision.rationale,
+          minutesSinceLastBreak: decision.minutesSinceLastBreak,
+        }
+      );
+      return null;
+    }
+
     const lastBreakAt = todayBreaks
       .map((b) => new Date(b.completedAt).getTime())
       .filter((n) => Number.isFinite(n))
