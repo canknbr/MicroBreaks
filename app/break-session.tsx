@@ -13,6 +13,8 @@ import * as Haptics from 'expo-haptics';
 
 import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
+import { requiresUpgradeForExercise } from '@/services/subscription/exerciseAccess';
 import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
 import { STREAK_MILESTONES } from '@/constants/config';
 import { calculateDailyGoal } from '@/utils/validation';
@@ -53,6 +55,25 @@ function BreakSessionScreen() {
   const { t } = useTranslation();
   const { breakId } = useLocalSearchParams<{ breakId?: string | string[] }>();
   const resolvedBreakId = resolveBreakSessionBreakId(breakId);
+
+  // Defense in depth: even if a deep link, Siri shortcut, or auto-
+  // launched timer bypasses the breaks-tab lock UI, the session
+  // refuses to mount for a paid exercise the user can't access and
+  // redirects to the paywall. Loading state (server ledger hasn't
+  // answered yet) lets the session render optimistically — the
+  // alternative is flashing a paywall for paying users on cold start.
+  const { tier, loaded: tierLoaded } = useEffectiveTier();
+  const needsUpgrade =
+    tierLoaded && requiresUpgradeForExercise(resolvedBreakId, tier);
+  useEffect(() => {
+    if (!needsUpgrade) return;
+    router.replace(
+      ({
+        pathname: '/subscription',
+        params: { placement: 'breaks' },
+      } as never)
+    );
+  }, [needsUpgrade, router]);
 
   const { state, actions, stats, progress } = useBreakSession(resolvedBreakId);
 
