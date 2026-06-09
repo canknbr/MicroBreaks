@@ -20,9 +20,57 @@
  * flow.
  */
 
-import type { SubscriptionCustomerState } from '@/services/billing/types';
+import type {
+  SubscriptionCustomerState,
+  SubscriptionOffer,
+} from '@/services/billing/types';
 
 export type Tier = 'free' | 'solo' | 'pro' | 'family';
+
+/** Tiers offered for purchase, in display order. */
+export const PURCHASABLE_TIERS: readonly Exclude<Tier, 'free'>[] = [
+  'solo',
+  'pro',
+  'family',
+] as const;
+
+/** Human display labels for each tier (used in tabs + access labels). */
+export const TIER_LABELS: Record<Tier, string> = {
+  free: 'Free',
+  solo: 'Solo',
+  pro: 'Pro',
+  family: 'Family',
+};
+
+/** Short tagline that sits under each tier tab. */
+export const TIER_TAGLINES: Record<Exclude<Tier, 'free'>, string> = {
+  solo: 'For one focused desk',
+  pro: 'For deeper recovery',
+  family: 'For up to 6 people',
+};
+
+/**
+ * What's-in-this-tier copy. Display lists — these are *additive* to
+ * the previous tier, so the paywall can render Solo's three lines
+ * plus a "Everything in Solo, plus…" header for Pro and Family.
+ */
+export const TIER_HIGHLIGHTS: Record<Exclude<Tier, 'free'>, readonly string[]> = {
+  solo: [
+    'Full break library — every guided reset, not just the starter set',
+    'Weekly recovery story showing your trends and best break times',
+    'Daily missions with bonus XP for variety and timing',
+  ],
+  pro: [
+    'Apple Health export — every mindful break logged as a session',
+    'Calendar-aware reminders that dodge your meetings',
+    'Unlimited custom routines and favorites',
+  ],
+  family: [
+    'Up to 6 family members on one plan',
+    'Streak buddies — quiet shared accountability with people you trust',
+    'Family sharing for purchases and progress',
+  ],
+};
 
 /** Feature keys gated by tier. */
 export type TierFeature =
@@ -111,4 +159,28 @@ export function tierIncludes(active: Tier, feature: TierFeature): boolean {
  */
 export function compareTiers(a: Tier, b: Tier): number {
   return Math.sign(TIER_RANK[a] - TIER_RANK[b]);
+}
+
+export interface TierOfferPair {
+  /** Monthly offer for the tier, or null if not available. */
+  monthly: SubscriptionOffer | null;
+  /** Yearly/annual offer for the tier, or null if not available. */
+  annual: SubscriptionOffer | null;
+}
+
+/**
+ * Pick the {monthly, annual} offer pair for a tier from the live
+ * offerings list. Either slot can be null if the dashboard hasn't
+ * configured both periods yet — the paywall should handle that
+ * gracefully (e.g. hide the toggle).
+ */
+export function getOffersForTier(
+  tier: Exclude<Tier, 'free'>,
+  offers: SubscriptionOffer[]
+): TierOfferPair {
+  const tierOffers = offers.filter((o) => getTierForOfferId(o.id) === tier);
+  return {
+    monthly: tierOffers.find((o) => o.billingPeriod === 'monthly') ?? null,
+    annual: tierOffers.find((o) => o.billingPeriod === 'yearly') ?? null,
+  };
 }

@@ -21,6 +21,18 @@ import {
   PAYWALL_COPY,
 } from '@/constants/subscription';
 import {
+  getOffersForTier,
+  getTierForOfferId,
+  PURCHASABLE_TIERS,
+  TIER_HIGHLIGHTS,
+  TIER_LABELS,
+  type Tier,
+} from '@/services/subscription/tiers';
+import TierSelector from './TierSelector';
+import BillingPeriodToggle, {
+  type BillingPeriod,
+} from './BillingPeriodToggle';
+import {
   useHasActiveSubscription,
   useBillingDiagnostics,
   useEntitlementHealth,
@@ -232,8 +244,19 @@ export default function PaywallContent({
   const primaryPress = usePressScale({ pressedScale: 0.97 });
   const secondaryPress = usePressScale({ pressedScale: 0.97 });
 
-  const defaultOfferId = offers.find((offer) => offer.recommended)?.id ?? offers[0]?.id ?? null;
-  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(defaultOfferId);
+  const recommendedOffer = offers.find((offer) => offer.recommended) ?? null;
+  const recommendedTier = (
+    recommendedOffer ? getTierForOfferId(recommendedOffer.id) : 'pro'
+  ) as Exclude<Tier, 'free'>;
+  const defaultTier: Exclude<Tier, 'free'> = PURCHASABLE_TIERS.includes(
+    recommendedTier as Exclude<Tier, 'free'>
+  )
+    ? recommendedTier
+    : 'pro';
+  const defaultPeriod: BillingPeriod = recommendedOffer?.billingPeriod ?? 'yearly';
+
+  const [selectedTier, setSelectedTier] = useState<Exclude<Tier, 'free'>>(defaultTier);
+  const [selectedPeriod, setSelectedPeriod] = useState<BillingPeriod>(defaultPeriod);
   const lastTrackedPlacementRef = useRef<PaywallPlacement | null>(null);
 
   const primaryNeed = useMemo(
@@ -262,21 +285,41 @@ export default function PaywallContent({
     })();
   }, [placement, markPaywallSeen]);
 
-  useEffect(() => {
-    if (!selectedOfferId && defaultOfferId) {
-      setSelectedOfferId(defaultOfferId);
-      return;
-    }
-
-    if (selectedOfferId && !offers.some((offer) => offer.id === selectedOfferId)) {
-      setSelectedOfferId(defaultOfferId);
-    }
-  }, [defaultOfferId, offers, selectedOfferId]);
-
-  const selectedOffer = useMemo<SubscriptionOffer | null>(
-    () => offers.find((offer) => offer.id === selectedOfferId) ?? offers[0] ?? null,
-    [offers, selectedOfferId]
+  const tierOfferPair = useMemo(
+    () => getOffersForTier(selectedTier, offers),
+    [selectedTier, offers]
   );
+
+  const selectedOffer = useMemo<SubscriptionOffer | null>(() => {
+    if (selectedPeriod === 'monthly') {
+      return tierOfferPair.monthly ?? tierOfferPair.annual;
+    }
+    return tierOfferPair.annual ?? tierOfferPair.monthly;
+  }, [tierOfferPair, selectedPeriod]);
+
+  // If the currently selected period isn't offered for the new tier,
+  // flip to the one that is so the offer card never goes blank.
+  useEffect(() => {
+    if (selectedPeriod === 'monthly' && !tierOfferPair.monthly && tierOfferPair.annual) {
+      setSelectedPeriod('yearly');
+    } else if (selectedPeriod === 'yearly' && !tierOfferPair.annual && tierOfferPair.monthly) {
+      setSelectedPeriod('monthly');
+    }
+  }, [tierOfferPair, selectedPeriod]);
+
+  // Compute annual savings vs. monthly so the toggle can show the
+  // discount label honestly. Falls back to no label when one side
+  // is missing.
+  const annualSavingsLabel = useMemo(() => {
+    const monthly = tierOfferPair.monthly;
+    const annual = tierOfferPair.annual;
+    if (!monthly || !annual || monthly.price <= 0) return undefined;
+    const yearlyMonthlyCost = monthly.price * 12;
+    if (annual.price >= yearlyMonthlyCost) return undefined;
+    const saved = 1 - annual.price / yearlyMonthlyCost;
+    const pct = Math.round(saved * 100);
+    return pct > 0 ? `Save ${pct}%` : undefined;
+  }, [tierOfferPair]);
 
   const accessLabel = formatAccessLabel(
     customer.activeOfferId,
@@ -370,7 +413,7 @@ export default function PaywallContent({
       : 'Done'
     : selectedOffer?.trialDays
       ? `Start ${selectedOffer.trialDays}-Day Trial`
-      : 'Continue with Pro';
+      : `Continue with ${TIER_LABELS[selectedTier]}`;
 
   return (
     <ScrollView
@@ -432,8 +475,82 @@ export default function PaywallContent({
         )}
       </View>
 
+      <TierSelector
+        selected={selectedTier}
+        onSelect={(tier) => {
+          selectionTick();
+          setSelectedTier(tier);
+        }}
+        recommended={recommendedTier}
+      />
+
+      <BillingPeriodToggle
+        selected={selectedPeriod}
+        onSelect={(period) => {
+          selectionTick();
+          setSelectedPeriod(period);
+        }}
+        annualSavingsLabel={annualSavingsLabel}
+      />
+
+      {selectedOffer && (
+        <View
+          style={[
+            styles.offerCard,
+            {
+              borderColor: theme.accent.warning,
+              backgroundColor: theme.isDark
+                ? 'rgba(19, 19, 26, 0.92)'
+                : theme.background.card,
+            },
+          ]}
+          accessibilityLabel={`${selectedOffer.title}, ${selectedOffer.priceLabel}`}
+        >
+          <View style={styles.offerHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.offerTitle, { color: theme.text.primary }]}>
+                {selectedOffer.title}
+              </Text>
+              <Text style={[styles.offerSubtitle, { color: theme.text.secondary }]}>
+                {selectedOffer.subtitle}
+              </Text>
+            </View>
+            {selectedOffer.badge && (
+              <View
+                style={[
+                  styles.offerBadge,
+                  { backgroundColor: theme.accent.warning },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.offerBadgeText,
+                    { color: theme.text.inverse },
+                  ]}
+                >
+                  {selectedOffer.badge}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={[styles.offerPrice, { color: theme.text.primary }]}>
+            {selectedOffer.priceLabel}
+          </Text>
+          <Text style={[styles.offerDescription, { color: theme.text.muted }]}>
+            {selectedOffer.description}
+          </Text>
+        </View>
+      )}
+
+      {selectedTier !== 'solo' && (
+        <Text style={[styles.tierIncludesHint, { color: theme.text.muted }]}>
+          Includes everything in {TIER_LABELS[selectedTier === 'pro' ? 'solo' : 'pro']}, plus:
+        </Text>
+      )}
+
       <View style={styles.featureList}>
-        {featureList.map((feature) => (
+        {TIER_HIGHLIGHTS[selectedTier].map((feature) => (
           <View key={feature} style={styles.featureRow}>
             <View
               style={[
@@ -448,65 +565,26 @@ export default function PaywallContent({
         ))}
       </View>
 
-      <View style={styles.offerList}>
-        {offers.map((offer) => {
-          const selected = offer.id === selectedOfferId;
-          return (
-            <Pressable
-              key={offer.id}
-              onPress={() => {
-                selectionTick();
-                setSelectedOfferId(offer.id);
-              }}
-              style={[
-                styles.offerCard,
-                {
-                  borderColor: selected ? theme.accent.warning : theme.border.subtle,
-                  backgroundColor: theme.isDark ? 'rgba(19, 19, 26, 0.92)' : theme.background.card,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={`${offer.title} plan, ${offer.priceLabel}`}
-            >
-              <View style={styles.offerHeader}>
-                <View>
-                  <Text style={[styles.offerTitle, { color: theme.text.primary }]}>{offer.title}</Text>
-                  <Text style={[styles.offerSubtitle, { color: theme.text.secondary }]}>
-                    {offer.subtitle}
-                  </Text>
-                </View>
-                {offer.badge && (
-                  <View
-                    style={[
-                      styles.offerBadge,
-                      {
-                        backgroundColor: selected ? theme.accent.warning : theme.border.subtle,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.offerBadgeText,
-                        { color: selected ? theme.text.inverse : theme.text.primary },
-                      ]}
-                    >
-                      {offer.badge}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <Text style={[styles.offerPrice, { color: theme.text.primary }]}>
-                {offer.priceLabel}
-              </Text>
-              <Text style={[styles.offerDescription, { color: theme.text.muted }]}>
-                {offer.description}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {placement === 'onboarding' && featureList.length > 0 && (
+        <View
+          style={[
+            styles.placementHintCard,
+            {
+              borderColor: theme.border.subtle,
+              backgroundColor: theme.isDark
+                ? 'rgba(255,255,255,0.04)'
+                : theme.background.card,
+            },
+          ]}
+        >
+          <Text style={[styles.placementHintTitle, { color: theme.text.primary }]}>
+            Why this for you
+          </Text>
+          <Text style={[styles.placementHintBody, { color: theme.text.secondary }]}>
+            {featureList[0]}
+          </Text>
+        </View>
+      )}
 
       <View
         style={[
@@ -781,6 +859,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 24,
     padding: 18,
+    marginBottom: 16,
+  },
+  tierIncludesHint: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 10,
+  },
+  placementHintCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 16,
+  },
+  placementHintTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 6,
+  },
+  placementHintBody: {
+    fontSize: 13,
+    lineHeight: 19,
   },
   offerHeader: {
     flexDirection: 'row',

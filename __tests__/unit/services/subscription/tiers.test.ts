@@ -1,12 +1,20 @@
 import {
   compareTiers,
   getActiveTier,
+  getOffersForTier,
   getTierForOfferId,
+  PURCHASABLE_TIERS,
   tierIncludes,
+  TIER_HIGHLIGHTS,
+  TIER_LABELS,
   TIER_SEATS,
+  TIER_TAGLINES,
   type Tier,
 } from '@/services/subscription/tiers';
-import type { SubscriptionCustomerState } from '@/services/billing/types';
+import type {
+  SubscriptionCustomerState,
+  SubscriptionOffer,
+} from '@/services/billing/types';
 
 function customer(overrides: Partial<SubscriptionCustomerState> = {}): SubscriptionCustomerState {
   return {
@@ -110,5 +118,75 @@ describe('TIER_SEATS', () => {
     expect(TIER_SEATS.solo).toBe(1);
     expect(TIER_SEATS.pro).toBe(1);
     expect(TIER_SEATS.family).toBe(6);
+  });
+});
+
+describe('display catalogs', () => {
+  it('exposes purchasable tiers in display order', () => {
+    expect(PURCHASABLE_TIERS).toEqual(['solo', 'pro', 'family']);
+  });
+
+  it('has labels for every tier including free', () => {
+    expect(TIER_LABELS.free).toBe('Free');
+    expect(TIER_LABELS.solo).toBe('Solo');
+    expect(TIER_LABELS.pro).toBe('Pro');
+    expect(TIER_LABELS.family).toBe('Family');
+  });
+
+  it('has a tagline for every purchasable tier', () => {
+    for (const tier of PURCHASABLE_TIERS) {
+      expect(TIER_TAGLINES[tier]).toBeTruthy();
+    }
+  });
+
+  it('has highlight bullets for every purchasable tier', () => {
+    for (const tier of PURCHASABLE_TIERS) {
+      expect(TIER_HIGHLIGHTS[tier].length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('getOffersForTier', () => {
+  function offer(overrides: Partial<SubscriptionOffer>): SubscriptionOffer {
+    return {
+      id: 'pro_annual',
+      title: 'Pro',
+      subtitle: 's',
+      description: 'd',
+      price: 1,
+      priceLabel: '$1',
+      currency: 'USD',
+      billingPeriod: 'yearly',
+      trialDays: 0,
+      ...overrides,
+    };
+  }
+
+  const sampleOffers: SubscriptionOffer[] = [
+    offer({ id: 'solo_monthly', billingPeriod: 'monthly' }),
+    offer({ id: 'solo_annual',  billingPeriod: 'yearly'  }),
+    offer({ id: 'pro_monthly',  billingPeriod: 'monthly' }),
+    offer({ id: 'pro_annual',   billingPeriod: 'yearly'  }),
+    offer({ id: 'family_monthly', billingPeriod: 'monthly' }),
+  ];
+
+  it('picks the {monthly, annual} pair for a tier', () => {
+    const pair = getOffersForTier('pro', sampleOffers);
+    expect(pair.monthly?.id).toBe('pro_monthly');
+    expect(pair.annual?.id).toBe('pro_annual');
+  });
+
+  it('returns null for a missing period (partial dashboard config)', () => {
+    const pair = getOffersForTier('family', sampleOffers);
+    expect(pair.monthly?.id).toBe('family_monthly');
+    expect(pair.annual).toBeNull();
+  });
+
+  it('returns both null when the tier has no offers', () => {
+    const pair = getOffersForTier('solo', [
+      offer({ id: 'pro_monthly', billingPeriod: 'monthly' }),
+    ]);
+    expect(pair.monthly).toBeNull();
+    expect(pair.annual).toBeNull();
   });
 });
