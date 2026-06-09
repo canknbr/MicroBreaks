@@ -32,6 +32,8 @@ import { Spacing } from '@/theme';
 import { router } from 'expo-router';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useUserStore, useSettingsStore, useHasActiveSubscription, useSubscriptionCustomer, useSubscriptionStatus, useSubscriptionStore, useBillingDiagnostics, useEntitlementHealth } from '@/store';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
+import { TIER_LABELS } from '@/services/subscription/tiers';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useTheme } from '@/hooks/useTheme';
@@ -189,15 +191,18 @@ export default function ProfileScreen() {
     } as any);
   };
 
+  const { tier: effectiveTier } = useEffectiveTier();
+  const tierLabel = TIER_LABELS[effectiveTier];
+  const billingPeriodLabel = subscriptionCustomer.activeOfferId?.endsWith('_annual')
+    ? 'Annual'
+    : 'Monthly';
   const premiumTitle = hasActiveSubscription
     ? subscriptionCustomer.isPreview
-      ? 'Preview Pro Active'
-      : 'Pro Active'
-    : 'Go Pro';
+      ? `Preview ${tierLabel} Active`
+      : `${tierLabel} Active`
+    : `Go ${effectiveTier === 'free' ? 'Pro' : tierLabel}`;
   const premiumDescription = hasActiveSubscription
-    ? subscriptionCustomer.activeOfferId?.endsWith('_annual')
-      ? 'Annual access is active on this device'
-      : 'Monthly access is active on this device'
+    ? `${billingPeriodLabel} ${tierLabel} access is active on this device`
     : subscriptionStatus === 'expired'
       ? 'Re-activate advanced insights, guided programs & more'
       : 'Advanced insights, guided programs & more';
