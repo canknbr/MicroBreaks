@@ -790,7 +790,25 @@ export default function HomeScreen() {
                   style={styles.cardHighlight}
                 />
               )}
-              <Text style={[styles.streakTitle, { color: theme.text.primary }]}>This Week</Text>
+              <View style={styles.streakHeader}>
+                <Text style={[styles.streakTitle, { color: theme.text.primary }]}>This Week</Text>
+                <Pressable
+                  style={styles.storyLink}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    // Typed routes hasn't picked up `/weekly-story` yet;
+                    // matches the same pattern used for /privacy-policy.
+                    router.push('/weekly-story' as never);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="See your full weekly recovery story"
+                >
+                  <Text style={[styles.storyLinkText, { color: theme.accent.primary }]}>
+                    Full story
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color={theme.accent.primary} />
+                </Pressable>
+              </View>
               <StreakCalendar
                 completedDays={data.streak.completedDays}
                 currentDayIndex={data.streak.currentDayIndex}
@@ -1162,12 +1180,27 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
     backgroundColor: 'rgba(30, 30, 40, 0.6)',
   },
+  streakHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
   streakTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: Spacing.md,
-    textAlign: 'center',
+  },
+  storyLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingLeft: 8,
+  },
+  storyLinkText: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginRight: 2,
   },
   bottomSpacer: {
     height: 120,

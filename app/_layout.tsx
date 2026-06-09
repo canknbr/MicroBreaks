@@ -550,6 +550,14 @@ export default function RootLayout() {
                     }}
                   />
                   <Stack.Screen
+                    name="weekly-story"
+                    options={{
+                      presentation: 'modal',
+                      animation: 'slide_from_bottom',
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
                     name="modal"
                     options={{
                       presentation: 'modal',
