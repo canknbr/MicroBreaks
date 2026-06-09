@@ -5,6 +5,10 @@ import {
   requestMindfulSessionPermission,
   writeMindfulSession,
 } from '@/services/health/healthKitSource';
+import {
+  __resetTierStateForTests,
+  __setEffectiveTier,
+} from '@/services/subscription/tierState';
 import type { MindfulSample } from '@/services/health/mindfulMinutes';
 
 function makeMockKit(opts: {
@@ -31,6 +35,11 @@ function sample(): MindfulSample {
 describe('healthKitSource', () => {
   beforeEach(() => {
     __resetHealthKitSourceForTests();
+    __resetTierStateForTests();
+    // Default to a paying tier so the existing success paths still
+    // exercise HealthKit behavior. Tier-gate cases set 'free'
+    // explicitly below.
+    __setEffectiveTier('pro');
     (Platform as { OS: string }).OS = 'ios';
   });
 
@@ -106,5 +115,40 @@ describe('healthKitSource', () => {
     // mock module injected we must short-circuit.
     const ok = await writeMindfulSession(sample());
     expect(ok).toBe(false);
+  });
+
+  describe('tier gate', () => {
+    it('skips the write for free-tier users without touching HealthKit', async () => {
+      const kit = makeMockKit();
+      __setHealthKitModuleForTests(kit);
+      __setEffectiveTier('free');
+
+      const ok = await writeMindfulSession(sample());
+      expect(ok).toBe(false);
+      expect(kit.saveMindfulSession).not.toHaveBeenCalled();
+    });
+
+    it('skips the write for solo-tier users (apple_health_export requires Pro)', async () => {
+      const kit = makeMockKit();
+      __setHealthKitModuleForTests(kit);
+      __setEffectiveTier('solo');
+
+      const ok = await writeMindfulSession(sample());
+      expect(ok).toBe(false);
+      expect(kit.saveMindfulSession).not.toHaveBeenCalled();
+    });
+
+    it('writes for pro and family tiers', async () => {
+      for (const tier of ['pro', 'family'] as const) {
+        __resetHealthKitSourceForTests();
+        const kit = makeMockKit();
+        __setHealthKitModuleForTests(kit);
+        __setEffectiveTier(tier);
+
+        const ok = await writeMindfulSession(sample());
+        expect(ok).toBe(true);
+        expect(kit.saveMindfulSession).toHaveBeenCalled();
+      }
+    });
   });
 });

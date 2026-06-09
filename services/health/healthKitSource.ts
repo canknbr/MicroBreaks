@@ -28,6 +28,8 @@
 
 import { Platform } from 'react-native';
 import { addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
+import { getCurrentEffectiveTier } from '@/services/subscription/tierState';
+import { tierIncludes } from '@/services/subscription/tiers';
 import type { MindfulSample } from './mindfulMinutes';
 
 interface HealthPermissions {
@@ -132,8 +134,15 @@ export async function requestMindfulSessionPermission(): Promise<boolean> {
 /**
  * Write a single Mindful Session. Always resolves — never rejects.
  * The boolean indicates success only for observability.
+ *
+ * Tier gate: Apple Health export is a Pro feature. We silently skip
+ * the write for tiers below Pro — fail-open keeps the break-save
+ * flow unaffected.
  */
 export async function writeMindfulSession(sample: MindfulSample): Promise<boolean> {
+  if (!tierIncludes(getCurrentEffectiveTier(), 'apple_health_export')) {
+    return false;
+  }
   const Health = getHealthKit();
   if (!Health) return false;
 

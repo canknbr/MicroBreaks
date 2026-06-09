@@ -31,6 +31,7 @@ import {
 import { initializeAuth, onAuthStateChanged } from '@/services/firebase/auth';
 import { initializeAppCheck } from '@/services/firebase/appCheck';
 import { initializeFirestore } from '@/services/firebase/firestore';
+import { useTierStateSync } from '@/hooks/useTierStateSync';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
 import { initializeTimerService, shutdownTimerService } from '@/services/timerService';
@@ -104,6 +105,10 @@ export default function RootLayout() {
   const effectiveTheme = useEffectiveTheme();
   const { i18n } = useTranslation();
   useNotificationDeepLinks();
+  // Bridges the React-side effective tier into the `tierState`
+  // singleton so non-React services (HealthKit writes, calendar reads,
+  // etc) can synchronously gate on the user's tier.
+  useTierStateSync();
   const [showSplash, setShowSplash] = useState(true);
   const [bootstrapPhase, setBootstrapPhase] = useState<BootstrapPhase>('loading');
   const [bootstrapIssues, setBootstrapIssues] = useState<BootstrapIssue[]>([]);

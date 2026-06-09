@@ -14,6 +14,8 @@
  * other code changes.
  */
 
+import { getCurrentEffectiveTier } from '@/services/subscription/tierState';
+import { tierIncludes } from '@/services/subscription/tiers';
 import type { BusyWindow } from './calendarAwareness';
 
 // Loose type for the dynamically-required `expo-calendar` module. We
@@ -64,11 +66,19 @@ export function __setCalendarModuleForTests(mod: CalendarModuleLike | null): voi
 /**
  * Fetch busy windows from the user's calendars between two times.
  * Returns an empty array if anything goes wrong — see module header.
+ *
+ * Tier gate: calendar-aware reminder shifting is a Pro feature.
+ * For tiers below Pro we return `[]` — the notification scheduler
+ * then schedules at the proposed time without shifting, which is
+ * exactly the pre-Pro behavior.
  */
 export async function getBusyWindows(
   rangeStart: Date,
   rangeEnd: Date
 ): Promise<BusyWindow[]> {
+  if (!tierIncludes(getCurrentEffectiveTier(), 'calendar_aware')) {
+    return [];
+  }
   const Calendar = getCalendar();
   if (!Calendar) return [];
 

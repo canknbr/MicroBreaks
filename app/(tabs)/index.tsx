@@ -60,6 +60,8 @@ import {
   MissionsCard,
 } from '@/components/home';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
+import { useTierFeature } from '@/hooks/useTierFeature';
+import UpgradeGateCard from '@/components/subscription/UpgradeGateCard';
 import {
   useHomeData,
   useGreeting,
@@ -113,6 +115,7 @@ export default function HomeScreen() {
 
   // Daily missions
   const dailyMissions = useDailyMissions();
+  const missionsGate = useTierFeature('daily_missions');
 
   // Timer state
   const timerPreferences = useTimerPreferences();
@@ -732,12 +735,23 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
 
-          <MissionsCard
-            missions={dailyMissions.missions}
-            bonusXPEarned={dailyMissions.bonusXPEarned}
-            completedCount={dailyMissions.completedCount}
-            delay={600}
-          />
+          {missionsGate.hasFeature ? (
+            <MissionsCard
+              missions={dailyMissions.missions}
+              bonusXPEarned={dailyMissions.bonusXPEarned}
+              completedCount={dailyMissions.completedCount}
+              delay={600}
+            />
+          ) : !missionsGate.loading ? (
+            <View style={{ marginBottom: 16 }}>
+              <UpgradeGateCard
+                requiredTier={missionsGate.requiredTier}
+                title="Unlock daily missions"
+                body="Three fresh goals every day with bonus XP — keep your routine varied without thinking about it."
+                placement="home_missions"
+              />
+            </View>
+          ) : null}
 
           <TimerWidget onPresetPress={() => setShowPresetPicker(true)} />
 
