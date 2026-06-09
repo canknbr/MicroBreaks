@@ -33,15 +33,33 @@ Required project state:
 
 ```bash
 npm install      # one-time
-npm test         # runs the mapper + (future) webhook tests
+npm test         # runs every functions-side test
 ```
 
-The mapper unit tests live in `src/entitlements/__tests__/mapper.test.ts`
-and cover every RevenueCat event type → status mapping, tier inference,
-billing-period inference, trial flagging, store mapping, ISO timestamp
-conversion, and edge cases (missing app_user_id, malformed payload,
-unknown event types). They run under `ts-jest` and are excluded from
-the root jest suite (see `jest.config.js`).
+Current suites:
+
+- `src/entitlements/__tests__/mapper.test.ts` — RevenueCat event →
+  EntitlementDoc. Covers every event type, tier inference, billing
+  period inference, trial flagging, store mapping, ISO timestamp
+  conversion, and edge cases (missing app_user_id, malformed
+  payload, unknown event types).
+- `src/entitlements/__tests__/appStoreMapper.test.ts` — App Store
+  Server Notifications V2 → EntitlementDoc. Same shape as the RC
+  mapper. ASSN V2 corroborates RC; both write the same ledger row
+  so we pick up events RC misses or delays on.
+- `src/cleanup/__tests__/staleUsers.test.ts` — conservative anonymous
+  user GC policy (provider gate, missing timestamps, boundary at
+  threshold).
+
+All run under `ts-jest` and are excluded from the root jest suite
+(see root `jest.config.js`).
+
+## Pending follow-ups
+
+- `appStoreNotifications` HTTPS function — wraps `appStoreMapper`
+  with JWS verification using Apple's x5c chain. Needs the `jose`
+  library + Apple's intermediate root cert. Until that ships,
+  ASSN V2 is mapper-only; RC remains the only live billing source.
 
 ## Client expectations
 
