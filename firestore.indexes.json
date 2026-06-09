@@ -1,0 +1,5 @@
+{
+  "comment": "Composite indexes for Firestore. Add new entries here BEFORE writing a query that would need them — Firestore will silently full-scan otherwise (slow + expensive at scale). Each entry maps to a query like `.where('a', '...').where('b', '...').orderBy('c')`. Single-field queries don't need this file; Firestore handles them automatically.",
+  "indexes": [],
+  "fieldOverrides": []
+}
