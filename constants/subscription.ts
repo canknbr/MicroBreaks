@@ -3,6 +3,18 @@ import type { BillingProvider, SubscriptionOffer } from '@/services/billing/type
 
 export const PRO_ENTITLEMENT_ID = 'pro';
 export const MAIN_PAYWALL_ID = 'main_pro_paywall';
+
+/**
+ * Per-tier entitlement identifiers used by RevenueCat. The legacy
+ * `PRO_ENTITLEMENT_ID = 'pro'` stays so existing pro purchases keep
+ * resolving; the new entitlements are tier-prefixed so the dashboard
+ * groups them cleanly.
+ */
+export const TIER_ENTITLEMENT_IDS = {
+  solo: 'solo',
+  pro: 'pro',
+  family: 'family',
+} as const;
 export const FREE_EXERCISE_IDS = [
   'eye-rest',
   'deep-breath',
@@ -55,11 +67,37 @@ function resolveDefaultBillingProvider(): BillingProvider {
 export const DEFAULT_BILLING_PROVIDER: BillingProvider = resolveDefaultBillingProvider();
 
 export const DEFAULT_SUBSCRIPTION_OFFERS: SubscriptionOffer[] = [
+  // Solo — the entry tier for solo desk workers
+  {
+    id: 'solo_annual',
+    title: 'Solo · Annual',
+    subtitle: 'Personal recovery routines',
+    description: 'Full break library, weekly recovery story, and daily missions for solo desk workers.',
+    price: 29.99,
+    priceLabel: '$29.99 / year',
+    currency: 'USD',
+    billingPeriod: 'yearly',
+    trialDays: 7,
+    badge: '7-day trial',
+  },
+  {
+    id: 'solo_monthly',
+    title: 'Solo · Monthly',
+    subtitle: 'Personal recovery routines',
+    description: 'Full break library plus weekly story and daily missions.',
+    price: 4.99,
+    priceLabel: '$4.99 / month',
+    currency: 'USD',
+    billingPeriod: 'monthly',
+    trialDays: 0,
+  },
+
+  // Pro — power users with deeper integration
   {
     id: 'pro_annual',
-    title: 'Annual',
+    title: 'Pro · Annual',
     subtitle: 'Best for daily desk-work recovery',
-    description: 'Full recovery library, weekly reports, and better routines for the lowest monthly cost.',
+    description: 'Everything in Solo plus Apple Health export, calendar-aware reminders, and unlimited custom routines.',
     price: 59.99,
     priceLabel: '$59.99 / year',
     currency: 'USD',
@@ -70,11 +108,36 @@ export const DEFAULT_SUBSCRIPTION_OFFERS: SubscriptionOffer[] = [
   },
   {
     id: 'pro_monthly',
-    title: 'Monthly',
+    title: 'Pro · Monthly',
     subtitle: 'Flexible while your routine takes shape',
-    description: 'Try the deeper recovery layer without committing to a full year.',
+    description: 'Pro features billed month-to-month.',
     price: 9.99,
     priceLabel: '$9.99 / month',
+    currency: 'USD',
+    billingPeriod: 'monthly',
+    trialDays: 0,
+  },
+
+  // Family — up to 6 members, social streak features
+  {
+    id: 'family_annual',
+    title: 'Family · Annual',
+    subtitle: 'Up to 6 members, shared accountability',
+    description: 'Pro for everyone in your household plus streak buddies and family sharing.',
+    price: 99.99,
+    priceLabel: '$99.99 / year',
+    currency: 'USD',
+    billingPeriod: 'yearly',
+    trialDays: 14,
+    badge: '6 seats · 14-day trial',
+  },
+  {
+    id: 'family_monthly',
+    title: 'Family · Monthly',
+    subtitle: 'Up to 6 members, billed monthly',
+    description: 'Family Pro access without an annual commitment.',
+    price: 14.99,
+    priceLabel: '$14.99 / month',
     currency: 'USD',
     billingPeriod: 'monthly',
     trialDays: 0,

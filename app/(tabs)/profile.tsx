@@ -195,7 +195,7 @@ export default function ProfileScreen() {
       : 'Pro Active'
     : 'Go Pro';
   const premiumDescription = hasActiveSubscription
-    ? subscriptionCustomer.activeOfferId === 'pro_annual'
+    ? subscriptionCustomer.activeOfferId?.endsWith('_annual')
       ? 'Annual access is active on this device'
       : 'Monthly access is active on this device'
     : subscriptionStatus === 'expired'

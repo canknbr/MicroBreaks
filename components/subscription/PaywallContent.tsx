@@ -49,8 +49,13 @@ function formatAccessLabel(
   isPreview: boolean
 ): string {
   if (!hasAccess) return 'Free';
-  const plan = activeOfferId === 'pro_annual' ? 'Annual' : 'Monthly';
-  return `${isPreview ? 'Preview ' : ''}${plan} Pro`;
+  const period = activeOfferId?.endsWith('_annual') ? 'Annual' : 'Monthly';
+  const tierLabel = activeOfferId?.startsWith('family_')
+    ? 'Family'
+    : activeOfferId?.startsWith('solo_')
+      ? 'Solo'
+      : 'Pro';
+  return `${isPreview ? 'Preview ' : ''}${period} ${tierLabel}`;
 }
 
 function formatOperationLabel(operation: BillingOperation | null): string {
