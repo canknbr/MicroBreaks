@@ -201,6 +201,16 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) && validDeviceDoc(deviceId);
         allow delete: if isOwner(userId);
       }
+
+      // Entitlement ledger — server-only writes. The RevenueCat webhook
+      // Cloud Function uses the admin SDK which bypasses these rules,
+      // so the deny-all-write here is what locks out clients (and any
+      // attacker who steals their auth token). Clients can still read
+      // their own row to drive premium UI gates.
+      match /entitlements/{docId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
     }
 
     // Deny everything else by default

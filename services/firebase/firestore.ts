@@ -117,6 +117,21 @@ export function getDeviceDoc(
 }
 
 /**
+ * Reference to the current entitlement-ledger doc the RevenueCat
+ * webhook writes for this user. Rules grant client read but deny
+ * client write — only the Cloud Function (admin SDK) can mutate it.
+ */
+export function getEntitlementDoc(
+  userId: string
+): FirebaseFirestoreTypes.DocumentReference {
+  return firestore()
+    .collection('users')
+    .doc(userId)
+    .collection('entitlements')
+    .doc('current');
+}
+
+/**
  * Delete all user data from Firestore (GDPR compliance)
  */
 export async function deleteAllUserData(userId: string): Promise<void> {

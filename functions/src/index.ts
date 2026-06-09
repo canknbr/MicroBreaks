@@ -14,6 +14,11 @@ import * as functionsV1 from 'firebase-functions/v1';
 
 admin.initializeApp();
 
+// HTTPS webhook for RevenueCat → entitlement ledger.
+// Exported at the top level so `firebase deploy --only functions:revenueCatWebhook`
+// can target it directly.
+export { revenueCatWebhook } from './entitlements/webhook';
+
 const DELETE_BATCH_SIZE = 450;
 
 /**

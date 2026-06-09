@@ -133,9 +133,79 @@ clean attack surface for abuse.
 
 ---
 
+## 7. RevenueCat webhook → entitlement ledger
+
+**Why:** The client `Purchases` SDK is easy to spoof on a jailbroken
+device. By having RevenueCat post every billing event to our Cloud
+Function, Firestore becomes the canonical source of "what server saw"
+and security rules can gate premium features without trusting the
+client.
+
+### 7a. Deploy the function
+
+```bash
+# From the repo root
+cd functions && npm install && npm run build
+firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET
+# Paste a long random string — generate with: openssl rand -hex 32
+firebase deploy --only functions:revenueCatWebhook
+```
+
+Grab the deployed URL from the deploy output — it looks like
+`https://revenue-cat-webhook-<hash>-uc.a.run.app` or
+`https://us-central1-<project>.cloudfunctions.net/revenueCatWebhook`.
+
+### 7b. Configure the webhook in RevenueCat
+
+1. RevenueCat Dashboard → **Project Settings → Integrations →
+   Webhooks** → **Add new**.
+2. **URL**: paste the function URL.
+3. **Authorization header value**: paste the same secret string from
+   step 7a. RevenueCat sends it as `Authorization: <secret>` (no
+   `Bearer` prefix).
+4. Enable every event type — INITIAL_PURCHASE, RENEWAL, CANCELLATION,
+   EXPIRATION, BILLING_ISSUE, REFUND, etc. Better to receive and drop
+   in code than to miss one we needed later.
+5. Save.
+
+### 7c. Verify it works
+
+1. Click **"Send test event"** in the RevenueCat webhook config.
+2. Firebase Console → **Functions → revenueCatWebhook → Logs**:
+   - You should see `Entitlement ledger updated` with `tier`, `status`,
+     `event: TEST`.
+3. Firestore → `users/<your-uid>/entitlements/current` should now have
+   a document.
+
+If the secret doesn't match the function returns 401 — that's the
+expected behavior, **don't** disable the secret to "make it work".
+
+### 7d. Rotate the secret
+
+When the secret leaks (or quarterly, whichever comes first):
+
+```bash
+firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET
+firebase deploy --only functions:revenueCatWebhook
+```
+
+Then paste the new secret into RevenueCat. There's a ~10-minute
+window where events may fail during rotation — RevenueCat retries
+5xx so they'll catch up.
+
+### 7e. App Store Server Notifications (later)
+
+When you have time, also wire Apple's App Store Server Notifications
+V2 directly into a separate Cloud Function. It catches edge cases
+RevenueCat sometimes misses (test sandbox events, retroactive refunds
+processed by Apple support). One source of truth is better than two,
+but having a second corroborating signal is the gold standard.
+
+---
+
 ## Done? Quick sanity check
 
-After all six steps:
+After all seven steps:
 
 - [ ] Budget alert email arrives when you test-spend $1 (e.g. by deploying)
 - [ ] Rules playground rejects out-of-policy operations
@@ -143,7 +213,9 @@ After all six steps:
 - [ ] Auth dashboard shows < 10 anonymous sign-ups / day under normal use
 - [ ] Crashlytics dashboard shows retention = 14 months
 - [ ] Functions dashboard shows max-instances = 5
+- [ ] RevenueCat test event writes a doc to
+      `users/<uid>/entitlements/current`
 
-This is the floor. Phase 2 (Cloud Function webhooks for billing, family
-seat orchestration, scheduled cleanups) and Phase 3 (caching, pagination,
-indexes) build on top of it.
+This is the floor. Phase 2 (family seat orchestration, scheduled
+cleanups, App Store Server Notifications) and Phase 3 (caching,
+pagination, indexes) build on top of it.
