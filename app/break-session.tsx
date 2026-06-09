@@ -15,6 +15,7 @@ import { useBreakSession } from '@/hooks/useBreakSession';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import { requiresUpgradeForExercise } from '@/services/subscription/exerciseAccess';
+import { useFreeQuotaCheck } from '@/hooks/useFreeQuotaCheck';
 import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
 import { STREAK_MILESTONES } from '@/constants/config';
 import { calculateDailyGoal } from '@/utils/validation';
@@ -65,15 +66,34 @@ function BreakSessionScreen() {
   const { tier, loaded: tierLoaded } = useEffectiveTier();
   const needsUpgrade =
     tierLoaded && requiresUpgradeForExercise(resolvedBreakId, tier);
+
+  // Free-tier daily cap. The screen is the only place we enforce it
+  // — once a user is here, we know they're committing to a session,
+  // and the gate sends them to the paywall instead of starting it.
+  // The check is gated on `tier === 'free'`; paid tiers skip the
+  // history fetch entirely.
+  const quota = useFreeQuotaCheck({ enabled: tierLoaded && tier === 'free' });
+  const overFreeQuota = tierLoaded && tier === 'free' && quota.exhausted;
+
   useEffect(() => {
-    if (!needsUpgrade) return;
-    router.replace(
-      ({
-        pathname: '/subscription',
-        params: { placement: 'breaks' },
-      } as never)
-    );
-  }, [needsUpgrade, router]);
+    if (needsUpgrade) {
+      router.replace(
+        ({
+          pathname: '/subscription',
+          params: { placement: 'breaks' },
+        } as never)
+      );
+      return;
+    }
+    if (overFreeQuota) {
+      router.replace(
+        ({
+          pathname: '/subscription',
+          params: { placement: 'free_quota' },
+        } as never)
+      );
+    }
+  }, [needsUpgrade, overFreeQuota, router]);
 
   const { state, actions, stats, progress } = useBreakSession(resolvedBreakId);
 

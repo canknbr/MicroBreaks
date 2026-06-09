@@ -18,3 +18,4 @@ export { HeaderActions } from './HeaderActions';
 export { default as TimerWidget } from './TimerWidget';
 export { default as PresetPicker } from './PresetPicker';
 export { default as MissionsCard } from './MissionsCard';
+export { default as FreeQuotaChip } from './FreeQuotaChip';

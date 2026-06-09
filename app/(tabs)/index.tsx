@@ -58,10 +58,13 @@ import {
   TimerWidget,
   PresetPicker,
   MissionsCard,
+  FreeQuotaChip,
 } from '@/components/home';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
 import { useTierFeature } from '@/hooks/useTierFeature';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import UpgradeGateCard from '@/components/subscription/UpgradeGateCard';
+import { FREE_DAILY_BREAK_LIMIT } from '@/services/subscription/freeQuota';
 import {
   useHomeData,
   useGreeting,
@@ -116,6 +119,8 @@ export default function HomeScreen() {
   // Daily missions
   const dailyMissions = useDailyMissions();
   const missionsGate = useTierFeature('daily_missions');
+  const { tier: effectiveTier } = useEffectiveTier();
+  const isFreeTier = effectiveTier === 'free';
 
   // Timer state
   const timerPreferences = useTimerPreferences();
@@ -448,6 +453,15 @@ export default function HomeScreen() {
             >
               {subtitle}
             </Text>
+
+            {isFreeTier && (
+              <View style={{ marginTop: 12 }}>
+                <FreeQuotaChip
+                  used={data?.dailyProgress.breaksTaken ?? 0}
+                  limit={FREE_DAILY_BREAK_LIMIT}
+                />
+              </View>
+            )}
           </Animated.View>
 
           {/* Current state picker */}
