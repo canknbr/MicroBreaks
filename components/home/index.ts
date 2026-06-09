@@ -19,3 +19,4 @@ export { default as TimerWidget } from './TimerWidget';
 export { default as PresetPicker } from './PresetPicker';
 export { default as MissionsCard } from './MissionsCard';
 export { default as FreeQuotaChip } from './FreeQuotaChip';
+export { default as ExpiredAccessBanner } from './ExpiredAccessBanner';

@@ -14,6 +14,7 @@ const PAYWALL_PLACEMENTS: PaywallPlacement[] = [
   'weekly_story',
   'home_missions',
   'free_quota',
+  're_engage',
 ];
 
 function parsePlacement(value: string | string[] | undefined): PaywallPlacement {

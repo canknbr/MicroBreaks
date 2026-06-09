@@ -59,6 +59,7 @@ import {
   PresetPicker,
   MissionsCard,
   FreeQuotaChip,
+  ExpiredAccessBanner,
 } from '@/components/home';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
 import { useTierFeature } from '@/hooks/useTierFeature';
@@ -463,6 +464,8 @@ export default function HomeScreen() {
               </View>
             )}
           </Animated.View>
+
+          <ExpiredAccessBanner />
 
           {/* Current state picker */}
           <View style={styles.section}>

@@ -11,7 +11,8 @@ export type PaywallPlacement =
   | 'stats'
   | 'weekly_story'    // /weekly-story screen gate
   | 'home_missions'   // home-screen daily missions gate
-  | 'free_quota';     // hit the 5/day free break cap
+  | 'free_quota'      // hit the 5/day free break cap
+  | 're_engage';      // expired / refunded user winback banner
 
 export type BillingOperation =
   | 'initialize'

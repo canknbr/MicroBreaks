@@ -213,6 +213,12 @@ function buildPlacementCopy(
           'Free covers five sessions a day. Upgrade for unlimited breaks plus the full guided library and weekly insights.',
         primaryFallback: fallbackLabel,
       };
+    case 're_engage':
+      return {
+        headline: 'Welcome back — your subscription lapsed',
+        subheadline: `Pick up where you left off. Your routines, history, and streak are all still here; just need access to unlock the deeper ${primaryNeed.summary} layer again.`,
+        primaryFallback: fallbackLabel,
+      };
     case 'profile':
     default:
       return {
@@ -236,6 +242,7 @@ function buildFeatureList(
     weekly_story: `Weekly story showing your ${primaryNeed.label} trends, best windows, and routine mix`,
     home_missions: 'Three fresh daily missions with bonus XP for variety and timing',
     free_quota: `Unlimited break sessions instead of the 5/day cap — keep your ${primaryNeed.label} routine flowing`,
+    re_engage: `Your ${primaryNeed.program.toLowerCase()} routine is one tap away — full library, weekly story, and faster timing all return on day one`,
   };
 
   return [

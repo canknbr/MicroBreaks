@@ -206,4 +206,10 @@ export const PAYWALL_COPY = {
       'Free covers five sessions a day. Upgrade for unlimited breaks plus the full guided library and weekly insights.',
     primaryFallback: 'Come back tomorrow',
   },
+  re_engage: {
+    headline: 'Welcome back — your subscription lapsed',
+    subheadline:
+      'Pick up where you left off. Your routines, history, and streak are all still here; just need access to unlock the deeper layer again.',
+    primaryFallback: 'Stay on free for now',
+  },
 } as const;
