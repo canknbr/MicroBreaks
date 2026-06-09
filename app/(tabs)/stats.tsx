@@ -43,6 +43,7 @@ import {
 import { CompletedBreak } from '@/services/storage';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
 import { useHasActiveSubscription, useOnboardingStore } from '@/store';
+import { useTierFeature } from '@/hooks/useTierFeature';
 import { PRO_STATS_HIGHLIGHTS } from '@/constants/subscription';
 import { UpgradePrompt } from '@/components/subscription';
 import {
@@ -409,6 +410,12 @@ export default function StatsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const headerOpacity = useSharedValue(0);
   const hasActiveSubscription = useHasActiveSubscription();
+  // Tier-aware gate for the chart / mix / pattern sections. Currently
+  // collapses to the same boolean as hasActiveSubscription (since
+  // every paid tier includes advanced_stats), but routing through
+  // `useTierFeature` lets us redirect specific tiers in the future
+  // without rewriting every block — and keeps the intent explicit.
+  const advancedStats = useTierFeature('advanced_stats');
 
   const stats = useStatsData(selectedPeriod);
 
@@ -696,7 +703,7 @@ export default function StatsScreen() {
                 </View>
               </View>
 
-              {hasActiveSubscription && stats.weeklyRecoveryReport && (
+              {advancedStats.hasFeature && stats.weeklyRecoveryReport && (
                 <WeeklyRecoveryReportCard
                   report={stats.weeklyRecoveryReport}
                   theme={theme}
@@ -705,7 +712,7 @@ export default function StatsScreen() {
                 />
               )}
 
-              {hasActiveSubscription && stats.recoveryInsights.length > 0 && (
+              {advancedStats.hasFeature && stats.recoveryInsights.length > 0 && (
                 <>
                   <View style={styles.insightsHeader}>
                     <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
@@ -730,7 +737,7 @@ export default function StatsScreen() {
               )}
 
               {/* Chart */}
-              {hasActiveSubscription && stats.chartData.length > 0 && (
+              {advancedStats.hasFeature && stats.chartData.length > 0 && (
                 <View style={[
                   styles.chartCard,
                   {
@@ -768,7 +775,7 @@ export default function StatsScreen() {
               )}
 
               {/* Break Types Distribution */}
-              {hasActiveSubscription && stats.breakTypes.length > 0 && (
+              {advancedStats.hasFeature && stats.breakTypes.length > 0 && (
                 <View style={[
                   styles.sectionCard,
                   {
@@ -807,7 +814,7 @@ export default function StatsScreen() {
               )}
 
               {/* Time Patterns */}
-              {hasActiveSubscription && stats.timePatterns.length > 0 && (
+              {advancedStats.hasFeature && stats.timePatterns.length > 0 && (
                 <View style={[
                   styles.sectionCard,
                   {
@@ -846,7 +853,7 @@ export default function StatsScreen() {
                 </View>
               )}
 
-              {!hasActiveSubscription && (
+              {!advancedStats.hasFeature && (
                 <UpgradePrompt
                   title="Unlock the pattern layer behind your recovery"
                   subtitle="You can already see the weekly story. Pro opens deeper signals, rhythm trends, and mix analysis so you know what to fix next."

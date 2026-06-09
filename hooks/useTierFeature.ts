@@ -26,6 +26,7 @@ const FEATURE_MIN_TIER: Record<TierFeature, Exclude<Tier, 'free'> | 'free'> = {
   full_break_library: 'solo',
   weekly_recovery_story: 'solo',
   daily_missions: 'solo',
+  advanced_stats: 'solo',
   apple_health_export: 'pro',
   calendar_aware: 'pro',
   unlimited_custom: 'pro',

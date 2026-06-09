@@ -78,6 +78,7 @@ export type TierFeature =
   | 'full_break_library'    // solo+
   | 'weekly_recovery_story' // solo+
   | 'daily_missions'        // solo+
+  | 'advanced_stats'        // solo+ (charts beyond today's totals)
   | 'apple_health_export'   // pro+
   | 'calendar_aware'        // pro+
   | 'unlimited_custom'      // pro+
@@ -101,6 +102,7 @@ const FEATURE_MIN_TIER: Record<TierFeature, Tier> = {
   full_break_library: 'solo',
   weekly_recovery_story: 'solo',
   daily_missions: 'solo',
+  advanced_stats: 'solo',
   apple_health_export: 'pro',
   calendar_aware: 'pro',
   unlimited_custom: 'pro',
