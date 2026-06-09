@@ -26,6 +26,21 @@ Required project state:
 | Trigger | What it does | Reason |
 |---------|-------------|--------|
 | `auth.user().onDelete` → `onAuthUserDelete` | Wipes `users/{uid}` plus its `breaks/` and `devices/` subcollections. | Makes the client account-delete flow atomic — the user only needs `auth.deleteUser()` to succeed. The Cloud Function picks up the rest. |
+| HTTPS `revenueCatWebhook` | Verifies the shared secret, maps the RevenueCat event to our ledger shape, and writes to `users/{uid}/entitlements/current`. | Server-side billing source of truth. The client `Purchases` SDK is easy to spoof; the webhook is the only path that can write the canonical entitlement row. See `docs/firebase-hardening.md` §7 for setup. |
+
+## Tests
+
+```bash
+npm install      # one-time
+npm test         # runs the mapper + (future) webhook tests
+```
+
+The mapper unit tests live in `src/entitlements/__tests__/mapper.test.ts`
+and cover every RevenueCat event type → status mapping, tier inference,
+billing-period inference, trial flagging, store mapping, ISO timestamp
+conversion, and edge cases (missing app_user_id, malformed payload,
+unknown event types). They run under `ts-jest` and are excluded from
+the root jest suite (see `jest.config.js`).
 
 ## Client expectations
 

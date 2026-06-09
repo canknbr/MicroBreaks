@@ -34,6 +34,10 @@ module.exports = {
     '<rootDir>/android/',
     '<rootDir>/ios/',
     '<rootDir>/dist/',
+    // Cloud Functions has its own jest setup (functions/jest.config.js)
+    // so root jest shouldn't compile its tests with the jest-expo
+    // preset — they run via `npm --prefix functions test`.
+    '<rootDir>/functions/',
     process.env.RUN_SCALABILITY ? '' : '<rootDir>/__tests__/unit/scalability/',
   ].filter(Boolean),
 

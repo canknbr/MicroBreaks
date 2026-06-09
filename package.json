@@ -18,6 +18,8 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --watchman=false --ci --runInBand --reporters=default --reporters=jest-junit",
     "test:scalability": "RUN_SCALABILITY=1 jest --watchman=false --runInBand __tests__/unit/scalability/",
+    "test:functions": "npm --prefix functions test",
+    "test:all": "npm test -- --watchman=false && npm run test:functions",
     "prepare": "husky"
   },
   "lint-staged": {
