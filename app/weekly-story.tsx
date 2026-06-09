@@ -26,6 +26,8 @@ import {
   composeWeeklyStory,
   type WeeklyStory,
 } from '@/services/insights/weeklyStory';
+import { useTierFeature } from '@/hooks/useTierFeature';
+import UpgradeGateCard from '@/components/subscription/UpgradeGateCard';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -42,10 +44,16 @@ function formatTimeBucket(bucket: string): string {
 
 export default function WeeklyStoryScreen() {
   const theme = useTheme();
+  const gate = useTierFeature('weekly_recovery_story');
   const [story, setStory] = useState<WeeklyStory | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Don't burn IO building a story the user can't see.
+    if (!gate.hasFeature) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -69,7 +77,7 @@ export default function WeeklyStoryScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [gate.hasFeature]);
 
   const peakBar = useMemo(() => {
     if (!story) return 0;
@@ -103,7 +111,31 @@ export default function WeeklyStoryScreen() {
           <View style={styles.backButton} />
         </View>
 
-        {loading ? (
+        {gate.loading ? (
+          <View style={styles.centerContent}>
+            <ActivityIndicator size="large" color={theme.accent.primary} />
+          </View>
+        ) : !gate.hasFeature ? (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={[styles.headline, { color: theme.text.primary }]}>
+              Your weekly story is a Pro habit.
+            </Text>
+            <Text style={[styles.range, { color: theme.text.muted }]}>
+              Pro · Solo · Family
+            </Text>
+            <UpgradeGateCard
+              requiredTier={gate.requiredTier}
+              title="Unlock your weekly recovery story"
+              body="A clear weekly snapshot — totals, streak status, top break types, your best time of day, and a daily rhythm chart. Upgrade once, see it every week."
+              placement="weekly_story"
+            />
+            <View style={styles.bottomSpacer} />
+          </ScrollView>
+        ) : loading ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={theme.accent.primary} />
           </View>

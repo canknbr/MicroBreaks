@@ -161,6 +161,29 @@ export function compareTiers(a: Tier, b: Tier): number {
   return Math.sign(TIER_RANK[a] - TIER_RANK[b]);
 }
 
+/**
+ * Resolve the *effective* tier from server + local signals.
+ *
+ *   - When the server ledger has answered (`serverLoaded`), it wins.
+ *     The server is the source of truth — a hostile client can claim
+ *     paid status; only the RevenueCat webhook can write the ledger.
+ *   - While the server is still loading, take the higher of the local
+ *     tier and 'free'. This keeps the UI optimistic for users who
+ *     just purchased (RevenueCat client SDK already flipped) so we
+ *     don't flash a paywall before the server catches up.
+ *
+ * Returns the resolved tier (downstream code can then `tierIncludes`
+ * for the feature check).
+ */
+export function resolveEffectiveTier(args: {
+  serverLoaded: boolean;
+  serverTier: Tier;
+  localTier: Tier;
+}): Tier {
+  if (args.serverLoaded) return args.serverTier;
+  return compareTiers(args.localTier, 'free') > 0 ? args.localTier : 'free';
+}
+
 export interface TierOfferPair {
   /** Monthly offer for the tier, or null if not available. */
   monthly: SubscriptionOffer | null;

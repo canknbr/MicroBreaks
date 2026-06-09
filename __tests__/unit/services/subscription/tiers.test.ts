@@ -4,6 +4,7 @@ import {
   getOffersForTier,
   getTierForOfferId,
   PURCHASABLE_TIERS,
+  resolveEffectiveTier,
   tierIncludes,
   TIER_HIGHLIGHTS,
   TIER_LABELS,
@@ -188,5 +189,35 @@ describe('getOffersForTier', () => {
     ]);
     expect(pair.monthly).toBeNull();
     expect(pair.annual).toBeNull();
+  });
+});
+
+describe('resolveEffectiveTier', () => {
+  it('uses the server tier the moment it has loaded', () => {
+    expect(
+      resolveEffectiveTier({ serverLoaded: true, serverTier: 'pro', localTier: 'free' })
+    ).toBe('pro');
+  });
+
+  it('respects a paid local tier while server is still loading (optimistic)', () => {
+    // Just-purchased user: client SDK flipped to pro, webhook hasn't
+    // landed yet — we don't want to flash a paywall.
+    expect(
+      resolveEffectiveTier({ serverLoaded: false, serverTier: 'free', localTier: 'pro' })
+    ).toBe('pro');
+  });
+
+  it('falls back to free when server hasnt loaded and local is also free', () => {
+    expect(
+      resolveEffectiveTier({ serverLoaded: false, serverTier: 'free', localTier: 'free' })
+    ).toBe('free');
+  });
+
+  it('downgrades to free when the server says free, even if local still claims paid', () => {
+    // Refund or churn: server is authoritative — downgrade immediately
+    // even if the client SDK hasn't seen the update.
+    expect(
+      resolveEffectiveTier({ serverLoaded: true, serverTier: 'free', localTier: 'pro' })
+    ).toBe('free');
   });
 });
