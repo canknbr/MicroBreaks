@@ -6,7 +6,15 @@ import { PaywallContent } from '@/components/subscription';
 import { useTheme } from '@/hooks/useTheme';
 import type { PaywallPlacement } from '@/services/billing';
 
-const PAYWALL_PLACEMENTS: PaywallPlacement[] = ['onboarding', 'profile', 'breaks', 'stats'];
+const PAYWALL_PLACEMENTS: PaywallPlacement[] = [
+  'onboarding',
+  'profile',
+  'breaks',
+  'stats',
+  'weekly_story',
+  'home_missions',
+  'free_quota',
+];
 
 function parsePlacement(value: string | string[] | undefined): PaywallPlacement {
   const candidate = Array.isArray(value) ? value[0] : value;

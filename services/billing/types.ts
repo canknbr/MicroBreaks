@@ -4,7 +4,14 @@ export type BillingProvider = 'none' | 'preview' | 'revenuecat';
 
 export type BillingPeriod = 'monthly' | 'yearly';
 
-export type PaywallPlacement = 'onboarding' | 'profile' | 'breaks' | 'stats';
+export type PaywallPlacement =
+  | 'onboarding'
+  | 'profile'
+  | 'breaks'
+  | 'stats'
+  | 'weekly_story'    // /weekly-story screen gate
+  | 'home_missions'   // home-screen daily missions gate
+  | 'free_quota';     // hit the 5/day free break cap
 
 export type BillingOperation =
   | 'initialize'

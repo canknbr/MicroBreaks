@@ -188,4 +188,22 @@ export const PAYWALL_COPY = {
       'See patterns behind your energy, break mix, and consistency so you can build a routine that actually sticks.',
     primaryFallback: 'Keep using basic stats',
   },
+  weekly_story: {
+    headline: 'See the story of your recovery',
+    subheadline:
+      'Weekly insights show what is working, what is slipping, and the best time of day for your reset routine.',
+    primaryFallback: 'Skip for now',
+  },
+  home_missions: {
+    headline: 'Three fresh missions every day',
+    subheadline:
+      'Light variety prompts that keep your routine interesting and award bonus XP — no thinking required.',
+    primaryFallback: 'Maybe later',
+  },
+  free_quota: {
+    headline: 'You hit today’s free limit',
+    subheadline:
+      'Free covers five sessions a day. Upgrade for unlimited breaks plus the full guided library and weekly insights.',
+    primaryFallback: 'Come back tomorrow',
+  },
 } as const;

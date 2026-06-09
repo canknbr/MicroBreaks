@@ -137,4 +137,42 @@ describe('PaywallContent', () => {
     expect(screen.getByText('Done')).toBeTruthy();
     expect(screen.getByText(/Current access valid through/i)).toBeTruthy();
   });
+
+  describe('placement-specific copy', () => {
+    it('renders the free-quota headline when hit from the daily cap', () => {
+      render(
+        <PaywallContent
+          placement="free_quota"
+          onContinueFree={jest.fn()}
+        />
+      );
+      expect(screen.getByText(/You hit today’s free limit/)).toBeTruthy();
+      expect(screen.getByText(/Free covers five sessions a day/)).toBeTruthy();
+    });
+
+    it('renders the weekly-story headline when entering from /weekly-story', () => {
+      render(
+        <PaywallContent
+          placement="weekly_story"
+          onContinueFree={jest.fn()}
+        />
+      );
+      expect(screen.getByText(/See the story behind your week/)).toBeTruthy();
+      expect(screen.getByText(/Weekly recovery summaries show your trend/)).toBeTruthy();
+    });
+
+    it('renders the home-missions headline when entering from the home card', () => {
+      render(
+        <PaywallContent
+          placement="home_missions"
+          onContinueFree={jest.fn()}
+        />
+      );
+      expect(screen.getByText(/Three fresh missions every day/)).toBeTruthy();
+      expect(
+        screen.getByText(/Light variety prompts that keep your routine interesting/)
+      ).toBeTruthy();
+    });
+
+  });
 });

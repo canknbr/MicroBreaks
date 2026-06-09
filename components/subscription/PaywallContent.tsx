@@ -192,6 +192,27 @@ function buildPlacementCopy(
           `You already have the top-line story. Pro shows the trend, timing, and recovery mix underneath it so you know what to fix next for ${primaryNeed.label}.`,
         primaryFallback: fallbackLabel,
       };
+    case 'weekly_story':
+      return {
+        headline: 'See the story behind your week',
+        subheadline:
+          `Weekly recovery summaries show your trend, your best time of day, and the recovery mix that fits your ${primaryNeed.summary} routine.`,
+        primaryFallback: fallbackLabel,
+      };
+    case 'home_missions':
+      return {
+        headline: 'Three fresh missions every day',
+        subheadline:
+          'Light variety prompts that keep your routine interesting and award bonus XP — no thinking required.',
+        primaryFallback: fallbackLabel,
+      };
+    case 'free_quota':
+      return {
+        headline: 'You hit today’s free limit',
+        subheadline:
+          'Free covers five sessions a day. Upgrade for unlimited breaks plus the full guided library and weekly insights.',
+        primaryFallback: fallbackLabel,
+      };
     case 'profile':
     default:
       return {
@@ -212,6 +233,9 @@ function buildFeatureList(
     profile: `Full guided programs for ${primaryNeed.label}, not just the starter layer`,
     breaks: `The complete ${primaryNeed.program.toLowerCase()} library with longer and deeper guided sessions`,
     stats: `The full recovery pattern layer behind your ${primaryNeed.label} routine`,
+    weekly_story: `Weekly story showing your ${primaryNeed.label} trends, best windows, and routine mix`,
+    home_missions: 'Three fresh daily missions with bonus XP for variety and timing',
+    free_quota: `Unlimited break sessions instead of the 5/day cap — keep your ${primaryNeed.label} routine flowing`,
   };
 
   return [
