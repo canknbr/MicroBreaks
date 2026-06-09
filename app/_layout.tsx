@@ -29,6 +29,7 @@ import {
   setUser as setCrashlyticsUser,
 } from '@/services/firebase/crashlytics-adapter';
 import { initializeAuth, onAuthStateChanged } from '@/services/firebase/auth';
+import { initializeAppCheck } from '@/services/firebase/appCheck';
 import { initializeFirestore } from '@/services/firebase/firestore';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
@@ -307,6 +308,17 @@ export default function RootLayout() {
           name: 'crashlytics',
           run: async () => {
             await initializeCrashlytics();
+          },
+        },
+        {
+          // App Check must come before Firestore / Functions / Storage so
+          // every outbound request carries an attestation token. The init
+          // is a no-op until @react-native-firebase/app-check is installed
+          // and the Firebase Console providers are enabled, so this is
+          // safe to land ahead of the dashboard side.
+          name: 'app_check',
+          run: async () => {
+            await initializeAppCheck();
           },
         },
         {

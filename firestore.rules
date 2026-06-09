@@ -142,6 +142,7 @@ service cloud.firestore {
           'totalSteps',
           'xpEarned',
           'rating',
+          'reliefScore',
           'completedAt',
           'updatedAt'
         ])
@@ -159,6 +160,9 @@ service cloud.firestore {
         && boundedInt(request.resource.data.xpEarned, 0, 1000)
         && (request.resource.data.rating == null
           || request.resource.data.rating in ['good', 'neutral', 'bad'])
+        && (!('reliefScore' in request.resource.data)
+          || request.resource.data.reliefScore == null
+          || request.resource.data.reliefScore in ['worse', 'same', 'better', 'much_better'])
         && requiredString(request.resource.data.completedAt, 64)
         && (!('updatedAt' in request.resource.data)
           || requiredString(request.resource.data.updatedAt, 64));
