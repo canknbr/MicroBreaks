@@ -14,9 +14,15 @@ export interface Achievement {
   color: string;
   // Criteria for unlocking
   criteria: {
-    type: 'total_breaks' | 'streak' | 'total_minutes' | 'category_breaks' | 'level' | 'first_break' | 'all_categories' | 'favorites';
+    type: 'total_breaks' | 'streak' | 'total_minutes' | 'category_breaks' | 'level' | 'first_break' | 'all_categories' | 'favorites' | 'tier_reached';
     value: number;
     category?: string; // For category_breaks type
+    /**
+     * Minimum tier for the `tier_reached` criterion. One of
+     * 'solo' | 'pro' | 'family'. Achievement unlocks the first time
+     * the user's effective tier reaches at least this level.
+     */
+    minTier?: 'solo' | 'pro' | 'family';
   };
   // XP reward for unlocking
   xpReward: number;
@@ -245,6 +251,41 @@ export const ACHIEVEMENTS: Achievement[] = [
     color: '#FF6B6B',
     criteria: { type: 'favorites', value: 5 },
     xpReward: 20,
+  },
+
+  // Subscription tier achievements — celebrate the upgrade rather than
+  // gating any tier behind achievement progress. The XP rewards are
+  // intentionally modest; the unlock itself is the moment of
+  // celebration.
+  {
+    id: 'tier-solo',
+    title: 'Welcome to Solo',
+    description: 'Unlock the full recovery library',
+    icon: '🌱',
+    category: 'special',
+    color: '#06FFA5',
+    criteria: { type: 'tier_reached', value: 0, minTier: 'solo' },
+    xpReward: 50,
+  },
+  {
+    id: 'tier-pro',
+    title: 'Going Pro',
+    description: 'Unlock Apple Health export and calendar-aware reminders',
+    icon: '⚡',
+    category: 'special',
+    color: '#FFD166',
+    criteria: { type: 'tier_reached', value: 0, minTier: 'pro' },
+    xpReward: 100,
+  },
+  {
+    id: 'tier-family',
+    title: 'Family Mode',
+    description: 'Bring your household into the routine',
+    icon: '🏡',
+    category: 'special',
+    color: '#FF6B6B',
+    criteria: { type: 'tier_reached', value: 0, minTier: 'family' },
+    xpReward: 150,
   },
 ];
 

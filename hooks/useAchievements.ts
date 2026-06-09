@@ -6,6 +6,8 @@
 import { useCallback, useMemo } from 'react';
 import { useUserStore, useNotificationStore, createAchievementNotification } from '@/store';
 import { ACHIEVEMENTS, Achievement, AchievementCategory } from '@/data/achievements';
+import { useEffectiveTier } from '@/hooks/useEffectiveTier';
+import { compareTiers, type Tier } from '@/services/subscription/tiers';
 
 export interface AchievementWithStatus extends Achievement {
   isUnlocked: boolean;
@@ -20,10 +22,11 @@ export function useAchievements() {
   const unlockAchievement = useUserStore((state) => state.unlockAchievement);
   const addXP = useUserStore((state) => state.addXP);
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { tier: effectiveTier } = useEffectiveTier();
 
   // Calculate progress for each achievement
   const getAchievementProgress = useCallback((achievement: Achievement): number => {
-    const { type, value, category } = achievement.criteria;
+    const { type, value, category, minTier } = achievement.criteria;
 
     switch (type) {
       case 'total_breaks':
@@ -39,14 +42,17 @@ export function useAchievements() {
         return Math.min((progress.level / value) * 100, 100);
       case 'favorites':
         return Math.min((preferences.favoriteBreaks.length / value) * 100, 100);
+      case 'tier_reached':
+        if (!minTier) return 0;
+        return compareTiers(effectiveTier, minTier) >= 0 ? 100 : 0;
       default:
         return 0;
     }
-  }, [progress, achievements, preferences]);
+  }, [progress, achievements, preferences, effectiveTier]);
 
   // Check if achievement criteria is met
   const isCriteriaMet = useCallback((achievement: Achievement): boolean => {
-    const { type, value, category } = achievement.criteria;
+    const { type, value, category, minTier } = achievement.criteria;
 
     switch (type) {
       case 'total_breaks':
@@ -62,10 +68,13 @@ export function useAchievements() {
         return progress.level >= value;
       case 'favorites':
         return preferences.favoriteBreaks.length >= value;
+      case 'tier_reached':
+        if (!minTier) return false;
+        return compareTiers(effectiveTier, minTier as Tier) >= 0;
       default:
         return false;
     }
-  }, [progress, achievements, preferences]);
+  }, [progress, achievements, preferences, effectiveTier]);
 
   // Get all achievements with status
   const achievementsWithStatus = useMemo((): AchievementWithStatus[] => {
