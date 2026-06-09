@@ -203,9 +203,80 @@ but having a second corroborating signal is the gold standard.
 
 ---
 
+## 8. Scheduled cleanup of stale anonymous users
+
+**Why:** Anonymous accounts that never convert pile up forever
+otherwise. Each one costs 1 Auth row (free) and any Firestore docs
+they wrote (not free). At low scale this is pennies; at 100k MAU it's
+the difference between a $10 and a $100 monthly Firestore bill.
+
+The function deletes Auth records; the existing `onAuthUserDelete`
+trigger fans out the Firestore cleanup so we never have to teach a
+new function about the schema.
+
+### 8a. Deploy the function
+
+```bash
+# From the repo root
+cd functions && npm install && npm run build && npm test
+firebase deploy --only functions:cleanupStaleAnonymousUsers
+```
+
+The deploy provisions a Cloud Scheduler job + Pub/Sub topic
+automatically. Confirm in the GCP Console → Cloud Scheduler → look
+for `firebase-schedule-cleanupStaleAnonymousUsers-us-central1`.
+
+### 8b. Verify the policy in the emulator (optional but worth it)
+
+```bash
+cd functions
+npm run serve         # boots the functions emulator
+# In another terminal, hit the scheduler trigger manually:
+curl -X POST http://localhost:5001/<project>/us-central1/cleanupStaleAnonymousUsers
+```
+
+Watch the emulator log — you should see `[cleanup] start`,
+`[cleanup] done` with inspected/deleted counts. The function is
+idempotent; a second run does nothing if there's nothing to delete.
+
+### 8c. Tune the knobs (only when you need to)
+
+If your DAU graph shows that legitimate users come back after long
+breaks, raise the threshold in
+`functions/src/cleanup/cleanupStaleAnonymousUsers.ts`:
+
+```ts
+const STALE_THRESHOLD_MS = 90 * 86_400_000;   // current: 90 days
+const MAX_DELETES_PER_RUN = 500;              // safety floor
+```
+
+Default policy:
+- Account must be **purely anonymous** (no linked providers).
+- Account must have been silent for **> 90 days**.
+- If both timestamps are missing or unparseable, **do nothing**.
+- Cap of **500 deletes per run** so a clock skew or audit can't drain
+  thousands of users in one invocation.
+
+### 8d. Watch for a few days
+
+Cloud Functions Console → `cleanupStaleAnonymousUsers` → Logs.
+Healthy runs show:
+
+```
+[cleanup] start  { thresholdDays: 90, maxDeletesPerRun: 500 }
+[cleanup] done   { inspected: <n>, deleted: <m>, failed: 0 }
+```
+
+If you see `[cleanup] delete failed` repeatedly for the same uid,
+inspect the user in the Auth dashboard — usually a leftover
+permission issue or a UID that's already been cleaned up by another
+trigger.
+
+---
+
 ## Done? Quick sanity check
 
-After all seven steps:
+After all eight steps:
 
 - [ ] Budget alert email arrives when you test-spend $1 (e.g. by deploying)
 - [ ] Rules playground rejects out-of-policy operations
@@ -215,7 +286,9 @@ After all seven steps:
 - [ ] Functions dashboard shows max-instances = 5
 - [ ] RevenueCat test event writes a doc to
       `users/<uid>/entitlements/current`
+- [ ] Cloud Scheduler shows a `cleanupStaleAnonymousUsers` job ticking
+      daily at 03:00 UTC
 
-This is the floor. Phase 2 (family seat orchestration, scheduled
-cleanups, App Store Server Notifications) and Phase 3 (caching,
-pagination, indexes) build on top of it.
+This is the floor. Phase 3 (family seat orchestration, App Store
+Server Notifications, caching, pagination, indexes) builds on top of
+it.

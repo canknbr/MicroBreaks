@@ -27,6 +27,7 @@ Required project state:
 |---------|-------------|--------|
 | `auth.user().onDelete` → `onAuthUserDelete` | Wipes `users/{uid}` plus its `breaks/` and `devices/` subcollections. | Makes the client account-delete flow atomic — the user only needs `auth.deleteUser()` to succeed. The Cloud Function picks up the rest. |
 | HTTPS `revenueCatWebhook` | Verifies the shared secret, maps the RevenueCat event to our ledger shape, and writes to `users/{uid}/entitlements/current`. | Server-side billing source of truth. The client `Purchases` SDK is easy to spoof; the webhook is the only path that can write the canonical entitlement row. See `docs/firebase-hardening.md` §7 for setup. |
+| Cloud Scheduler → `cleanupStaleAnonymousUsers` | Daily 03:00 UTC: pages Firebase Auth, deletes anonymous accounts that have been silent for > 90 days (capped at 500 deletes per run). The existing `onAuthUserDelete` trigger handles the Firestore fan-out. | Anonymous accounts pile up forever otherwise. At low scale this is pennies; at 100k MAU it's the difference between a $10 and a $100 monthly Firestore bill. See `docs/firebase-hardening.md` §8. |
 
 ## Tests
 

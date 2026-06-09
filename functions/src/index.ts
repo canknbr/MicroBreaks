@@ -19,6 +19,11 @@ admin.initializeApp();
 // can target it directly.
 export { revenueCatWebhook } from './entitlements/webhook';
 
+// Scheduled cleanup of stale anonymous users (daily 03:00 UTC).
+// The function deletes Auth records; the existing onAuthUserDelete
+// trigger handles the Firestore cleanup fan-out.
+export { cleanupStaleAnonymousUsers } from './cleanup/cleanupStaleAnonymousUsers';
+
 const DELETE_BATCH_SIZE = 450;
 
 /**
