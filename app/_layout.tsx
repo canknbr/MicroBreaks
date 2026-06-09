@@ -32,6 +32,7 @@ import { initializeAuth, onAuthStateChanged } from '@/services/firebase/auth';
 import { initializeAppCheck } from '@/services/firebase/appCheck';
 import { initializeFirestore } from '@/services/firebase/firestore';
 import { useTierStateSync } from '@/hooks/useTierStateSync';
+import { useEntitlementLedgerSync } from '@/hooks/useEntitlementLedgerSync';
 import { registerForPushNotifications, onTokenRefresh } from '@/services/firebase/messaging';
 import { syncService } from '@/services/sync';
 import { initializeTimerService, shutdownTimerService } from '@/services/timerService';
@@ -109,6 +110,9 @@ export default function RootLayout() {
   // singleton so non-React services (HealthKit writes, calendar reads,
   // etc) can synchronously gate on the user's tier.
   useTierStateSync();
+  // Mirrors the server entitlement ledger into subscriptionStore so
+  // synchronous reads of `customer.status` reflect server truth.
+  useEntitlementLedgerSync();
   const [showSplash, setShowSplash] = useState(true);
   const [bootstrapPhase, setBootstrapPhase] = useState<BootstrapPhase>('loading');
   const [bootstrapIssues, setBootstrapIssues] = useState<BootstrapIssue[]>([]);
