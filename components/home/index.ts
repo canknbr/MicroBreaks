@@ -20,3 +20,4 @@ export { default as PresetPicker } from './PresetPicker';
 export { default as MissionsCard } from './MissionsCard';
 export { default as FreeQuotaChip } from './FreeQuotaChip';
 export { default as ExpiredAccessBanner } from './ExpiredAccessBanner';
+export { default as RecoveryBank } from './RecoveryBank';

@@ -275,6 +275,45 @@ describe('UserStore', () => {
       expect(achievements.categoryBreaks['stretch']).toBe(1);
       expect(achievements.totalMinutes).toBe(10);
     });
+
+    it('should accumulate recovery minutes on every break completion', () => {
+      expect(useUserStore.getState().progress.recoveryMinutes).toBe(0);
+      expect(useUserStore.getState().progress.recoveryBankSince).toBeNull();
+
+      act(() => {
+        useUserStore.getState().trackBreakCompletion('quick', 2);
+        useUserStore.getState().trackBreakCompletion('stretch', 5);
+      });
+
+      const progress = useUserStore.getState().progress;
+      expect(progress.recoveryMinutes).toBe(7);
+      expect(progress.recoveryBankSince).not.toBeNull();
+    });
+
+    it('should stamp recoveryBankSince only on the first break, not every call', () => {
+      act(() => {
+        useUserStore.getState().trackBreakCompletion('quick', 1);
+      });
+      const firstStamp = useUserStore.getState().progress.recoveryBankSince;
+      expect(firstStamp).not.toBeNull();
+
+      act(() => {
+        useUserStore.getState().trackBreakCompletion('quick', 4);
+      });
+      const secondStamp = useUserStore.getState().progress.recoveryBankSince;
+      expect(secondStamp).toBe(firstStamp);
+    });
+
+    it('should treat a NaN duration as zero recovery minutes', () => {
+      act(() => {
+        useUserStore.getState().trackBreakCompletion('quick', Number.NaN);
+      });
+      const progress = useUserStore.getState().progress;
+      expect(progress.recoveryMinutes).toBe(0);
+      // The bank still kicks on — a logged break is a logged break,
+      // even if its duration was malformed.
+      expect(progress.recoveryBankSince).not.toBeNull();
+    });
   });
 
   describe('Sign Out', () => {

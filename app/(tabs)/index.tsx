@@ -60,6 +60,7 @@ import {
   MissionsCard,
   FreeQuotaChip,
   ExpiredAccessBanner,
+  RecoveryBank,
 } from '@/components/home';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
 import { useTierFeature } from '@/hooks/useTierFeature';
@@ -85,7 +86,11 @@ import {
   getRecoveryReason,
 } from '@/features/recovery/states';
 import { getWorkPatternTimingHint } from '@/features/workday/patterns';
-import { useNotificationStore, useOnboardingStore } from '@/store';
+import {
+  useNotificationStore,
+  useOnboardingStore,
+  useUserStore,
+} from '@/store';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useSmartInsight } from '@/hooks/useSmartInsight';
@@ -463,6 +468,8 @@ export default function HomeScreen() {
                 />
               </View>
             )}
+
+            <RecoveryBankRow />
           </Animated.View>
 
           <ExpiredAccessBanner />
@@ -872,6 +879,29 @@ export default function HomeScreen() {
         onSelect={timerActions.setPreset}
         onClose={() => setShowPresetPicker(false)}
       />
+    </View>
+  );
+}
+
+/**
+ * Calm companion to the streak indicator: shows the lifetime recovery
+ * bank below the free-quota chip. Hidden until the user has logged
+ * their first break (`recoveryBankSince === null`).
+ *
+ * Selector-isolated so the parent screen doesn't re-render every time
+ * the bank tick increments.
+ */
+function RecoveryBankRow() {
+  const recoveryMinutes = useUserStore(
+    (state) => state.progress.recoveryMinutes,
+  );
+  const recoveryBankSince = useUserStore(
+    (state) => state.progress.recoveryBankSince,
+  );
+  if (!recoveryBankSince) return null;
+  return (
+    <View style={{ marginTop: 12 }}>
+      <RecoveryBank minutes={recoveryMinutes} since={recoveryBankSince} />
     </View>
   );
 }

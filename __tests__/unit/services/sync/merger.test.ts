@@ -72,6 +72,8 @@ describe('Sync Merger', () => {
       longestStreak: 0,
       weeklyGoal: 20,
       dailyGoal: 5,
+      recoveryMinutes: 0,
+      recoveryBankSince: null,
     };
 
     it('should take max values for cumulative stats', () => {
@@ -112,6 +114,62 @@ describe('Sync Merger', () => {
     it('should handle both sides being equal', () => {
       const result = mergeProgress(baseProgress, baseProgress);
       expect(result).toEqual(baseProgress);
+    });
+
+    it('should take max recovery minutes across devices', () => {
+      const local: UserProgress = {
+        ...baseProgress,
+        recoveryMinutes: 120,
+        recoveryBankSince: '2026-03-10T00:00:00.000Z',
+      };
+      const remote: UserProgress = {
+        ...baseProgress,
+        recoveryMinutes: 200,
+        recoveryBankSince: '2026-02-01T00:00:00.000Z',
+      };
+
+      const result = mergeProgress(local, remote);
+      expect(result.recoveryMinutes).toBe(200);
+      // Earlier of the two start dates wins — the bank "started" on
+      // whichever device logged the first break.
+      expect(result.recoveryBankSince).toBe('2026-02-01T00:00:00.000Z');
+    });
+
+    it('should preserve the only available recoveryBankSince when one side is null', () => {
+      const local: UserProgress = {
+        ...baseProgress,
+        recoveryMinutes: 50,
+        recoveryBankSince: '2026-04-01T00:00:00.000Z',
+      };
+      const remote: UserProgress = {
+        ...baseProgress,
+        recoveryMinutes: 0,
+        recoveryBankSince: null,
+      };
+
+      const result = mergeProgress(local, remote);
+      expect(result.recoveryMinutes).toBe(50);
+      expect(result.recoveryBankSince).toBe('2026-04-01T00:00:00.000Z');
+    });
+
+    it('should fall back to zero for an older client missing recovery fields', () => {
+      const local: UserProgress = {
+        ...baseProgress,
+        recoveryMinutes: 30,
+        recoveryBankSince: '2026-05-01T00:00:00.000Z',
+      };
+      // Simulate a remote payload from a pre-recovery-debt client.
+      const remote = {
+        ...baseProgress,
+        recoveryMinutes: undefined as unknown as number,
+        recoveryBankSince: undefined as unknown as string | null,
+      } as UserProgress;
+
+      const result = mergeProgress(local, remote);
+      expect(result.recoveryMinutes).toBe(30);
+      expect(result.recoveryBankSince).toBe('2026-05-01T00:00:00.000Z');
+      // Must never propagate NaN into the store.
+      expect(Number.isFinite(result.recoveryMinutes)).toBe(true);
     });
   });
 

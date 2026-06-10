@@ -1,6 +1,14 @@
 /**
  * Storage Service
- * AsyncStorage wrapper for persistent data
+ * AsyncStorage wrapper for persistent data.
+ *
+ * Service-level blob storage (break history, user stats, streak data)
+ * stays on AsyncStorage for now. A MMKV-backed replacement lives at
+ * `services/storage/blobMmkv.ts` ready for a future migration, but
+ * landing it requires a coordinated test rewrite (~50+ tests probe
+ * AsyncStorage directly) which is its own sprint. Zustand stores
+ * already use MMKV through `zustandMmkv.ts` — that path is live and
+ * gives the hot-path performance win.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

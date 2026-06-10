@@ -59,6 +59,10 @@ describe('userSync', () => {
       longestStreak: 6,
       weeklyGoal: 49,
       dailyGoal: 7,
+      // Remote payload pre-dates the recovery-bank fields and local
+      // store is freshly signed out, so the merge yields the defaults.
+      recoveryMinutes: 0,
+      recoveryBankSince: null,
     });
 
     const storedStats = JSON.parse((await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS)) ?? '{}');

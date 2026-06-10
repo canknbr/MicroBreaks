@@ -25,6 +25,34 @@ export function mergeProfiles(
  */
 export function mergeProgress(local: UserProgress, remote: UserProgress): UserProgress {
   const totalXP = Math.max(local.totalXP, remote.totalXP);
+  // Recovery bank is monotonic — always take the larger value so a
+  // device that's been offline doesn't reset a more-recent gain.
+  // The "since" date is the earlier of the two — the bank started
+  // accruing whichever device logged the first break.
+  //
+  // Defensive: remote may be a pre-recovery-debt payload (sync layer
+  // talks to older client versions on other devices). Sanitise both
+  // sides before Math.max so we never propagate NaN into the store.
+  const localMinutes = Number.isFinite(local.recoveryMinutes)
+    ? local.recoveryMinutes
+    : 0;
+  const remoteMinutes = Number.isFinite(remote.recoveryMinutes)
+    ? remote.recoveryMinutes
+    : 0;
+  const localSince =
+    typeof local.recoveryBankSince === 'string' && local.recoveryBankSince
+      ? local.recoveryBankSince
+      : null;
+  const remoteSince =
+    typeof remote.recoveryBankSince === 'string' && remote.recoveryBankSince
+      ? remote.recoveryBankSince
+      : null;
+  let recoveryBankSince: string | null;
+  if (localSince && remoteSince) {
+    recoveryBankSince = localSince < remoteSince ? localSince : remoteSince;
+  } else {
+    recoveryBankSince = localSince ?? remoteSince;
+  }
   return {
     level: Math.floor(totalXP / 100) + 1,
     totalXP,
@@ -33,6 +61,8 @@ export function mergeProgress(local: UserProgress, remote: UserProgress): UserPr
     longestStreak: Math.max(local.longestStreak, remote.longestStreak),
     weeklyGoal: remote.weeklyGoal, // Use remote as source of truth for settings-like values
     dailyGoal: remote.dailyGoal,
+    recoveryMinutes: Math.max(localMinutes, remoteMinutes),
+    recoveryBankSince,
   };
 }
 

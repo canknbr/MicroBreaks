@@ -30,6 +30,22 @@ export interface UserProgress {
   longestStreak: number;
   weeklyGoal: number;
   dailyGoal: number;
+  /**
+   * "Recovery bank" — cumulative recovery minutes from completed
+   * breaks since `recoveryBankSince`. Additive companion to streak;
+   * the streak system stays as-is, this layer is a softer narrative
+   * for users who find streak loss demotivating.
+   *
+   * Accumulates on every break completion. Never decreases on its own
+   * (missed days produce no growth, not negative balance — by design).
+   */
+  recoveryMinutes: number;
+  /**
+   * ISO date string the recovery bank started accumulating. Lets the
+   * UI say "5h 30m saved since Mar 1" instead of just a raw number.
+   * `null` until the first break that triggers initialisation.
+   */
+  recoveryBankSince: string | null;
 }
 
 export interface UserPreferences {
@@ -92,6 +108,8 @@ export const initialUserProgress: UserProgress = {
   longestStreak: 0,
   weeklyGoal: DEFAULT_WEEKLY_GOAL,
   dailyGoal: calculateDailyGoal(DEFAULT_WEEKLY_GOAL),
+  recoveryMinutes: 0,
+  recoveryBankSince: null,
 };
 
 export const initialUserPreferences: UserPreferences = {
@@ -218,6 +236,16 @@ function sanitizeProgress(value: unknown): UserProgress {
       typeof progress.dailyGoal === 'number' && Number.isFinite(progress.dailyGoal) && progress.dailyGoal > 0
         ? Math.round(progress.dailyGoal)
         : calculateDailyGoal(weeklyGoal),
+    recoveryMinutes:
+      typeof progress.recoveryMinutes === 'number' &&
+      Number.isFinite(progress.recoveryMinutes)
+        ? Math.max(0, Math.round(progress.recoveryMinutes))
+        : initialUserProgress.recoveryMinutes,
+    recoveryBankSince:
+      typeof progress.recoveryBankSince === 'string' &&
+      progress.recoveryBankSince.length > 0
+        ? progress.recoveryBankSince
+        : initialUserProgress.recoveryBankSince,
   };
 }
 
@@ -514,7 +542,24 @@ export const useUserStore = create<UserState>()(
       trackBreakCompletion: (category, durationMinutes) => {
         set((state) => {
           const categoryBreaks = state.achievements.categoryBreaks;
+          // Recovery debt accumulator: every break adds to the bank.
+          // First-ever break also stamps the "since" date so the UI
+          // can render "<minutes> banked since <date>" without
+          // backfilling from achievements history.
+          const sanitisedMinutes = Math.max(
+            0,
+            Math.round(Number.isFinite(durationMinutes) ? durationMinutes : 0),
+          );
+          const nextRecoveryMinutes =
+            state.progress.recoveryMinutes + sanitisedMinutes;
+          const nextRecoveryBankSince =
+            state.progress.recoveryBankSince ?? new Date().toISOString();
           return {
+            progress: {
+              ...state.progress,
+              recoveryMinutes: nextRecoveryMinutes,
+              recoveryBankSince: nextRecoveryBankSince,
+            },
             achievements: {
               ...state.achievements,
               categoryBreaks: {
