@@ -593,6 +593,64 @@ export default {
       levelUp: "Tebrikler! {{level}}. seviyeye ulastiniz!",
       achievementUnlocked: "Acilan basari: {{achievement}}",
     },
+    dailyGoal: {
+      titleSingular: '{{count}} mola daha! 🎯',
+      titlePlural: '{{count}} mola daha! 🎯',
+      body: "Gunluk hedefe %{{percent}} kaldi. Devam et!",
+    },
+    weeklyStory: {
+      title: 'Bu haftaki odagin 📊',
+      body: 'Hangi molalar sana iyi geldi gor, gelecek haftaya hangisini tasimak istersin secebilirsin.',
+    },
+    adaptive: {
+      streakAtRisk: {
+        title: '{{streak}} gunluk seriyi koru 🔥',
+        body: 'Tek bir kisa mola yeter. 60 saniye bile is gorur.',
+      },
+      firstBreak: {
+        title: 'Ilk molan 🌱',
+        body: 'Baski yok — bir dakika fazlasiyla yeterli. Yol gosteririm.',
+      },
+      almostDone: {
+        title: 'Bir tane daha 🎯',
+        body: "Gunluk hedefine bir mola kaldi — son sprintle bitir.",
+      },
+      pain: {
+        eyes:       { title: '20-20-20 zamani 👁️',     body: '6 metre uzaktaki bir noktaya 20 saniye bak.' },
+        neck:       { title: 'Boyun resetle 🧘',          body: '30 saniye yavas cene cekme — anlik rahatlama.' },
+        shoulders:  { title: 'Omuzlari cevir 🤸',         body: 'Bes geri, bes ileri. Gerginlik gitti.' },
+        upper_back: { title: 'Dik dur 💪',                body: 'Gogsunu ac, genis nefes al, on sayinca birak.' },
+        lower_back: { title: 'Sandalyede kedi-inek 🐈',   body: 'Belini bes kez kavislendir ve toparlama.' },
+        wrists:     { title: 'Bilek cevirme 🤲',          body: 'Her yone on tur — klavyeden gelen yorgunluga iyi geliyor.' },
+      },
+      tone: {
+        energetic: {
+          '0': { title: 'Sabah resetle 🌅',           body: 'Omuzlari cevir, gunun tonunu belirle.' },
+          '1': { title: 'Bedenini uyandir ☀️',        body: '60 saniye hareket, hazirsin.' },
+          '2': { title: 'Guclu basla 💪',             body: 'Simdi yapilan kucuk germe tum gune yayilir.' },
+        },
+        focused: {
+          '0': { title: 'Derin is oncesi mini reset 🎯', body: 'Kafani temizle — bir dakika, sonra geri don.' },
+          '1': { title: 'Odak yenileme 🧘',              body: 'Bakisini yumusat, omuzlari indir, uc nefes al.' },
+          '2': { title: 'Kucuk mola, buyuk geri donus ⏱️', body: 'Simdi durakla, sonraki saati keskin tut.' },
+        },
+        recover: {
+          '0': { title: 'Ogle sonrasi reset 🌿',    body: 'Ayaga kalk, uzayarak ger, cokmusluga itiraz et.' },
+          '1': { title: 'Ogleden sonra toparlanma 🍃', body: 'Kisa bir mola, saat ucteki cokuse karsi.' },
+          '2': { title: 'Bosalt 🤸',                  body: 'Gerginlik sessizce birikir — simdi gevset.' },
+        },
+        calm: {
+          '0': { title: 'Yavasla 🪷',          body: 'Nefesi yavaslar, ceneyi yumusar, biraz birak.' },
+          '1': { title: 'Aksam resetle 🌙',    body: 'Calisma modundan cikis icin nazik bir mola.' },
+          '2': { title: 'Yerlesim 🌅',         body: 'Yavasca nefes al. Gun guzel kapaniyor.' },
+        },
+        gentle: {
+          '0': { title: 'Kolay olsun 🌌',  body: 'Hafif bir germe ve yavas bir nefes — bu kadari yeterli.' },
+          '1': { title: 'Tek nefes 🤍',     body: 'Hedef yok, metrik yok. Sadece tek bir tam nefes.' },
+          '2': { title: 'Dinlenme modu 🌒', body: 'Hazir oldugun zaman. Hic acele yok.' },
+        },
+      },
+    },
   },
 
   // ============================================

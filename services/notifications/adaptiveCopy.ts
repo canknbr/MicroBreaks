@@ -52,6 +52,20 @@ export interface AdaptiveNotificationCopy {
   rationale: 'streak_at_risk' | 'almost_done' | 'first_break' | 'pain_focused' | 'time_of_day';
 }
 
+/**
+ * Optional translator. Caller can pass `i18n.t` to localise output.
+ * When omitted, the composer falls back to the built-in English
+ * strings, keeping pure-function callers (jest, analytics) working
+ * without an i18n setup.
+ *
+ * `params` carries interpolation values (e.g. {{streak}}). Implementations
+ * that don't interpolate (the fallback) can ignore it.
+ */
+export type AdaptiveTranslate = (
+  key: string,
+  params?: Record<string, string | number>,
+) => string;
+
 // ============================================================
 // Time bucket
 // ============================================================
@@ -137,9 +151,29 @@ function pickFromArray<T>(arr: T[], now: Date): T {
   return arr[index];
 }
 
-export function composeAdaptiveCopy(context: AdaptiveCopyContext): AdaptiveNotificationCopy {
+export function composeAdaptiveCopy(
+  context: AdaptiveCopyContext,
+  translate?: AdaptiveTranslate,
+): AdaptiveNotificationCopy {
   const bucket = getTimeBucket(context.now);
   const tone = toneForBucket(bucket);
+
+  // i18n helper: if no translator was supplied, fall back to the
+  // English defaults. Caller-provided keys win when present; missing
+  // keys fall through to the default so partial translations don't
+  // break the flow.
+  const tr = (key: string, fallback: string, params?: Record<string, string | number>): string => {
+    if (!translate) return fallback;
+    try {
+      const out = translate(key, params);
+      // Many i18n libraries return the key itself on a miss. Treat that
+      // as "no translation available" and fall back so we never ship
+      // raw keys to the user.
+      return out && out !== key ? out : fallback;
+    } catch {
+      return fallback;
+    }
+  };
 
   // Highest priority: streak at risk. The user worked hard for the
   // streak — protect it before showing anything else.
@@ -149,8 +183,15 @@ export function composeAdaptiveCopy(context: AdaptiveCopyContext): AdaptiveNotif
 
   if (hasStreak && noBreakToday && (bucket === 'afternoon' || bucket === 'evening' || bucket === 'late')) {
     return {
-      title: `Protect your ${context.currentStreak}-day streak 🔥`,
-      body: 'One quick break keeps it alive. Even 60 seconds works.',
+      title: tr(
+        'notifications.adaptive.streakAtRisk.title',
+        `Protect your ${context.currentStreak}-day streak 🔥`,
+        { streak: context.currentStreak },
+      ),
+      body: tr(
+        'notifications.adaptive.streakAtRisk.body',
+        'One quick break keeps it alive. Even 60 seconds works.',
+      ),
       tone,
       rationale: 'streak_at_risk',
     };
@@ -159,8 +200,11 @@ export function composeAdaptiveCopy(context: AdaptiveCopyContext): AdaptiveNotif
   // First break of the user's life — go warm, not transactional.
   if (context.currentStreak === 0 && context.todayBreakCount === 0 && context.lastBreakAt == null) {
     return {
-      title: 'Your first break 🌱',
-      body: 'No pressure — one minute is plenty. Let me guide you.',
+      title: tr('notifications.adaptive.firstBreak.title', 'Your first break 🌱'),
+      body: tr(
+        'notifications.adaptive.firstBreak.body',
+        'No pressure — one minute is plenty. Let me guide you.',
+      ),
       tone,
       rationale: 'first_break',
     };
@@ -169,8 +213,11 @@ export function composeAdaptiveCopy(context: AdaptiveCopyContext): AdaptiveNotif
   // One break short of the daily goal.
   if (context.dailyGoal > 0 && breaksLeft === 1 && context.todayBreakCount > 0) {
     return {
-      title: 'One more 🎯',
-      body: 'You are one break away from today\'s goal — finish strong.',
+      title: tr('notifications.adaptive.almostDone.title', 'One more 🎯'),
+      body: tr(
+        'notifications.adaptive.almostDone.body',
+        "You are one break away from today's goal — finish strong.",
+      ),
       tone,
       rationale: 'almost_done',
     };
@@ -184,10 +231,10 @@ export function composeAdaptiveCopy(context: AdaptiveCopyContext): AdaptiveNotif
   if (shouldUsePainCopy) {
     const pick = context.painAreas.find((tag) => PAIN_AREA_COPY[tag]);
     const painCopy = pick ? PAIN_AREA_COPY[pick] : null;
-    if (painCopy) {
+    if (painCopy && pick) {
       return {
-        title: painCopy.title,
-        body: painCopy.body,
+        title: tr(`notifications.adaptive.pain.${pick}.title`, painCopy.title),
+        body: tr(`notifications.adaptive.pain.${pick}.body`, painCopy.body),
         tone,
         rationale: 'pain_focused',
       };
@@ -197,9 +244,10 @@ export function composeAdaptiveCopy(context: AdaptiveCopyContext): AdaptiveNotif
   // Default: tone-tinted rotation.
   const pool = TONE_COPY[tone];
   const pick = pickFromArray(pool, context.now);
+  const index = pool.indexOf(pick);
   return {
-    title: pick.title,
-    body: pick.body,
+    title: tr(`notifications.adaptive.tone.${tone}.${index}.title`, pick.title),
+    body: tr(`notifications.adaptive.tone.${tone}.${index}.body`, pick.body),
     tone,
     rationale: 'time_of_day',
   };

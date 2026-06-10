@@ -142,11 +142,28 @@ export function composeWeeklyStory(input: ComposeInput): WeeklyStory {
   const brokeToday = inRange.some(
     (b) => localDateString(new Date(b.completedAt)) === todayStr
   );
+  // "Grew" means the streak counter is higher today than it was at the
+  // start of this 7-day window. We use streakHistory if available; if
+  // we don't have a snapshot from before the window, we fall back to
+  // treating the current streak as a clean growth signal only when the
+  // user actually broke on multiple distinct days this week (the prior
+  // heuristic, kept as a conservative floor).
+  const historyBeforeWindow = input.streak.streakHistory.filter(
+    (e) => e.date < startStr,
+  );
+  const streakAtWindowStart =
+    historyBeforeWindow.length > 0
+      ? historyBeforeWindow[historyBeforeWindow.length - 1]!.count
+      : null;
+  const grew =
+    streakAtWindowStart !== null
+      ? input.streak.currentStreak > streakAtWindowStart
+      : input.streak.currentStreak > 0 && totals.activeDays > 1;
   const streakCallout: StreakCallout = {
     current: input.streak.currentStreak,
     longest: input.streak.longestStreak,
     atRisk: input.streak.currentStreak > 0 && !brokeToday,
-    grew: input.streak.currentStreak > 0 && totals.activeDays > 1,
+    grew,
   };
 
   // Category mix

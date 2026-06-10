@@ -1,3 +1,4 @@
+/* global __dirname */
 /**
  * Config plugin — adds the App Intents Swift file to the main iOS app
  * target on every `expo prebuild`.

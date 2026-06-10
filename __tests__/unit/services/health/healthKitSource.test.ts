@@ -9,6 +9,7 @@ import {
   __resetTierStateForTests,
   __setEffectiveTier,
 } from '@/services/subscription/tierState';
+import { useSettingsStore } from '@/store/settingsStore';
 import type { MindfulSample } from '@/services/health/mindfulMinutes';
 
 function makeMockKit(opts: {
@@ -40,6 +41,17 @@ describe('healthKitSource', () => {
     // exercise HealthKit behavior. Tier-gate cases set 'free'
     // explicitly below.
     __setEffectiveTier('pro');
+    // User consent is now a separate gate above the tier check. The
+    // settings store defaults to off so the user is asked to opt in;
+    // for the historical write tests we flip it on so they exercise
+    // the HealthKit-touching code paths. The consent-off case has its
+    // own test below.
+    useSettingsStore.setState({
+      settings: {
+        ...useSettingsStore.getState().settings,
+        appleHealthMirrorEnabled: true,
+      },
+    });
     (Platform as { OS: string }).OS = 'ios';
   });
 
@@ -149,6 +161,24 @@ describe('healthKitSource', () => {
         expect(ok).toBe(true);
         expect(kit.saveMindfulSession).toHaveBeenCalled();
       }
+    });
+  });
+
+  describe('consent gate', () => {
+    it('skips the write when the user has not opted in, even on Pro', async () => {
+      const kit = makeMockKit();
+      __setHealthKitModuleForTests(kit);
+      __setEffectiveTier('pro');
+      useSettingsStore.setState({
+        settings: {
+          ...useSettingsStore.getState().settings,
+          appleHealthMirrorEnabled: false,
+        },
+      });
+
+      const ok = await writeMindfulSession(sample());
+      expect(ok).toBe(false);
+      expect(kit.saveMindfulSession).not.toHaveBeenCalled();
     });
   });
 });

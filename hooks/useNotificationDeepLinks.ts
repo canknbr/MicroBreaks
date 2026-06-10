@@ -14,6 +14,7 @@ import * as Notifications from 'expo-notifications';
 import {
   addNotificationReceivedListener,
   addNotificationResponseListener,
+  scheduleSnoozedBreakReminder,
 } from '@/services/notifications';
 
 export type NotificationData = Record<string, unknown> | null | undefined;
@@ -27,6 +28,8 @@ export function routeForNotification(data: NotificationData): string | null {
       return '/breaks';
     case 'daily_goal':
       return '/stats';
+    case 'weekly_story':
+      return '/weekly-story';
     default:
       return null;
   }
@@ -34,6 +37,21 @@ export function routeForNotification(data: NotificationData): string | null {
 
 function navigateForResponse(response: Notifications.NotificationResponse | null) {
   if (!response) {
+    return;
+  }
+  const actionIdentifier = response.actionIdentifier;
+  // Background action buttons (snooze / skip) finish without ever
+  // pulling the user into the app. Handle them silently before the
+  // default routing kicks in.
+  if (
+    actionIdentifier === 'BREAK_SNOOZE_15' ||
+    actionIdentifier === 'BREAK_SKIP'
+  ) {
+    if (actionIdentifier === 'BREAK_SNOOZE_15') {
+      void scheduleSnoozedBreakReminder(15).catch((err) => {
+        if (__DEV__) console.warn('[Notifications] snooze failed', err);
+      });
+    }
     return;
   }
   const target = routeForNotification(response.notification.request.content.data);

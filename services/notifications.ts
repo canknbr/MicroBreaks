@@ -21,6 +21,8 @@ import { composeAdaptiveCopy, type PainTag as AdaptivePainTag } from './notifica
 import { decideNotificationAction } from './notifications/predictiveDetection';
 import { findNextFreeSlot } from './notifications/calendarAwareness';
 import { getBusyWindows } from './notifications/calendarSource';
+import { recordReminderDecision } from './notifications/diagnostics';
+import { i18n } from '@/i18n';
 
 // Notification channel IDs
 export const NOTIFICATION_CHANNELS = {
@@ -38,6 +40,7 @@ export const NOTIFICATION_IDS = {
   DAILY_GOAL: 'daily-goal',
   MORNING_MOTIVATION: 'morning-motivation',
   POMODORO_TIMER_END: 'pomodoro-timer-end',
+  WEEKLY_STORY: 'weekly-story',
 } as const;
 
 // Notification settings interface
@@ -195,8 +198,48 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// Initialize notification channels (Android)
+/**
+ * Register iOS/Android notification action categories.
+ *
+ * Categories let the user act on a push without opening the app —
+ * "Take a break now", "Snooze 15m", "Skip" on the lock screen.
+ * The action's `identifier` lands in the response payload and is
+ * routed by `hooks/useNotificationDeepLinks`.
+ *
+ * Categories are global, idempotent, and survive across launches —
+ * registering on every cold start is the documented pattern.
+ */
+async function registerNotificationCategories(): Promise<void> {
+  try {
+    await Notifications.setNotificationCategoryAsync('break_reminder', [
+      {
+        identifier: 'BREAK_NOW',
+        buttonTitle: 'Take a break now',
+        options: { opensAppToForeground: true },
+      },
+      {
+        identifier: 'BREAK_SNOOZE_15',
+        buttonTitle: 'Snooze 15 min',
+        options: { opensAppToForeground: false },
+      },
+      {
+        identifier: 'BREAK_SKIP',
+        buttonTitle: 'Skip',
+        options: { opensAppToForeground: false, isDestructive: true },
+      },
+    ]);
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[notifications] register categories failed', error);
+    }
+  }
+}
+
+// Initialize notification channels (Android) and action categories (iOS/Android)
 export async function initializeNotifications(): Promise<void> {
+  // Categories are platform-agnostic; register on every platform.
+  await registerNotificationCategories();
+
   if (Platform.OS !== 'android') {
     return;
   }
@@ -572,18 +615,29 @@ export async function scheduleBreakReminder(): Promise<string | null> {
           'info',
           { proposedHour: nextTime.getHours(), busyCount: busy.length }
         );
+        void recordReminderDecision({
+          kind: 'suppressed_no_slot',
+          summary:
+            "We didn't send your last reminder — every slot in the next 90 minutes was booked.",
+          details: { busyCount: busy.length, proposedHour: nextTime.getHours() },
+        });
         return null;
       }
       if (shifted.getTime() !== nextTime.getTime()) {
+        const shiftMinutes = Math.round(
+          (shifted.getTime() - nextTime.getTime()) / 60_000,
+        );
         addBreadcrumb(
           'Break reminder shifted past a calendar event',
           'notifications',
           'info',
-          {
-            shiftMinutes: Math.round((shifted.getTime() - nextTime.getTime()) / 60_000),
-            busyCount: busy.length,
-          }
+          { shiftMinutes, busyCount: busy.length }
         );
+        void recordReminderDecision({
+          kind: 'shifted_past_meeting',
+          summary: `We moved your reminder ${shiftMinutes} minutes later so it wouldn't land during a meeting.`,
+          details: { shiftMinutes, busyCount: busy.length },
+        });
         nextTime = shifted;
       }
     }
@@ -625,6 +679,14 @@ export async function scheduleBreakReminder(): Promise<string | null> {
           minutesSinceLastBreak: decision.minutesSinceLastBreak,
         }
       );
+      void recordReminderDecision({
+        kind: 'suppressed_predictive',
+        summary: predictiveRationaleToSummary(decision.rationale),
+        details: {
+          rationale: decision.rationale,
+          minutesSinceLastBreak: decision.minutesSinceLastBreak ?? -1,
+        },
+      });
       return null;
     }
 
@@ -633,14 +695,20 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       .filter((n) => Number.isFinite(n))
       .sort((a, b) => b - a)[0] ?? null;
 
-    const adaptive = composeAdaptiveCopy({
-      now: nextTime,
-      currentStreak: streakData.currentStreak,
-      todayBreakCount: todayBreaks.length,
-      dailyGoal,
-      lastBreakAt,
-      painAreas: painAreas as AdaptivePainTag[],
-    });
+    const adaptive = composeAdaptiveCopy(
+      {
+        now: nextTime,
+        currentStreak: streakData.currentStreak,
+        todayBreakCount: todayBreaks.length,
+        dailyGoal,
+        lastBreakAt,
+        painAreas: painAreas as AdaptivePainTag[],
+      },
+      // i18next.t signature is (key, options) where interpolation values
+      // live under `options`. Adapt to the (key, params) shape the
+      // composer expects so missing keys still fall back to English.
+      (key, params) => i18n.t(key, params ?? {}) as string,
+    );
     message = { title: adaptive.title, body: adaptive.body };
   } catch (err) {
     if (__DEV__) {
@@ -665,6 +733,14 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       channelId: NOTIFICATION_CHANNELS.BREAK_REMINDERS,
     },
     identifier: NOTIFICATION_IDS.BREAK_REMINDER,
+  });
+
+  // Record success so the Profile debug card can show "next reminder
+  // at <time>" instead of stale shift / suppression reasons.
+  void recordReminderDecision({
+    kind: 'scheduled',
+    summary: `Next reminder set for ${nextTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+    details: { hour: nextTime.getHours(), minute: nextTime.getMinutes() },
   });
 
   return identifier;
@@ -704,8 +780,14 @@ export async function scheduleStreakProtection(): Promise<string | null> {
 
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
-      title: `Protect your ${streakData.currentStreak}-day streak! 🔥`,
-      body: "You haven't taken a break today. Complete one to keep your streak alive!",
+      title: i18n.t('notifications.adaptive.streakAtRisk.title', {
+        streak: streakData.currentStreak,
+        defaultValue: `Protect your ${streakData.currentStreak}-day streak! 🔥`,
+      }) as string,
+      body: i18n.t('notifications.adaptive.streakAtRisk.body', {
+        defaultValue:
+          "You haven't taken a break today. Complete one to keep your streak alive!",
+      }) as string,
       sound: settings.soundEnabled ? 'default' : undefined,
       data: { type: 'streak_protection' },
     },
@@ -752,10 +834,26 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
     return null;
   }
 
+  const percent = Math.round((todayBreaks.length / dailyGoal) * 100);
+  // i18next v23 plural rules require `_one` / `_other` suffixes which
+  // not every key in this codebase has migrated to yet. Resolve the
+  // pluralised key ourselves so the fallback string stays correct
+  // when i18n hasn't been initialised (e.g. unit tests).
+  const goalTitleKey =
+    remaining === 1
+      ? 'notifications.dailyGoal.titleSingular'
+      : 'notifications.dailyGoal.titlePlural';
+  const goalTitleFallback = `${remaining} break${remaining === 1 ? '' : 's'} to go! 🎯`;
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
-      title: `${remaining} break${remaining > 1 ? 's' : ''} to go! 🎯`,
-      body: `You're ${Math.round((todayBreaks.length / dailyGoal) * 100)}% to your daily goal. Keep it up!`,
+      title: i18n.t(goalTitleKey, {
+        count: remaining,
+        defaultValue: goalTitleFallback,
+      }) as string,
+      body: i18n.t('notifications.dailyGoal.body', {
+        percent,
+        defaultValue: `You're ${percent}% to your daily goal. Keep it up!`,
+      }) as string,
       sound: settings.soundEnabled ? 'default' : undefined,
       data: { type: 'daily_goal' },
     },
@@ -765,6 +863,115 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
       channelId: NOTIFICATION_CHANNELS.GOALS,
     },
     identifier: NOTIFICATION_IDS.DAILY_GOAL,
+  });
+
+  return identifier;
+}
+
+/** Plain-English summary for the predictive gate's rationale. Kept
+ *  next to the gate so a future new branch shows up here too. */
+function predictiveRationaleToSummary(rationale: string): string {
+  switch (rationale) {
+    case 'in_quiet_hours':
+      return "We held the reminder because you're inside your quiet hours.";
+    case 'just_broke':
+      return 'We held the reminder because you took a break recently.';
+    case 'goal_complete':
+      return "We held the reminder because you've already hit today's break goal.";
+    default:
+      return 'We held the reminder based on your recent break pattern.';
+  }
+}
+
+/**
+ * Snooze the active break reminder by `minutes`. Fired from the
+ * notification "Snooze 15 min" action button — the user wants the
+ * nudge to come back shortly, not be skipped.
+ *
+ * Cancels the currently-displayed reminder and queues a one-shot
+ * DATE-trigger replacement. We deliberately bypass the predictive
+ * gate here because the user just *explicitly* asked for a snooze
+ * and gating it would feel broken.
+ */
+export async function scheduleSnoozedBreakReminder(
+  minutes: number,
+): Promise<string | null> {
+  const settings = await getNotificationSettings();
+  const hasPermission = await hasGrantedNotificationPermission();
+  if (!hasPermission || !settings.enabled) {
+    return null;
+  }
+  await Notifications.cancelScheduledNotificationAsync(
+    NOTIFICATION_IDS.BREAK_REMINDER,
+  );
+  const fireAt = new Date(Date.now() + minutes * 60_000);
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: i18n.t('notifications.adaptive.tone.focused.0.title', {
+        defaultValue: 'Quick reset before deep work 🎯',
+      }) as string,
+      body: i18n.t('notifications.adaptive.tone.focused.0.body', {
+        defaultValue: 'Clear your head — one minute, then back in.',
+      }) as string,
+      sound: settings.soundEnabled ? 'default' : undefined,
+      data: { type: 'break_reminder', snoozed: true },
+      categoryIdentifier: 'break_reminder',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: fireAt,
+      channelId: NOTIFICATION_CHANNELS.BREAK_REMINDERS,
+    },
+    identifier: NOTIFICATION_IDS.BREAK_REMINDER,
+  });
+  return identifier;
+}
+
+/**
+ * Schedule a Sunday-evening reminder that nudges the user toward
+ * the weekly recovery story. The story engine ships its data on
+ * demand from local history — no server hop — so we only need to
+ * surface the screen, not deliver new content in the payload.
+ *
+ * Returns the scheduled identifier, or null if notifications are
+ * disabled or unsupported. Cancels any previously-scheduled instance
+ * before rescheduling so the cadence stays at one per week.
+ */
+const WEEKLY_STORY_WEEKDAY = 1; // expo-notifications: 1 = Sunday
+const WEEKLY_STORY_HOUR = 19;
+
+export async function scheduleWeeklyStoryReminder(): Promise<string | null> {
+  const settings = await getNotificationSettings();
+
+  await Notifications.cancelScheduledNotificationAsync(
+    NOTIFICATION_IDS.WEEKLY_STORY,
+  );
+
+  const hasPermission = await hasGrantedNotificationPermission();
+  if (!hasPermission || !settings.enabled) {
+    return null;
+  }
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: i18n.t('notifications.weeklyStory.title', {
+        defaultValue: 'Your week in focus 📊',
+      }) as string,
+      body: i18n.t('notifications.weeklyStory.body', {
+        defaultValue:
+          'See which breaks lifted you most and what to repeat next week.',
+      }) as string,
+      sound: settings.soundEnabled ? 'default' : undefined,
+      data: { type: 'weekly_story', screen: '/weekly-story' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: WEEKLY_STORY_WEEKDAY,
+      hour: WEEKLY_STORY_HOUR,
+      minute: 0,
+      channelId: NOTIFICATION_CHANNELS.GENERAL,
+    },
+    identifier: NOTIFICATION_IDS.WEEKLY_STORY,
   });
 
   return identifier;
@@ -783,6 +990,7 @@ export async function scheduleAllNotifications(): Promise<void> {
   await scheduleBreakReminder();
   await scheduleStreakProtection();
   await scheduleDailyGoalReminder();
+  await scheduleWeeklyStoryReminder();
 }
 
 // Cancel all scheduled notifications

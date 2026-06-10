@@ -28,12 +28,19 @@ import { useUserStore } from '@/store/userStore';
 import { toMindfulSample } from '@/services/health/mindfulMinutes';
 import { writeMindfulSession } from '@/services/health/healthKitSource';
 import { useMissionsStore } from '@/store/missionsStore';
+import type { Mission } from '@/services/missions/types';
 
 // Result type for save operations
 export interface SaveBreakResult {
   success: boolean;
   breakId?: string;
   error?: StorageError;
+  /**
+   * Missions that newly completed as a result of this save. Lets the
+   * caller render "+XP — mission complete!" feedback without re-
+   * reading the missions store afterwards.
+   */
+  completedMissions?: Mission[];
 }
 
 /**
@@ -196,6 +203,21 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
     try {
       const history = await getBreakHistory();
 
+      // Idempotency: if a save with the same (breakId, completedAt) tuple
+      // already exists at the top of history, treat the second call as a
+      // success without writing again. Defense in depth against double-
+      // submit from the break-session screen — the in-component savedRef
+      // guard already covers the common case, but a stale closure or a
+      // future caller without that guard would otherwise duplicate.
+      const dupe = history.slice(0, 5).find(
+        (b) =>
+          b.breakId === breakData.breakId &&
+          b.completedAt === breakData.completedAt
+      );
+      if (dupe) {
+        return { success: true, breakId: dupe.id };
+      }
+
       // Validate and sanitize input data
       const validatedDuration = validateBreakDuration(breakData.duration);
       const validatedXP = validateXP(breakData.xpEarned);
@@ -235,12 +257,13 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
       // the break's own xpEarned. Done before the projection so the
       // UI sees the combined total in one paint.
       let missionXP = 0;
+      let completedMissions: Mission[] = [];
       try {
         const todayBreaks = getTodayBreaksFromHistory(history);
-        const completed = useMissionsStore
+        completedMissions = useMissionsStore
           .getState()
           .recordBreak(newBreak, todayBreaks);
-        missionXP = completed.reduce((sum, m) => sum + m.bonusXP, 0);
+        missionXP = completedMissions.reduce((sum, m) => sum + m.bonusXP, 0);
         if (missionXP > 0) {
           userStats.totalXP += missionXP;
           userStats.level = Math.floor(userStats.totalXP / 100) + 1;
@@ -269,7 +292,7 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
         });
       }
 
-      return { success: true, breakId };
+      return { success: true, breakId, completedMissions };
     } catch (error) {
       if (__DEV__) {
         console.error('Error saving break:', error);
@@ -614,9 +637,21 @@ export async function checkStreakStatus(): Promise<{
     return { isAtRisk: false, hoursUntilReset: 0 };
   }
 
-  // Parse the stored date string as local date (YYYY-MM-DD format)
-  const [year, month, day] = streakData.lastBreakDate.split('-').map(Number);
-  const lastBreak = new Date(year, month - 1, day);
+  // Parse the stored date string as local date (YYYY-MM-DD format).
+  // Guard against schema drift / corrupted persistence: a malformed value
+  // would otherwise produce a NaN Date and downstream hour math would lie.
+  const parts = streakData.lastBreakDate.split('-').map(Number);
+  const year = parts[0];
+  const month = parts[1];
+  const day = parts[2];
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day)
+  ) {
+    return { isAtRisk: false, hoursUntilReset: 0 };
+  }
+  const lastBreak = new Date(year as number, (month as number) - 1, day as number);
 
   const now = new Date();
 

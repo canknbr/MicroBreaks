@@ -23,6 +23,15 @@ import { useTranslation } from '@/i18n/hooks';
 import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 import { breakSounds } from '@/services/audio/breakSounds';
 
+interface CompletedMissionFeedback {
+  /** Stable id for the React key. */
+  id: string;
+  /** Short human description from the mission ("Take 3 breaks today"). */
+  description: string;
+  /** Bonus XP awarded for completing this mission. */
+  bonusXP: number;
+}
+
 interface BreakCompletionProps {
   title: string;
   icon: string;
@@ -33,6 +42,12 @@ interface BreakCompletionProps {
     totalSteps: number;
     xpEarned: number;
   };
+  /**
+   * Missions that newly completed alongside this break. When present,
+   * the screen surfaces a callout above the stats card to make the
+   * bonus XP visible — without it the mission system credits silently.
+   */
+  completedMissions?: CompletedMissionFeedback[];
 }
 
 export default function BreakCompletion({
@@ -40,6 +55,7 @@ export default function BreakCompletion({
   icon,
   color,
   stats,
+  completedMissions,
 }: BreakCompletionProps) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -165,6 +181,53 @@ export default function BreakCompletion({
           {t('breakSession.completion.youCompleted', { title, defaultValue: `You completed ${title}` })}
         </Text>
       </Animated.View>
+
+      {/* Mission completion callout — only when a mission newly
+          finished as part of this save. Sits above the stats card so
+          the bonus XP is visible in the same paint as the base XP. */}
+      {completedMissions && completedMissions.length > 0 && (
+        <Animated.View
+          style={[
+            styles.missionCallout,
+            {
+              borderColor: color,
+              backgroundColor: theme.isDark
+                ? `${color}1A`
+                : `${color}14`,
+            },
+            statsStyle,
+          ]}
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={t(
+            'breakSession.completion.missionAriaLabel',
+            {
+              count: completedMissions.length,
+              xp: completedMissions.reduce((s, m) => s + m.bonusXP, 0),
+              defaultValue: `${completedMissions.length} mission complete — bonus ${completedMissions.reduce((s, m) => s + m.bonusXP, 0)} XP`,
+            },
+          )}
+        >
+          <Text style={[styles.missionTitle, { color }]}>
+            {t('breakSession.completion.missionTitle', {
+              defaultValue: 'Mission complete!',
+            })}
+          </Text>
+          {completedMissions.map((mission) => (
+            <View key={mission.id} style={styles.missionRow}>
+              <Text
+                style={[styles.missionDesc, { color: theme.text.primary }]}
+                numberOfLines={1}
+              >
+                {mission.description}
+              </Text>
+              <Text style={[styles.missionXP, { color }]}>
+                +{mission.bonusXP} XP
+              </Text>
+            </View>
+          ))}
+        </Animated.View>
+      )}
 
       {/* Stats Card */}
       <Animated.View style={[
@@ -349,5 +412,36 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
+  },
+  missionCallout: {
+    width: '100%',
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  missionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  missionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  missionDesc: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 12,
+  },
+  missionXP: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

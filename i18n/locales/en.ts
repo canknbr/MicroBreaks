@@ -593,6 +593,64 @@ export default {
       levelUp: "Congratulations! You've reached level {{level}}!",
       achievementUnlocked: "You've unlocked: {{achievement}}",
     },
+    dailyGoal: {
+      titleSingular: '{{count}} break to go! 🎯',
+      titlePlural: '{{count}} breaks to go! 🎯',
+      body: "You're {{percent}}% to your daily goal. Keep it up!",
+    },
+    weeklyStory: {
+      title: 'Your week in focus 📊',
+      body: 'See which breaks lifted you most and what to repeat next week.',
+    },
+    adaptive: {
+      streakAtRisk: {
+        title: 'Protect your {{streak}}-day streak 🔥',
+        body: 'One quick break keeps it alive. Even 60 seconds works.',
+      },
+      firstBreak: {
+        title: 'Your first break 🌱',
+        body: 'No pressure — one minute is plenty. Let me guide you.',
+      },
+      almostDone: {
+        title: 'One more 🎯',
+        body: "You are one break away from today's goal — finish strong.",
+      },
+      pain: {
+        eyes:       { title: '20-20-20 time 👁️',         body: 'Look at something 20 feet away for 20 seconds.' },
+        neck:       { title: 'Neck reset 🧘',             body: 'Slow chin tucks for 30 seconds — instant ease.' },
+        shoulders:  { title: 'Roll your shoulders 🤸',    body: 'Five back, five forward. Feel the release.' },
+        upper_back: { title: 'Stand tall 💪',             body: 'Open your chest, breathe wide, hold for ten.' },
+        lower_back: { title: 'Cat-cow at your chair 🐈',  body: 'Arch and round your spine five times.' },
+        wrists:     { title: 'Wrist circles 🤲',          body: 'Ten each direction — typing relief.' },
+      },
+      tone: {
+        energetic: {
+          '0': { title: 'Morning reset 🌅',     body: 'Roll your shoulders, set the tone for the day.' },
+          '1': { title: 'Wake up your body ☀️', body: '60 seconds of movement and you are ready.' },
+          '2': { title: 'Start strong 💪',      body: 'A quick stretch now compounds across the whole day.' },
+        },
+        focused: {
+          '0': { title: 'Quick reset before deep work 🎯', body: 'Clear your head — one minute, then back in.' },
+          '1': { title: 'Focus refill 🧘',                  body: 'Soften your gaze, drop your shoulders, three breaths.' },
+          '2': { title: 'Tiny break, big return ⏱️',        body: 'Pause now to keep the next hour sharp.' },
+        },
+        recover: {
+          '0': { title: 'Post-lunch reset 🌿',    body: 'Stand up, stretch tall, undo the slump.' },
+          '1': { title: 'Afternoon recovery 🍃', body: 'A short pause to fight the 3pm dip.' },
+          '2': { title: 'Move it out 🤸',         body: 'Tension builds quietly — release it now.' },
+        },
+        calm: {
+          '0': { title: 'Wind down 🪷',     body: 'Slow the breath, soften the jaw, let go a little.' },
+          '1': { title: 'Evening reset 🌙', body: 'A gentle pause to transition out of work mode.' },
+          '2': { title: 'Settle in 🌅',     body: 'Breathe slowly. The day is ending well.' },
+        },
+        gentle: {
+          '0': { title: 'Easy does it 🌌', body: 'A soft stretch and a slow breath — that is enough.' },
+          '1': { title: 'One breath 🤍',   body: 'No goal, no metric. Just a single full breath.' },
+          '2': { title: 'Rest mode 🌒',    body: 'Whenever you are ready. There is no rush.' },
+        },
+      },
+    },
   },
 
   // ============================================

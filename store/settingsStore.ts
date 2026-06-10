@@ -40,6 +40,15 @@ export interface AppSettings {
   // Privacy
   analyticsEnabled: boolean;
   crashReportingEnabled: boolean;
+
+  // Integrations
+  /**
+   * When true the app mirrors completed breaks into Apple Health as
+   * Mindful Sessions. The write itself is also gated on tier (Pro+)
+   * inside the HealthKit adapter — this toggle is the user-facing
+   * consent layer above that gate.
+   */
+  appleHealthMirrorEnabled: boolean;
 }
 
 interface SettingsState {
@@ -92,6 +101,10 @@ export const defaultAppSettings: AppSettings = {
   // Privacy
   analyticsEnabled: true,
   crashReportingEnabled: true,
+
+  // Integrations — opt-in. The user has to flip this in profile
+  // settings AND be on Pro+ for any HealthKit write to land.
+  appleHealthMirrorEnabled: false,
 };
 
 function sanitizeTheme(value: unknown): AppSettings['theme'] {
@@ -198,6 +211,10 @@ function sanitizePersistedSettingsState(state: unknown): Pick<
         typeof settings.crashReportingEnabled === 'boolean'
           ? settings.crashReportingEnabled
           : defaultAppSettings.crashReportingEnabled,
+      appleHealthMirrorEnabled:
+        typeof settings.appleHealthMirrorEnabled === 'boolean'
+          ? settings.appleHealthMirrorEnabled
+          : defaultAppSettings.appleHealthMirrorEnabled,
     },
     settingsUpdatedAt:
       typeof persisted.settingsUpdatedAt === 'number' && Number.isFinite(persisted.settingsUpdatedAt)

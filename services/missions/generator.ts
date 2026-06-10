@@ -74,6 +74,7 @@ export function generateDailyMissions(
   const pool = [...templates];
   const out: Mission[] = [];
   const usedKinds = new Set<MissionKind>();
+  const usedTemplates = new Set<MissionTemplate>();
 
   // Fisher-Yates shuffle then pick from the front, skipping repeats.
   for (let i = pool.length - 1; i > 0; i -= 1) {
@@ -85,6 +86,7 @@ export function generateDailyMissions(
     if (out.length >= count) break;
     if (usedKinds.has(tpl.kind)) continue;
     usedKinds.add(tpl.kind);
+    usedTemplates.add(tpl);
     out.push({
       id: `${seed}-${tpl.kind}-${out.length}`,
       kind: tpl.kind,
@@ -99,12 +101,14 @@ export function generateDailyMissions(
   }
 
   // If the kind-uniqueness constraint left us short (unlikely with
-  // current pool size), fill from anywhere.
+  // current pool size), relax to template-uniqueness — pull any
+  // template we haven't already used by reference. This lets a small
+  // pool fill the requested count without producing duplicate IDs.
   if (out.length < count) {
     for (const tpl of pool) {
       if (out.length >= count) break;
-      const alreadyPicked = out.some((m) => m.id.endsWith(`${tpl.kind}-${out.indexOf(m)}`));
-      if (alreadyPicked) continue;
+      if (usedTemplates.has(tpl)) continue;
+      usedTemplates.add(tpl);
       out.push({
         id: `${seed}-${tpl.kind}-${out.length}-fill`,
         kind: tpl.kind,

@@ -30,6 +30,7 @@ import { Platform } from 'react-native';
 import { addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
 import { getCurrentEffectiveTier } from '@/services/subscription/tierState';
 import { tierIncludes } from '@/services/subscription/tiers';
+import { useSettingsStore } from '@/store/settingsStore';
 import type { MindfulSample } from './mindfulMinutes';
 
 interface HealthPermissions {
@@ -140,6 +141,12 @@ export async function requestMindfulSessionPermission(): Promise<boolean> {
  * flow unaffected.
  */
 export async function writeMindfulSession(sample: MindfulSample): Promise<boolean> {
+  // User consent gate. We will silently skip if the user has not
+  // opted in from Profile → Settings → Apple Health, even on Pro.
+  const consent = useSettingsStore.getState().settings.appleHealthMirrorEnabled;
+  if (!consent) {
+    return false;
+  }
   if (!tierIncludes(getCurrentEffectiveTier(), 'apple_health_export')) {
     return false;
   }

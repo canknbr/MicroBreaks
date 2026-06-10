@@ -3,7 +3,7 @@
  * Full-screen immersive break execution experience
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -136,6 +136,12 @@ function BreakSessionScreen() {
   // Track if we've already saved this session
   const savedRef = useRef(false);
   const previousLevelRef = useRef(currentLevel);
+  // Missions that newly completed alongside the save — surfaced by the
+  // completion screen so bonus XP is visible. State (not ref) so a
+  // re-render paints the callout once the save returns.
+  const [completedMissionFeedback, setCompletedMissionFeedback] = useState<
+    Array<{ id: string; description: string; bonusXP: number }>
+  >([]);
 
   // Persisting the break is deferred until the user either submits feedback
   // (so rating + reliefScore land in the record) or explicitly finishes from
@@ -174,6 +180,19 @@ function BreakSessionScreen() {
           console.warn('Failed to save break to history:', saveResult.error);
         }
         return;
+      }
+
+      // Surface mission-bonus feedback to the completion screen. Map to
+      // just the fields the UI uses so a Mission shape change later
+      // doesn't cascade into the screen.
+      if (saveResult.completedMissions && saveResult.completedMissions.length > 0) {
+        setCompletedMissionFeedback(
+          saveResult.completedMissions.map((m) => ({
+            id: m.id,
+            description: m.description,
+            bonusXP: m.bonusXP,
+          })),
+        );
       }
 
       try {
@@ -437,6 +456,7 @@ function BreakSessionScreen() {
               icon={exercise.icon}
               color={exercise.color}
               stats={stats}
+              completedMissions={completedMissionFeedback}
             />
 
             {/* Feedback */}
@@ -498,6 +518,7 @@ function BreakSessionScreen() {
     renderExerciseAnimation,
     t,
     theme,
+    completedMissionFeedback,
   ]);
 
   // Ambient background color based on exercise

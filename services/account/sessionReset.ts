@@ -112,21 +112,35 @@ export async function replaceWithFreshAnonymousSession(options?: {
   await syncService.shutdown();
 
   if (!options?.deleteRemoteUserData && userId) {
-    await unregisterPushNotifications(userId);
+    // Best-effort — orphaned token is harmless.
+    try {
+      await unregisterPushNotifications(userId);
+    } catch {
+      // ignored
+    }
   }
 
   if (options?.deleteRemoteUserData && userId) {
     await deleteAllUserData(userId);
   }
 
-  await clearLocalSessionState();
-
+  // Run the destructive auth op BEFORE wiping local state. If the auth op
+  // fails (network, Firebase outage), we still have the user's local data
+  // and they can retry. The previous order — clear-then-auth — meant a
+  // failed signOut would leave the user with their data wiped and no
+  // visible recovery path.
   if (options?.deleteRemoteUserData) {
     await deleteAuthAccount();
   } else {
     await signOut();
   }
 
+  await clearLocalSessionState();
+
+  // If this fails the user is signed out with empty local state; the
+  // bootstrap path in `_layout.tsx` will create a fresh anonymous user
+  // on the next foreground/reconnect, so we surface the error but the
+  // app is not left in an unrecoverable state.
   const freshUser = await refreshAnonymousSession();
   if (!freshUser) {
     throw new Error('Could not start a fresh anonymous session.');

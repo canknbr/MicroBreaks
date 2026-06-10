@@ -92,8 +92,13 @@ function handleAppStateChange(nextState: AppStateStatus): void {
   const { session } = useTimerStore.getState();
 
   if (nextState === 'active') {
-    // Returning to foreground
-    cancelPhaseEndNotification();
+    // Returning to foreground. Fire-and-forget cancellation could let a
+    // stale "phase complete" notification fire after the timer already
+    // resumed; surface its result through the catch instead of dropping it.
+    void cancelPhaseEndNotification().catch(() => {
+      // Ignore — the notification may have already fired or never been
+      // scheduled. We don't want this to block the resume path.
+    });
     if (session.isActive && !session.isPaused) {
       useTimerStore.getState().handleForegroundResume();
       startTicking();

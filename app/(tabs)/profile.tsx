@@ -33,7 +33,7 @@ import { router } from 'expo-router';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useUserStore, useSettingsStore, useHasActiveSubscription, useSubscriptionCustomer, useSubscriptionStatus, useSubscriptionStore, useBillingDiagnostics, useEntitlementHealth } from '@/store';
 import { useEffectiveTier } from '@/hooks/useEffectiveTier';
-import { TIER_LABELS } from '@/services/subscription/tiers';
+import { TIER_LABELS, tierIncludes } from '@/services/subscription/tiers';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useTheme } from '@/hooks/useTheme';
@@ -41,6 +41,11 @@ import { LEVEL_COLORS, LEVEL_TITLES } from '@/constants/levels';
 import { getPremiumHealthSummary } from '@/services/billing/healthSummary';
 import { replaceWithFreshAnonymousSession } from '@/services/account/sessionReset';
 import { setFirebaseCollectionPreferences } from '@/services/firebase/config';
+import { requestMindfulSessionPermission } from '@/services/health/healthKitSource';
+import {
+  getLastReminderDecision,
+  type ReminderDecisionRecord,
+} from '@/services/notifications/diagnostics';
 import {
   reloadCurrentUser,
   sendCurrentUserEmailVerification,
@@ -96,6 +101,18 @@ export default function ProfileScreen() {
   const [showAccountAccess, setShowAccountAccess] = useState(false);
   const [accountAccessMode, setAccountAccessMode] = useState<AccountAccessMode>('link');
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [reminderDecision, setReminderDecision] =
+    useState<ReminderDecisionRecord | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getLastReminderDecision().then((rec) => {
+      if (!cancelled) setReminderDecision(rec);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const headerOpacity = useSharedValue(0);
   const profileScale = useSharedValue(0.9);
@@ -192,6 +209,32 @@ export default function ProfileScreen() {
   };
 
   const { tier: effectiveTier } = useEffectiveTier();
+
+  const handleAppleHealthToggle = useCallback(async () => {
+    const currentlyOn = settingsStore.settings.appleHealthMirrorEnabled;
+    // Pro+ gated. Sending them to upgrade flow on toggle-on if they
+    // aren't on a qualifying tier so they understand why the writes
+    // would never land.
+    if (!currentlyOn && !tierIncludes(effectiveTier, 'apple_health_export')) {
+      router.push({
+        pathname: '/subscription',
+        params: { placement: 'profile' },
+      } as any);
+      return;
+    }
+    if (!currentlyOn) {
+      const granted = await requestMindfulSessionPermission();
+      if (!granted) {
+        Alert.alert(
+          'Apple Health unavailable',
+          "We couldn't get Mindful Sessions write access. Enable it in Settings → Health → Data Access → MicroBreaks.",
+          [{ text: 'OK' }],
+        );
+        return;
+      }
+    }
+    settingsStore.updateSettings({ appleHealthMirrorEnabled: !currentlyOn });
+  }, [effectiveTier, settingsStore]);
   const tierLabel = TIER_LABELS[effectiveTier];
   const billingPeriodLabel = subscriptionCustomer.activeOfferId?.endsWith('_annual')
     ? 'Annual'
@@ -821,6 +864,22 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               )}
+              {reminderDecision && !notificationsDisabled && (
+                <View
+                  style={styles.quietHoursInfo}
+                  accessibilityRole="text"
+                  accessibilityLabel={`Notification status: ${reminderDecision.summary}`}
+                >
+                  <Text
+                    style={[
+                      styles.quietHoursText,
+                      { color: theme.text.secondary },
+                    ]}
+                  >
+                    {reminderDecision.summary}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -886,6 +945,27 @@ export default function ProfileScreen() {
                 onToggle={() => settingsStore.toggleVoiceGuidance()}
                 delay={500}
                 index={3}
+                theme={theme}
+              />
+              {Platform.OS === 'ios' && (
+                <SettingItem
+                  icon="heart"
+                  label="Mirror to Apple Health"
+                  type="toggle"
+                  isEnabled={settingsStore.settings.appleHealthMirrorEnabled}
+                  onToggle={handleAppleHealthToggle}
+                  delay={500}
+                  index={4}
+                  theme={theme}
+                />
+              )}
+              <SettingItem
+                icon="people"
+                label="Streak Buddies"
+                type="arrow"
+                onPress={() => router.push('/buddies' as any)}
+                delay={500}
+                index={5}
                 theme={theme}
               />
             </View>
