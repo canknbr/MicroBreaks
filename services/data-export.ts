@@ -6,6 +6,8 @@
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readPersistedSlice } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS, SERVICE_STORAGE_KEYS } from '@/constants/storageKeys';
 import { getCurrentUserId } from '@/services/firebase/auth';
 import { getUserDoc, getBreaksCollection } from '@/services/firebase/firestore';
 
@@ -33,11 +35,16 @@ export async function exportUserData(): Promise<void> {
   const userId = getCurrentUserId();
 
   // Gather local data
-  const [userStoreData, settingsData, breakHistory] = await Promise.all([
-    AsyncStorage.getItem('microbreaks-user'),
-    AsyncStorage.getItem('microbreaks-settings'),
-    AsyncStorage.getItem('@microbreaks/break_history'),
+  // The user/settings slices live in MMKV (Zustand persist). Reading them via
+  // AsyncStorage would return null and silently export an incomplete GDPR
+  // bundle. break_history is a genuine AsyncStorage blob, so it stays.
+  const [userSlice, settingsSlice, breakHistory] = await Promise.all([
+    readPersistedSlice(ZUSTAND_PERSIST_KEYS.USER),
+    readPersistedSlice(ZUSTAND_PERSIST_KEYS.SETTINGS),
+    AsyncStorage.getItem(SERVICE_STORAGE_KEYS.BREAK_HISTORY),
   ]);
+  const userStoreData = userSlice ? JSON.stringify(userSlice) : null;
+  const settingsData = settingsSlice ? JSON.stringify(settingsSlice) : null;
 
   // Gather cloud data if authenticated. We materialize it in JS since
   // Firestore SDK doesn't stream — but in practice 5k breaks remain well

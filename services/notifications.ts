@@ -307,34 +307,55 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return true;
 }
 
-// Get notification settings
-// Reads from both the settingsStore persistence key and the legacy STORAGE_KEYS.SETTINGS,
-// preferring the settingsStore data to maintain a single source of truth.
+function mapAppSettingsToNotificationSettings(
+  s: ReturnType<typeof useSettingsStore.getState>['settings']
+): NotificationSettings {
+  return {
+    enabled: s.notificationsEnabled,
+    breakReminders: s.breakReminders,
+    reminderIntervalMinutes: s.reminderIntervalMinutes,
+    streakAlerts: s.streakAlerts,
+    goalNotifications: s.goalNotifications,
+    soundEnabled: s.soundEnabled,
+    quietHoursEnabled: s.quietHoursEnabled,
+    quietHoursStart: s.quietHoursStart,
+    quietHoursEnd: s.quietHoursEnd,
+    workDaysOnly: s.workDaysOnly,
+    workDays: s.workDays,
+  };
+}
+
+// Get notification settings.
+//
+// The settings store (MMKV-backed) is the authoritative source once the user
+// has changed anything. The previous implementation read the persisted blob via
+// the AsyncStorage-backed storage service using the store's `microbreaks-settings`
+// key — but that key is owned by MMKV, and the MMKV adapter deletes the
+// AsyncStorage copy after migrating it. The read therefore always missed the
+// user's settings and every scheduler silently fell back to defaults.
+//
+// Read order: live store (when customized) → legacy `@microbreaks/settings`
+// blob (written by onboarding's saveNotificationSettings, correctly an
+// AsyncStorage key) → defaults.
 export async function getNotificationSettings(): Promise<NotificationSettings> {
-  // Try to read from settingsStore's persistence key first (single source of truth)
-  const storeData = await getItem<{ state?: { settings?: Record<string, unknown> } }>(
-    SETTINGS_STORE_PERSIST_KEY
-  );
-  const storeSettings = storeData?.state?.settings;
-  if (storeSettings) {
-    return {
-      enabled: (storeSettings.notificationsEnabled as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.enabled,
-      breakReminders: (storeSettings.breakReminders as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.breakReminders,
-      reminderIntervalMinutes: (storeSettings.reminderIntervalMinutes as number) ?? DEFAULT_NOTIFICATION_SETTINGS.reminderIntervalMinutes,
-      streakAlerts: (storeSettings.streakAlerts as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.streakAlerts,
-      goalNotifications: (storeSettings.goalNotifications as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.goalNotifications,
-      soundEnabled: (storeSettings.soundEnabled as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.soundEnabled,
-      quietHoursEnabled: (storeSettings.quietHoursEnabled as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnabled,
-      quietHoursStart: (storeSettings.quietHoursStart as number) ?? DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart,
-      quietHoursEnd: (storeSettings.quietHoursEnd as number) ?? DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd,
-      workDaysOnly: (storeSettings.workDaysOnly as boolean) ?? DEFAULT_NOTIFICATION_SETTINGS.workDaysOnly,
-      workDays: (storeSettings.workDays as number[]) ?? DEFAULT_NOTIFICATION_SETTINGS.workDays,
-    };
+  // Guard the rare pre-hydration path (e.g. scheduling during early boot):
+  // force a read from MMKV before sampling the store.
+  if (!useSettingsStore.persist.hasHydrated()) {
+    try {
+      await useSettingsStore.persist.rehydrate();
+    } catch {
+      // Fall back to in-memory state (defaults) if rehydration fails.
+    }
   }
 
-  // Fallback to legacy storage key
-  const settings = await getItem<NotificationSettings>(STORAGE_KEYS.SETTINGS);
-  return settings || DEFAULT_NOTIFICATION_SETTINGS;
+  const state = useSettingsStore.getState();
+  if (state.settingsUpdatedAt > 0) {
+    return mapAppSettingsToNotificationSettings(state.settings);
+  }
+
+  // Store untouched on this install — honor any legacy/onboarding-written blob.
+  const legacy = await getItem<NotificationSettings>(STORAGE_KEYS.SETTINGS);
+  return legacy ?? mapAppSettingsToNotificationSettings(state.settings);
 }
 
 /**
@@ -435,6 +456,7 @@ function isWithinQuietHoursForDate(date: Date, settings: NotificationSettings): 
  */
 export const __notificationsTestUtils = {
   isWithinQuietHoursForDate,
+  getNextNotificationTime: (settings: NotificationSettings) => getNextNotificationTime(settings),
 };
 
 function moveToQuietHoursEnd(date: Date, settings: NotificationSettings): Date {
@@ -547,7 +569,11 @@ function getNextNotificationTime(settings: NotificationSettings): Date {
 
   for (let attempts = 0; attempts < 14; attempts += 1) {
     if (!isWorkDayForDate(nextTime, settings)) {
+      // Re-anchor to the START of the next day. Carrying the late-night hour
+      // forward let a cross-midnight quiet-hours shift push the reminder to
+      // the FOLLOWING day, skipping the first work day's entire active window.
       nextTime.setDate(nextTime.getDate() + 1);
+      nextTime.setHours(0, 0, 0, 0);
       continue;
     }
 

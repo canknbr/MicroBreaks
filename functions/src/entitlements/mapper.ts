@@ -156,21 +156,28 @@ export function mapRevenueCatEvent(
   const productId = event.product_id ?? null;
   const tier = tierForProductId(productId ?? undefined);
   const status = statusFor(eventType, expiresAtMs, now);
-  const isPaidStatus =
-    status === 'active' || status === 'trial' || status === 'cancelled';
+  // Statuses that still entitle the user to their paid tier. `billing_issue`
+  // is a GRACE period (payment failed, access continues) — excluding it here
+  // collapsed paying users to `free` and locked them out mid-subscription.
+  // Terminal states (expired/refunded/unknown) drop to free.
+  const grantsAccess =
+    status === 'active' ||
+    status === 'trial' ||
+    status === 'cancelled' ||
+    status === 'billing_issue';
 
   const doc: EntitlementDoc = {
     schemaVersion: ENTITLEMENT_SCHEMA_VERSION,
     // Lapsed subscriptions collapse to free tier regardless of which
     // tier they were on. UI/security rules should never see a
     // "pro tier but status=expired" row.
-    tier: isPaidStatus ? tier : 'free',
-    status: inTrial && isPaidStatus ? 'trial' : status,
+    tier: grantsAccess ? tier : 'free',
+    status: inTrial && grantsAccess ? 'trial' : status,
     productId,
     billingPeriod: billingPeriodForProductId(productId ?? undefined),
     purchasedAt: toIso(event.purchased_at_ms),
     expiresAt: toIso(expiresAtMs),
-    inTrial: inTrial && isPaidStatus,
+    inTrial: inTrial && grantsAccess,
     trialEndsAt: inTrial ? toIso(expiresAtMs) : null,
     store: mapStore(event.store),
     originalTransactionId: event.original_transaction_id ?? null,

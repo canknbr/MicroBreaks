@@ -495,11 +495,23 @@ class SyncService {
   };
 
   /**
+   * Foreground resync: flush any pending offline changes BEFORE pulling, then
+   * reconcile with an incremental pull. Pushing first prevents a remote pull
+   * from clobbering un-pushed local edits. Previously the foreground path only
+   * pulled, silently stranding queued offline writes until the next
+   * connectivity change or mutation. Mirrors handleConnectivityChange.
+   */
+  private async resyncOnForeground(): Promise<void> {
+    await this.processPendingQueue();
+    await this.performIncrementalSync();
+  }
+
+  /**
    * Handle app state changes
    */
   private handleAppStateChange = (state: AppStateStatus): void => {
     if (state === 'active' && this.userId && !this.isSyncing) {
-      this.performIncrementalSync();
+      void this.resyncOnForeground();
       return;
     }
 

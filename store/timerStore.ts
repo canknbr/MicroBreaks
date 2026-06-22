@@ -365,18 +365,43 @@ export const useTimerStore = create<TimerState>()(
       },
 
       handleForegroundResume: () => {
-        const { session } = get();
-        if (!session.isActive || session.isPaused || !session.phaseStartedAt) return;
+        // Catch up across EVERY phase boundary crossed while backgrounded —
+        // not just the first. completePhase() restarts the next phase at
+        // "now", so after each completion we re-anchor phaseStartedAt to the
+        // instant the previous phase actually ended and loop until we land in
+        // an in-progress phase (or one that does not auto-start and is
+        // therefore waiting for the user). The guard is unreachable in
+        // practice (min phase ≥ 60s vs a fixed `now`) — it only prevents a
+        // pathological infinite loop.
+        let guard = 0;
+        while (guard < 10000) {
+          guard += 1;
+          const { session } = get();
+          if (!session.isActive || session.isPaused || !session.phaseStartedAt) return;
 
-        const elapsed = Math.floor((Date.now() - session.phaseStartedAt) / 1000);
-        const remaining = session.phaseDurationSeconds - elapsed;
+          const elapsed = Math.floor((Date.now() - session.phaseStartedAt) / 1000);
+          const remaining = session.phaseDurationSeconds - elapsed;
 
-        if (remaining <= 0) {
-          // Phase completed while in background
+          if (remaining > 0) {
+            set((state) => ({
+              session: { ...state.session, remainingSeconds: remaining },
+            }));
+            return;
+          }
+
+          // Phase elapsed entirely in the background. Remember when it truly
+          // ended so the next phase's countdown starts from there, not now.
+          const phaseEndedAt =
+            session.phaseStartedAt + session.phaseDurationSeconds * 1000;
           get().completePhase();
-        } else {
+
+          const next = get().session;
+          if (!next.isActive || !next.phaseStartedAt) {
+            // Next phase waits for the user — completePhase already reset it.
+            return;
+          }
           set((state) => ({
-            session: { ...state.session, remainingSeconds: remaining },
+            session: { ...state.session, phaseStartedAt: phaseEndedAt },
           }));
         }
       },

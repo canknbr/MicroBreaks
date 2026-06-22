@@ -103,7 +103,7 @@ function calculateLastBreakMinutes(completedAt: string | undefined): number {
 }
 
 // Calculate weekly completed days
-function calculateWeeklyDays(streakHistory: { date: string; count: number }[]): boolean[] {
+export function calculateWeeklyDays(streakHistory: { date: string; count: number }[]): boolean[] {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const monday = new Date(today);
@@ -115,7 +115,12 @@ function calculateWeeklyDays(streakHistory: { date: string; count: number }[]): 
   for (let i = 0; i < 7; i++) {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
-    const dateStr = day.toISOString().split('T')[0];
+    // Key by LOCAL Y/M/D — streak history is written with local dates
+    // (breakHistory.getLocalDateString). toISOString() would convert to UTC
+    // and shift the key back a day for UTC+ users, mismatching the history.
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(
+      day.getDate()
+    ).padStart(2, '0')}`;
     const hasBreaks = streakHistory.some((h) => h.date === dateStr && h.count > 0);
     completedDays.push(hasBreaks);
   }

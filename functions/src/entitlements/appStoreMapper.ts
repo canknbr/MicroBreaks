@@ -238,7 +238,14 @@ export function mapAppStoreNotification(
   const status = statusFor(notification.notificationType, notification.subtype, txn, now);
   const productId = txn?.productId ?? null;
   const tier = tierForProductId(productId ?? undefined);
-  const isPaidStatus = status === 'active' || status === 'trial' || status === 'cancelled';
+  // `billing_issue` is a grace period (access continues while payment is
+  // retried), so it must keep the paid tier. Excluding it collapsed paying
+  // grace-period users to `free`. Terminal states still drop to free.
+  const grantsAccess =
+    status === 'active' ||
+    status === 'trial' ||
+    status === 'cancelled' ||
+    status === 'billing_issue';
 
   // Apple doesn't have a "trial" status separate from "active" — the
   // transaction's `offerType=1` flags an intro trial, but we'd need
@@ -248,7 +255,7 @@ export function mapAppStoreNotification(
 
   const doc: EntitlementDoc = {
     schemaVersion: ENTITLEMENT_SCHEMA_VERSION,
-    tier: isPaidStatus ? tier : 'free',
+    tier: grantsAccess ? tier : 'free',
     status,
     productId,
     billingPeriod: billingPeriodForProductId(productId ?? undefined),

@@ -356,6 +356,50 @@ export async function updateBreakRating(
   }
 }
 
+/**
+ * Non-mutating read-time correction for a stale `currentStreak`.
+ *
+ * `currentStreak` is only ever recomputed when a break is saved
+ * (`updateStreak`). Between breaks the stored value is frozen, so a streak
+ * that has actually lapsed keeps displaying its old number everywhere it is
+ * read (Home, Stats, Buddies, weekly story, streak reminders) until the user
+ * happens to take another break. This derives the streak's true state from
+ * the time elapsed since `lastBreakDate` and zeroes it when it has lapsed.
+ *
+ * Deriving 0 here never interferes with the next break's math: the only place
+ * that increments off the prior value is `updateStreak`, and in every case
+ * where this returns 0 that function's else-branch sets `currentStreak = 1`
+ * absolutely (ignoring the prior value).
+ */
+export function applyStreakDecay(streakData: StreakData, now: Date = new Date()): StreakData {
+  const lastBreakDate = streakData.lastBreakDate;
+  if (!lastBreakDate || streakData.currentStreak === 0) {
+    return streakData;
+  }
+
+  const diffDays = calendarDayDiff(getLocalDateString(now), lastBreakDate);
+
+  // Malformed value, same day, or yesterday → still alive (or can't tell).
+  if (!Number.isFinite(diffDays) || diffDays <= 1) {
+    return streakData;
+  }
+
+  // A single missed day (gap of 2) is still salvageable IF a grace is
+  // available. Graces roll over at the ISO-week boundary, so mirror
+  // updateStreak's rollover: a new week refreshes the grace.
+  if (diffDays === 2) {
+    const currentWeekStart = getWeekStartDateString(now);
+    const gracesUsed =
+      streakData.weekStartDate !== currentWeekStart ? 0 : streakData.gracesUsedThisWeek ?? 0;
+    if (gracesUsed < MAX_GRACES_PER_WEEK) {
+      return streakData;
+    }
+  }
+
+  // Gap > 2 days, or a 2-day gap with no grace left → the streak has lapsed.
+  return { ...streakData, currentStreak: 0 };
+}
+
 // Get streak data
 export async function getStreakData(): Promise<StreakData> {
   const result = await getItemWithError<StreakData>(STORAGE_KEYS.STREAK_DATA);
@@ -365,7 +409,7 @@ export async function getStreakData(): Promise<StreakData> {
     return fallback;
   }
 
-  return result.data || createDefaultStreakData();
+  return applyStreakDecay(result.data || createDefaultStreakData());
 }
 
 // Update streak based on break history

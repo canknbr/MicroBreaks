@@ -35,6 +35,23 @@ function safeParse<T>(raw: string): StorageValue<T> | null {
   }
 }
 
+/**
+ * Read a persisted Zustand slice straight from the backing store, using the
+ * same MMKV-first / AsyncStorage-legacy-migration semantics as the live
+ * persist adapter.
+ *
+ * Service code that needs a `microbreaks-*` slice (settings, user, …) outside
+ * of a React render MUST use this instead of `AsyncStorage.getItem` directly:
+ * those keys are owned by MMKV, and the adapter deletes the AsyncStorage copy
+ * after the first migration, so an AsyncStorage read silently returns null and
+ * the caller falls back to defaults.
+ */
+export async function readPersistedSlice<T = unknown>(
+  name: string
+): Promise<StorageValue<T> | null> {
+  return createMmkvStorage<T>().getItem(name);
+}
+
 export function createMmkvStorage<T>(): PersistStorage<T> {
   return {
     getItem: async (name: string): Promise<StorageValue<T> | null> => {

@@ -180,6 +180,43 @@ describe('syncService shutdown', () => {
   });
 });
 
+describe('syncService foreground resync', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+    (NetInfo.fetch as jest.Mock).mockReset();
+    (NetInfo.fetch as jest.Mock).mockResolvedValue({
+      isConnected: false,
+      isInternetReachable: false,
+    });
+    await syncService.shutdown();
+  });
+
+  afterEach(async () => {
+    await syncService.shutdown();
+  });
+
+  it('flushes pending offline changes on foreground, not just an incremental pull', async () => {
+    // Initialize offline so initialize() does not run a full sync.
+    await syncService.initialize('user-1');
+    jest.clearAllMocks();
+
+    // An edit was made while offline and is sitting in the pending queue.
+    (syncService as any).pendingQueue = [{ type: 'settings' }];
+
+    // App returns to foreground.
+    (syncService as any).handleAppStateChange('active');
+    // handleAppStateChange kicks off async work fire-and-forget — let it settle.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await Promise.resolve();
+
+    // The queued offline change must be pushed (was previously stranded)...
+    expect(pushSettings).toHaveBeenCalledTimes(1);
+    // ...and an incremental pull still runs to reconcile remote state.
+    expect(pullSettings).toHaveBeenCalled();
+  });
+});
+
 describe('syncService failure reporting', () => {
   beforeEach(async () => {
     jest.clearAllMocks();

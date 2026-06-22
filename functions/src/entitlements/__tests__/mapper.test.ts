@@ -151,6 +151,26 @@ describe('mapRevenueCatEvent — status mapping by event type', () => {
   });
 });
 
+describe('mapRevenueCatEvent — billing-issue grace period', () => {
+  it('keeps the paid tier during a billing issue so grace-period users are not locked out', () => {
+    const result = mapRevenueCatEvent(
+      payload({ type: 'BILLING_ISSUE', product_id: 'family_annual' }),
+      { now: NOW }
+    );
+    expect(result?.doc.status).toBe('billing_issue');
+    expect(result?.doc.tier).toBe('family');
+  });
+
+  it('keeps tier during a billing issue even when the original expiry has passed (grace continues)', () => {
+    const result = mapRevenueCatEvent(
+      payload({ type: 'BILLING_ISSUE', product_id: 'pro_monthly', expiration_at_ms: PAST }),
+      { now: NOW }
+    );
+    expect(result?.doc.status).toBe('billing_issue');
+    expect(result?.doc.tier).toBe('pro');
+  });
+});
+
 describe('mapRevenueCatEvent — trial flagging', () => {
   it('flips status to trial when period_type=TRIAL on an active event', () => {
     const result = mapRevenueCatEvent(

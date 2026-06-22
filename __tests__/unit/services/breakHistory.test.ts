@@ -15,6 +15,7 @@ import {
   replaceBreakHistory,
   updateBreakRating,
   getStreakData,
+  applyStreakDecay,
   getUserStats,
   getWeeklyChartData,
   getMonthlyChartData,
@@ -536,18 +537,24 @@ describe('Break History Service', () => {
     });
 
     it('should return stored streak data', async () => {
+      // Use today's local date so the read-time decay correction does not
+      // fire — this test only verifies that persisted fields round-trip.
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+        now.getDate()
+      ).padStart(2, '0')}`;
       const streakData = {
         currentStreak: 5,
         longestStreak: 10,
-        lastBreakDate: '2024-01-15',
-        streakHistory: [{ date: '2024-01-15', count: 3 }],
+        lastBreakDate: todayStr,
+        streakHistory: [{ date: todayStr, count: 3 }],
       };
       await AsyncStorage.setItem(STORAGE_KEYS.STREAK_DATA, JSON.stringify(streakData));
 
       const result = await getStreakData();
       expect(result.currentStreak).toBe(5);
       expect(result.longestStreak).toBe(10);
-      expect(result.lastBreakDate).toBe('2024-01-15');
+      expect(result.lastBreakDate).toBe(todayStr);
     });
 
     it('should self-heal corrupted streak data', async () => {
@@ -632,6 +639,136 @@ describe('Break History Service', () => {
 
         const data = await getStreakData();
         expect(data.currentStreak).toBe(4);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
+  describe('applyStreakDecay (read-time staleness correction)', () => {
+    const NOW = new Date(2026, 5, 22, 12, 0, 0); // Mon 2026-06-22, local noon
+
+    function dayStr(offsetDays: number): string {
+      const d = new Date(NOW);
+      d.setDate(d.getDate() + offsetDays);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate()
+      ).padStart(2, '0')}`;
+    }
+
+    function weekStartOf(date: Date): string {
+      const d = new Date(date);
+      const day = d.getDay();
+      const shift = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + shift);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate()
+      ).padStart(2, '0')}`;
+    }
+
+    const base = {
+      longestStreak: 10,
+      streakHistory: [],
+      gracesUsedThisWeek: 0,
+      weekStartDate: weekStartOf(NOW),
+    };
+
+    it('keeps the streak when the last break was today', () => {
+      const out = applyStreakDecay(
+        { ...base, currentStreak: 10, lastBreakDate: dayStr(0) },
+        NOW
+      );
+      expect(out.currentStreak).toBe(10);
+    });
+
+    it('keeps the streak when the last break was yesterday', () => {
+      const out = applyStreakDecay(
+        { ...base, currentStreak: 10, lastBreakDate: dayStr(-1) },
+        NOW
+      );
+      expect(out.currentStreak).toBe(10);
+    });
+
+    it('keeps a 2-day-gap streak alive while a grace is still available', () => {
+      const out = applyStreakDecay(
+        { ...base, currentStreak: 10, lastBreakDate: dayStr(-2), gracesUsedThisWeek: 0 },
+        NOW
+      );
+      expect(out.currentStreak).toBe(10);
+    });
+
+    it('zeroes a 2-day-gap streak once the weekly grace is spent', () => {
+      const out = applyStreakDecay(
+        { ...base, currentStreak: 10, lastBreakDate: dayStr(-2), gracesUsedThisWeek: 1 },
+        NOW
+      );
+      expect(out.currentStreak).toBe(0);
+      expect(out.longestStreak).toBe(10); // longest is preserved
+    });
+
+    it('zeroes a streak after a 3-day gap regardless of grace', () => {
+      const out = applyStreakDecay(
+        { ...base, currentStreak: 10, lastBreakDate: dayStr(-3), gracesUsedThisWeek: 0 },
+        NOW
+      );
+      expect(out.currentStreak).toBe(0);
+    });
+
+    it('treats a 2-day gap as savable when the ISO week rolled over (grace refreshes)', () => {
+      const lastWeek = new Date(NOW);
+      lastWeek.setDate(lastWeek.getDate() - 14);
+      const out = applyStreakDecay(
+        {
+          ...base,
+          currentStreak: 10,
+          lastBreakDate: dayStr(-2),
+          gracesUsedThisWeek: 1, // burned, but in a previous ISO week
+          weekStartDate: weekStartOf(lastWeek),
+        },
+        NOW
+      );
+      expect(out.currentStreak).toBe(10);
+    });
+
+    it('leaves an already-zero streak untouched', () => {
+      const out = applyStreakDecay(
+        { ...base, currentStreak: 0, lastBreakDate: dayStr(-30) },
+        NOW
+      );
+      expect(out.currentStreak).toBe(0);
+    });
+
+    it('does not mutate the input object', () => {
+      const input = { ...base, currentStreak: 10, lastBreakDate: dayStr(-5) };
+      applyStreakDecay(input, NOW);
+      expect(input.currentStreak).toBe(10);
+    });
+
+    it('getStreakData reports a lapsed streak as 0 without rewriting storage', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(NOW);
+      try {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.STREAK_DATA,
+          JSON.stringify({
+            currentStreak: 10,
+            longestStreak: 12,
+            lastBreakDate: dayStr(-5),
+            streakHistory: [],
+            gracesUsedThisWeek: 0,
+            weekStartDate: weekStartOf(NOW),
+          })
+        );
+
+        const read = await getStreakData();
+        expect(read.currentStreak).toBe(0);
+        expect(read.longestStreak).toBe(12);
+
+        // Correction is read-time only — persisted value is untouched.
+        const raw = JSON.parse(
+          (await AsyncStorage.getItem(STORAGE_KEYS.STREAK_DATA)) as string
+        );
+        expect(raw.currentStreak).toBe(10);
       } finally {
         jest.useRealTimers();
       }

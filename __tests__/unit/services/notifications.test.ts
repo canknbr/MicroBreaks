@@ -30,6 +30,7 @@ import {
 } from '@/services/notifications';
 import { STORAGE_KEYS } from '@/services/storage';
 import { ONBOARDING_STORE_PERSIST_KEY } from '@/store/onboardingStore';
+import { useSettingsStore, defaultAppSettings } from '@/store/settingsStore';
 
 // Mock dependencies
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -89,6 +90,13 @@ describe('Notification Service', () => {
     await AsyncStorage.clear();
     jest.clearAllMocks();
     (Device as any).isDevice = true;
+    // The settings store is the source of truth and persists to MMKV. Reset it
+    // to defaults between tests so getNotificationSettings starts from a known
+    // baseline (it now reads the store, not AsyncStorage).
+    useSettingsStore.setState({
+      settings: { ...defaultAppSettings },
+      settingsUpdatedAt: 0,
+    });
   });
 
   afterEach(() => {
@@ -229,18 +237,40 @@ describe('Notification Service', () => {
       expect(result).toEqual(DEFAULT_NOTIFICATION_SETTINGS);
     });
 
-    it('should return stored settings', async () => {
-      const customSettings = {
-        ...DEFAULT_NOTIFICATION_SETTINGS,
+    it('should return settings written through the settings store', async () => {
+      // The real UI mutates settings via the store (MMKV-backed), not by
+      // writing the legacy AsyncStorage key directly.
+      useSettingsStore.getState().updateSettings({
         reminderIntervalMinutes: 30,
         soundEnabled: false,
-      };
-      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(customSettings));
+      });
 
       const result = await getNotificationSettings();
 
       expect(result.reminderIntervalMinutes).toBe(30);
       expect(result.soundEnabled).toBe(false);
+    });
+
+    it('reflects store changes that never touch the legacy AsyncStorage key', async () => {
+      // Regression: getNotificationSettings used to read the persisted blob via
+      // AsyncStorage, but the settings store persists to MMKV. After the MMKV
+      // migration the AsyncStorage copy is deleted, so every scheduler silently
+      // fell back to DEFAULT_NOTIFICATION_SETTINGS and ignored the user.
+      useSettingsStore.getState().updateSettings({
+        notificationsEnabled: false,
+        reminderIntervalMinutes: 45,
+        quietHoursStart: 23,
+        quietHoursEnd: 6,
+        workDays: [1, 3, 5],
+      });
+
+      const result = await getNotificationSettings();
+
+      expect(result.enabled).toBe(false);
+      expect(result.reminderIntervalMinutes).toBe(45);
+      expect(result.quietHoursStart).toBe(23);
+      expect(result.quietHoursEnd).toBe(6);
+      expect(result.workDays).toEqual([1, 3, 5]);
     });
   });
 

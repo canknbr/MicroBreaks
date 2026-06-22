@@ -525,6 +525,67 @@ describe('TimerStore', () => {
 
       expect(useTimerStore.getState().session.remainingSeconds).toBe(remaining);
     });
+
+    it('catches up across multiple phases that elapsed while backgrounded', () => {
+      const now = Date.now();
+      act(() => {
+        useTimerStore.setState((state) => ({
+          preferences: { ...state.preferences, autoStartBreak: true, autoStartWork: true },
+          session: {
+            isActive: true,
+            isPaused: false,
+            phase: 'work',
+            remainingSeconds: 25 * 60,
+            phaseDurationSeconds: 25 * 60,
+            currentSession: 1,
+            // 31 min ago: work (25m) + break (5m) both elapsed, 1 min into next work
+            phaseStartedAt: now - 31 * 60 * 1000,
+            pausedAt: null,
+          },
+        }));
+        useTimerStore.getState().handleForegroundResume();
+      });
+
+      const { session, stats } = useTimerStore.getState();
+      // Work completed → break completed → fresh work phase (session 2),
+      // ~1 minute already elapsed into it.
+      expect(session.phase).toBe('work');
+      expect(session.currentSession).toBe(2);
+      expect(session.remainingSeconds).toBeGreaterThanOrEqual(25 * 60 - 61);
+      expect(session.remainingSeconds).toBeLessThanOrEqual(25 * 60 - 59);
+      // Exactly one work phase credited — no double counting across the chain.
+      expect(stats.todaySessionsCompleted).toBe(1);
+      expect(stats.todayFocusMinutes).toBe(25);
+    });
+
+    it('stops catching up at a phase that does not auto-start', () => {
+      const now = Date.now();
+      act(() => {
+        useTimerStore.setState((state) => ({
+          // Break auto-starts, but the work after it does not.
+          preferences: { ...state.preferences, autoStartBreak: true, autoStartWork: false },
+          session: {
+            isActive: true,
+            isPaused: false,
+            phase: 'work',
+            remainingSeconds: 25 * 60,
+            phaseDurationSeconds: 25 * 60,
+            currentSession: 1,
+            // 31 min ago: work + break both elapsed; next work must wait for user.
+            phaseStartedAt: now - 31 * 60 * 1000,
+            pausedAt: null,
+          },
+        }));
+        useTimerStore.getState().handleForegroundResume();
+      });
+
+      const { session } = useTimerStore.getState();
+      expect(session.phase).toBe('work');
+      expect(session.isActive).toBe(false);
+      expect(session.currentSession).toBe(2);
+      expect(session.remainingSeconds).toBe(25 * 60);
+      expect(session.phaseStartedAt).toBeNull();
+    });
   });
 
   describe('Stats Accumulation', () => {

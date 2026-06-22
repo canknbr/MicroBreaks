@@ -164,6 +164,29 @@ describe('mapAppStoreNotification — status mapping', () => {
   });
 });
 
+describe('mapAppStoreNotification — billing-issue grace period', () => {
+  it('keeps the paid tier on DID_FAIL_TO_RENEW so grace-period users keep access', () => {
+    const r = mapAppStoreNotification(
+      notification(
+        { notificationType: 'DID_FAIL_TO_RENEW', subtype: 'GRACE_PERIOD' },
+        { productId: 'family_annual' }
+      ),
+      { now: NOW, resolveUid: RESOLVE_BY_TID }
+    );
+    expect(r?.doc.status).toBe('billing_issue');
+    expect(r?.doc.tier).toBe('family');
+  });
+
+  it('keeps tier on a billing issue even when the original expiry has passed (grace continues)', () => {
+    const r = mapAppStoreNotification(
+      notification({ notificationType: 'DID_FAIL_TO_RENEW' }, { expiresDate: PAST }),
+      { now: NOW, resolveUid: RESOLVE_BY_TID }
+    );
+    expect(r?.doc.status).toBe('billing_issue');
+    expect(r?.doc.tier).toBe('pro');
+  });
+});
+
 describe('mapAppStoreNotification — doc shape echo', () => {
   it('records app_store as the source store always', () => {
     const r = mapAppStoreNotification(notification(), {

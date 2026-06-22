@@ -6,10 +6,10 @@
 import firebase from '@react-native-firebase/app';
 import analytics from '@react-native-firebase/analytics';
 import crashlytics from '@react-native-firebase/crashlytics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readPersistedSlice } from '@/services/storage/zustandMmkv';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 
 let isInitialized = false;
-const SETTINGS_STORE_PERSIST_KEY = 'microbreaks-settings';
 
 export interface FirebaseCollectionPreferences {
   analyticsEnabled: boolean;
@@ -25,21 +25,14 @@ function getDefaultCollectionPreferences(): FirebaseCollectionPreferences {
 
 export async function getStoredFirebaseCollectionPreferences(): Promise<FirebaseCollectionPreferences> {
   try {
-    const raw = await AsyncStorage.getItem(SETTINGS_STORE_PERSIST_KEY);
-    if (!raw) {
-      return getDefaultCollectionPreferences();
-    }
-
-    const parsed = JSON.parse(raw) as {
-      state?: {
-        settings?: {
-          analyticsEnabled?: boolean;
-          crashReportingEnabled?: boolean;
-        };
+    const persisted = await readPersistedSlice<{
+      settings?: {
+        analyticsEnabled?: boolean;
+        crashReportingEnabled?: boolean;
       };
-    };
+    }>(ZUSTAND_PERSIST_KEYS.SETTINGS);
 
-    const settings = parsed.state?.settings;
+    const settings = persisted?.state?.settings;
     return {
       analyticsEnabled:
         typeof settings?.analyticsEnabled === 'boolean'
