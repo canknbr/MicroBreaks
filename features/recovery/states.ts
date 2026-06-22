@@ -153,8 +153,8 @@ export function getRecommendationContextForRecoveryState(
   }
 }
 
-export function formatRelativeMinutes(minutes: number): string {
-  if (!Number.isFinite(minutes) || minutes >= 999) return 'Not yet today';
+export function formatRelativeMinutes(minutes: number | null): string {
+  if (minutes == null || !Number.isFinite(minutes)) return 'Not yet today';
   if (minutes <= 0) return 'Just now';
   if (minutes < 60) return `${minutes}m ago`;
 
@@ -177,7 +177,7 @@ export function formatNextBreakWindow(minutes: number): string {
 
 export function getRecoveryReason(
   stateId: RecoveryStateId,
-  lastBreakMinutesAgo: number,
+  lastBreakMinutesAgo: number | null,
   breaksTaken: number,
   isNewUser: boolean
 ): string {
@@ -185,7 +185,7 @@ export function getRecoveryReason(
     return 'Start with one short reset to get your first relief win before you explore the rest of the app.';
   }
 
-  if (lastBreakMinutesAgo > 90) {
+  if (lastBreakMinutesAgo != null && lastBreakMinutesAgo > 90) {
     return `You have gone ${formatRelativeMinutes(lastBreakMinutesAgo)} without a reset. This is the fastest way back into a better work rhythm.`;
   }
 

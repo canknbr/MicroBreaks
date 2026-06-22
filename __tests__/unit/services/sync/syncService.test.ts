@@ -217,6 +217,68 @@ describe('syncService foreground resync', () => {
   });
 });
 
+describe('syncService re-entrancy guard', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+    (NetInfo.fetch as jest.Mock).mockReset();
+    (NetInfo.fetch as jest.Mock).mockResolvedValue({
+      isConnected: false,
+      isInternetReachable: false,
+    });
+    await syncService.shutdown();
+  });
+
+  afterEach(async () => {
+    jest.useRealTimers();
+    await syncService.shutdown();
+  });
+
+  it('does not run a second concurrent full sync while the first is waiting out its backoff', async () => {
+    // Initialize offline so initialize() does not kick off a sync.
+    await syncService.initialize('user-1');
+    jest.clearAllMocks();
+
+    // One prior failure forces a 1s exponential backoff before the next sync.
+    // The first caller awaits that backoff; a second caller arriving inside the
+    // window must be turned away by the re-entrancy guard, not run in parallel.
+    (syncService as any).consecutiveFailures = 1;
+
+    jest.useFakeTimers();
+    const both = Promise.all([
+      syncService.performFullSync(),
+      syncService.performFullSync(),
+    ]);
+    // Release the backoff timer(s) and let the chained awaits settle.
+    await jest.advanceTimersByTimeAsync(1000);
+    await both;
+    jest.useRealTimers();
+
+    // Exactly one sync should have executed; the duplicate must be rejected
+    // at the guard rather than issuing a second set of Firestore reads/writes.
+    expect(pullUserProfile).toHaveBeenCalledTimes(1);
+    expect(pushUserProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run a second concurrent incremental sync during the backoff window', async () => {
+    await syncService.initialize('user-1');
+    jest.clearAllMocks();
+
+    (syncService as any).consecutiveFailures = 1;
+
+    jest.useFakeTimers();
+    const both = Promise.all([
+      syncService.performIncrementalSync(),
+      syncService.performIncrementalSync(),
+    ]);
+    await jest.advanceTimersByTimeAsync(1000);
+    await both;
+    jest.useRealTimers();
+
+    expect(pullUserProfile).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('syncService failure reporting', () => {
   beforeEach(async () => {
     jest.clearAllMocks();

@@ -120,18 +120,67 @@ describe('TimerStore', () => {
   });
 
   describe('Tick', () => {
-    it('should decrement remaining seconds', () => {
-      act(() => {
-        useTimerStore.getState().startWorkSession();
-      });
+    it('should decrement remaining seconds as wall-clock time advances', () => {
+      const base = 1_000_000_000_000;
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(base);
+      try {
+        act(() => {
+          useTimerStore.getState().startWorkSession();
+        });
 
-      const initialRemaining = useTimerStore.getState().session.remainingSeconds;
+        const initialRemaining = useTimerStore.getState().session.remainingSeconds;
 
-      act(() => {
-        useTimerStore.getState().tick();
-      });
+        nowSpy.mockReturnValue(base + 1000); // one real second later
+        act(() => {
+          useTimerStore.getState().tick();
+        });
 
-      expect(useTimerStore.getState().session.remainingSeconds).toBe(initialRemaining - 1);
+        expect(useTimerStore.getState().session.remainingSeconds).toBe(initialRemaining - 1);
+      } finally {
+        nowSpy.mockRestore();
+      }
+    });
+
+    it('derives remaining from elapsed wall-clock time, not the tick count', () => {
+      // setInterval drops ticks when the JS thread janks: 5 real seconds can
+      // pass with only ONE tick firing. Counting ticks would leave the
+      // countdown 4s behind reality; deriving from phaseStartedAt stays honest.
+      const base = 1_000_000_000_000;
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(base);
+      try {
+        act(() => {
+          useTimerStore.getState().startWorkSession();
+        });
+        const start = useTimerStore.getState().session.remainingSeconds; // 25*60
+
+        nowSpy.mockReturnValue(base + 5000); // 5s elapse, only one tick fires
+        act(() => {
+          useTimerStore.getState().tick();
+        });
+
+        expect(useTimerStore.getState().session.remainingSeconds).toBe(start - 5);
+      } finally {
+        nowSpy.mockRestore();
+      }
+    });
+
+    it('completes the phase when wall-clock time has run past the duration', () => {
+      const base = 1_000_000_000_000;
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(base);
+      try {
+        act(() => {
+          useTimerStore.getState().startWorkSession(); // 25 min work
+        });
+
+        nowSpy.mockReturnValue(base + 25 * 60 * 1000 + 1000); // past full phase
+        act(() => {
+          useTimerStore.getState().tick();
+        });
+
+        expect(useTimerStore.getState().session.phase).toBe('break');
+      } finally {
+        nowSpy.mockRestore();
+      }
     });
 
     it('should not tick when paused', () => {

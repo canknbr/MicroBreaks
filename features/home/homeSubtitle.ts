@@ -2,7 +2,7 @@ export interface HomeSubtitleInput {
   hasCompletedGoal: boolean;
   isNewUser: boolean;
   isEmpty: boolean;
-  lastBreakMinutesAgo: number;
+  lastBreakMinutesAgo: number | null;
   dynamicSubtitle: string;
 }
 
@@ -19,7 +19,7 @@ export function getHomeSubtitle(input: HomeSubtitleInput): string {
   if (hasCompletedGoal) return "Amazing! You've crushed your goal today";
   if (isNewUser) return 'Choose the kind of relief you want and start with one guided reset.';
   if (isEmpty) return 'Pick what your body or mind needs right now and take a short reset.';
-  if (lastBreakMinutesAgo > 90) {
+  if (lastBreakMinutesAgo != null && lastBreakMinutesAgo > 90) {
     return 'You are overdue for a reset. Start with the recovery state that feels most relevant right now.';
   }
   return dynamicSubtitle;

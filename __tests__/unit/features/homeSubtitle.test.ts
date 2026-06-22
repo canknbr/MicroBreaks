@@ -39,6 +39,13 @@ describe('getHomeSubtitle', () => {
     );
   });
 
+  it('does not flag overdue when there is no break data (null)', () => {
+    // null means "no recent break" — it must not be treated as overdue.
+    expect(getHomeSubtitle({ ...base, lastBreakMinutesAgo: null })).toBe(
+      'Time-of-day greeting subtitle'
+    );
+  });
+
   it('falls back to the dynamic time-of-day subtitle by default', () => {
     expect(getHomeSubtitle(base)).toBe('Time-of-day greeting subtitle');
   });

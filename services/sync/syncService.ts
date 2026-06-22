@@ -225,15 +225,19 @@ class SyncService {
       return;
     }
 
-    const backoff = this.getBackoffDelay();
-    if (backoff > 0) {
-      await new Promise((resolve) => setTimeout(resolve, backoff));
-    }
-
+    // Claim the slot synchronously, before any await, so a second caller that
+    // arrives during the backoff window is rejected by the guard above instead
+    // of slipping through and running a duplicate concurrent sync.
     this.isSyncing = true;
-    this.recordSyncAttempt();
 
     try {
+      const backoff = this.getBackoffDelay();
+      if (backoff > 0) {
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+      }
+
+      this.recordSyncAttempt();
+
       // Pull first (to get latest remote data)
       // Fetch user doc once and share with both pull functions to avoid duplicate reads
       const userDoc = await getUserDoc(this.userId).get();
@@ -287,15 +291,19 @@ class SyncService {
       return;
     }
 
-    const backoff = this.getBackoffDelay();
-    if (backoff > 0) {
-      await new Promise((resolve) => setTimeout(resolve, backoff));
-    }
-
+    // Claim the slot synchronously, before any await, so a second caller that
+    // arrives during the backoff window is rejected by the guard above instead
+    // of slipping through and running a duplicate concurrent sync.
     this.isSyncing = true;
-    this.recordSyncAttempt();
 
     try {
+      const backoff = this.getBackoffDelay();
+      if (backoff > 0) {
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+      }
+
+      this.recordSyncAttempt();
+
       // Fetch user doc once and share with both pull functions to avoid duplicate reads
       const userDoc = await getUserDoc(this.userId).get();
       setApplyingRemoteData(true);

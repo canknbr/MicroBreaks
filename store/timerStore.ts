@@ -235,9 +235,17 @@ export const useTimerStore = create<TimerState>()(
 
       tick: () => {
         const { session } = get();
-        if (!session.isActive || session.isPaused) return;
+        if (!session.isActive || session.isPaused || session.phaseStartedAt == null) return;
 
-        if (session.remainingSeconds <= 1) {
+        // Derive remaining from the wall-clock anchor instead of counting tick
+        // invocations. setInterval fires irregularly and drops ticks when the
+        // JS thread janks, so counting would let the countdown drift slower
+        // than real time. phaseStartedAt is the source of truth (already
+        // pause-adjusted in resume()), matching handleForegroundResume().
+        const elapsed = Math.floor((Date.now() - session.phaseStartedAt) / 1000);
+        const remaining = session.phaseDurationSeconds - elapsed;
+
+        if (remaining <= 0) {
           get().completePhase();
           return;
         }
@@ -245,7 +253,7 @@ export const useTimerStore = create<TimerState>()(
         set((state) => ({
           session: {
             ...state.session,
-            remainingSeconds: state.session.remainingSeconds - 1,
+            remainingSeconds: remaining,
           },
         }));
       },

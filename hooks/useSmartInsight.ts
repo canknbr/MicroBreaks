@@ -10,11 +10,11 @@ export interface SmartInsightState {
 export function useSmartInsight(
   breaksTaken: number,
   breaksGoal: number,
-  lastBreakMinutesAgo: number,
+  lastBreakMinutesAgo: number | null,
   streak: number
 ): SmartInsightState {
   return useMemo(() => {
-    if (lastBreakMinutesAgo > 90) {
+    if (lastBreakMinutesAgo != null && lastBreakMinutesAgo > 90) {
       return {
         type: 'warning',
         title: 'Time for a break!',

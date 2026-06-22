@@ -31,7 +31,7 @@ export interface DailyProgress {
   breaksTaken: number;
   breaksGoal: number;
   minutesInvested: number;
-  lastBreakMinutesAgo: number;
+  lastBreakMinutesAgo: number | null;
 }
 
 export interface StreakData {
@@ -94,9 +94,12 @@ const LEVEL_TITLES: Record<number, string> = {
   10: 'Zen Master',
 };
 
-// Calculate last break minutes ago
-function calculateLastBreakMinutes(completedAt: string | undefined): number {
-  if (!completedAt) return 999; // No breaks taken yet
+// Calculate last break minutes ago. Returns null (out-of-band) when there is
+// no break to measure against, so consumers never confuse "no data" with a
+// real elapsed time — an in-band sentinel (999) collided with genuine gaps
+// longer than ~16.6h.
+function calculateLastBreakMinutes(completedAt: string | undefined): number | null {
+  if (!completedAt) return null; // No breaks taken yet
   const lastBreakTime = new Date(completedAt);
   const now = new Date();
   return Math.floor((now.getTime() - lastBreakTime.getTime()) / (1000 * 60));
@@ -136,6 +139,20 @@ function getDayRange(date: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
+// Half-open week interval [start, end): Monday 00:00 local up to — but not
+// including — the following Monday 00:00. Mirrors getDayRange so week bucketing
+// uses the same exclusive upper bound and never double-counts a break that
+// lands exactly on the next-week boundary.
+export function getWeekRange(date: Date): { start: Date; end: Date } {
+  const dayOfWeek = date.getDay();
+  const start = new Date(date);
+  start.setDate(date.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+  return { start, end };
+}
+
 async function generateHomeData(
   userName: string,
   userAvatar: string | null,
@@ -150,12 +167,8 @@ async function generateHomeData(
 
   const today = new Date();
   const { start: todayStart, end: tomorrow } = getDayRange(today);
+  const { start: weekStart, end: weekEnd } = getWeekRange(today);
   const dayOfWeek = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-  monday.setHours(0, 0, 0, 0);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 7);
 
   const todayBreaks = allBreaks.filter((breakEntry) => {
     const completedAt = new Date(breakEntry.completedAt);
@@ -164,7 +177,7 @@ async function generateHomeData(
 
   const weekBreaks = allBreaks.filter((breakEntry) => {
     const completedAt = new Date(breakEntry.completedAt);
-    return completedAt >= monday && completedAt <= sunday;
+    return completedAt >= weekStart && completedAt < weekEnd;
   });
 
   const mostRecentBreak = allBreaks[0];
@@ -184,7 +197,7 @@ async function generateHomeData(
   // Calculate last break time
   const lastBreakMinutesAgo = mostRecentBreak
     ? calculateLastBreakMinutes(mostRecentBreak.completedAt)
-    : 999;
+    : null;
 
   // Calculate weekly insights
   const weekBreaksCount = weekBreaks.length;
@@ -255,7 +268,7 @@ async function generateHomeData(
       },
     ],
     nextBreakMinutes:
-      lastBreakMinutesAgo > effectiveReminderInterval
+      lastBreakMinutesAgo == null || lastBreakMinutesAgo > effectiveReminderInterval
         ? 0
         : effectiveReminderInterval - lastBreakMinutesAgo,
     recommendationSignals,

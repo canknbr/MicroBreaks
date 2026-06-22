@@ -156,7 +156,7 @@ export default function HomeScreen() {
   const smartInsight = useSmartInsight(
     data?.dailyProgress.breaksTaken ?? 0,
     data?.dailyProgress.breaksGoal ?? 8,
-    data?.dailyProgress.lastBreakMinutesAgo ?? 0,
+    data?.dailyProgress.lastBreakMinutesAgo ?? null,
     data?.streak.current ?? 0
   );
 
@@ -230,7 +230,7 @@ export default function HomeScreen() {
       composeRecoveryReason({
         baseReason: getRecoveryReason(
           selectedRecoveryState.id,
-          data?.dailyProgress.lastBreakMinutesAgo ?? 999,
+          data?.dailyProgress.lastBreakMinutesAgo ?? null,
           data?.dailyProgress.breaksTaken ?? 0,
           isNewUser
         ),
@@ -248,7 +248,7 @@ export default function HomeScreen() {
   );
 
   const lastResetLabel = useMemo(
-    () => formatRelativeMinutes(data?.dailyProgress.lastBreakMinutesAgo ?? 999),
+    () => formatRelativeMinutes(data?.dailyProgress.lastBreakMinutesAgo ?? null),
     [data?.dailyProgress.lastBreakMinutesAgo]
   );
 
@@ -357,7 +357,7 @@ export default function HomeScreen() {
         hasCompletedGoal,
         isNewUser,
         isEmpty,
-        lastBreakMinutesAgo: data?.dailyProgress.lastBreakMinutesAgo ?? 0,
+        lastBreakMinutesAgo: data?.dailyProgress.lastBreakMinutesAgo ?? null,
         dynamicSubtitle,
       }),
     [hasCompletedGoal, isEmpty, isNewUser, dynamicSubtitle, data?.dailyProgress.lastBreakMinutesAgo]
