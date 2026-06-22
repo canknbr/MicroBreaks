@@ -26,6 +26,7 @@ import {
   getBestBreakTime,
   getYearBreaksFromHistory,
   getYearlyChartDataFromHistory,
+  invalidateBreakHistoryCache,
 } from '@/services/breakHistory';
 import { STORAGE_KEYS, DEFAULT_STREAK_DATA, DEFAULT_USER_STATS } from '@/services/storage';
 import { syncService } from '@/services/sync';
@@ -87,6 +88,9 @@ function getDateAtHour(hour: number, daysAgo = 0): string {
 describe('Break History Service', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    // Tests seed AsyncStorage directly, bypassing the module's writers — drop
+    // the in-memory history cache so each case reads its own fresh fixture.
+    invalidateBreakHistoryCache();
     jest.clearAllMocks();
     useUserStore.getState().signOut();
   });

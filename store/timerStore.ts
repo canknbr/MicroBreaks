@@ -250,6 +250,13 @@ export const useTimerStore = create<TimerState>()(
           return;
         }
 
+        // Interval jitter (and a busy JS thread) can fire two ticks inside the
+        // same wall-clock second. The countdown is derived from phaseStartedAt,
+        // so both compute the same `remaining` — skip the redundant set() so we
+        // don't emit a new session object and force every subscriber (the
+        // TimerWidget) to re-render with identical content.
+        if (remaining === session.remainingSeconds) return;
+
         set((state) => ({
           session: {
             ...state.session,

@@ -109,15 +109,42 @@ function syncUserProgressProjection(stats: UserStats, streakData: StreakData): v
   }));
 }
 
+// In-memory cache of the parsed break-history array. Every write to
+// STORAGE_KEYS.BREAK_HISTORY funnels through this module, so we keep a hot copy
+// and avoid the AsyncStorage round-trip + JSON.parse of up to MAX_BREAK_HISTORY
+// (5000) entries on every screen focus / pull-to-refresh. Reads hand back a
+// shallow copy so neither readers nor the in-place mutating writers below can
+// corrupt the cached reference; writers replace the cache via setHistoryCache.
+let historyCache: CompletedBreak[] | null = null;
+
+function setHistoryCache(history: CompletedBreak[]): void {
+  historyCache = history;
+}
+
+/**
+ * Drop the cached break history so the next read re-parses from storage. Call
+ * after any out-of-band mutation of STORAGE_KEYS.BREAK_HISTORY (e.g. a bulk
+ * wipe during account deletion) that does not go through this module's writers.
+ */
+export function invalidateBreakHistoryCache(): void {
+  historyCache = null;
+}
+
 // Get all completed breaks
 export async function getBreakHistory(): Promise<CompletedBreak[]> {
+  if (historyCache !== null) {
+    return historyCache.slice();
+  }
+
   const result = await getItemWithError<CompletedBreak[]>(STORAGE_KEYS.BREAK_HISTORY);
   if (result.error) {
     await setItem(STORAGE_KEYS.BREAK_HISTORY, []);
+    historyCache = [];
     return [];
   }
 
-  return result.data || [];
+  historyCache = result.data || [];
+  return historyCache.slice();
 }
 
 export function getBreaksByDateRangeFromHistory(
@@ -243,8 +270,12 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
 
       const saveError = await setItemWithError(STORAGE_KEYS.BREAK_HISTORY, history);
       if (saveError) {
+        // The mutated array was never persisted — drop the cache so the next
+        // read falls back to the last good on-disk state.
+        invalidateBreakHistoryCache();
         return { success: false, error: saveError };
       }
+      setHistoryCache(history);
 
       // Update streak
       const streakData = await updateStreak();
@@ -322,7 +353,12 @@ export async function replaceBreakHistory(
   const run = saveQueue.then<CompletedBreak[]>(async () => {
     const current = await getBreakHistory();
     const next = transform(current);
-    await setItem(STORAGE_KEYS.BREAK_HISTORY, next);
+    const saved = await setItem(STORAGE_KEYS.BREAK_HISTORY, next);
+    if (saved) {
+      setHistoryCache(next);
+    } else {
+      invalidateBreakHistoryCache();
+    }
     return next;
   });
 
@@ -352,7 +388,11 @@ export async function updateBreakRating(
 
   const saved = await setItem(STORAGE_KEYS.BREAK_HISTORY, history);
   if (saved) {
+    setHistoryCache(history);
     syncService.queueDataChange('break', breakEntry);
+  } else {
+    // In-place rating mutation wasn't persisted — drop the cache.
+    invalidateBreakHistoryCache();
   }
 }
 
@@ -520,30 +560,23 @@ export function getWeeklyChartDataFromHistory(
   monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
   monday.setHours(0, 0, 0, 0);
 
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 7);
-
-  const weekBreaks = getBreaksByDateRangeFromHistory(history, monday, sunday);
-
-  const result: { day: string; count: number; minutes: number }[] = [];
-
-  for (let i = 0; i < 7; i++) {
+  // Single-pass O(n) bucketing: map each day's local date key to its bucket
+  // index, then walk the history once. Keying by local calendar day matches
+  // the prior [dayStart, dayEnd) comparison exactly while staying DST-safe,
+  // and parses each break's timestamp a single time instead of once per day.
+  const indexByDate = new Map<string, number>();
+  const result = days.map((day, i) => {
     const dayStart = new Date(monday);
     dayStart.setDate(monday.getDate() + i);
-    const dayEnd = new Date(dayStart);
-    dayEnd.setDate(dayStart.getDate() + 1);
+    indexByDate.set(getLocalDateString(dayStart), i);
+    return { day, count: 0, minutes: 0 };
+  });
 
-    const dayBreaks = weekBreaks.filter((b) => {
-      const breakDate = new Date(b.completedAt);
-      return breakDate >= dayStart && breakDate < dayEnd;
-    });
-    const totalMinutes = dayBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
-
-    result.push({
-      day: days[i],
-      count: dayBreaks.length,
-      minutes: totalMinutes,
-    });
+  for (const b of history) {
+    const idx = indexByDate.get(getLocalDateString(new Date(b.completedAt)));
+    if (idx === undefined) continue;
+    result[idx].count += 1;
+    result[idx].minutes += Math.round(b.duration / 60);
   }
 
   return result;
@@ -560,36 +593,29 @@ export function getMonthlyChartDataFromHistory(
 ): { date: string; count: number; minutes: number }[] {
   const today = new Date();
 
-  const rangeStart = new Date(today);
-  rangeStart.setDate(today.getDate() - 29);
-  rangeStart.setHours(0, 0, 0, 0);
-
-  const rangeEnd = new Date(today);
-  rangeEnd.setDate(today.getDate() + 1);
-  rangeEnd.setHours(0, 0, 0, 0);
-
-  const monthBreaks = getBreaksByDateRangeFromHistory(history, rangeStart, rangeEnd);
-
+  // Single-pass O(n) bucketing over the trailing 30 local days. Each day's
+  // local date key maps to its bucket index, so the history is parsed once
+  // rather than re-filtered 30 times.
+  const indexByDate = new Map<string, number>();
   const result: { date: string; count: number; minutes: number }[] = [];
 
   for (let i = 29; i >= 0; i--) {
     const dayStart = new Date(today);
     dayStart.setDate(today.getDate() - i);
     dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(dayStart);
-    dayEnd.setDate(dayStart.getDate() + 1);
-
-    const dayBreaks = monthBreaks.filter((b) => {
-      const breakDate = new Date(b.completedAt);
-      return breakDate >= dayStart && breakDate < dayEnd;
-    });
-    const totalMinutes = dayBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
-
+    indexByDate.set(getLocalDateString(dayStart), result.length);
     result.push({
       date: `${dayStart.getMonth() + 1}/${dayStart.getDate()}`,
-      count: dayBreaks.length,
-      minutes: totalMinutes,
+      count: 0,
+      minutes: 0,
     });
+  }
+
+  for (const b of history) {
+    const idx = indexByDate.get(getLocalDateString(new Date(b.completedAt)));
+    if (idx === undefined) continue;
+    result[idx].count += 1;
+    result[idx].minutes += Math.round(b.duration / 60);
   }
 
   return result;
@@ -604,26 +630,27 @@ export function getYearlyChartDataFromHistory(
   history: CompletedBreak[]
 ): { month: string; count: number; minutes: number }[] {
   const today = new Date();
-  const yearBreaks = getYearBreaksFromHistory(history);
   const formatter = new Intl.DateTimeFormat('en-US', { month: 'short' });
+
+  // Single-pass O(n) bucketing over the trailing 12 months. Each calendar
+  // month maps to its bucket via a `${year}-${monthIndex}` key (year keeps
+  // same-month-different-year breaks from colliding), so the history is walked
+  // once instead of filtered 12 times.
+  const indexByMonth = new Map<string, number>();
   const result: { month: string; count: number; minutes: number }[] = [];
 
   for (let i = 11; i >= 0; i--) {
     const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    monthStart.setHours(0, 0, 0, 0);
-    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
-    monthEnd.setHours(0, 0, 0, 0);
+    indexByMonth.set(`${monthStart.getFullYear()}-${monthStart.getMonth()}`, result.length);
+    result.push({ month: formatter.format(monthStart), count: 0, minutes: 0 });
+  }
 
-    const monthBreaks = yearBreaks.filter((b) => {
-      const breakDate = new Date(b.completedAt);
-      return breakDate >= monthStart && breakDate < monthEnd;
-    });
-
-    result.push({
-      month: formatter.format(monthStart),
-      count: monthBreaks.length,
-      minutes: monthBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0),
-    });
+  for (const b of history) {
+    const breakDate = new Date(b.completedAt);
+    const idx = indexByMonth.get(`${breakDate.getFullYear()}-${breakDate.getMonth()}`);
+    if (idx === undefined) continue;
+    result[idx].count += 1;
+    result[idx].minutes += Math.round(b.duration / 60);
   }
 
   return result;

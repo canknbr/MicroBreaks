@@ -319,6 +319,18 @@ export default function HomeScreen() {
     });
   }, []);
 
+  // Stable per-break handlers so MemoizedQuickBreakCard's memo holds across
+  // unrelated home re-renders (preset modal toggle, recovery-state change,
+  // refresh). Inline `() => handleBreakPress(id)` would allocate a fresh
+  // closure each render and defeat the memo for every card.
+  const breakPressHandlers = useMemo(() => {
+    const handlers: Record<string, () => void> = {};
+    for (const breakType of BREAK_TYPES) {
+      handlers[breakType.id] = () => handleBreakPress(breakType.id);
+    }
+    return handlers;
+  }, [handleBreakPress]);
+
   const handleSmartInsightAction = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to breaks tab
@@ -349,6 +361,14 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await refresh();
   }, [refresh]);
+
+  const handleOpenPresetPicker = useCallback(() => {
+    setShowPresetPicker(true);
+  }, []);
+
+  const handleClosePresetPicker = useCallback(() => {
+    setShowPresetPicker(false);
+  }, []);
 
   // Dynamic subtitle based on state
   const subtitle = useMemo(
@@ -750,7 +770,7 @@ export default function HomeScreen() {
                   title={breakType.title}
                   duration={breakType.duration}
                   color={breakType.color}
-                  onPress={() => handleBreakPress(breakType.id)}
+                  onPress={breakPressHandlers[breakType.id]}
                   isRecommended={breakType.id === recommendedBreakId}
                   accessibilityLabel={`Start ${breakType.title} break, ${breakType.duration}`}
                   accessibilityHint="Double tap to begin this exercise"
@@ -777,7 +797,7 @@ export default function HomeScreen() {
             </View>
           ) : null}
 
-          <TimerWidget onPresetPress={() => setShowPresetPicker(true)} />
+          <TimerWidget onPresetPress={handleOpenPresetPicker} />
 
           {smartInsight.type !== 'warning' && !isNewUser && (
             <SmartInsight
@@ -877,7 +897,7 @@ export default function HomeScreen() {
         visible={showPresetPicker}
         currentPresetId={timerPreferences.selectedPresetId}
         onSelect={timerActions.setPreset}
-        onClose={() => setShowPresetPicker(false)}
+        onClose={handleClosePresetPicker}
       />
     </View>
   );

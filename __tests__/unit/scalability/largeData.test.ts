@@ -16,6 +16,7 @@ import {
   getRecentBreaks,
   getStreakData,
   saveCompletedBreak,
+  invalidateBreakHistoryCache,
 } from '@/services/breakHistory';
 import { MAX_BREAK_HISTORY } from '@/constants/config';
 import { STORAGE_KEYS, CompletedBreak } from '@/services/storage';
@@ -84,6 +85,7 @@ async function measureTimeAsync(fn: () => Promise<unknown>): Promise<number> {
 describe('Large Data Set Tests', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    invalidateBreakHistoryCache();
     act(() => {
       useUserStore.getState().signOut();
     });
