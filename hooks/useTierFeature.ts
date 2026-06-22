@@ -16,23 +16,11 @@
 import { useMemo } from 'react';
 import { useEffectiveTier } from './useEffectiveTier';
 import {
+  getRequiredTier,
   tierIncludes,
   type Tier,
   type TierFeature,
 } from '@/services/subscription/tiers';
-
-const FEATURE_MIN_TIER: Record<TierFeature, Exclude<Tier, 'free'> | 'free'> = {
-  starter_breaks: 'free',
-  full_break_library: 'solo',
-  weekly_recovery_story: 'solo',
-  daily_missions: 'solo',
-  advanced_stats: 'solo',
-  apple_health_export: 'pro',
-  calendar_aware: 'pro',
-  unlimited_custom: 'pro',
-  streak_buddies: 'family',
-  family_sharing: 'family',
-};
 
 export interface TierFeatureGate {
   /** True iff the current effective tier unlocks this feature. */
@@ -52,7 +40,7 @@ export function useTierFeature(feature: TierFeature): TierFeatureGate {
     () => ({
       hasFeature: tierIncludes(tier, feature),
       tier,
-      requiredTier: FEATURE_MIN_TIER[feature],
+      requiredTier: getRequiredTier(feature),
       loading: !loaded,
     }),
     [tier, loaded, feature]

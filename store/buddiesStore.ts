@@ -17,6 +17,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import { createMmkvStorage } from '@/services/storage/zustandMmkv';
 import {
   generateBuddyCode,
@@ -47,7 +48,7 @@ interface BuddiesState {
   reset: () => void;
 }
 
-const STORAGE_KEY = 'microbreaks-buddies';
+const STORAGE_KEY = ZUSTAND_PERSIST_KEYS.BUDDIES;
 
 export const useBuddiesStore = create<BuddiesState>()(
   persist(

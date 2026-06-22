@@ -176,4 +176,21 @@ describe('useMissionsStore', () => {
       expect(state.missions.some((m) => m.id === 'm-old')).toBe(false);
     });
   });
+
+  describe('persist hardening (L2)', () => {
+    it('pins an explicit schema version so future migrations have a baseline', () => {
+      expect(useMissionsStore.persist.getOptions().version).toBe(1);
+    });
+
+    it('preserves existing persisted data when upgrading from the unversioned build', () => {
+      // Bumping version without a migrate would make zustand discard the
+      // persisted blob (and wipe in-flight mission progress). The migrate
+      // must hand back the old shape so a v0 → v1 upgrade keeps the data.
+      const { migrate } = useMissionsStore.persist.getOptions();
+      expect(migrate).toBeDefined();
+
+      const legacy = { missions: [{ id: 'm-legacy' }], dayStart: '2025-01-01', bonusXPEarned: 7 };
+      expect(migrate!(legacy, 0)).toEqual(legacy);
+    });
+  });
 });

@@ -85,6 +85,11 @@ export const useMissionsStore = create<MissionsStoreState>()(
     {
       name: ZUSTAND_PERSIST_KEYS.MISSIONS,
       storage: createMmkvStorage<MissionsStoreState>(),
+      version: 1,
+      // Baseline migration. The prior build persisted without a version, so
+      // hand the v0 blob back unchanged — bumping the version without a
+      // migrate would make zustand discard it and reset mission progress.
+      migrate: (persistedState) => persistedState as MissionsStoreState,
     }
   )
 );

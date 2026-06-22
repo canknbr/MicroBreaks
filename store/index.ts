@@ -23,6 +23,7 @@ export type { AppNotification, NotificationType } from './notificationStore';
 
 export {
   useTimerStore,
+  getTodayKey,
   initialTimerSession,
   initialTimerStats,
   initialTimerPreferences,

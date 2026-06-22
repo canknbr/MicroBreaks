@@ -309,6 +309,31 @@ export async function saveCompletedBreak(breakData: Omit<CompletedBreak, 'id'>):
   return runSave;
 }
 
+/**
+ * Atomically replace the persisted break history by applying `transform`
+ * to the freshly-read current history. Runs inside the same serialized
+ * `saveQueue` as `saveCompletedBreak`, so a sync pull's merge cannot race a
+ * concurrent break completion and silently drop the just-saved entry — the
+ * pull previously read+merged+wrote outside the queue (C-BUG: data-loss race).
+ */
+export async function replaceBreakHistory(
+  transform: (current: CompletedBreak[]) => CompletedBreak[]
+): Promise<CompletedBreak[]> {
+  const run = saveQueue.then<CompletedBreak[]>(async () => {
+    const current = await getBreakHistory();
+    const next = transform(current);
+    await setItem(STORAGE_KEYS.BREAK_HISTORY, next);
+    return next;
+  });
+
+  saveQueue = run.then(
+    () => undefined,
+    () => undefined
+  );
+
+  return run;
+}
+
 // Update the rating on an existing break
 export async function updateBreakRating(
   breakId: string,

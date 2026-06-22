@@ -27,6 +27,7 @@ import { useNotificationStore, AppNotification } from '@/store';
 import { Spacing } from '@/theme';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
 import i18n from 'i18next';
+import { formatRelativeTime } from '@/utils/format';
 
 function localeBcp47(): string {
   // i18next's language code (e.g. "en", "tr") maps 1:1 to BCP-47 here.
@@ -53,24 +54,6 @@ function getNotificationColor(type: AppNotification['type']): string {
   }
 }
 
-// Format relative time
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  // D-I18N3: explicit locale so the date format matches the active app
-  // language, even when the device's locale differs.
-  return date.toLocaleDateString(localeBcp47());
-}
 
 // Notification Item Component
 function NotificationItem({
@@ -135,7 +118,7 @@ function NotificationItem({
             {notification.message}
           </Text>
           <Text style={[styles.notificationTime, { color: theme.text.muted }]}>
-            {formatRelativeTime(notification.createdAt)}
+            {formatRelativeTime(notification.createdAt, { locale: localeBcp47() })}
           </Text>
         </View>
       </Pressable>

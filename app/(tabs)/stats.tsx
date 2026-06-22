@@ -35,6 +35,8 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import i18n from 'i18next';
 import { Spacing } from '@/theme';
+import { formatDuration, formatRelativeTime } from '@/utils/format';
+import { cardShadow } from '@/utils/cardShadow';
 import {
   useStatsData,
   StatsPeriod,
@@ -42,7 +44,7 @@ import {
 } from '@/hooks/useStatsData';
 import { CompletedBreak } from '@/services/storage';
 import { useTheme, ThemeColors } from '@/hooks/useTheme';
-import { useHasActiveSubscription, useOnboardingStore } from '@/store';
+import { useOnboardingStore } from '@/store';
 import { useTierFeature } from '@/hooks/useTierFeature';
 import { PRO_STATS_HIGHLIGHTS } from '@/constants/subscription';
 import { UpgradePrompt } from '@/components/subscription';
@@ -108,11 +110,7 @@ function StatCard({
         width: (screenWidth - Spacing.lg * 2 - 12) / 2,
         borderColor: theme.isDark ? theme.border.subtle : 'transparent',
         backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: theme.isDark ? 0 : 0.08,
-        shadowRadius: 10,
-        elevation: theme.isDark ? 0 : 4,
+        ...cardShadow(theme.isDark, { height: 2, opacity: 0.08, radius: 10, elevation: 4 }),
       },
       containerStyle,
     ]}>
@@ -364,37 +362,18 @@ function RecentBreakItem({
     transform: [{ translateX: translateX.value }],
   }));
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    if (mins === 0) return `${secs}s`;
-    return `${mins}m`;
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    // D-I18N3: use the active i18n language for the formatted date so the
-    // stats screen and notification card agree across locales.
-    return date.toLocaleDateString(i18n.language || 'en');
-  };
+  // D-I18N3: use the active i18n language for the formatted date so the
+  // stats screen and notification card agree across locales.
+  const locale = i18n.language || 'en';
 
   return (
-    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.medium }, style]} accessibilityLabel={`${item.title}, ${formatDuration(item.duration)}, ${formatTime(item.completedAt)}`}>
+    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.medium }, style]} accessibilityLabel={`${item.title}, ${formatDuration(item.duration)}, ${formatRelativeTime(item.completedAt, { locale })}`}>
       <View style={[styles.recentIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
         <Text style={styles.recentIconText}>{item.icon}</Text>
       </View>
       <View style={styles.recentInfo}>
         <Text style={[styles.recentType, { color: theme.text.primary }]}>{item.title}</Text>
-        <Text style={[styles.recentTime, { color: theme.text.muted }]}>{formatTime(item.completedAt)}</Text>
+        <Text style={[styles.recentTime, { color: theme.text.muted }]}>{formatRelativeTime(item.completedAt, { locale })}</Text>
       </View>
       <Text style={[styles.recentDuration, { color: theme.accent.primary }]}>{formatDuration(item.duration)}</Text>
     </Animated.View>
@@ -409,12 +388,10 @@ export default function StatsScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<StatsPeriod>('week');
   const [refreshing, setRefreshing] = useState(false);
   const headerOpacity = useSharedValue(0);
-  const hasActiveSubscription = useHasActiveSubscription();
-  // Tier-aware gate for the chart / mix / pattern sections. Currently
-  // collapses to the same boolean as hasActiveSubscription (since
-  // every paid tier includes advanced_stats), but routing through
-  // `useTierFeature` lets us redirect specific tiers in the future
-  // without rewriting every block — and keeps the intent explicit.
+  // Tier-aware gate for the chart / mix / pattern sections AND the
+  // period switcher. Routes through the server-resolved effective tier
+  // so a stale/spoofed local "premium" status can't unlock advanced
+  // stats the server ledger hasn't granted.
   const advancedStats = useTierFeature('advanced_stats');
 
   const stats = useStatsData(selectedPeriod);
@@ -430,7 +407,7 @@ export default function StatsScreen() {
 
   const handlePeriodChange = (period: StatsPeriod) => {
     Haptics.selectionAsync();
-    if (!hasActiveSubscription && period !== 'week') {
+    if (!advancedStats.hasFeature && period !== 'week') {
       router.push({
         pathname: '/subscription',
         params: { placement: 'stats' },
@@ -548,11 +525,7 @@ export default function StatsScreen() {
           <View
             style={[styles.periodSelector, {
               backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: theme.isDark ? 0 : 0.05,
-              shadowRadius: 8,
-              elevation: theme.isDark ? 0 : 2,
+              ...cardShadow(theme.isDark, { height: 2, opacity: 0.05, radius: 8, elevation: 2 }),
             }]}
             accessibilityRole="tablist"
             accessibilityLabel="Statistics time period selector"
@@ -650,11 +623,7 @@ export default function StatsScreen() {
                 {
                   borderColor: theme.isDark ? theme.border.subtle : 'transparent',
                   backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: theme.isDark ? 0 : 0.08,
-                  shadowRadius: 12,
-                  elevation: theme.isDark ? 0 : 5,
+                  ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
                 },
               ]}>
                 {theme.isDark && (
@@ -743,11 +712,7 @@ export default function StatsScreen() {
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
                     backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.08,
-                    shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 5,
+                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
                   },
                 ]}>
                   {/* BlurView only for dark mode */}
@@ -781,11 +746,7 @@ export default function StatsScreen() {
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
                     backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.08,
-                    shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 5,
+                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
                   },
                 ]}>
                   {/* BlurView only for dark mode */}
@@ -820,11 +781,7 @@ export default function StatsScreen() {
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
                     backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.08,
-                    shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 5,
+                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
                   },
                 ]}>
                   {/* BlurView only for dark mode */}
@@ -872,11 +829,7 @@ export default function StatsScreen() {
                   {
                     borderColor: theme.isDark ? theme.border.subtle : 'transparent',
                     backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: theme.isDark ? 0 : 0.08,
-                    shadowRadius: 12,
-                    elevation: theme.isDark ? 0 : 5,
+                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
                   },
                 ]}>
                   {/* BlurView only for dark mode */}
@@ -905,11 +858,7 @@ export default function StatsScreen() {
                 {
                   borderColor: theme.isDark ? theme.border.subtle : 'transparent',
                   backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: theme.isDark ? 0 : 0.08,
-                  shadowRadius: 12,
-                  elevation: theme.isDark ? 0 : 5,
+                  ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
                 },
               ]}>
                 {/* BlurView only for dark mode */}

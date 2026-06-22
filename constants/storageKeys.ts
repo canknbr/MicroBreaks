@@ -26,6 +26,7 @@ export const ZUSTAND_PERSIST_KEYS = {
   NOTIFICATIONS: 'microbreaks-notifications',
   ONBOARDING: 'microbreaks-onboarding',
   MISSIONS: 'microbreaks-missions',
+  BUDDIES: 'microbreaks-buddies',
 } as const;
 
 // Direct storage keys for service-owned blobs.

@@ -314,6 +314,15 @@ describe('UserStore', () => {
       // even if its duration was malformed.
       expect(progress.recoveryBankSince).not.toBeNull();
     });
+
+    it('should not poison totalMinutes with a NaN or negative duration', () => {
+      act(() => {
+        useUserStore.getState().trackBreakCompletion('quick', Number.NaN);
+        useUserStore.getState().trackBreakCompletion('stretch', -10);
+        useUserStore.getState().trackBreakCompletion('quick', 5);
+      });
+      expect(useUserStore.getState().achievements.totalMinutes).toBe(5);
+    });
   });
 
   describe('Sign Out', () => {

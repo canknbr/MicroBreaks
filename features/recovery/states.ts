@@ -206,3 +206,24 @@ export function getRecoveryReason(
       return 'A short reset matched to the kind of relief you want right now.';
   }
 }
+
+/**
+ * Combines the base recovery reason with an optional adaptive-recommendation
+ * reason and work-pattern timing hint into the single line shown on Home.
+ *
+ * A null `adaptiveReason` (no recommendation) or the generic
+ * "Recommended for you" reason is treated as no adaptive lead-in.
+ */
+export function composeRecoveryReason(input: {
+  baseReason: string;
+  adaptiveReason: string | null;
+  workPatternHint: string | null;
+}): string {
+  const { baseReason, adaptiveReason, workPatternHint } = input;
+
+  if (adaptiveReason === null || adaptiveReason === 'Recommended for you') {
+    return workPatternHint ? `${baseReason} ${workPatternHint}` : baseReason;
+  }
+
+  return `${adaptiveReason}. ${baseReason}${workPatternHint ? ` ${workPatternHint}` : ''}`;
+}

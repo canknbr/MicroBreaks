@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   defaultAppSettings,
   initialOnboardingData,
+  getTodayKey,
   initialTimerPreferences,
   initialTimerSession,
   initialTimerStats,
@@ -86,7 +87,7 @@ function resetInMemoryStores(): void {
     session: { ...initialTimerSession },
     stats: {
       ...initialTimerStats,
-      lastResetDate: new Date().toISOString().split('T')[0],
+      lastResetDate: getTodayKey(),
     },
     preferences: { ...initialTimerPreferences },
   });

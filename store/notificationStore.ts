@@ -95,6 +95,11 @@ export const useNotificationStore = create<NotificationState>()(
     {
       name: ZUSTAND_PERSIST_KEYS.NOTIFICATIONS,
       storage: createMmkvStorage(),
+      version: 1,
+      // Baseline migration. The prior build persisted without a version, so
+      // hand the v0 blob back unchanged — bumping the version without a
+      // migrate would make zustand discard the user's notification history.
+      migrate: (persistedState) => persistedState as NotificationState,
     }
   )
 );

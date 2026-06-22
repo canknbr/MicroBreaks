@@ -87,3 +87,20 @@ export interface PurchaseResult {
   message: string;
   customer: SubscriptionCustomerState | null;
 }
+
+/**
+ * Abstraction over a remote billing provider (RevenueCat today; StoreKit,
+ * Google Play, Stripe, etc. in the future). The billing service talks to this
+ * interface instead of any single SDK, so adding a provider is a matter of
+ * implementing the adapter and registering it in `resolveBillingAdapter`.
+ *
+ * Store-local providers (`preview`, `none`) have no remote operations and are
+ * handled directly by the billing service, so they have no adapter.
+ */
+export interface BillingProviderAdapter {
+  readonly provider: BillingProvider;
+  getOfferings(appUserId: string): Promise<SubscriptionOffer[]>;
+  getCustomerState(appUserId: string): Promise<SubscriptionCustomerState>;
+  purchaseOffer(appUserId: string, offerId: string): Promise<SubscriptionCustomerState>;
+  restorePurchases(appUserId: string): Promise<SubscriptionCustomerState>;
+}

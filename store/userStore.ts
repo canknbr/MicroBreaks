@@ -9,7 +9,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { createMmkvStorage } from '@/services/storage/zustandMmkv';
 import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
 import { DEFAULT_WEEKLY_GOAL } from '@/constants/config';
-import { syncService } from '@/services/sync';
+import { notifyDataChange } from '@/store/syncBridge';
 import { syncStoredUserStatsFromProgress } from '@/services/storage';
 import { calculateDailyGoal } from '@/utils/validation';
 
@@ -143,9 +143,7 @@ function scheduleProgressSideEffects(): Promise<void> {
           Promise.resolve(syncStoredUserStatsFromProgress(progress)).catch(() => undefined),
         ];
 
-        if (!syncService.isSyncPulling()) {
-          tasks.push(Promise.resolve(syncService.queueDataChange('progress')).catch(() => undefined));
-        }
+        tasks.push(Promise.resolve(notifyDataChange('progress')).catch(() => undefined));
 
         await Promise.all(tasks);
       } finally {
@@ -377,27 +375,21 @@ export const useUserStore = create<UserState>()(
         set((state) => ({
           profile: { ...state.profile, ...data, updatedAt: Date.now() },
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('profile');
-        }
+        notifyDataChange('profile');
       },
 
       setName: (name) => {
         set((state) => ({
           profile: { ...state.profile, name, updatedAt: Date.now() },
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('profile');
-        }
+        notifyDataChange('profile');
       },
 
       setAvatar: (avatar) => {
         set((state) => ({
           profile: { ...state.profile, avatar, updatedAt: Date.now() },
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('profile');
-        }
+        notifyDataChange('profile');
       },
 
       // Progress Actions
@@ -492,9 +484,7 @@ export const useUserStore = create<UserState>()(
             },
           };
         });
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('preferences');
-        }
+        notifyDataChange('preferences');
       },
 
       isFavorite: (breakId) => {
@@ -511,9 +501,7 @@ export const useUserStore = create<UserState>()(
             },
           };
         });
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('preferences');
-        }
+        notifyDataChange('preferences');
       },
 
       // Achievement Actions
@@ -530,9 +518,7 @@ export const useUserStore = create<UserState>()(
             },
           },
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('achievements');
-        }
+        notifyDataChange('achievements');
       },
 
       isAchievementUnlocked: (achievementId) => {
@@ -566,13 +552,11 @@ export const useUserStore = create<UserState>()(
                 ...categoryBreaks,
                 [category]: (categoryBreaks[category] || 0) + 1,
               },
-              totalMinutes: state.achievements.totalMinutes + durationMinutes,
+              totalMinutes: state.achievements.totalMinutes + sanitisedMinutes,
             },
           };
         });
-        if (!syncService.isSyncPulling()) {
-          syncService.queueDataChange('achievements');
-        }
+        notifyDataChange('achievements');
       },
     }),
     {

@@ -19,12 +19,7 @@ import type {
   SubscriptionCustomerState,
   SubscriptionOffer,
 } from './types';
-import {
-  getRevenueCatCustomerState,
-  getRevenueCatOffers,
-  purchaseRevenueCatOffer,
-  restoreRevenueCatCustomerState,
-} from './revenuecat';
+import { resolveBillingAdapter } from './adapters';
 
 class BillingService {
   private isInitialized = false;
@@ -90,10 +85,11 @@ class BillingService {
       nextState.setAppUserId(options.appUserId);
       nextState.setOfferings(DEFAULT_SUBSCRIPTION_OFFERS);
 
-      if (DEFAULT_BILLING_PROVIDER === 'revenuecat' && IS_REVENUECAT_CONFIGURED) {
+      const initAdapter = resolveBillingAdapter(DEFAULT_BILLING_PROVIDER);
+      if (initAdapter && IS_REVENUECAT_CONFIGURED) {
         const [offerings, customer] = await Promise.all([
-          getRevenueCatOffers(options.appUserId),
-          getRevenueCatCustomerState(options.appUserId),
+          initAdapter.getOfferings(options.appUserId),
+          initAdapter.getCustomerState(options.appUserId),
         ]);
 
         nextState.setOfferings(offerings);
@@ -134,8 +130,9 @@ class BillingService {
     state.startBillingOperation('load_offers');
 
     try {
-      if (state.customer.billingProvider === 'revenuecat' && state.customer.appUserId) {
-        const offerings = await getRevenueCatOffers(state.customer.appUserId);
+      const adapter = resolveBillingAdapter(state.customer.billingProvider);
+      if (adapter && state.customer.appUserId) {
+        const offerings = await adapter.getOfferings(state.customer.appUserId);
         state.setOfferings(offerings);
         const customer = useSubscriptionStore.getState().customer;
         this.finishOperation('load_offers', customer, {
@@ -179,8 +176,9 @@ class BillingService {
     try {
       let customer: SubscriptionCustomerState;
 
-      if (state.customer.billingProvider === 'revenuecat' && state.customer.appUserId) {
-        customer = await getRevenueCatCustomerState(state.customer.appUserId);
+      const adapter = resolveBillingAdapter(state.customer.billingProvider);
+      if (adapter && state.customer.appUserId) {
+        customer = await adapter.getCustomerState(state.customer.appUserId);
         state.setCustomerState(customer);
       } else {
         state.expireIfNeeded();
@@ -219,6 +217,7 @@ class BillingService {
   ): Promise<PurchaseResult> {
     const state = useSubscriptionStore.getState();
     const billingProvider = state.customer.billingProvider;
+    const adapter = resolveBillingAdapter(billingProvider);
     const offer = state.offerings.find((item) => item.id === offerId);
     state.startBillingOperation('purchase');
 
@@ -239,8 +238,8 @@ class BillingService {
     }
 
     try {
-      if (billingProvider === 'revenuecat' && state.customer.appUserId) {
-        const customer = await purchaseRevenueCatOffer(state.customer.appUserId, offer.id);
+      if (adapter && state.customer.appUserId) {
+        const customer = await adapter.purchaseOffer(state.customer.appUserId, offer.id);
         state.setCustomerState(customer);
         this.syncAnalyticsState(customer);
 
@@ -391,8 +390,9 @@ class BillingService {
     state.startBillingOperation('restore');
 
     try {
-      if (state.customer.billingProvider === 'revenuecat' && state.customer.appUserId) {
-        const customer = await restoreRevenueCatCustomerState(state.customer.appUserId);
+      const adapter = resolveBillingAdapter(state.customer.billingProvider);
+      if (adapter && state.customer.appUserId) {
+        const customer = await adapter.restorePurchases(state.customer.appUserId);
         state.setCustomerState(customer);
         const hasAccess =
           customer.status === 'trial' || customer.status === 'premium';

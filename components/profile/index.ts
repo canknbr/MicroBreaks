@@ -1,4 +1,14 @@
 export { AccountAccessModal, type AccountAccessMode } from './AccountAccessModal';
+export { AboutSection } from './AboutSection';
+export { AccountSection } from './AccountSection';
+export { AchievementsSection } from './AchievementsSection';
+export { DataPrivacySection } from './DataPrivacySection';
 export { EditProfileModal } from './EditProfileModal';
 export { IntervalPickerModal, ThemePickerModal } from './PreferencePickers';
+export { NotificationsSection } from './NotificationsSection';
+export { PreferencesSection } from './PreferencesSection';
+export { PremiumCard } from './PremiumCard';
+export { ProfileCard } from './ProfileCard';
 export { SettingItem } from './SettingItem';
+export { SignOutButton } from './SignOutButton';
+export { TimerSettingsSection } from './TimerSettingsSection';

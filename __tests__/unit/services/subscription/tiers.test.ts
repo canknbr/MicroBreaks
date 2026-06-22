@@ -2,6 +2,7 @@ import {
   compareTiers,
   getActiveTier,
   getOffersForTier,
+  getRequiredTier,
   getTierForOfferId,
   PURCHASABLE_TIERS,
   resolveEffectiveTier,
@@ -11,6 +12,7 @@ import {
   TIER_SEATS,
   TIER_TAGLINES,
   type Tier,
+  type TierFeature,
 } from '@/services/subscription/tiers';
 import type {
   SubscriptionCustomerState,
@@ -54,8 +56,9 @@ describe('getTierForOfferId', () => {
     expect(getTierForOfferId('')).toBe('free');
   });
 
-  it('falls back to pro for unknown prefixes (legacy purchases)', () => {
-    expect(getTierForOfferId('legacy_unicorn')).toBe('pro');
+  it('fails closed to free for unknown prefixes (never grant access on a typo/misconfig)', () => {
+    expect(getTierForOfferId('legacy_unicorn')).toBe('free');
+    expect(getTierForOfferId('garbage')).toBe('free');
   });
 });
 
@@ -102,6 +105,34 @@ describe('tierIncludes — inheritance', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(tierIncludes(tier, feature as any)).toBe(expected);
     });
+  });
+});
+
+describe('getRequiredTier', () => {
+  it('returns the minimum tier that unlocks each feature', () => {
+    expect(getRequiredTier('starter_breaks')).toBe('free');
+    expect(getRequiredTier('full_break_library')).toBe('solo');
+    expect(getRequiredTier('weekly_recovery_story')).toBe('solo');
+    expect(getRequiredTier('daily_missions')).toBe('solo');
+    expect(getRequiredTier('advanced_stats')).toBe('solo');
+    expect(getRequiredTier('apple_health_export')).toBe('pro');
+    expect(getRequiredTier('calendar_aware')).toBe('pro');
+    expect(getRequiredTier('unlimited_custom')).toBe('pro');
+    expect(getRequiredTier('streak_buddies')).toBe('family');
+    expect(getRequiredTier('family_sharing')).toBe('family');
+  });
+
+  it('agrees with tierIncludes — the required tier is exactly the threshold that unlocks it', () => {
+    const features: TierFeature[] = [
+      'starter_breaks',
+      'full_break_library',
+      'apple_health_export',
+      'streak_buddies',
+    ];
+    for (const feature of features) {
+      const required = getRequiredTier(feature);
+      expect(tierIncludes(required, feature)).toBe(true);
+    }
   });
 });
 

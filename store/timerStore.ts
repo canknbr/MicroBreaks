@@ -64,8 +64,16 @@ interface TimerState {
   toggleAutoStartWork: () => void;
 }
 
-function getTodayKey(): string {
-  return new Date().toISOString().split('T')[0];
+/**
+ * Local-calendar date key (YYYY-MM-DD). Uses local components rather than
+ * UTC so today's focus stats reset at the user's local midnight, matching
+ * `getLocalDateString`/`getLocalDateKey` used across the app.
+ */
+export function getTodayKey(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function getActivePreset(preferences: TimerPreferences) {
@@ -439,6 +447,10 @@ export const useTimerStore = create<TimerState>()(
     {
       name: ZUSTAND_PERSIST_KEYS.TIMER,
       storage: createMmkvStorage(),
+      // The session ticks every second; persisting it would write to MMKV on
+      // each tick and restore a stale countdown on cold start. Only the
+      // durable stats and preferences belong on disk.
+      partialize: (state) => ({ stats: state.stats, preferences: state.preferences }),
       version: 2,
       migrate: (persistedState, version) => {
         // v1 → v2: sound/vibration moved to settingsStore (single source of

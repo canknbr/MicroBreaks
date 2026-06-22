@@ -22,6 +22,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/i18n/hooks';
 import { useHapticChoreography } from '@/hooks/useHapticChoreography';
 import { breakSounds } from '@/services/audio/breakSounds';
+import { formatDuration } from '@/utils/format';
 
 interface CompletedMissionFeedback {
   /** Stable id for the React key. */
@@ -126,13 +127,6 @@ export default function BreakCompletion({
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${ringRotation.value}deg` }],
   }));
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    if (mins === 0) return `${secs}s`;
-    return `${mins}m ${secs}s`;
-  };
 
   return (
     <View style={styles.container}>
@@ -254,7 +248,7 @@ export default function BreakCompletion({
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: theme.text.primary }]}>{formatDuration(stats.totalDuration)}</Text>
+            <Text style={[styles.statValue, { color: theme.text.primary }]}>{formatDuration(stats.totalDuration, { showSeconds: true })}</Text>
             <Text style={[styles.statLabel, { color: theme.text.muted }]}>Duration</Text>
           </View>
 

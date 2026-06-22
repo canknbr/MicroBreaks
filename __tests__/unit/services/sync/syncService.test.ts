@@ -1,13 +1,20 @@
 import NetInfo from '@react-native-community/netinfo';
 import { syncService } from '@/services/sync';
 import { getItem, setItem } from '@/services/storage';
+import { captureError } from '@/services/firebase/crashlytics-adapter';
 import { pushSettings, pullSettings } from '@/services/sync/settingsSync';
 import { pushUserProfile, pullUserProfile } from '@/services/sync/userSync';
 import { pushBreakHistory, pullBreakHistory, pushSingleBreak } from '@/services/sync/breakSync';
+import { notifyDataChange } from '@/store/syncBridge';
 
 jest.mock('@/services/storage', () => ({
   getItem: jest.fn(() => Promise.resolve(null)),
   setItem: jest.fn(() => Promise.resolve(true)),
+}));
+
+jest.mock('@/services/firebase/crashlytics-adapter', () => ({
+  captureError: jest.fn(),
+  addBreadcrumb: jest.fn(),
 }));
 
 jest.mock('@/services/firebase/firestore', () => ({
@@ -170,5 +177,89 @@ describe('syncService shutdown', () => {
     await (syncService as any).processPendingQueue();
 
     expect(pushUserProfile).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('syncService failure reporting', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+    (NetInfo.fetch as jest.Mock).mockReset();
+    (NetInfo.fetch as jest.Mock).mockResolvedValue({
+      isConnected: false,
+      isInternetReachable: false,
+    });
+
+    await syncService.shutdown();
+  });
+
+  afterEach(async () => {
+    await syncService.shutdown();
+  });
+
+  it('reports a full sync failure to Crashlytics so silent sync breakage is observable', async () => {
+    // Online → initialize() kicks off a full sync. A failing pull must not
+    // be swallowed into a dev-only console.error; it has to reach Crashlytics.
+    (NetInfo.fetch as jest.Mock).mockResolvedValue({
+      isConnected: true,
+      isInternetReachable: true,
+    });
+    const boom = new Error('firestore unavailable');
+    (pullUserProfile as jest.Mock).mockRejectedValueOnce(boom);
+
+    await syncService.initialize('user-1');
+
+    expect(captureError).toHaveBeenCalledWith(
+      boom,
+      expect.objectContaining({ component: 'SyncService', action: 'performFullSync' })
+    );
+  });
+
+  it('reports an incremental sync failure to Crashlytics', async () => {
+    // Initialize offline (no full sync), then run an incremental sync whose
+    // pull rejects.
+    await syncService.initialize('user-1');
+
+    const boom = new Error('network blip mid-pull');
+    (pullBreakHistory as jest.Mock).mockRejectedValueOnce(boom);
+
+    await syncService.performIncrementalSync();
+
+    expect(captureError).toHaveBeenCalledWith(
+      boom,
+      expect.objectContaining({ component: 'SyncService', action: 'performIncrementalSync' })
+    );
+  });
+});
+
+describe('syncService ↔ store sync bridge wiring', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+    (NetInfo.fetch as jest.Mock).mockReset();
+    (NetInfo.fetch as jest.Mock).mockResolvedValue({
+      isConnected: false,
+      isInternetReachable: false,
+    });
+    await syncService.shutdown();
+  });
+
+  afterEach(async () => {
+    await syncService.shutdown();
+  });
+
+  it('registers sync handlers on initialize so store notifications route to the queue', async () => {
+    await syncService.initialize('user-1');
+
+    // A registered handler returns queueDataChange's promise; an unregistered
+    // bridge returns undefined.
+    expect(notifyDataChange('profile')).toBeInstanceOf(Promise);
+  });
+
+  it('clears sync handlers on shutdown so store notifications no longer route', async () => {
+    await syncService.initialize('user-1');
+    await syncService.shutdown();
+
+    expect(notifyDataChange('profile')).toBeUndefined();
   });
 });

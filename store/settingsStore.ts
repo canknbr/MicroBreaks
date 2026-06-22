@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { createMmkvStorage } from '@/services/storage/zustandMmkv';
 import { ZUSTAND_PERSIST_KEYS } from '@/constants/storageKeys';
-import { syncService } from '@/services/sync';
+import { notifySettingsChange } from '@/store/syncBridge';
 
 export interface AppSettings {
   // Appearance
@@ -259,9 +259,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, ...newSettings },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleSound: () => {
@@ -269,9 +267,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, soundEnabled: !state.settings.soundEnabled },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleHaptics: () => {
@@ -279,9 +275,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, hapticsEnabled: !state.settings.hapticsEnabled },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleVoiceGuidance: () => {
@@ -289,9 +283,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, voiceGuidanceEnabled: !state.settings.voiceGuidanceEnabled },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleNotifications: () => {
@@ -299,9 +291,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, notificationsEnabled: !state.settings.notificationsEnabled },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleBreakReminders: () => {
@@ -309,9 +299,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, breakReminders: !state.settings.breakReminders },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleStreakAlerts: () => {
@@ -319,9 +307,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, streakAlerts: !state.settings.streakAlerts },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleGoalNotifications: () => {
@@ -329,9 +315,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, goalNotifications: !state.settings.goalNotifications },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       toggleQuietHours: () => {
@@ -339,9 +323,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, quietHoursEnabled: !state.settings.quietHoursEnabled },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       setReminderInterval: (minutes) => {
@@ -349,9 +331,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, reminderIntervalMinutes: Math.max(5, Math.min(120, Math.round(minutes))) },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       setQuietHours: (start, end) => {
@@ -363,9 +343,7 @@ export const useSettingsStore = create<SettingsState>()(
           },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       setTheme: (theme) => {
@@ -373,16 +351,12 @@ export const useSettingsStore = create<SettingsState>()(
           settings: { ...state.settings, theme },
           settingsUpdatedAt: Date.now(),
         }));
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
 
       resetSettings: () => {
         set({ settings: { ...defaultAppSettings }, settingsUpdatedAt: Date.now() });
-        if (!syncService.isSyncPulling()) {
-          syncService.queueSettingsChange();
-        }
+        notifySettingsChange();
       },
     }),
     {

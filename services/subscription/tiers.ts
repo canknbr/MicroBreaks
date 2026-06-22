@@ -120,16 +120,20 @@ export const TIER_SEATS: Record<Tier, number> = {
 
 /**
  * Resolve the tier for a given offer id using the documented prefix
- * convention. Unknown ids fall back to 'pro' to keep legacy single-
- * tier purchases working — those offer ids look like `pro_annual` /
- * `pro_monthly` already.
+ * convention. Legacy single-tier purchases already use `pro_*` ids, so
+ * they hit the explicit `pro_` branch. Anything we don't recognise
+ * fails CLOSED to 'free' — granting a paid tier on an unrecognised
+ * (typo'd / misconfigured / future) id is a billing/security landmine.
  */
 export function getTierForOfferId(offerId: string | null | undefined): Tier {
   if (!offerId) return 'free';
   if (offerId.startsWith('family_')) return 'family';
   if (offerId.startsWith('solo_')) return 'solo';
   if (offerId.startsWith('pro_')) return 'pro';
-  return 'pro';
+  if (__DEV__) {
+    console.warn(`[tiers] Unrecognised offer id "${offerId}" — failing closed to 'free'.`);
+  }
+  return 'free';
 }
 
 /**
@@ -153,6 +157,15 @@ export function getActiveTier(customer: SubscriptionCustomerState): Tier {
  */
 export function tierIncludes(active: Tier, feature: TierFeature): boolean {
   return TIER_RANK[active] >= TIER_RANK[FEATURE_MIN_TIER[feature]];
+}
+
+/**
+ * The minimum tier that unlocks a feature. Drives upgrade copy
+ * ("Upgrade to Pro") without callers re-declaring the gating table —
+ * this is the single source of truth for `FEATURE_MIN_TIER`.
+ */
+export function getRequiredTier(feature: TierFeature): Tier {
+  return FEATURE_MIN_TIER[feature];
 }
 
 /**

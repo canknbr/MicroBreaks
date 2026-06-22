@@ -60,7 +60,7 @@ import {
   MissionsCard,
   FreeQuotaChip,
   ExpiredAccessBanner,
-  RecoveryBank,
+  RecoveryBankRow,
 } from '@/components/home';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
 import { useTierFeature } from '@/hooks/useTierFeature';
@@ -79,6 +79,7 @@ import {
   BREAK_TYPES,
   RECOVERY_STATES,
   RecoveryStateId,
+  composeRecoveryReason,
   formatNextBreakWindow,
   formatRelativeMinutes,
   getDefaultRecoveryStateId,
@@ -86,10 +87,10 @@ import {
   getRecoveryReason,
 } from '@/features/recovery/states';
 import { getWorkPatternTimingHint } from '@/features/workday/patterns';
+import { getHomeSubtitle } from '@/features/home/homeSubtitle';
 import {
   useNotificationStore,
   useOnboardingStore,
-  useUserStore,
 } from '@/store';
 import { useTimerPreferences, useTimerActions } from '@/store/timerStore';
 import { useTheme } from '@/hooks/useTheme';
@@ -225,20 +226,17 @@ export default function HomeScreen() {
   );
 
   const recoveryReason = useMemo(
-    () => {
-      const baseReason = getRecoveryReason(
-        selectedRecoveryState.id,
-        data?.dailyProgress.lastBreakMinutesAgo ?? 999,
-        data?.dailyProgress.breaksTaken ?? 0,
-        isNewUser
-      );
-
-      if (!adaptiveRecommendation || adaptiveRecommendation.reason === 'Recommended for you') {
-        return workPatternHint ? `${baseReason} ${workPatternHint}` : baseReason;
-      }
-
-      return `${adaptiveRecommendation.reason}. ${baseReason}${workPatternHint ? ` ${workPatternHint}` : ''}`;
-    },
+    () =>
+      composeRecoveryReason({
+        baseReason: getRecoveryReason(
+          selectedRecoveryState.id,
+          data?.dailyProgress.lastBreakMinutesAgo ?? 999,
+          data?.dailyProgress.breaksTaken ?? 0,
+          isNewUser
+        ),
+        adaptiveReason: adaptiveRecommendation ? adaptiveRecommendation.reason : null,
+        workPatternHint,
+      }),
     [
       adaptiveRecommendation,
       selectedRecoveryState.id,
@@ -353,15 +351,17 @@ export default function HomeScreen() {
   }, [refresh]);
 
   // Dynamic subtitle based on state
-  const subtitle = useMemo(() => {
-    if (hasCompletedGoal) return "Amazing! You've crushed your goal today";
-    if (isNewUser) return 'Choose the kind of relief you want and start with one guided reset.';
-    if (isEmpty) return 'Pick what your body or mind needs right now and take a short reset.';
-    if ((data?.dailyProgress.lastBreakMinutesAgo ?? 0) > 90) {
-      return 'You are overdue for a reset. Start with the recovery state that feels most relevant right now.';
-    }
-    return dynamicSubtitle;
-  }, [hasCompletedGoal, isEmpty, isNewUser, dynamicSubtitle, data?.dailyProgress.lastBreakMinutesAgo]);
+  const subtitle = useMemo(
+    () =>
+      getHomeSubtitle({
+        hasCompletedGoal,
+        isNewUser,
+        isEmpty,
+        lastBreakMinutesAgo: data?.dailyProgress.lastBreakMinutesAgo ?? 0,
+        dynamicSubtitle,
+      }),
+    [hasCompletedGoal, isEmpty, isNewUser, dynamicSubtitle, data?.dailyProgress.lastBreakMinutesAgo]
+  );
 
   // Loading state
   if (loading) {
@@ -891,21 +891,6 @@ export default function HomeScreen() {
  * Selector-isolated so the parent screen doesn't re-render every time
  * the bank tick increments.
  */
-function RecoveryBankRow() {
-  const recoveryMinutes = useUserStore(
-    (state) => state.progress.recoveryMinutes,
-  );
-  const recoveryBankSince = useUserStore(
-    (state) => state.progress.recoveryBankSince,
-  );
-  if (!recoveryBankSince) return null;
-  return (
-    <View style={{ marginTop: 12 }}>
-      <RecoveryBank minutes={recoveryMinutes} since={recoveryBankSince} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

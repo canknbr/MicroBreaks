@@ -672,4 +672,20 @@ describe('NotificationStore', () => {
       expect(notifications.map((n) => n.type)).toContain('level_up');
     });
   });
+
+  describe('persist hardening (L2)', () => {
+    it('pins an explicit schema version so future migrations have a baseline', () => {
+      expect(useNotificationStore.persist.getOptions().version).toBe(1);
+    });
+
+    it('preserves existing persisted notifications when upgrading from the unversioned build', () => {
+      // Bumping version without a migrate would make zustand discard the
+      // persisted blob and silently clear the user's notification history.
+      const { migrate } = useNotificationStore.persist.getOptions();
+      expect(migrate).toBeDefined();
+
+      const legacy = { notifications: [{ id: 'n-legacy', read: false }] };
+      expect(migrate!(legacy, 0)).toEqual(legacy);
+    });
+  });
 });

@@ -12,6 +12,7 @@ import {
   getMonthBreaks,
   getYearlyChartData,
   saveCompletedBreak,
+  replaceBreakHistory,
   updateBreakRating,
   getStreakData,
   getUserStats,
@@ -490,6 +491,41 @@ describe('Break History Service', () => {
       expect(history.map((item) => item.breakId).sort()).toEqual(['eye-rescue', 'neck-reset']);
       expect(stats.totalBreaks).toBe(2);
       expect(stats.totalXP).toBe(25);
+    });
+  });
+
+  describe('replaceBreakHistory', () => {
+    it('applies the transform to current history and persists the result', async () => {
+      const seed = createMockBreak({ id: 'seed', breakId: 'seed-break' });
+      await AsyncStorage.setItem(STORAGE_KEYS.BREAK_HISTORY, JSON.stringify([seed]));
+
+      const result = await replaceBreakHistory((current) => [
+        ...current,
+        createMockBreak({ id: 'merged', breakId: 'merged-break' }),
+      ]);
+
+      expect(result.map((b) => b.breakId).sort()).toEqual(['merged-break', 'seed-break']);
+
+      const persisted = await getBreakHistory();
+      expect(persisted.map((b) => b.breakId).sort()).toEqual(['merged-break', 'seed-break']);
+    });
+
+    it('serializes against a concurrent save so a just-completed break is never dropped', async () => {
+      // Race: a break completes while a sync pull merges remote history.
+      // Both must survive — the pull's read+merge+write has to run inside
+      // the same serialized queue as saveCompletedBreak, not bypass it.
+      const save = saveCompletedBreak(
+        createMockBreak({ breakId: 'live-break', completedAt: new Date().toISOString() })
+      );
+      const pullMerge = replaceBreakHistory((current) => [
+        ...current,
+        createMockBreak({ id: 'remote-1', breakId: 'remote-break' }),
+      ]);
+
+      await Promise.all([save, pullMerge]);
+
+      const history = await getBreakHistory();
+      expect(history.map((b) => b.breakId).sort()).toEqual(['live-break', 'remote-break']);
     });
   });
 

@@ -5,9 +5,8 @@
 
 import { firestore, getBreaksCollection } from '@/services/firebase/firestore';
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { getBreakHistory } from '@/services/breakHistory';
+import { getBreakHistory, replaceBreakHistory } from '@/services/breakHistory';
 import { mergeBreakHistories } from './merger';
-import { STORAGE_KEYS, setItem } from '@/services/storage';
 import type { CompletedBreak } from '@/services/storage';
 
 const BREAK_PULL_PAGE_SIZE = 500;
@@ -143,12 +142,11 @@ export async function pullBreakHistory(userId: string, lastPullAt: number | null
 
   if (remoteBreaks.length === 0) return;
 
-  // Merge with local
-  const localBreaks = await getBreakHistory();
-  const merged = mergeBreakHistories(localBreaks, remoteBreaks);
-
-  // Save merged history
-  await setItem(STORAGE_KEYS.BREAK_HISTORY, merged);
+  // Merge with local inside the serialized save queue so the read+merge+write
+  // can't interleave with a concurrent break completion and drop it.
+  const merged = await replaceBreakHistory((localBreaks) =>
+    mergeBreakHistories(localBreaks, remoteBreaks)
+  );
 
   if (__DEV__) {
     console.log(`[BreakSync] Pulled ${remoteBreaks.length} breaks, merged to ${merged.length} total`);

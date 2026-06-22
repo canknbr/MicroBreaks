@@ -1,8 +1,7 @@
 import { pullBreakHistory, pushBreakHistory } from '@/services/sync/breakSync';
 import { firestore, getBreaksCollection } from '@/services/firebase/firestore';
-import { getBreakHistory } from '@/services/breakHistory';
+import { getBreakHistory, replaceBreakHistory } from '@/services/breakHistory';
 import { mergeBreakHistories } from '@/services/sync/merger';
-import { setItem, STORAGE_KEYS } from '@/services/storage';
 import type { CompletedBreak } from '@/services/storage';
 
 jest.mock('@/services/firebase/firestore', () => ({
@@ -12,6 +11,7 @@ jest.mock('@/services/firebase/firestore', () => ({
 
 jest.mock('@/services/breakHistory', () => ({
   getBreakHistory: jest.fn(() => Promise.resolve([])),
+  replaceBreakHistory: jest.fn((transform) => Promise.resolve(transform([]))),
 }));
 
 jest.mock('@/services/sync/merger', () => ({
@@ -85,10 +85,19 @@ describe('pullBreakHistory', () => {
     expect(query.where).toHaveBeenCalledWith('updatedAt', '>', expect.any(String));
     expect(query.orderBy).toHaveBeenCalledWith('updatedAt', 'desc');
     expect(query.startAfter).toHaveBeenCalledTimes(1);
-    expect(mergeBreakHistories).toHaveBeenCalledWith([], expect.any(Array));
+
+    // The merge must run through the serialized save queue, not a raw
+    // read+write, so a concurrent break completion can't be clobbered.
+    expect(replaceBreakHistory).toHaveBeenCalledTimes(1);
+    expect(getBreakHistory).not.toHaveBeenCalled();
+
+    // The transform handed to replaceBreakHistory merges the freshly-read
+    // local history with every paginated remote break (620 across 2 pages).
+    const transform = (replaceBreakHistory as jest.Mock).mock.calls[0][0];
+    const localSnapshot: CompletedBreak[] = [];
+    transform(localSnapshot);
+    expect(mergeBreakHistories).toHaveBeenCalledWith(localSnapshot, expect.any(Array));
     expect((mergeBreakHistories as jest.Mock).mock.calls[0][1]).toHaveLength(620);
-    expect(setItem).toHaveBeenCalledWith(STORAGE_KEYS.BREAK_HISTORY, expect.any(Array));
-    expect(getBreakHistory).toHaveBeenCalledTimes(1);
   });
 });
 

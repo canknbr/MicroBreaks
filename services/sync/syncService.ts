@@ -8,13 +8,18 @@ import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { generateId } from '@/utils/generateId';
 import { getItem, setItem } from '@/services/storage';
 import { getUserDoc } from '@/services/firebase/firestore';
-import { addBreadcrumb } from '@/services/firebase/crashlytics-adapter';
+import { addBreadcrumb, captureError } from '@/services/firebase/crashlytics-adapter';
 import { pushUserProfile, pullUserProfile } from './userSync';
 import { pushBreakHistory, pullBreakHistory, pushSingleBreak } from './breakSync';
 import { pushSettings, pullSettings } from './settingsSync';
 import type { SyncDataType, SyncMetadata } from './types';
 import { DEFAULT_SYNC_METADATA } from './types';
 import type { CompletedBreak } from '@/services/storage';
+import {
+  clearSyncHandlers,
+  registerSyncHandlers,
+  setApplyingRemoteData,
+} from '@/store/syncBridge';
 
 const LEGACY_SYNC_METADATA_KEY = '@microbreaks/sync_metadata';
 const LEGACY_PENDING_QUEUE_KEY = '@microbreaks/sync_pending_queue';
@@ -56,7 +61,6 @@ class SyncService {
   private userDocDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private isSyncing = false;
   private isInitialized = false;
-  private _isSyncPulling = false;
   private pendingQueue: Array<{ type: SyncDataType; data?: unknown }> = [];
   private syncTimestamps: number[] = [];
   private consecutiveFailures = 0;
@@ -67,14 +71,6 @@ class SyncService {
 
   private getPendingQueueStorageKey(): string | null {
     return this.userId ? getPendingQueueKey(this.userId) : null;
-  }
-
-  /**
-   * Whether the sync service is currently pulling remote data into stores.
-   * Used by stores to avoid re-queuing sync pushes during a pull.
-   */
-  isSyncPulling(): boolean {
-    return this._isSyncPulling;
   }
 
   /**
@@ -178,6 +174,13 @@ class SyncService {
     this.userId = userId;
     this.isInitialized = true;
 
+    // Wire store mutations to the queue through the bridge so stores never
+    // import this singleton directly (breaks the store ↔ sync import cycle).
+    registerSyncHandlers({
+      onDataChange: (type, data) => this.queueDataChange(type, data),
+      onSettingsChange: () => this.queueSettingsChange(),
+    });
+
     // Load pending queue from storage
     await this.loadPendingQueue();
 
@@ -234,13 +237,13 @@ class SyncService {
       // Pull first (to get latest remote data)
       // Fetch user doc once and share with both pull functions to avoid duplicate reads
       const userDoc = await getUserDoc(this.userId).get();
-      this._isSyncPulling = true;
+      setApplyingRemoteData(true);
       try {
         await pullUserProfile(this.userId, userDoc);
         await pullBreakHistory(this.userId, this.metadata.lastPullAt);
         await pullSettings(this.userId, userDoc);
       } finally {
-        this._isSyncPulling = false;
+        setApplyingRemoteData(false);
       }
 
       this.metadata.lastPullAt = Date.now();
@@ -261,6 +264,11 @@ class SyncService {
       }
     } catch (error) {
       this.consecutiveFailures += 1;
+      captureError(error instanceof Error ? error : new Error(String(error)), {
+        component: 'SyncService',
+        action: 'performFullSync',
+        extra: { consecutiveFailures: this.consecutiveFailures },
+      });
       if (__DEV__) {
         console.error('[SyncService] Full sync failed:', error);
       }
@@ -290,13 +298,13 @@ class SyncService {
     try {
       // Fetch user doc once and share with both pull functions to avoid duplicate reads
       const userDoc = await getUserDoc(this.userId).get();
-      this._isSyncPulling = true;
+      setApplyingRemoteData(true);
       try {
         await pullUserProfile(this.userId, userDoc);
         await pullBreakHistory(this.userId, this.metadata.lastPullAt);
         await pullSettings(this.userId, userDoc);
       } finally {
-        this._isSyncPulling = false;
+        setApplyingRemoteData(false);
       }
 
       this.metadata.lastPullAt = Date.now();
@@ -310,6 +318,11 @@ class SyncService {
       }
     } catch (error) {
       this.consecutiveFailures += 1;
+      captureError(error instanceof Error ? error : new Error(String(error)), {
+        component: 'SyncService',
+        action: 'performIncrementalSync',
+        extra: { consecutiveFailures: this.consecutiveFailures },
+      });
       if (__DEV__) {
         console.error('[SyncService] Incremental sync failed:', error);
       }
@@ -532,9 +545,11 @@ class SyncService {
     this.userDocDebounceTimer = null;
     this.isSyncing = false;
     this.isInitialized = false;
-    this._isSyncPulling = false;
     this.syncTimestamps = [];
     this.consecutiveFailures = 0;
+
+    clearSyncHandlers();
+    setApplyingRemoteData(false);
 
     if (__DEV__) {
       console.log('[SyncService] Shutdown');

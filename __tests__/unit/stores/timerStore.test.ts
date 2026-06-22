@@ -4,7 +4,7 @@
  */
 
 import { act } from '@testing-library/react-native';
-import { useTimerStore } from '@/store/timerStore';
+import { getTodayKey, useTimerStore } from '@/store/timerStore';
 
 describe('TimerStore', () => {
   beforeEach(() => {
@@ -542,5 +542,45 @@ describe('TimerStore', () => {
       expect(stats.totalFocusMinutes).toBe(50);
       expect(stats.todaySessionsCompleted).toBe(2);
     });
+  });
+});
+
+describe('getTodayKey (M2 local timezone)', () => {
+  // A fake Date whose LOCAL getters say 2025-01-15 but whose UTC
+  // toISOString() says the 16th. A UTC-based key (toISOString().split)
+  // would roll the day forward and reset today's focus stats just after
+  // local midnight in negative-UTC offsets. The local getters are correct.
+  const fakeLateNight = {
+    getFullYear: () => 2025,
+    getMonth: () => 0, // January, 0-indexed
+    getDate: () => 15,
+    toISOString: () => '2025-01-16T03:30:00.000Z',
+  } as unknown as Date;
+
+  it('derives the key from local calendar components, not UTC', () => {
+    expect(getTodayKey(fakeLateNight)).toBe('2025-01-15');
+  });
+
+  it('zero-pads single-digit month and day', () => {
+    const fakeEarly = {
+      getFullYear: () => 2025,
+      getMonth: () => 2, // March, 0-indexed
+      getDate: () => 7,
+      toISOString: () => '2025-03-07T00:00:00.000Z',
+    } as unknown as Date;
+    expect(getTodayKey(fakeEarly)).toBe('2025-03-07');
+  });
+});
+
+describe('persist partialize (M1)', () => {
+  it('persists only stats and preferences, never the volatile session', () => {
+    const { partialize } = useTimerStore.persist.getOptions();
+    expect(partialize).toBeDefined();
+
+    const persisted = partialize!(useTimerStore.getState());
+
+    expect(persisted).toHaveProperty('stats');
+    expect(persisted).toHaveProperty('preferences');
+    expect(persisted).not.toHaveProperty('session');
   });
 });
