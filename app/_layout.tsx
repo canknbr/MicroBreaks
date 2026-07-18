@@ -42,6 +42,14 @@ import {
   shutdownShortcutHandler,
 } from '@/services/shortcuts/handler';
 import { useUserStore, flushProgressSideEffects } from '@/store/userStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useTimerStore } from '@/store/timerStore';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { useRoutinesStore } from '@/store/routinesStore';
+import { useMissionsStore } from '@/store/missionsStore';
+import { useBuddiesStore } from '@/store/buddiesStore';
 import OfflineBanner from '@/components/common/OfflineBanner';
 
 // Prevent the native splash screen from auto-hiding
@@ -311,6 +319,36 @@ export default function RootLayout() {
             if (!firebase.apps.length) {
               throw new Error('Firebase app is unavailable. Check native Firebase configuration.');
             }
+          },
+        },
+        {
+          name: 'hydrate_stores',
+          critical: true,
+          run: async () => {
+            const stores = [
+              useOnboardingStore,
+              useUserStore,
+              useSettingsStore,
+              useNotificationStore,
+              useTimerStore,
+              useSubscriptionStore,
+              useRoutinesStore,
+              useMissionsStore,
+              useBuddiesStore,
+            ];
+            const waitForHydration = (store: any) => {
+              return new Promise<void>((resolve) => {
+                if (store.persist.hasHydrated()) {
+                  resolve();
+                } else {
+                  const unsub = store.persist.onFinishHydration(() => {
+                    unsub();
+                    resolve();
+                  });
+                }
+              });
+            };
+            await Promise.all(stores.map(waitForHydration));
           },
         },
         {
