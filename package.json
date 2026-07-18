@@ -20,7 +20,8 @@
     "test:scalability": "RUN_SCALABILITY=1 jest --watchman=false --runInBand __tests__/unit/scalability/",
     "test:functions": "npm --prefix functions test",
     "test:all": "npm test -- --watchman=false && npm run test:functions",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate:exercises": "node ./scripts/generate-exercise-library.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

@@ -198,7 +198,7 @@ function getRecommendationReason(
 
   const matchedPainAreas = getMatchedPainAreas(exercise, painAreas);
   if (matchedPainAreas.length > 0) {
-    const topMatch = matchedPainAreas[0];
+    const topMatch = matchedPainAreas[0]!;
     return `Great for ${painAreaLabels[topMatch] ?? topMatch}`;
   }
 

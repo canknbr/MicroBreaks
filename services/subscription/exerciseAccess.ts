@@ -9,16 +9,25 @@
  *   - `services/shortcuts/handler.ts` — Siri / App Intent entrypoint
  *   - `hooks/useTimer.ts` — Pomodoro break auto-launch
  *
- * The free catalog is six exercises from `FREE_EXERCISE_IDS`.
- * Anything outside that list requires `full_break_library` (Solo+).
- * Unknown ids are treated as locked — we won't accidentally hand a
- * free pass to an exercise we don't recognise.
+ * The free catalog is six guided breaks (`FREE_EXERCISE_IDS`) plus the
+ * movement-library starter set (`FREE_LIBRARY_EXERCISE_IDS`). Anything
+ * outside those lists requires `full_break_library` (Solo+). Unknown ids
+ * are treated as locked — we won't accidentally hand a free pass to an
+ * exercise we don't recognise.
  */
 
-import { FREE_EXERCISE_IDS } from '@/constants/subscription';
+import {
+  FREE_CIRCUIT_IDS,
+  FREE_EXERCISE_IDS,
+  FREE_LIBRARY_EXERCISE_IDS,
+} from '@/constants/subscription';
 import { tierIncludes, type Tier } from './tiers';
 
-const FREE_SET = new Set<string>(FREE_EXERCISE_IDS);
+const FREE_SET = new Set<string>([
+  ...FREE_EXERCISE_IDS,
+  ...FREE_LIBRARY_EXERCISE_IDS,
+  ...FREE_CIRCUIT_IDS,
+]);
 
 /** True if the exercise is part of the always-free starter set. */
 export function isFreeExercise(exerciseId: string | null | undefined): boolean {

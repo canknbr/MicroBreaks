@@ -60,8 +60,8 @@ function getLocalDateString(date: Date): string {
  * do not collapse "yesterday" into "today" or drop a streak.
  */
 function calendarDayDiff(laterStr: string, earlierStr: string): number {
-  const [ly, lm, ld] = laterStr.split('-').map(Number);
-  const [ey, em, ed] = earlierStr.split('-').map(Number);
+  const [ly, lm, ld] = laterStr.split('-').map(Number) as [number, number, number];
+  const [ey, em, ed] = earlierStr.split('-').map(Number) as [number, number, number];
   if (
     !Number.isFinite(ly) || !Number.isFinite(lm) || !Number.isFinite(ld) ||
     !Number.isFinite(ey) || !Number.isFinite(em) || !Number.isFinite(ed)
@@ -575,8 +575,8 @@ export function getWeeklyChartDataFromHistory(
   for (const b of history) {
     const idx = indexByDate.get(getLocalDateString(new Date(b.completedAt)));
     if (idx === undefined) continue;
-    result[idx].count += 1;
-    result[idx].minutes += Math.round(b.duration / 60);
+    result[idx]!.count += 1;
+    result[idx]!.minutes += Math.round(b.duration / 60);
   }
 
   return result;
@@ -614,8 +614,8 @@ export function getMonthlyChartDataFromHistory(
   for (const b of history) {
     const idx = indexByDate.get(getLocalDateString(new Date(b.completedAt)));
     if (idx === undefined) continue;
-    result[idx].count += 1;
-    result[idx].minutes += Math.round(b.duration / 60);
+    result[idx]!.count += 1;
+    result[idx]!.minutes += Math.round(b.duration / 60);
   }
 
   return result;
@@ -649,8 +649,8 @@ export function getYearlyChartDataFromHistory(
     const breakDate = new Date(b.completedAt);
     const idx = indexByMonth.get(`${breakDate.getFullYear()}-${breakDate.getMonth()}`);
     if (idx === undefined) continue;
-    result[idx].count += 1;
-    result[idx].minutes += Math.round(b.duration / 60);
+    result[idx]!.count += 1;
+    result[idx]!.minutes += Math.round(b.duration / 60);
   }
 
   return result;
@@ -809,7 +809,7 @@ export function getTimePatternsFromBreaks(
   };
 
   // Count breaks by time period
-  const counts: Record<string, number> = {
+  const counts = {
     morning: 0,
     afternoon: 0,
     evening: 0,
@@ -861,7 +861,7 @@ export async function getBestBreakTime(): Promise<{
   const patterns = await getTimePatterns('all');
   if (patterns.length === 0) return null;
 
-  const best = patterns[0];
+  const best = patterns[0]!;
   return {
     period: best.label,
     percentage: best.percentage,

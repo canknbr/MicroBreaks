@@ -19,6 +19,26 @@ describe('routeForNotification', () => {
     expect(routeForNotification({ type })).toBe(target);
   });
 
+  it('routes pain-focused break reminders into the matching library zone', () => {
+    expect(routeForNotification({ type: 'break_reminder', pain: 'neck' })).toBe(
+      '/exercise-library?initialZone=neck'
+    );
+    expect(routeForNotification({ type: 'break_reminder', pain: 'shoulders' })).toBe(
+      '/exercise-library?initialZone=neck'
+    );
+    expect(routeForNotification({ type: 'break_reminder', pain: 'lower_back' })).toBe(
+      '/exercise-library?initialZone=back'
+    );
+    expect(routeForNotification({ type: 'break_reminder', pain: 'wrists' })).toBe(
+      '/exercise-library?initialZone=arms'
+    );
+    // Eyes has no movement zone — fall back to the breaks tab.
+    expect(routeForNotification({ type: 'break_reminder', pain: 'eyes' })).toBe('/breaks');
+    // Defensive: unknown or non-string pain values keep legacy routing.
+    expect(routeForNotification({ type: 'break_reminder', pain: 'unknown_area' })).toBe('/breaks');
+    expect(routeForNotification({ type: 'break_reminder', pain: 42 })).toBe('/breaks');
+  });
+
   it('returns null for unknown notification types', () => {
     expect(routeForNotification({ type: 'this_is_not_a_real_notification' })).toBeNull();
   });

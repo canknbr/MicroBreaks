@@ -1,7 +1,23 @@
+const fs = require('fs');
+const path = require('path');
+
 const baseConfig = require('./app.json');
 
 const NOTIFICATION_ICON_PATH = './assets/images/android-icon-monochrome.png';
 const PLACEHOLDER_PROJECT_ID = 'your-project-id';
+
+// Firebase native config files. Drop the real files at the repo root (or
+// point elsewhere via env). They are included only when present so a fresh
+// clone still resolves config; scripts/validate-app-config.js blocks
+// preview/production builds when they are missing.
+const IOS_GOOGLE_SERVICES_PATH =
+  process.env.GOOGLE_SERVICES_PLIST || './GoogleService-Info.plist';
+const ANDROID_GOOGLE_SERVICES_PATH =
+  process.env.GOOGLE_SERVICES_JSON || './google-services.json';
+
+function fileExists(relativePath) {
+  return fs.existsSync(path.resolve(__dirname, relativePath));
+}
 
 function trimEnvValue(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -96,6 +112,20 @@ module.exports = ({ config }) => {
     nextConfig.updates = {
       ...(baseUpdates ?? {}),
       url: resolvedUpdatesUrl,
+    };
+  }
+
+  if (fileExists(IOS_GOOGLE_SERVICES_PATH)) {
+    nextConfig.ios = {
+      ...(nextConfig.ios ?? {}),
+      googleServicesFile: IOS_GOOGLE_SERVICES_PATH,
+    };
+  }
+
+  if (fileExists(ANDROID_GOOGLE_SERVICES_PATH)) {
+    nextConfig.android = {
+      ...(nextConfig.android ?? {}),
+      googleServicesFile: ANDROID_GOOGLE_SERVICES_PATH,
     };
   }
 

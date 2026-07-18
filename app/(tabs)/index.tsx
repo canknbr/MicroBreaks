@@ -75,6 +75,8 @@ import {
 } from '@/hooks/useHomeData';
 import { getSuggestedBreak } from '@/services/recommendations/engine';
 import { getExerciseById } from '@/data/exercises';
+import { localizeExercise } from '@/data/exerciseLocalization';
+import { toLibraryLocale } from '@/features/exercise-library/catalog';
 import {
   BREAK_TYPES,
   RECOVERY_STATES,
@@ -103,7 +105,7 @@ const MemoizedQuickBreakCard = memo(QuickBreakCard);
 export default function HomeScreen() {
   // Theme
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const onboardingData = useOnboardingStore((state) => state.data);
 
   // Data hook
@@ -207,10 +209,11 @@ export default function HomeScreen() {
 
   const recommendedBreakId = adaptiveRecommendation?.exercise.id ?? selectedRecoveryState.breakId;
 
-  const recommendedExercise = useMemo(
-    () => getExerciseById(recommendedBreakId),
-    [recommendedBreakId]
-  );
+  const recommendedExercise = useMemo(() => {
+    const locale = toLibraryLocale(language);
+    const resolved = getExerciseById(recommendedBreakId, locale);
+    return resolved ? localizeExercise(resolved, locale) : undefined;
+  }, [language, recommendedBreakId]);
 
   const recommendedDuration = useMemo(
     () =>

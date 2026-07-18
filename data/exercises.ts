@@ -3,6 +3,21 @@
  * Complete exercise library with step-by-step instructions
  */
 
+import type { LibraryExerciseMedia } from '@/data/exerciseLibraryMedia.generated';
+import {
+  isLibraryExerciseId,
+  type LibraryLocale,
+} from '@/features/exercise-library/catalog';
+import {
+  isCircuitId,
+  resolveCircuitExercise,
+} from '@/features/exercise-library/circuits';
+import {
+  isRoutineId,
+  resolveRoutineExercise,
+} from '@/features/exercise-library/customRoutines';
+import { resolveLibrarySessionExercise } from '@/features/exercise-library/session';
+
 export type AnimationType =
   | 'breathe-in'
   | 'breathe-hold'
@@ -58,6 +73,12 @@ export interface ExerciseStep {
   duration: number; // Seconds
   animation: AnimationType;
   visualGuide: string; // Emoji
+  /**
+   * Per-step demo media override. Chained circuit sessions switch the GIF
+   * per movement; when absent the session player falls back to the
+   * exercise-level `media`.
+   */
+  media?: LibraryExerciseMedia;
 }
 
 export interface Exercise {
@@ -69,6 +90,17 @@ export interface Exercise {
   color: string;
   icon: string;
   steps: ExerciseStep[];
+  /**
+   * Present on movement-library sessions — looping demo GIF + thumbnail
+   * (media © Gym visual, see constants/legal.ts attribution).
+   */
+  media?: LibraryExerciseMedia;
+  /**
+   * BCP-47 speech locale matching the language of this exercise's step
+   * text. Voice guidance falls back to en-US when absent (the hand-authored
+   * library is English).
+   */
+  voiceLanguage?: string;
 }
 
 // ============================================
@@ -3473,8 +3505,22 @@ export const ALL_EXERCISES: Exercise[] = [
   afternoonReset,
 ];
 
-export const getExerciseById = (id: string): Exercise | undefined => {
-  return ALL_EXERCISES.find((ex) => ex.id === id);
+/**
+ * Resolve any playable break id — the hand-authored guided breaks above, or
+ * a movement-library id (`lib-*`) converted into a timed session on demand.
+ * `locale` only affects library sessions (their copy is locale-resolved at
+ * build time); core exercises are returned as-is.
+ */
+export const getExerciseById = (
+  id: string,
+  locale: LibraryLocale = 'en'
+): Exercise | undefined => {
+  const core = ALL_EXERCISES.find((ex) => ex.id === id);
+  if (core) return core;
+  if (isLibraryExerciseId(id)) return resolveLibrarySessionExercise(id, locale);
+  if (isCircuitId(id)) return resolveCircuitExercise(id, locale);
+  if (isRoutineId(id)) return resolveRoutineExercise(id, locale);
+  return undefined;
 };
 
 export const getExercisesByCategory = (category: ExerciseCategory): Exercise[] => {

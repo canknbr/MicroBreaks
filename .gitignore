@@ -49,3 +49,6 @@ app-example
 # Firebase
 google-services.json
 GoogleService-Info.plist
+
+# Store submission credentials
+google-play-service-account.json

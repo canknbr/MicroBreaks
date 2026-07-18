@@ -410,7 +410,7 @@ export function getEntitlementHealthSnapshot(
     summary:
       issues.length === 0
         ? 'Entitlement state looks consistent.'
-        : issues[0],
+        : issues[0]!,
     issues,
     checkedAt: Date.now(),
   };

@@ -58,7 +58,7 @@ export function useSmartInsight(
     return {
       type: 'suggestion',
       title: 'Pro tip',
-      message: tips[breaksTaken % tips.length],
+      message: tips[breaksTaken % tips.length]!,
       actionLabel: 'Learn more',
     };
   }, [breaksTaken, breaksGoal, lastBreakMinutesAgo, streak]);

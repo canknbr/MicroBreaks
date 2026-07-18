@@ -86,7 +86,8 @@ function getActivePreset(preferences: TimerPreferences) {
     };
   }
   const preset = TIMER_PRESETS.find((p) => p.id === preferences.selectedPresetId);
-  return preset ?? TIMER_PRESETS[0];
+  const defaultPreset = TIMER_PRESETS[0]!;
+  return preset ?? defaultPreset;
 }
 
 function getPhaseDuration(phase: TimerPhase, preferences: TimerPreferences): number {

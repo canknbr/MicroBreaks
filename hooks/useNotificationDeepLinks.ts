@@ -16,6 +16,7 @@ import {
   addNotificationResponseListener,
   scheduleSnoozedBreakReminder,
 } from '@/services/notifications';
+import { zoneForPainArea } from '@/features/exercise-library/suggestions';
 
 export type NotificationData = Record<string, unknown> | null | undefined;
 
@@ -23,7 +24,13 @@ export function routeForNotification(data: NotificationData): string | null {
   const type = typeof data?.type === 'string' ? (data.type as string) : null;
 
   switch (type) {
-    case 'break_reminder':
+    case 'break_reminder': {
+      // Pain-focused reminders land directly on the matching library
+      // shelf so the promised relief is one tap away.
+      const pain = typeof data?.pain === 'string' ? (data.pain as string) : null;
+      const zone = pain ? zoneForPainArea(pain) : null;
+      return zone ? `/exercise-library?initialZone=${zone}` : '/breaks';
+    }
     case 'streak_protection':
       return '/breaks';
     case 'daily_goal':

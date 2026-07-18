@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REPLACE_WITH_APPLE_TEAM_ID.com.cankanbur.MicroBreaks"],
+        "components": [
+          {
+            "/": "/*",
+            "comment": "Open every microbreaks.app path in the app"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["REPLACE_WITH_APPLE_TEAM_ID.com.cankanbur.MicroBreaks"]
+  }
+}

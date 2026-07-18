@@ -10,11 +10,13 @@ export function SearchBar({
   onChangeText,
   onClear,
   theme,
+  placeholder = 'Search breaks...',
 }: {
   value: string;
   onChangeText: (_text: string) => void;
   onClear: () => void;
   theme: ThemeColors;
+  placeholder?: string;
 }) {
   return (
     <View style={[
@@ -36,7 +38,7 @@ export function SearchBar({
       <Ionicons name="search" size={18} color={theme.text.muted} />
       <TextInput
         style={[styles.searchInput, { color: theme.text.primary }]}
-        placeholder="Search breaks..."
+        placeholder={placeholder}
         placeholderTextColor={theme.text.muted}
         value={value}
         onChangeText={onChangeText}

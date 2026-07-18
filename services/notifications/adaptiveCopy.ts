@@ -50,6 +50,12 @@ export interface AdaptiveNotificationCopy {
   tone: NotificationTone;
   /** Why we picked this — used by analytics + jest assertions. */
   rationale: 'streak_at_risk' | 'almost_done' | 'first_break' | 'pain_focused' | 'time_of_day';
+  /**
+   * Set on pain_focused copy: the pain area the message targets. The
+   * scheduler forwards it in the notification payload so the tap can
+   * deep-link into the matching movement-library zone.
+   */
+  painArea?: string;
 }
 
 /**
@@ -148,7 +154,7 @@ function pickFromArray<T>(arr: T[], now: Date): T {
     throw new Error('pickFromArray: empty array');
   }
   const index = Math.floor((now.getHours() * 60 + now.getMinutes()) / 7) % arr.length;
-  return arr[index];
+  return arr[index]!;
 }
 
 export function composeAdaptiveCopy(
@@ -237,6 +243,7 @@ export function composeAdaptiveCopy(
         body: tr(`notifications.adaptive.pain.${pick}.body`, painCopy.body),
         tone,
         rationale: 'pain_focused',
+        painArea: pick,
       };
     }
   }

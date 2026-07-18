@@ -539,6 +539,28 @@ export default function RootLayout() {
                     }}
                   />
                   <Stack.Screen
+                    name="exercise-library"
+                    options={{
+                      animation: 'slide_from_right',
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="exercise-detail"
+                    options={{
+                      animation: 'slide_from_right',
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="routine-builder"
+                    options={{
+                      presentation: 'modal',
+                      animation: 'slide_from_bottom',
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
                     name="notifications"
                     options={{
                       presentation: 'modal',

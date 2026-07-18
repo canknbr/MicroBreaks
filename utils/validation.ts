@@ -159,7 +159,7 @@ export function validateDateString(dateStr: string): {
     };
   }
 
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const [year, month, day] = dateStr.split('-').map(Number) as [number, number, number];
   const date = new Date(year, month - 1, day);
 
   // Check if the date is valid (e.g., not Feb 30)

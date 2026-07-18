@@ -10,6 +10,7 @@ const PAYWALL_PLACEMENTS: PaywallPlacement[] = [
   'onboarding',
   'profile',
   'breaks',
+  'library',
   'stats',
   'weekly_story',
   'home_missions',

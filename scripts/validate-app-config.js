@@ -129,6 +129,37 @@ if (projectId && updatesUrl) {
   }
 }
 
+// Firebase native config. The app registers @react-native-firebase/app as a
+// config plugin, so native builds require the platform config files. They
+// are resolved by app.config.js only when present on disk — warn in
+// development, hard-fail for preview/production store builds.
+const iosGoogleServices = expoConfig.ios?.googleServicesFile;
+const androidGoogleServices = expoConfig.android?.googleServicesFile;
+const firebaseMessage = (platform, expectedPath, envVar) =>
+  `${platform} Firebase config is missing. Download it from Firebase Console → Project settings and place it at ${expectedPath} (or set ${envVar}).`;
+
+if (!iosGoogleServices) {
+  const message = firebaseMessage(
+    'iOS',
+    './GoogleService-Info.plist',
+    'GOOGLE_SERVICES_PLIST'
+  );
+  (profile === 'development' ? warnings : errors).push(message);
+} else {
+  assertAsset(iosGoogleServices, 'iOS GoogleService-Info.plist', errors);
+}
+
+if (!androidGoogleServices) {
+  const message = firebaseMessage(
+    'Android',
+    './google-services.json',
+    'GOOGLE_SERVICES_JSON'
+  );
+  (profile === 'development' ? warnings : errors).push(message);
+} else {
+  assertAsset(androidGoogleServices, 'Android google-services.json', errors);
+}
+
 const billingProvider = (process.env.EXPO_PUBLIC_BILLING_PROVIDER ?? '').trim();
 const revenueCatIosApiKey = (process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? '').trim();
 const revenueCatAndroidApiKey = (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ?? '').trim();

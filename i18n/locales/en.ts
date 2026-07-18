@@ -136,9 +136,32 @@ export default {
   // Breaks Screen
   // ============================================
   breaks: {
-    title: 'Browse Breaks',
-    subtitle: 'Find the perfect break for you',
+    title: 'Breaks',
+    subtitle: 'Pick the kind of relief you want, then start with a guided reset.',
+    searchPlaceholder: 'Search breaks...',
     featured: 'Featured',
+    packs: {
+      title: 'Reset packs',
+      subtitle: 'Outcome-first entry points for desk work pain, fatigue, and focus drops.',
+    },
+    featuredCard: {
+      startHere: 'START HERE',
+      proStarter: 'PRO STARTER',
+      start: 'Start',
+      unlockPro: 'Unlock Pro',
+      unlockedInPack: '{{unlocked}}/{{total}} unlocked in this pack',
+      description: '{{packDescription}} Start with {{breakTitle}} for a fast {{duration}} guided reset.',
+    },
+    noResults: {
+      title: 'No breaks found',
+      subtitle: 'Try adjusting your search or filters',
+      clear: 'Clear Filters',
+    },
+    upsell: {
+      title: 'Unlock the full {{pack}} library',
+      subtitle: 'You currently have {{starterCount}} starter sessions. Pro opens {{lockedCount}} more guided breaks, including deeper {{packLabel}} reset options.',
+      cta: 'Preview Pro Library',
+    },
     categories: {
       all: 'All',
       quick: 'Quick',
@@ -311,6 +334,118 @@ export default {
     afternoonReset: {
       title: 'Afternoon Reset',
       description: 'Perfect mid-day refresher',
+    },
+  },
+
+  // ============================================
+  // Movement Library
+  // ============================================
+  library: {
+    title: 'Move Library',
+    subtitle: '{{count}} desk-friendly moves with animated guides',
+    searchPlaceholder: 'Search moves or muscles...',
+    allZones: 'All',
+    resultCount_one: '{{count}} move',
+    resultCount_other: '{{count}} moves',
+    empty: {
+      title: 'No moves found',
+      subtitle: 'Try a different search or filter',
+      clear: 'Clear filters',
+    },
+    zones: {
+      neck: 'Neck & Shoulders',
+      back: 'Back & Spine',
+      chest: 'Chest',
+      arms: 'Arms & Wrists',
+      core: 'Core',
+      legs: 'Hips & Legs',
+      cardio: 'Cardio',
+    },
+    positions: {
+      all: 'Any space',
+      desk: 'At desk',
+      standing: 'Standing',
+      floor: 'Floor',
+    },
+    kinds: {
+      stretch: 'Stretch',
+      mobility: 'Mobility',
+      strength: 'Strength',
+      cardio: 'Cardio',
+    },
+    difficulty: {
+      '1': 'Gentle',
+      '2': 'Moderate',
+      '3': 'Challenging',
+    },
+    detail: {
+      startSession: 'Start guided session',
+      unlockWithPro: 'Unlock with Pro',
+      howTo: 'How to do it',
+      muscles: 'Muscles worked',
+      primaryMuscle: 'Primary',
+      secondaryMuscles: 'Also works',
+      aboutDuration: '~{{minutes}} min guided',
+      safety: 'Move within a comfortable range and stop if anything hurts.',
+      attribution: 'Demo media © Gym visual — gymvisual.com',
+      notFound: 'This move is no longer available.',
+      lockedPreviewBadge: 'Animated with Pro',
+      moreStepsWithPro_one: '+{{count}} more step with Pro',
+      moreStepsWithPro_other: '+{{count}} more steps with Pro',
+    },
+    session: {
+      followAlong: 'Follow the animation',
+      formTip: 'Match the pace of the animation',
+    },
+    today: {
+      title: "Today's plan",
+      subtitle: 'Three moves picked for your focus areas',
+    },
+    circuits: {
+      title: 'Zone circuits',
+      subtitle: '3 moves, guided back-to-back',
+      duration: '~{{minutes}} min',
+    },
+    favoritesFilter: 'Favorites',
+    favoritesEmpty: 'No favorite moves yet — tap the heart on any move.',
+    routines: {
+      title: 'My routines',
+      subtitle: 'Your own move combos, played back-to-back',
+      newRoutine: 'New routine',
+      createTitle: 'New routine',
+      editTitle: 'Edit routine',
+      namePlaceholder: 'Routine name (e.g. Morning reset)',
+      selectedTitle: 'Moves in this routine',
+      pickerTitle: 'Add moves',
+      moveCount_one: '{{count}} move',
+      moveCount_other: '{{count}} moves',
+      limitHint: 'Pick {{min}}–{{max}} moves',
+      save: 'Save routine',
+      delete: 'Delete routine',
+      deleteConfirmTitle: 'Delete routine?',
+      deleteConfirmMessage: 'This cannot be undone.',
+      proTeaserTitle: 'Build your own routines',
+      proTeaserSubtitle: 'Chain 2–8 moves into a personal session',
+      empty: 'No routines yet — create your first one',
+      moveUp: 'Move up',
+      moveDown: 'Move down',
+      remove: 'Remove',
+      notFound: 'This routine no longer exists.',
+    },
+    nextMove: {
+      title: 'Keep the momentum',
+      subtitle: 'Next in this zone',
+      start: 'Start next move',
+    },
+    entry: {
+      title: 'Move Library',
+      subtitle: '{{count}} animated desk-friendly exercises',
+      badge: 'NEW',
+    },
+    upsell: {
+      title: 'Unlock all {{count}} moves',
+      subtitle: 'Starter moves are free — Pro opens the full animated library.',
+      cta: 'See Pro',
     },
   },
 

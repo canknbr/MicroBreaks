@@ -6,6 +6,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Exercise, ExerciseStep, getExerciseById } from '@/data/exercises';
+import { localizeExercise } from '@/data/exerciseLocalization';
+import { toLibraryLocale } from '@/features/exercise-library/catalog';
+import { useTranslation } from '@/i18n/hooks';
 import { useVoiceGuidance } from './useVoiceGuidance';
 import {
   PREPARATION_DURATION,
@@ -67,7 +70,20 @@ interface UseBreakSessionReturn {
 // Phase durations are imported from constants/config.ts
 
 export function useBreakSession(breakId: string): UseBreakSessionReturn {
-  const { speak, stop: stopSpeech } = useVoiceGuidance();
+  const { language } = useTranslation();
+  // Resolve the exercise first so voice guidance can speak in the language
+  // of the exercise's step text (library sessions are locale-built; the
+  // hand-authored library is English). Core exercises get locale-appropriate
+  // title/description so the header, completion screen, and saved history
+  // read in the UI language — their steps stay English to match en-US voice.
+  const exercise = useMemo(() => {
+    const locale = toLibraryLocale(language);
+    const resolved = getExerciseById(breakId, locale);
+    return resolved ? localizeExercise(resolved, locale) : null;
+  }, [breakId, language]);
+  const { speak, stop: stopSpeech } = useVoiceGuidance({
+    language: exercise?.voiceLanguage ?? 'en-US',
+  });
 
   // Core state
   const [phase, setPhase] = useState<SessionPhase>('loading');
@@ -84,8 +100,6 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
   const startTimeRef = useRef<number>(0);
   const isTransitioningRef = useRef<boolean>(false); // Prevent race conditions during phase transitions
 
-  // Load exercise
-  const exercise = useMemo(() => getExerciseById(breakId) || null, [breakId]);
   const currentStep = useMemo(
     () => (exercise ? exercise.steps[currentStepIndex] || null : null),
     [exercise, currentStepIndex]

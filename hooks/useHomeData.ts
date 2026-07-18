@@ -204,7 +204,7 @@ async function generateHomeData(
   const weekMinutes = weekBreaks.reduce((sum, b) => sum + Math.round(b.duration / 60), 0);
 
   // Get level title
-  const levelTitle = LEVEL_TITLES[Math.min(userStats.level, 10)] || LEVEL_TITLES[10];
+  const levelTitle = (LEVEL_TITLES[Math.min(userStats.level, 10)] ?? LEVEL_TITLES[10])!;
 
   const effectiveReminderInterval = getEffectiveReminderInterval(
     reminderIntervalMinutes,

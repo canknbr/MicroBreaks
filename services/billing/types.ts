@@ -8,6 +8,7 @@ export type PaywallPlacement =
   | 'onboarding'
   | 'profile'
   | 'breaks'
+  | 'library'         // movement-library gate (list upsell + locked detail CTA)
   | 'stats'
   | 'weekly_story'    // /weekly-story screen gate
   | 'home_missions'   // home-screen daily missions gate

@@ -3,11 +3,13 @@
  * Full-screen immersive break execution experience
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -44,16 +46,33 @@ import {
   NeckExercise,
   StretchExercise,
   ActiveExercise,
+  GifExercise,
 } from '@/components/break-session';
 import { AnimationType } from '@/data/exercises';
 import { ScreenErrorBoundary } from '@/components/error';
 import { resolveBreakSessionBreakId } from '@/features/break-session/sessionParams';
+
+/** Coarse origin of a session id for funnel segmentation. */
+function breakSourceKind(id: string): 'core' | 'library' | 'circuit' | 'routine' {
+  if (id.startsWith('lib-')) return 'library';
+  if (id.startsWith('circuit-')) return 'circuit';
+  if (id.startsWith('routine-')) return 'routine';
+  return 'core';
+}
 import { useBreakLiveActivity } from '@/services/widgets/liveActivity';
+import {
+  getLibraryMedia,
+  isLibraryExerciseId,
+  localizedName,
+  toLibraryLocale,
+} from '@/features/exercise-library/catalog';
+import { getNextZoneMove } from '@/features/exercise-library/suggestions';
+import { analytics, AnalyticsEvent } from '@/services/analytics';
 
 function BreakSessionScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { breakId } = useLocalSearchParams<{ breakId?: string | string[] }>();
   const resolvedBreakId = resolveBreakSessionBreakId(breakId);
 
@@ -133,6 +152,21 @@ function BreakSessionScreen() {
   // Achievements
   const { checkAndUnlockAchievements } = useAchievements();
 
+  // Funnel: one BREAK_STARTED per mounted session (the screen is keyed by
+  // break id, so a chained "next move" replace emits its own event).
+  const startTrackedRef = useRef(false);
+  useEffect(() => {
+    if (state.exercise && !startTrackedRef.current) {
+      startTrackedRef.current = true;
+      analytics.track(AnalyticsEvent.BREAK_STARTED, {
+        break_id: state.exercise.id,
+        break_type: state.exercise.category,
+        source_kind: breakSourceKind(state.exercise.id),
+        break_duration: state.exercise.totalDuration,
+      });
+    }
+  }, [state.exercise]);
+
   // Track if we've already saved this session
   const savedRef = useRef(false);
   const previousLevelRef = useRef(currentLevel);
@@ -181,6 +215,14 @@ function BreakSessionScreen() {
         }
         return;
       }
+
+      analytics.track(AnalyticsEvent.BREAK_COMPLETED, {
+        break_id: exercise.id,
+        break_type: exercise.category,
+        source_kind: breakSourceKind(exercise.id),
+        break_duration: stats.totalDuration,
+        steps_completed: stats.stepsCompleted,
+      });
 
       // Surface mission-bonus feedback to the completion screen. Map to
       // just the fields the UI uses so a Mission shape change later
@@ -270,6 +312,28 @@ function BreakSessionScreen() {
     }
   }, [currentLevel, addNotification]);
 
+  // Post-session momentum: for library sessions, surface the next playable
+  // move in the same body zone on the feedback screen.
+  const nextMove = useMemo(() => {
+    if (!state.exercise || !isLibraryExerciseId(state.exercise.id)) return null;
+    if (!tierLoaded) return null;
+    return getNextZoneMove(
+      state.exercise.id,
+      (id) => !requiresUpgradeForExercise(id, tier)
+    );
+  }, [state.exercise, tier, tierLoaded]);
+
+  const handleNextMove = useCallback(() => {
+    if (!nextMove) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // The completed session is already persisted (feedback phase implies a
+    // submitted save); the keyed wrapper remounts a fresh state machine.
+    router.replace({
+      pathname: '/break-session',
+      params: { breakId: nextMove.id },
+    });
+  }, [nextMove, router]);
+
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     actions.endSession();
@@ -295,6 +359,21 @@ function BreakSessionScreen() {
 
     const { animation, instruction, visualGuide } = state.currentStep;
     const color = state.exercise.color;
+
+    // Movement-library sessions render their demo GIF for every working
+    // step. Circuits pin per-step media so the GIF switches with each move;
+    // "rest" steps (transitions, closer) fall through to the calm default.
+    const stepMedia = state.currentStep.media ?? state.exercise.media;
+    if (stepMedia && animation !== 'rest') {
+      return (
+        <GifExercise
+          source={stepMedia.gif}
+          instruction={instruction}
+          color={color}
+          isFlowStep={state.currentStep.id.endsWith('-flow')}
+        />
+      );
+    }
 
     // Group animations by exercise type
     const breathingAnimations: AnimationType[] = ['breathe-in', 'breathe-hold', 'breathe-out'];
@@ -493,6 +572,51 @@ function BreakSessionScreen() {
               </Text>
             </View>
 
+            {/* Next-move momentum card (library sessions only) */}
+            {nextMove && (
+              <Pressable
+                onPress={handleNextMove}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('library.nextMove.start')}: ${localizedName(nextMove, toLibraryLocale(language))}`}
+                style={[
+                  styles.nextMoveCard,
+                  {
+                    backgroundColor: theme.isDark
+                      ? 'rgba(25, 25, 35, 0.9)'
+                      : 'rgba(0, 0, 0, 0.04)',
+                    borderColor: `${exercise.color}45`,
+                  },
+                ]}
+              >
+                <View style={styles.nextMoveThumbWrap}>
+                  {getLibraryMedia(nextMove) ? (
+                    <Image
+                      source={getLibraryMedia(nextMove)?.thumb}
+                      style={styles.nextMoveThumb}
+                      contentFit="cover"
+                      accessibilityIgnoresInvertColors
+                    />
+                  ) : (
+                    <Text style={styles.nextMoveEmoji}>{exercise.icon}</Text>
+                  )}
+                </View>
+                <View style={styles.nextMoveInfo}>
+                  <Text style={[styles.nextMoveLabel, { color: theme.text.muted }]}>
+                    {t('library.nextMove.subtitle')}
+                  </Text>
+                  <Text
+                    style={[styles.nextMoveName, { color: theme.text.primary }]}
+                    numberOfLines={1}
+                  >
+                    {localizedName(nextMove, toLibraryLocale(language))}
+                  </Text>
+                </View>
+                <View style={[styles.nextMovePlay, { backgroundColor: exercise.color }]}>
+                  <Ionicons name="play" size={14} color="#000000" />
+                </View>
+              </Pressable>
+            )}
+
             {/* Done Button */}
             <Pressable
               style={[styles.doneButton, { backgroundColor: exercise.color }]}
@@ -515,6 +639,9 @@ function BreakSessionScreen() {
     actions,
     handleClose,
     handleFinish,
+    handleNextMove,
+    language,
+    nextMove,
     renderExerciseAnimation,
     t,
     theme,
@@ -662,6 +789,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  nextMoveCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 14,
+  },
+  nextMoveThumbWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  nextMoveThumb: {
+    width: 42,
+    height: 42,
+  },
+  nextMoveEmoji: {
+    fontSize: 22,
+  },
+  nextMoveInfo: {
+    flex: 1,
+    marginHorizontal: 12,
+  },
+  nextMoveLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  nextMoveName: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  nextMovePlay: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   feedbackCompleteEmoji: {
     fontSize: 60,
     marginBottom: 16,
@@ -679,9 +852,14 @@ const styles = StyleSheet.create({
 });
 
 export default function BreakSessionWithErrorBoundary() {
+  // Keyed by break id so chained navigation (post-session "next move"
+  // replace) remounts the whole session state machine instead of leaking
+  // completion state into the new exercise.
+  const { breakId } = useLocalSearchParams<{ breakId?: string | string[] }>();
+  const resolvedBreakId = resolveBreakSessionBreakId(breakId);
   return (
     <ScreenErrorBoundary screenName="BreakSession">
-      <BreakSessionScreen />
+      <BreakSessionScreen key={resolvedBreakId} />
     </ScreenErrorBoundary>
   );
 }

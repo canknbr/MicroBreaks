@@ -175,7 +175,7 @@ function pickBreakReminderMessage(painAreas: string[]): BreakReminderMessage {
 
   const total = weighted.reduce((sum, item) => sum + item.weight, 0);
   if (total <= 0) {
-    return BREAK_REMINDER_MESSAGES[0];
+    return BREAK_REMINDER_MESSAGES[0]!;
   }
 
   let roll = Math.random() * total;
@@ -185,7 +185,7 @@ function pickBreakReminderMessage(painAreas: string[]): BreakReminderMessage {
       return item.message;
     }
   }
-  return weighted[weighted.length - 1].message;
+  return weighted[weighted.length - 1]!.message;
 }
 
 // Configure notification handler
@@ -677,6 +677,7 @@ export async function scheduleBreakReminder(): Promise<string | null> {
   // source fails we fall back to the legacy pool so the notification
   // still fires with a reasonable string.
   let message: { title: string; body: string } | null = null;
+  let painFocusArea: string | undefined;
   try {
     const [todayBreaks, streakData, userStats] = await Promise.all([
       getTodayBreaks(),
@@ -736,6 +737,7 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       (key, params) => i18n.t(key, params ?? {}) as string,
     );
     message = { title: adaptive.title, body: adaptive.body };
+    painFocusArea = adaptive.painArea;
   } catch (err) {
     if (__DEV__) {
       console.warn('[notifications] adaptive copy failed, falling back', err);
@@ -750,7 +752,11 @@ export async function scheduleBreakReminder(): Promise<string | null> {
       title: message.title,
       body: message.body,
       sound: settings.soundEnabled ? 'default' : undefined,
-      data: { type: 'break_reminder' },
+      // `pain` lets the tap deep-link straight into the matching
+      // movement-library zone (see hooks/useNotificationDeepLinks.ts).
+      data: painFocusArea
+        ? { type: 'break_reminder', pain: painFocusArea }
+        : { type: 'break_reminder' },
       categoryIdentifier: 'break_reminder',
     },
     trigger: {

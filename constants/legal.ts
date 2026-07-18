@@ -119,7 +119,8 @@ You agree not to:
 
 ## 6. Intellectual Property
 
-- The App, including its code, design, content, and exercises, is owned by MicroBreaks.
+- The App, including its code, design, content, and exercises, is owned by MicroBreaks, except for the third-party content identified below.
+- Movement-library demonstration media (exercise animations and thumbnails) is © Gym visual — https://gymvisual.com/ — and is used with attribution at 180×180 resolution. Movement names, categories, and instruction text derive from the MIT-licensed open exercises dataset.
 - You are granted a limited, non-exclusive, non-transferable license to use the App for personal, non-commercial purposes.
 
 ## 7. Disclaimer of Warranties

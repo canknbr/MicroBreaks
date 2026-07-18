@@ -185,6 +185,13 @@ function buildPlacementCopy(
           `Open the full guided library for ${primaryNeed.label}, including longer routines and deeper programs built for real desk-work fatigue.`,
         primaryFallback: fallbackLabel,
       };
+    case 'library':
+      return {
+        headline: 'Unlock the full movement library',
+        subheadline:
+          `Every animated move for ${primaryNeed.label} and beyond — guided demo sessions for neck, back, core, legs, and quick cardio resets.`,
+        primaryFallback: fallbackLabel,
+      };
     case 'stats':
       return {
         headline: 'See what your recovery story is missing',
@@ -238,6 +245,8 @@ function buildFeatureList(
     onboarding: `A complete ${primaryNeed.program.toLowerCase()} path instead of just the starter reset`,
     profile: `Full guided programs for ${primaryNeed.label}, not just the starter layer`,
     breaks: `The complete ${primaryNeed.program.toLowerCase()} library with longer and deeper guided sessions`,
+    library:
+      'The complete animated movement library — 100+ desk-friendly moves with guided sessions',
     stats: `The full recovery pattern layer behind your ${primaryNeed.label} routine`,
     weekly_story: `Weekly story showing your ${primaryNeed.label} trends, best windows, and routine mix`,
     home_missions: 'Three fresh daily missions with bonus XP for variety and timing',

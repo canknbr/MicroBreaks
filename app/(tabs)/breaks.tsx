@@ -56,7 +56,11 @@ import { filterBreakCategories } from '@/features/recovery/breakLibraryFilter';
 import { selectFeaturedBreak } from '@/features/recovery/featuredBreak';
 import { CategorySection } from '@/components/breaks/CategorySection';
 import { FilterChips } from '@/components/breaks/FilterChips';
+import { MoveLibraryCard } from '@/components/breaks/MoveLibraryCard';
 import { SearchBar } from '@/components/breaks/SearchBar';
+import { useTranslation } from '@/i18n/hooks';
+import { getLibraryExercises, toLibraryLocale } from '@/features/exercise-library/catalog';
+import { localizeExercise } from '@/data/exerciseLocalization';
 import { DURATION_FILTERS } from '@/components/breaks/constants';
 import type { BreakListItem } from '@/components/breaks/types';
 import type { RecommendationOutcomeSignal } from '@/services/recommendations/scoring';
@@ -64,6 +68,7 @@ import type { RecommendationOutcomeSignal } from '@/services/recommendations/sco
 export default function BreaksScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t, language } = useTranslation();
   const onboardingData = useOnboardingStore((state) => state.data);
   const headerOpacity = useSharedValue(0);
   const featuredScale = useSharedValue(0.9);
@@ -122,20 +127,23 @@ export default function BreaksScreen() {
 
   const library = useMemo<BreakListItem[]>(
     () =>
-      ALL_EXERCISES.map((exercise) => ({
-        id: exercise.id,
-        title: exercise.title,
-        duration: formatDurationMinutes(exercise.totalDuration),
-        durationMinutes: Math.max(1, Math.round(exercise.totalDuration / 60)),
-        icon: exercise.icon,
-        description: exercise.description,
-        category: exercise.category,
-        color:
-          CATEGORY_DEFINITIONS.find((category) => category.id === exercise.category)?.color ??
-          exercise.color,
-        isLocked: !hasFullLibrary && !isStarterExercise(exercise.id),
-      })),
-    [hasFullLibrary]
+      ALL_EXERCISES.map((raw) => {
+        const exercise = localizeExercise(raw, toLibraryLocale(language));
+        return {
+          id: exercise.id,
+          title: exercise.title,
+          duration: formatDurationMinutes(exercise.totalDuration),
+          durationMinutes: Math.max(1, Math.round(exercise.totalDuration / 60)),
+          icon: exercise.icon,
+          description: exercise.description,
+          category: exercise.category,
+          color:
+            CATEGORY_DEFINITIONS.find((category) => category.id === exercise.category)?.color ??
+            exercise.color,
+          isLocked: !hasFullLibrary && !isStarterExercise(exercise.id),
+        };
+      }),
+    [hasFullLibrary, language]
   );
 
   const selectedPack = useMemo(
@@ -357,19 +365,19 @@ export default function BreaksScreen() {
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
-            <Text style={[styles.title, { color: theme.text.primary }]}>Breaks</Text>
+            <Text style={[styles.title, { color: theme.text.primary }]}>{t('breaks.title')}</Text>
             <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-              Pick the kind of relief you want, then start with a guided reset.
+              {t('breaks.subtitle')}
             </Text>
           </Animated.View>
 
           <View style={styles.packSection}>
             <View style={styles.packSectionHeader}>
               <Text style={[styles.packSectionTitle, { color: theme.text.primary }]}>
-                Reset packs
+                {t('breaks.packs.title')}
               </Text>
               <Text style={[styles.packSectionSubtitle, { color: theme.text.muted }]}>
-                Outcome-first entry points for desk work pain, fatigue, and focus drops.
+                {t('breaks.packs.subtitle')}
               </Text>
             </View>
 
@@ -414,12 +422,22 @@ export default function BreaksScreen() {
             </ScrollView>
           </View>
 
+          {/* Movement Library entry */}
+          <MoveLibraryCard
+            title={t('library.entry.title')}
+            subtitle={t('library.entry.subtitle', { count: getLibraryExercises().length })}
+            badge={t('library.entry.badge')}
+            theme={theme}
+            onPress={() => router.push('/exercise-library' as never)}
+          />
+
           {/* Search Bar */}
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
             onClear={handleClearSearch}
             theme={theme}
+            placeholder={t('breaks.searchPlaceholder')}
           />
 
           {/* Filter Chips */}
@@ -433,10 +451,14 @@ export default function BreaksScreen() {
 
           {!hasFullLibrary && !isFiltering && (
             <UpgradePrompt
-              title={`Unlock the full ${selectedPack.title} library`}
-              subtitle={`You currently have ${starterExerciseCount} starter sessions. Pro opens ${lockedExerciseCount} more guided breaks, including deeper ${selectedPack.shortLabel.toLowerCase()} reset options.`}
+              title={t('breaks.upsell.title', { pack: selectedPack.title })}
+              subtitle={t('breaks.upsell.subtitle', {
+                starterCount: starterExerciseCount,
+                lockedCount: lockedExerciseCount,
+                packLabel: selectedPack.shortLabel.toLowerCase(),
+              })}
               bullets={PRO_LIBRARY_HIGHLIGHTS}
-              ctaLabel="Preview Pro Library"
+              ctaLabel={t('breaks.upsell.cta')}
               onPress={openProPreview}
               icon="sparkles"
               accentColors={FEATURED_GRADIENT}
@@ -461,7 +483,9 @@ export default function BreaksScreen() {
                       color="#000"
                     />
                     <Text style={styles.featuredBadgeText}>
-                      {featuredBreak.isLocked ? 'PRO STARTER' : 'START HERE'}
+                      {featuredBreak.isLocked
+                        ? t('breaks.featuredCard.proStarter')
+                        : t('breaks.featuredCard.startHere')}
                     </Text>
                   </View>
                   <Text style={styles.featuredIcon}>{selectedPack.icon}</Text>
@@ -481,18 +505,27 @@ export default function BreaksScreen() {
                     </View>
                   )}
                   <Text style={styles.featuredDescription}>
-                    {selectedPack.description} Start with {featuredBreak.title} for a fast {featuredBreak.duration} guided reset.
+                    {t('breaks.featuredCard.description', {
+                      packDescription: selectedPack.description,
+                      breakTitle: featuredBreak.title,
+                      duration: featuredBreak.duration,
+                    })}
                   </Text>
                   <View style={styles.featuredFooter}>
                     <View>
                       <Text style={styles.featuredDuration}>{featuredBreak.title}</Text>
                       <Text style={styles.featuredLibraryMeta}>
-                        {packStarterCount}/{packLibraryCount} unlocked in this pack
+                        {t('breaks.featuredCard.unlockedInPack', {
+                          unlocked: packStarterCount,
+                          total: packLibraryCount,
+                        })}
                       </Text>
                     </View>
                     <View style={styles.featuredButton}>
                       <Text style={styles.featuredButtonText}>
-                        {featuredBreak.isLocked ? 'Unlock Pro' : 'Start'}
+                        {featuredBreak.isLocked
+                          ? t('breaks.featuredCard.unlockPro')
+                          : t('breaks.featuredCard.start')}
                       </Text>
                       <Ionicons
                         name={featuredBreak.isLocked ? 'lock-open' : 'play'}
@@ -522,12 +555,14 @@ export default function BreaksScreen() {
           ) : (
             <Animated.View entering={FadeIn.duration(300)} style={styles.noResultsContainer}>
               <Ionicons name="search-outline" size={48} color={theme.text.muted} />
-              <Text style={[styles.noResultsTitle, { color: theme.text.primary }]}>No breaks found</Text>
+              <Text style={[styles.noResultsTitle, { color: theme.text.primary }]}>
+                {t('breaks.noResults.title')}
+              </Text>
               <Text style={[styles.noResultsText, { color: theme.text.muted }]}>
-                Try adjusting your search or filters
+                {t('breaks.noResults.subtitle')}
               </Text>
               <Pressable style={styles.clearFiltersButton} onPress={handleClearFilters}>
-                <Text style={styles.clearFiltersText}>Clear Filters</Text>
+                <Text style={styles.clearFiltersText}>{t('breaks.noResults.clear')}</Text>
               </Pressable>
             </Animated.View>
           )}

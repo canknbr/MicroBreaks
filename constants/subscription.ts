@@ -24,6 +24,28 @@ export const FREE_EXERCISE_IDS = [
   'walk',
 ] as const;
 
+/**
+ * Always-free movement-library starter set — one gentle move per body zone
+ * so free users can feel the GIF-guided experience before the paywall.
+ * Ids must exist in data/exerciseLibrary.generated.ts (unit-tested).
+ */
+export const FREE_LIBRARY_EXERCISE_IDS = [
+  'lib-1403', // Neck side stretch
+  'lib-1428', // Wrist circles
+  'lib-1365', // Upper back stretch
+  'lib-0659', // Wall push-up
+  'lib-3533', // Bodyweight squat
+  'lib-1368', // Ankle circles
+  'lib-3147', // Lying pelvic tilt
+  'lib-3672', // Back and forth step
+] as const;
+
+/**
+ * Always-free chained zone circuit — lets free users feel the multi-move
+ * session format; the other six circuits are Solo+.
+ */
+export const FREE_CIRCUIT_IDS = ['circuit-neck'] as const;
+
 const BILLING_PROVIDER_ENV = process.env.EXPO_PUBLIC_BILLING_PROVIDER;
 const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY?.trim() ?? '';
 const REVENUECAT_ANDROID_API_KEY =
@@ -153,8 +175,8 @@ export const PRO_FEATURES = [
 
 export const PRO_LIBRARY_HIGHLIGHTS = [
   'Full eye-strain, posture, and desk-reset session library',
-  'Longer guided routines for deeper recovery between work blocks',
-  'Faster access to favorites, custom routines, and future sync-ready history',
+  'Animated movement library: 100+ desk-friendly moves with guided sessions',
+  'Custom routines and zone circuits — chain moves into your own sessions',
 ] as const;
 
 export const PRO_STATS_HIGHLIGHTS = [
@@ -181,6 +203,12 @@ export const PAYWALL_COPY = {
     subheadline:
       'Go beyond the starter routines with deeper desk-health programs for eyes, neck, posture, and focus.',
     primaryFallback: 'Keep exploring free breaks',
+  },
+  library: {
+    headline: 'Unlock the full movement library',
+    subheadline:
+      'Starter moves are free. Pro opens 100+ animated desk-friendly movements with guided sessions for every body zone.',
+    primaryFallback: 'Keep the starter moves',
   },
   stats: {
     headline: 'Unlock deeper recovery analytics',
