@@ -53,16 +53,65 @@ export function mergeProgress(local: UserProgress, remote: UserProgress): UserPr
   } else {
     recoveryBankSince = localSince ?? remoteSince;
   }
+
+  // Resolve streak fields using last-break-wins strategy
+  const localLastBreak = local.lastBreakDate ?? '';
+  const remoteLastBreak = remote.lastBreakDate ?? '';
+  const lastBreakDate = remoteLastBreak > localLastBreak ? remote.lastBreakDate : local.lastBreakDate;
+
+  let currentStreak: number;
+  if (remoteLastBreak > localLastBreak) {
+    currentStreak = remote.currentStreak;
+  } else if (localLastBreak > remoteLastBreak) {
+    currentStreak = local.currentStreak;
+  } else {
+    currentStreak = Math.max(local.currentStreak, remote.currentStreak);
+  }
+
+  // Merge streak histories, deduplicate by date, sort descending and limit to 30 days
+  const mergedHistoryMap = new Map<string, number>();
+  for (const entry of remote.streakHistory ?? []) {
+    mergedHistoryMap.set(entry.date, entry.count);
+  }
+  for (const entry of local.streakHistory ?? []) {
+    const existing = mergedHistoryMap.get(entry.date) ?? 0;
+    mergedHistoryMap.set(entry.date, Math.max(existing, entry.count));
+  }
+  const streakHistory = Array.from(mergedHistoryMap.entries())
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 30);
+
+  // Resolve graces used this week
+  const localWeekStart = local.weekStartDate ?? '';
+  const remoteWeekStart = remote.weekStartDate ?? '';
+  let gracesUsedThisWeek = 0;
+  let weekStartDate: string | null = null;
+  if (remoteWeekStart > localWeekStart) {
+    gracesUsedThisWeek = remote.gracesUsedThisWeek ?? 0;
+    weekStartDate = remote.weekStartDate || null;
+  } else if (localWeekStart > remoteWeekStart) {
+    gracesUsedThisWeek = local.gracesUsedThisWeek ?? 0;
+    weekStartDate = local.weekStartDate || null;
+  } else {
+    gracesUsedThisWeek = Math.max(local.gracesUsedThisWeek ?? 0, remote.gracesUsedThisWeek ?? 0);
+    weekStartDate = local.weekStartDate || remote.weekStartDate || null;
+  }
+
   return {
     level: Math.floor(totalXP / 100) + 1,
     totalXP,
     totalBreaks: Math.max(local.totalBreaks, remote.totalBreaks),
-    currentStreak: Math.max(local.currentStreak, remote.currentStreak),
+    currentStreak,
     longestStreak: Math.max(local.longestStreak, remote.longestStreak),
     weeklyGoal: remote.weeklyGoal, // Use remote as source of truth for settings-like values
     dailyGoal: remote.dailyGoal,
     recoveryMinutes: Math.max(localMinutes, remoteMinutes),
     recoveryBankSince,
+    lastBreakDate,
+    streakHistory,
+    gracesUsedThisWeek,
+    weekStartDate,
   };
 }
 

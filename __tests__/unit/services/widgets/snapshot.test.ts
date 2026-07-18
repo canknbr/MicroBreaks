@@ -27,6 +27,10 @@ function makeProgress(overrides: Partial<UserProgress> = {}): UserProgress {
     dailyGoal: 3,
     recoveryMinutes: 240,
     recoveryBankSince: '2026-01-01T00:00:00.000Z',
+    lastBreakDate: null,
+    streakHistory: [],
+    gracesUsedThisWeek: 0,
+    weekStartDate: null,
     ...overrides,
   };
 }

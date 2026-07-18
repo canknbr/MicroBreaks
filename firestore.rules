@@ -44,7 +44,13 @@ service cloud.firestore {
           'currentStreak',
           'longestStreak',
           'weeklyGoal',
-          'dailyGoal'
+          'dailyGoal',
+          'recoveryMinutes',
+          'recoveryBankSince',
+          'lastBreakDate',
+          'streakHistory',
+          'gracesUsedThisWeek',
+          'weekStartDate'
         ])
         && positiveInt(progress.level)
         && nonNegativeInt(progress.totalXP)
@@ -53,7 +59,13 @@ service cloud.firestore {
         && nonNegativeInt(progress.longestStreak)
         && progress.longestStreak >= progress.currentStreak
         && boundedInt(progress.weeklyGoal, 1, 100)
-        && boundedInt(progress.dailyGoal, 1, 20);
+        && boundedInt(progress.dailyGoal, 1, 20)
+        && (!('recoveryMinutes' in progress) || nonNegativeInt(progress.recoveryMinutes))
+        && (!('recoveryBankSince' in progress) || progress.recoveryBankSince == null || requiredString(progress.recoveryBankSince, 64))
+        && (!('lastBreakDate' in progress) || progress.lastBreakDate == null || requiredString(progress.lastBreakDate, 64))
+        && (!('streakHistory' in progress) || progress.streakHistory is list)
+        && (!('gracesUsedThisWeek' in progress) || nonNegativeInt(progress.gracesUsedThisWeek))
+        && (!('weekStartDate' in progress) || progress.weekStartDate == null || requiredString(progress.weekStartDate, 64));
     }
 
     function validPreferences(preferences) {

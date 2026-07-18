@@ -74,6 +74,10 @@ describe('Sync Merger', () => {
       dailyGoal: 5,
       recoveryMinutes: 0,
       recoveryBankSince: null,
+      lastBreakDate: null,
+      streakHistory: [],
+      gracesUsedThisWeek: 0,
+      weekStartDate: null,
     };
 
     it('should take max values for cumulative stats', () => {

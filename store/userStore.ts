@@ -46,6 +46,11 @@ export interface UserProgress {
    * `null` until the first break that triggers initialisation.
    */
   recoveryBankSince: string | null;
+  // Streak sync fields to resolve multi-device sync
+  lastBreakDate: string | null;
+  streakHistory: { date: string; count: number }[];
+  gracesUsedThisWeek: number;
+  weekStartDate: string | null;
 }
 
 export interface UserPreferences {
@@ -110,6 +115,10 @@ export const initialUserProgress: UserProgress = {
   dailyGoal: calculateDailyGoal(DEFAULT_WEEKLY_GOAL),
   recoveryMinutes: 0,
   recoveryBankSince: null,
+  lastBreakDate: null,
+  streakHistory: [],
+  gracesUsedThisWeek: 0,
+  weekStartDate: null,
 };
 
 export const initialUserPreferences: UserPreferences = {
@@ -244,6 +253,24 @@ function sanitizeProgress(value: unknown): UserProgress {
       progress.recoveryBankSince.length > 0
         ? progress.recoveryBankSince
         : initialUserProgress.recoveryBankSince,
+    lastBreakDate:
+      typeof progress.lastBreakDate === 'string' && progress.lastBreakDate.length > 0
+        ? progress.lastBreakDate
+        : null,
+    streakHistory: Array.isArray(progress.streakHistory)
+      ? progress.streakHistory.filter(
+          (h): h is { date: string; count: number } =>
+            h && typeof h === 'object' && typeof h.date === 'string' && typeof h.count === 'number'
+        )
+      : [],
+    gracesUsedThisWeek:
+      typeof progress.gracesUsedThisWeek === 'number' && Number.isFinite(progress.gracesUsedThisWeek)
+        ? Math.max(0, Math.round(progress.gracesUsedThisWeek))
+        : 0,
+    weekStartDate:
+      typeof progress.weekStartDate === 'string' && progress.weekStartDate.length > 0
+        ? progress.weekStartDate
+        : null,
   };
 }
 
@@ -365,7 +392,7 @@ export const useUserStore = create<UserState>()(
     (set, get) => ({
       // Initial State
       profile: initialUserProfile,
-      progress: initialUserProgress,
+      progress: { ...initialUserProgress, streakHistory: [] },
       preferences: initialUserPreferences,
       achievements: initialUserAchievements,
       isAuthenticated: false,
@@ -456,7 +483,7 @@ export const useUserStore = create<UserState>()(
 
       resetProgress: () => {
         set({
-          progress: initialUserProgress,
+          progress: { ...initialUserProgress, streakHistory: [] },
         });
         scheduleProgressSideEffects();
       },
@@ -464,7 +491,7 @@ export const useUserStore = create<UserState>()(
       signOut: () =>
         set({
           profile: initialUserProfile,
-          progress: initialUserProgress,
+          progress: { ...initialUserProgress, streakHistory: [] },
           preferences: initialUserPreferences,
           achievements: initialUserAchievements,
           isAuthenticated: false,

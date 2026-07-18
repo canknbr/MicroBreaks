@@ -4,7 +4,7 @@
  */
 
 import { getUserDoc } from '@/services/firebase/firestore';
-import { syncStoredUserStatsFromProgress } from '@/services/storage';
+import { syncStoredUserStatsFromProgress, syncStoredStreakDataFromProgress } from '@/services/storage';
 import { useUserStore } from '@/store/userStore';
 import type { UserProfile, UserProgress, UserPreferences, UserAchievements } from '@/store/userStore';
 import { mergeProfiles, mergeProgress, mergePreferences, mergeAchievements } from './merger';
@@ -72,6 +72,7 @@ export async function pullUserProfile(userId: string, prefetchedDoc?: any): Prom
       progress: mergedProgress,
     });
     await syncStoredUserStatsFromProgress(mergedProgress);
+    await syncStoredStreakDataFromProgress(mergedProgress);
   }
 
   if (remote.preferences) {

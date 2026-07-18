@@ -12,7 +12,6 @@ import {
   CompletedBreak,
   StreakData,
   UserStats,
-  DEFAULT_STREAK_DATA,
   StorageError,
   getStoredUserStats,
   updateStoredUserStats,
@@ -73,12 +72,6 @@ function calendarDayDiff(laterStr: string, earlierStr: string): number {
   return Math.round((laterUTC - earlierUTC) / 86_400_000);
 }
 
-function createDefaultStreakData(): StreakData {
-  return {
-    ...DEFAULT_STREAK_DATA,
-    streakHistory: [],
-  };
-}
 
 /**
  * Return the Monday of the ISO week containing `date` as a local
@@ -442,14 +435,60 @@ export function applyStreakDecay(streakData: StreakData, now: Date = new Date())
 
 // Get streak data
 export async function getStreakData(): Promise<StreakData> {
+  const progress = useUserStore.getState().progress;
+
+  // 1. If Zustand progress has streak data, use it as the source of truth
+  if (progress.lastBreakDate !== null || progress.streakHistory.length > 0) {
+    const streakData: StreakData = {
+      currentStreak: progress.currentStreak,
+      longestStreak: progress.longestStreak,
+      lastBreakDate: progress.lastBreakDate,
+      streakHistory: progress.streakHistory ?? [],
+      gracesUsedThisWeek: progress.gracesUsedThisWeek ?? 0,
+      weekStartDate: progress.weekStartDate ?? undefined,
+    };
+    return applyStreakDecay(streakData);
+  }
+
+  // 2. Else, check if legacy AsyncStorage has streak data (migration & test fallback!)
   const result = await getItemWithError<StreakData>(STORAGE_KEYS.STREAK_DATA);
   if (result.error) {
-    const fallback = createDefaultStreakData();
+    // Self-heal corrupted AsyncStorage key by writing default fallback
+    const fallback: StreakData = {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastBreakDate: null,
+      streakHistory: [],
+    };
     await setItem(STORAGE_KEYS.STREAK_DATA, fallback);
     return fallback;
   }
 
-  return applyStreakDecay(result.data || createDefaultStreakData());
+  if (result.data && result.data.lastBreakDate) {
+    const legacyData = result.data;
+    // Migrate to Zustand userStore so it gets persisted to MMKV & synced to cloud!
+    useUserStore.setState((state) => ({
+      progress: {
+        ...state.progress,
+        currentStreak: legacyData.currentStreak,
+        longestStreak: legacyData.longestStreak,
+        lastBreakDate: legacyData.lastBreakDate,
+        streakHistory: legacyData.streakHistory ?? [],
+        gracesUsedThisWeek: legacyData.gracesUsedThisWeek ?? 0,
+        weekStartDate: legacyData.weekStartDate ?? null,
+      },
+    }));
+    return applyStreakDecay(legacyData);
+  }
+
+  // 3. Fallback: return default empty streak data matching DEFAULT_STREAK_DATA exactly!
+  const fallback: StreakData = {
+    currentStreak: 0,
+    longestStreak: 0,
+    lastBreakDate: null,
+    streakHistory: [],
+  };
+  return applyStreakDecay(fallback);
 }
 
 // Update streak based on break history
@@ -515,6 +554,20 @@ async function updateStreak(): Promise<StreakData> {
     }
   }
 
+  // Update Zustand state (which handles persistence to MMKV and triggers sync automatically!)
+  useUserStore.setState((state) => ({
+    progress: {
+      ...state.progress,
+      currentStreak: streakData.currentStreak,
+      longestStreak: streakData.longestStreak,
+      lastBreakDate: streakData.lastBreakDate,
+      streakHistory: streakData.streakHistory,
+      gracesUsedThisWeek: streakData.gracesUsedThisWeek ?? 0,
+      weekStartDate: streakData.weekStartDate ?? null,
+    },
+  }));
+
+  // Backwards compatibility / local fallback cache: write to AsyncStorage
   await setItem(STORAGE_KEYS.STREAK_DATA, streakData);
   return streakData;
 }

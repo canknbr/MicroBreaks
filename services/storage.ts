@@ -296,3 +296,27 @@ export async function syncStoredUserStatsFromProgress(
     weeklyGoal: progress.weeklyGoal,
   });
 }
+
+export interface UserStreakProgressProjection {
+  currentStreak: number;
+  longestStreak: number;
+  lastBreakDate: string | null;
+  streakHistory?: { date: string; count: number }[];
+  gracesUsedThisWeek?: number;
+  weekStartDate?: string | null;
+}
+
+export async function syncStoredStreakDataFromProgress(
+  progress: UserStreakProgressProjection
+): Promise<StreakData> {
+  const streakData: StreakData = {
+    currentStreak: progress.currentStreak,
+    longestStreak: progress.longestStreak,
+    lastBreakDate: progress.lastBreakDate,
+    streakHistory: progress.streakHistory ?? [],
+    gracesUsedThisWeek: progress.gracesUsedThisWeek ?? 0,
+    weekStartDate: progress.weekStartDate ?? undefined,
+  };
+  await setItem(STORAGE_KEYS.STREAK_DATA, streakData);
+  return streakData;
+}

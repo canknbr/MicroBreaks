@@ -94,6 +94,10 @@ describe('replaceWithFreshAnonymousSession', () => {
         dailyGoal: 6,
         recoveryMinutes: 180,
         recoveryBankSince: '2026-01-01T00:00:00.000Z',
+        lastBreakDate: null,
+        streakHistory: [],
+        gracesUsedThisWeek: 0,
+        weekStartDate: null,
       },
       preferences: {
         favoriteBreaks: ['neck-reset'],

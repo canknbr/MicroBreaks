@@ -63,6 +63,10 @@ describe('userSync', () => {
       // store is freshly signed out, so the merge yields the defaults.
       recoveryMinutes: 0,
       recoveryBankSince: null,
+      lastBreakDate: null,
+      streakHistory: [],
+      gracesUsedThisWeek: 0,
+      weekStartDate: null,
     });
 
     const storedStats = JSON.parse((await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS)) ?? '{}');
