@@ -123,7 +123,7 @@ export function getTodayPlan(
     );
     if (candidates.length === 0) continue;
     const index = hashString(`${dateKey}:${zone}`) % candidates.length;
-    plan.push(candidates[index]);
+    plan.push(candidates[index]!);
   }
   return plan;
 }
@@ -146,7 +146,7 @@ export function getNextZoneMove(
   if (currentIndex < 0 || zoneRecords.length < 2) return null;
 
   for (let offset = 1; offset < zoneRecords.length; offset += 1) {
-    const candidate = zoneRecords[(currentIndex + offset) % zoneRecords.length];
+    const candidate = zoneRecords[(currentIndex + offset) % zoneRecords.length]!;
     if (isPlayable(candidate.id)) {
       return candidate;
     }

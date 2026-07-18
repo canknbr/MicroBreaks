@@ -108,7 +108,7 @@ export function buildZoneCircuit(zoneId: LibraryZoneId, locale: LibraryLocale): 
   const cached = circuitCache.get(cacheKey);
   if (cached) return cached;
 
-  const zone = LIBRARY_ZONES.find((candidate) => candidate.id === zoneId) ?? LIBRARY_ZONES[0];
+  const zone = LIBRARY_ZONES.find((candidate) => candidate.id === zoneId) ?? LIBRARY_ZONES[0]!;
   const copy = CIRCUIT_COPY[locale];
 
   const exercise = composeChainedSession(

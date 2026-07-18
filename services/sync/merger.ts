@@ -84,15 +84,17 @@ function mergeRecentLists(local: string[], remote: string[], limit: number): str
   const seen = new Set<string>();
   const merged: string[] = [];
 
-  // Interleave local and remote, preferring local order
-  for (let i = 0; i < Math.max(local.length, remote.length); i++) {
-    if (i < local.length && !seen.has(local[i])) {
-      seen.add(local[i]);
-      merged.push(local[i]);
+  const maxLen = Math.max(local.length, remote.length);
+  for (let i = 0; i < maxLen; i++) {
+    const localVal = local[i];
+    if (localVal !== undefined && !seen.has(localVal)) {
+      seen.add(localVal);
+      merged.push(localVal);
     }
-    if (i < remote.length && !seen.has(remote[i])) {
-      seen.add(remote[i]);
-      merged.push(remote[i]);
+    const remoteVal = remote[i];
+    if (remoteVal !== undefined && !seen.has(remoteVal)) {
+      seen.add(remoteVal);
+      merged.push(remoteVal);
     }
   }
 
@@ -118,7 +120,7 @@ export function mergeAchievements(local: UserAchievements, remote: UserAchieveme
     if (localTime && remoteTime) {
       unlockedAt[id] = localTime < remoteTime ? localTime : remoteTime;
     } else {
-      unlockedAt[id] = localTime || remoteTime;
+      unlockedAt[id] = (localTime ?? remoteTime)!;
     }
   }
 
