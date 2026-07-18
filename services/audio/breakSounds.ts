@@ -96,6 +96,25 @@ const SOURCE_MAP: Record<BreakSoundName, number | null> = {
   'ambient-chime':     null, // require('../../assets/audio/ambient-chime.m4a'),
 };
 
+/**
+ * Remote fallback URLs for streaming when local assets are not bundled yet.
+ * Streams high-fidelity ambient nature sounds and zen chimes from a CDN.
+ */
+const REMOTE_SOURCE_MAP: Record<BreakSoundName, string | null> = {
+  'breathe-in':        'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav',
+  'breathe-hold':      null,
+  'breathe-out':       'https://assets.mixkit.co/active_storage/sfx/2566/2566-84.wav',
+  'breathe-complete':  'https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav',
+  'tap-soft':          'https://assets.mixkit.co/active_storage/sfx/2571/2571-84.wav',
+  'tap-confirm':       'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav',
+  'tap-success':       'https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav',
+  'session-start':     'https://assets.mixkit.co/active_storage/sfx/2017/2017-84.wav',
+  'session-complete':  'https://assets.mixkit.co/active_storage/sfx/1653/1653-84.wav',
+  'session-milestone': 'https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav',
+  'ambient-nature':    'https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav',
+  'ambient-chime':     'https://assets.mixkit.co/active_storage/sfx/2017/2017-84.wav',
+};
+
 interface BreakSoundsService {
   /**
    * Play a sound by name. Resolves immediately whether or not playback
@@ -124,20 +143,25 @@ class ExpoAudioBreakSoundsService implements BreakSoundsService {
   private players = new Map<BreakSoundName, AudioPlayer>();
 
   /**
-   * Returns a ready-to-play `AudioPlayer` for the named sound, or `null`
-   * when no asset is bundled yet (in which case callers no-op). Failure
-   * to create the player (corrupted source, native issue) is swallowed
-   * and logged — we never want a missing sound asset to take down a
-   * session.
+   * Returns a ready-to-play `AudioPlayer` for the named sound. Falls back
+   * to a remote streaming CDN if local files are missing, ensuring
+   * zero audio downtime.
    */
   private ensurePlayer(name: BreakSoundName): AudioPlayer | null {
     const cached = this.players.get(name);
     if (cached) return cached;
 
-    const source = SOURCE_MAP[name];
+    let source: any = SOURCE_MAP[name];
+    if (source == null) {
+      const remoteUrl = REMOTE_SOURCE_MAP[name];
+      if (remoteUrl) {
+        source = { uri: remoteUrl };
+      }
+    }
+
     if (source == null) {
       if (__DEV__) {
-        console.log(`[breakSounds] no asset bundled for "${name}" — skipping`);
+        console.log(`[breakSounds] no asset or remote fallback for "${name}" — skipping`);
       }
       return null;
     }
@@ -159,6 +183,17 @@ class ExpoAudioBreakSoundsService implements BreakSoundsService {
 
   async play(name: BreakSoundName, opts?: { volumeMultiplier?: number }): Promise<void> {
     if (!isSoundEnabled()) return;
+
+    // Prevent overlapping breathing phase loops
+    const breathingSounds: BreakSoundName[] = ['breathe-in', 'breathe-hold', 'breathe-out'];
+    if (breathingSounds.includes(name)) {
+      for (const other of breathingSounds) {
+        if (other !== name) {
+          await this.stop(other);
+        }
+      }
+    }
+
     const player = this.ensurePlayer(name);
     if (!player) return;
 

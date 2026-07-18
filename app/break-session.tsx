@@ -19,6 +19,7 @@ import { useEffectiveTier } from '@/hooks/useEffectiveTier';
 import { requiresUpgradeForExercise } from '@/services/subscription/exerciseAccess';
 import { useFreeQuotaCheck } from '@/hooks/useFreeQuotaCheck';
 import { saveCompletedBreak, getTodayBreaks, getUserStats } from '@/services/breakHistory';
+import { breakSounds } from '@/services/audio/breakSounds';
 import { STREAK_MILESTONES } from '@/constants/config';
 import { calculateDailyGoal } from '@/utils/validation';
 import { getLevelTitle } from '@/constants/levels';
@@ -166,6 +167,22 @@ function BreakSessionScreen() {
       });
     }
   }, [state.exercise]);
+
+  // Ambient Soundscape Management
+  useEffect(() => {
+    const isPlayingPhase = ['preparation', 'instruction', 'execution'].includes(state.phase);
+
+    if (isPlayingPhase && !state.isPaused) {
+      void breakSounds.play('ambient-nature');
+    } else {
+      void breakSounds.stop('ambient-nature');
+    }
+
+    return () => {
+      // Stop ambient track on unmount
+      void breakSounds.stop('ambient-nature');
+    };
+  }, [state.phase, state.isPaused]);
 
   // Track if we've already saved this session
   const savedRef = useRef(false);
