@@ -1,34 +1,5 @@
-/**
- * SkiaBreathingCircle
- *
- * Skia-rendered breathing orb that replaces the layered Reanimated
- * `LinearGradient` + nested `Animated.View` stack inside
- * `BreathingExercise`. The visceral upgrade is real radial gradients
- * whose stops, radius, and blur all morph in lock-step with the breath
- * phase — the orb actually *grows* and *softens* the way a deep breath
- * feels, instead of just scaling a flat painted circle up and down.
- *
- * Architecture:
- *   - Outer halo:  large radial gradient from `${color}55` → transparent.
- *                  Radius and opacity scale with `phaseProgress`.
- *   - Inner orb:   smaller radial gradient from a white-tinted core to
- *                  `${color}`. Blur radius softens during exhale so the
- *                  orb literally "lets go" at the end of the breath.
- *
- * Synchronization:
- *   - A single `phaseProgress` SharedValue ticks 0 → 1 during inhale,
- *     1 → 0 during exhale, sinusoidal during hold, and pulses gently
- *     when idle. Every Skia prop derives off this one value through
- *     `useDerivedValue` so the whole composition stays in phase.
- *
- * Accessibility:
- *   - Reduce Motion: progress freezes at 0.5 (mid-breath) and all
- *     time-based animation is skipped so the user sees a still gradient
- *     instead of a continuous morph.
- */
-
 import React, { useEffect } from 'react';
-import { Canvas, Circle, RadialGradient, BlurMask, vec } from '@shopify/react-native-skia';
+import { Canvas, Path, RadialGradient, BlurMask, vec, Circle, Skia } from '@shopify/react-native-skia';
 import {
   useSharedValue,
   withTiming,
@@ -37,6 +8,7 @@ import {
   cancelAnimation,
   Easing,
   useDerivedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { AnimationType } from '@/data/exercises';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
@@ -53,6 +25,57 @@ const PHASE_MS = 4000;
 const IDLE_PULSE_MS = 2500;
 const HOLD_PULSE_MS = 600;
 
+// Floating Energy Particle Component
+function FloatingParticle({
+  index,
+  size,
+  center,
+  time,
+  phaseProgress,
+}: {
+  index: number;
+  size: number;
+  center: number;
+  time: SharedValue<number>;
+  phaseProgress: SharedValue<number>;
+}) {
+  // Deterministic random properties for each index
+  const angleOffset = (index * 2 * Math.PI) / 12 + (index * 0.17) % 0.3;
+  const radiusMultiplier = 0.22 + ((index * 0.13) % 0.45);
+  const speed = 0.6 + ((index * 0.23) % 1.0);
+  const particleSize = 1.5 + ((index * 1.5) % 3);
+
+  const cx = useDerivedValue(() => {
+    const p = phaseProgress.value;
+    const t = time.value;
+    const driftAngle = angleOffset + t * 0.1 * speed;
+    const distance = size * radiusMultiplier * (0.8 + p * 0.45);
+    return center + distance * Math.cos(driftAngle);
+  });
+
+  const cy = useDerivedValue(() => {
+    const p = phaseProgress.value;
+    const t = time.value;
+    const driftAngle = angleOffset + t * 0.1 * speed;
+    const distance = size * radiusMultiplier * (0.8 + p * 0.45);
+    return center + distance * Math.sin(driftAngle);
+  });
+
+  const opacity = useDerivedValue(() => {
+    const p = phaseProgress.value;
+    const t = time.value;
+    const baseOpacity = 0.1 + p * 0.55;
+    const pulse = 0.5 + Math.sin(t * 1.5 * speed) * 0.4;
+    return baseOpacity * pulse;
+  });
+
+  return (
+    <Circle cx={cx} cy={cy} r={particleSize} opacity={opacity} color="white">
+      <BlurMask blur={1.5} style="normal" />
+    </Circle>
+  );
+}
+
 export default function SkiaBreathingCircle({
   animation,
   color,
@@ -64,15 +87,28 @@ export default function SkiaBreathingCircle({
   //   1 = fully inhaled / expanded
   const phaseProgress = useSharedValue(0.45);
 
+  // Time value for continuous organic wobbling/morphing
+  const time = useSharedValue(0);
+
   useEffect(() => {
     cancelAnimation(phaseProgress);
+    cancelAnimation(time);
 
     if (reduceMotion) {
-      // Snap to a calm mid-breath and stop. Reduce Motion users still get
-      // the rendered gradient — they just don't get the continuous morph.
       phaseProgress.value = 0.5;
+      time.value = 0;
       return;
     }
+
+    // Run continuous time loop for organic wobble
+    time.value = withRepeat(
+      withTiming(2 * Math.PI, {
+        duration: 12000,
+        easing: Easing.linear,
+      }),
+      -1,
+      false
+    );
 
     switch (animation) {
       case 'breathe-in':
@@ -113,7 +149,7 @@ export default function SkiaBreathingCircle({
         );
         break;
     }
-  }, [animation, phaseProgress, reduceMotion]);
+  }, [animation, phaseProgress, time, reduceMotion]);
 
   const center = size / 2;
   const centerPoint = vec(center, center);
@@ -143,22 +179,96 @@ export default function SkiaBreathingCircle({
   // Halo blur is heavier; this is what gives the surrounding glow.
   const haloBlur = useDerivedValue(() => 18 + phaseProgress.value * 10);
 
+  // Dynamic wobbly path for the outer halo (ambient breath aura)
+  const haloPath = useDerivedValue(() => {
+    const path = Skia.Path.Make();
+    const N = 40;
+    const rBase = haloRadius.value;
+    const t = time.value;
+    const p = phaseProgress.value;
+    
+    // Wobble scales up with breath expansion, inactive if reduce motion is on
+    const wobbleAmp = (8 + p * 12) * (reduceMotion ? 0 : 1);
+
+    for (let i = 0; i <= N; i++) {
+      const angle = (i * 2 * Math.PI) / N;
+      // Multi-frequency wave pattern out of phase with inner orb
+      const wobble = 
+        Math.cos(4 * angle + t * 1.3) * 0.5 + 
+        Math.sin(2 * angle - t * 2.2) * 0.5;
+      const r = rBase + wobble * wobbleAmp;
+      const x = center + r * Math.cos(angle);
+      const y = center + r * Math.sin(angle);
+
+      if (i === 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    return path;
+  });
+
+  // Dynamic wobbly path for the inner orb (the core breathing body)
+  const orbPath = useDerivedValue(() => {
+    const path = Skia.Path.Make();
+    const N = 40;
+    const rBase = orbRadius.value;
+    const t = time.value;
+    const p = phaseProgress.value;
+
+    const wobbleAmp = (4 + p * 8) * (reduceMotion ? 0 : 1);
+
+    for (let i = 0; i <= N; i++) {
+      const angle = (i * 2 * Math.PI) / N;
+      // Multi-frequency waves for complex fluid deformation
+      const wobble = 
+        Math.sin(3 * angle - t * 1.8) * 0.65 + 
+        Math.cos(5 * angle + t * 2.6) * 0.35;
+      const r = rBase + wobble * wobbleAmp;
+      const x = center + r * Math.cos(angle);
+      const y = center + r * Math.sin(angle);
+
+      if (i === 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    return path;
+  });
+
   const haloColors = [`${color}88`, `${color}33`, `${color}00`];
   const orbColors = ['rgba(255,255,255,0.85)', `${color}CC`, `${color}33`];
 
   return (
     <Canvas style={{ width: size, height: size }}>
-      {/* Outer halo — the ambient breath aura. */}
-      <Circle cx={center} cy={center} r={haloRadius} opacity={haloOpacity}>
+      {/* Outer wobbly halo — the ambient breath aura. */}
+      <Path path={haloPath} opacity={haloOpacity}>
         <RadialGradient c={centerPoint} r={haloRadius} colors={haloColors} />
         <BlurMask blur={haloBlur} style="normal" />
-      </Circle>
+      </Path>
 
-      {/* Inner orb — the body of the breath. */}
-      <Circle cx={center} cy={center} r={orbRadius}>
+      {/* Inner wobbly orb — the body of the breath. */}
+      <Path path={orbPath}>
         <RadialGradient c={centerPoint} r={orbRadius} colors={orbColors} />
         <BlurMask blur={orbBlur} style="solid" />
-      </Circle>
+      </Path>
+
+      {/* Floating glowing energy particles (skipped if reduce motion is on) */}
+      {!reduceMotion &&
+        Array.from({ length: 12 }).map((_, i) => (
+          <FloatingParticle
+            key={`particle-${i}`}
+            index={i}
+            size={size}
+            center={center}
+            time={time}
+            phaseProgress={phaseProgress}
+          />
+        ))}
     </Canvas>
   );
 }
