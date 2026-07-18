@@ -113,7 +113,15 @@
       "@react-native-firebase/messaging",
       "expo-audio",
       "@bacons/apple-targets",
-      "./plugins/with-app-intents/plugin.js"
+      "./plugins/with-app-intents/plugin.js",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -128,7 +136,7 @@
       "url": "https://u.expo.dev/your-project-id"
     },
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "locales": {}
   }
