@@ -8,7 +8,7 @@ export default {
   // Common
   // ============================================
   common: {
-    appName: 'MicroBreaks',
+    appName: 'Unwind',
     loading: 'Loading...',
     error: 'Error',
     success: 'Success',
@@ -89,7 +89,7 @@ export default {
       streakWarning: "Don't forget your break to keep your streak!",
     },
     emptyState: {
-      title: 'Welcome to MicroBreaks',
+      title: 'Welcome to Unwind',
       subtitle: 'Start your wellness journey by taking your first break',
       action: 'Take First Break',
     },
@@ -512,7 +512,7 @@ export default {
       language: 'Language',
       privacy: 'Privacy',
       help: 'Help & Support',
-      about: 'About MicroBreaks',
+      about: 'About Unwind',
       rateApp: 'Rate App',
       shareApp: 'Share with Friends',
       signOut: 'Sign Out',
@@ -573,12 +573,12 @@ export default {
   // ============================================
   onboarding: {
     welcome: {
-      title: 'Welcome to MicroBreaks',
+      title: 'Welcome to Unwind',
       subtitle: 'Your wellness companion for a healthier workday',
       action: 'Get Started',
     },
     benefits: {
-      title: 'Why Micro Breaks?',
+      title: 'Why Unwind?',
       items: {
         eyes: 'Reduce eye strain',
         posture: 'Improve posture',

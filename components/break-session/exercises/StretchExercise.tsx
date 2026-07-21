@@ -1,6 +1,7 @@
 /**
- * Stretch Exercise Animation
- * Step-by-step visual guides for stretching
+ * Stretch Exercise Animation — editorial. An abstract torso capsule that
+ * lengthens, leans and twists with the movement, a plain direction chevron,
+ * and quiet type. No emoji / gradient circle / badge pills.
  */
 
 import React, { useEffect } from 'react';
@@ -13,7 +14,6 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimationType } from '@/data/exercises';
 import { useTheme } from '@/hooks/useTheme';
@@ -29,13 +29,12 @@ export default function StretchExercise({
   animation,
   instruction,
   color,
-  visualGuide,
 }: StretchExerciseProps) {
   const theme = useTheme();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const rotate = useSharedValue(0);
-  const opacity = useSharedValue(0.8);
+  const opacity = useSharedValue(0.9);
 
   useEffect(() => {
     const duration = 2000;
@@ -99,7 +98,7 @@ export default function StretchExercise({
         opacity.value = withRepeat(
           withSequence(
             withTiming(1, { duration: 1000 }),
-            withTiming(0.7, { duration: 1000 })
+            withTiming(0.6, { duration: 1000 })
           ),
           -1,
           true
@@ -118,7 +117,6 @@ export default function StretchExercise({
         break;
 
       case 'stretch-back':
-        // Arch back motion
         translateY.value = withRepeat(
           withSequence(
             withTiming(-15, { duration, easing: Easing.inOut(Easing.ease) }),
@@ -138,7 +136,6 @@ export default function StretchExercise({
         break;
 
       case 'cat-cow':
-        // Alternating arch and round
         translateY.value = withRepeat(
           withSequence(
             withTiming(15, { duration, easing: Easing.inOut(Easing.ease) }),
@@ -158,7 +155,6 @@ export default function StretchExercise({
         break;
 
       case 'seated-twist':
-        // Rotation motion
         rotate.value = withRepeat(
           withSequence(
             withTiming(25, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
@@ -170,7 +166,6 @@ export default function StretchExercise({
         break;
 
       case 'hip-opener':
-        // Gentle opening motion
         scale.value = withRepeat(
           withSequence(
             withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -205,74 +200,57 @@ export default function StretchExercise({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: translateY.value },
-      { scale: scale.value },
+      { scaleY: scale.value },
       { rotate: `${rotate.value}deg` },
     ],
     opacity: opacity.value,
   }));
 
-  const getIconName = (): keyof typeof Ionicons.glyphMap => {
+  const getDirectionIcon = (): keyof typeof Ionicons.glyphMap | null => {
     switch (animation) {
       case 'stretch-up':
-        return 'arrow-up';
+      case 'stretch-back':
+        return 'chevron-up';
       case 'stretch-side':
         return 'swap-horizontal';
       case 'stretch-forward':
-        return 'arrow-down';
-      case 'stretch-back':
-        return 'arrow-up';
+        return 'chevron-down';
       case 'cat-cow':
         return 'sync';
       case 'seated-twist':
         return 'refresh';
       case 'hip-opener':
-        return 'expand';
-      case 'hold':
-        return 'pause';
+        return 'resize';
       default:
-        return 'body';
+        return null;
     }
   };
 
   const isHolding = animation === 'hold';
+  const directionIcon = getDirectionIcon();
 
   return (
     <View style={styles.container}>
-      {/* Main visualization */}
-      <Animated.View style={[styles.visualContainer, animatedStyle]}>
-        <View style={[styles.iconCircle, { borderColor: `${color}50` }]}>
-          <LinearGradient
-            colors={[`${color}30`, `${color}10`]}
-            style={StyleSheet.absoluteFill}
-          />
-          <Text style={styles.emoji}>{visualGuide}</Text>
-        </View>
+      <View style={styles.stage}>
+        {directionIcon ? (
+          <Ionicons name={directionIcon} size={26} color={color} style={styles.directionHint} />
+        ) : null}
 
-        {/* Direction indicator */}
-        {!isHolding && animation !== 'rest' && (
-          <View style={[styles.directionBadge, { backgroundColor: color }]}>
-            <Ionicons name={getIconName()} size={16} color="#000" />
-          </View>
-        )}
-      </Animated.View>
+        {/* Abstract torso */}
+        <Animated.View style={[styles.torso, { backgroundColor: color }, animatedStyle]} />
+        <View style={[styles.base, { backgroundColor: 'rgba(255,255,255,0.14)' }]} />
+      </View>
 
-      {/* Hold indicator */}
       {isHolding && (
-        <View style={[styles.holdIndicator, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
-          <Ionicons name="pause" size={20} color={color} />
-          <Text style={[styles.holdText, { color }]}>Hold Position</Text>
-        </View>
+        <Text style={[styles.holdText, { color }]}>HOLD POSITION</Text>
       )}
 
-      {/* Instruction */}
       <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
 
-      {/* Tips */}
       {!isHolding && (
-        <View style={styles.tipContainer}>
-          <Ionicons name="information-circle" size={16} color={theme.text.muted} />
-          <Text style={[styles.tipText, { color: theme.text.muted }]}>Breathe steadily while stretching</Text>
-        </View>
+        <Text style={[styles.tipText, { color: theme.text.muted }]}>
+          Breathe steadily while stretching
+        </Text>
       )}
     </View>
   );
@@ -285,61 +263,46 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  visualContainer: {
+  stage: {
+    width: 200,
+    height: 200,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 28,
   },
-  iconCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  emoji: {
-    fontSize: 70,
-  },
-  directionBadge: {
+  directionHint: {
     position: 'absolute',
-    bottom: -10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: 20,
+    opacity: 0.5,
   },
-  holdIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+  torso: {
+    width: 30,
+    height: 104,
+    borderRadius: 16,
+  },
+  base: {
+    width: 88,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 10,
   },
   holdText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
+    marginTop: 24,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 12,
+    letterSpacing: 1.6,
   },
   instruction: {
-    marginTop: 32,
+    marginTop: 28,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     lineHeight: 26,
+    textAlign: 'center',
     paddingHorizontal: 20,
   },
-  tipContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-  },
   tipText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.4)',
-    marginLeft: 6,
+    marginTop: 16,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 13,
   },
 });

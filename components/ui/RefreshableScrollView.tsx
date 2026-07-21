@@ -72,7 +72,7 @@ export function RefreshableScrollView({
           onRefresh={handleRefresh}
           tintColor={theme.accent.primary}
           colors={[theme.accent.primary, theme.accent.secondary]}
-          progressBackgroundColor={theme.isDark ? '#1a1a2e' : '#ffffff'}
+          progressBackgroundColor={theme.isDark ? '#1C1922' : '#ffffff'}
           progressViewOffset={Platform.OS === 'android' ? 20 : 0}
         />
       }
@@ -122,7 +122,7 @@ export function AnimatedRefreshableScrollView({
           onRefresh={handleRefresh}
           tintColor={theme.accent.primary}
           colors={[theme.accent.primary, theme.accent.secondary]}
-          progressBackgroundColor={theme.isDark ? '#1a1a2e' : '#ffffff'}
+          progressBackgroundColor={theme.isDark ? '#1C1922' : '#ffffff'}
         />
       }
     >

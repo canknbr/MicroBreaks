@@ -92,7 +92,13 @@ export async function initializeAuth(): Promise<AuthUser | null> {
 
     return currentUser;
   } catch (error) {
-    console.error('[Auth] Failed to initialize:', error);
+    if (__DEV__) {
+      // Expected with the mock dev Firebase config — the bootstrap handles
+      // this gracefully, so keep it at log level (no red LogBox in dev).
+      console.log('[Auth] initialize skipped (dev):', (error as Error)?.message ?? error);
+    } else {
+      console.error('[Auth] Failed to initialize:', error);
+    }
     return null;
   }
 }

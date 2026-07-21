@@ -61,7 +61,7 @@ type ListItem =
   | { type: 'header'; zone: LibraryZoneMeta; count: number }
   | { type: 'row'; record: LibraryExerciseRecord };
 
-const POSITION_FILTERS: Array<LibraryPosition | null> = [null, 'desk', 'standing', 'floor'];
+const POSITION_FILTERS: Array<LibraryPosition | null> = [null, 'desk', 'standing'];
 
 function ExerciseLibraryScreen() {
   const router = useRouter();
@@ -223,11 +223,8 @@ function ExerciseLibraryScreen() {
       if (item.type === 'header') {
         return (
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionIcon} accessibilityElementsHidden>
-              {item.zone.icon}
-            </Text>
-            <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
-              {t(`library.zones.${item.zone.id}`)}
+            <Text style={[styles.sectionTitle, { color: theme.text.muted }]}>
+              {t(`library.zones.${item.zone.id}`).toUpperCase()}
             </Text>
             <Text style={[styles.sectionCount, { color: theme.text.muted }]}>
               {item.count}
@@ -260,7 +257,6 @@ function ExerciseLibraryScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      <View style={[styles.ambientGlow, styles.ambientTeal]} />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
@@ -371,19 +367,19 @@ function ExerciseLibraryScreen() {
                     : theme.isDark
                       ? 'rgba(255,255,255,0.06)'
                       : 'rgba(0,0,0,0.04)',
-                  borderColor: favoritesOnly ? '#FF6B6B' : 'transparent',
+                  borderColor: favoritesOnly ? '#EB3E38' : 'transparent',
                 },
               ]}
             >
               <Ionicons
                 name={favoritesOnly ? 'heart' : 'heart-outline'}
                 size={13}
-                color={favoritesOnly ? '#FF6B6B' : theme.text.secondary}
+                color={favoritesOnly ? '#EB3E38' : theme.text.secondary}
               />
               <Text
                 style={[
                   styles.positionChipText,
-                  { color: favoritesOnly ? '#FF6B6B' : theme.text.secondary },
+                  { color: favoritesOnly ? '#EB3E38' : theme.text.secondary },
                 ]}
               >
                 {t('library.favoritesFilter')}
@@ -514,14 +510,14 @@ function ExerciseLibraryScreen() {
 
 function ZoneChip({
   label,
-  icon,
   color,
   isSelected,
   onPress,
   theme,
 }: {
   label: string;
-  icon: string;
+  // `icon` is accepted from call sites but not rendered — zones are a type menu.
+  icon?: string;
   color: string;
   isSelected: boolean;
   onPress: () => void;
@@ -533,27 +529,18 @@ function ZoneChip({
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
       accessibilityLabel={label}
-      style={[
-        styles.zoneChip,
-        {
-          borderColor: isSelected ? color : theme.border.subtle,
-          backgroundColor: isSelected
-            ? `${color}18`
-            : theme.isDark
-              ? 'rgba(25, 25, 35, 0.9)'
-              : theme.background.card,
-        },
-      ]}
+      style={styles.zoneChip}
     >
-      <Text style={styles.zoneChipIcon} accessibilityElementsHidden>
-        {icon}
-      </Text>
       <Text
-        style={[styles.zoneChipText, { color: isSelected ? color : theme.text.primary }]}
+        style={[
+          styles.zoneChipText,
+          { color: isSelected ? theme.text.primary : 'rgba(255,255,255,0.34)' },
+        ]}
         numberOfLines={1}
       >
         {label}
       </Text>
+      <View style={[styles.zoneChipBar, isSelected && { backgroundColor: color }]} />
     </Pressable>
   );
 }
@@ -561,18 +548,6 @@ function ZoneChip({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  ambientGlow: {
-    position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.06,
-  },
-  ambientTeal: {
-    top: -120,
-    right: -140,
-    width: 380,
-    height: 380,
-    backgroundColor: '#06FFA5',
   },
   safeArea: {
     flex: 1,
@@ -596,37 +571,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.4,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 30,
+    letterSpacing: -0.8,
   },
   subtitle: {
-    fontSize: 13,
-    marginTop: 2,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    marginTop: 3,
   },
   controls: {
     paddingHorizontal: Spacing.lg,
   },
   zoneRail: {
     paddingVertical: Spacing.sm,
-    gap: 8,
+    gap: 22,
     paddingRight: Spacing.lg,
+    alignItems: 'flex-start',
   },
   zoneChip: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  zoneChipIcon: {
-    fontSize: 14,
-    marginRight: 6,
   },
   zoneChipText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: -0.2,
+  },
+  zoneChipBar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    marginTop: 8,
+    backgroundColor: 'transparent',
   },
   positionRow: {
     flexDirection: 'row',
@@ -634,20 +610,20 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   positionChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 100,
+    borderWidth: 0,
   },
   favoritesChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     marginLeft: 'auto',
   },
   positionChipText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 13,
   },
   upsellStrip: {
     flexDirection: 'row',
@@ -682,21 +658,18 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  sectionIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    marginTop: 24,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
     flex: 1,
   },
   sectionCount: {
+    fontFamily: 'JetBrainsMono-Medium',
     fontSize: 13,
-    fontWeight: '600',
   },
   emptyState: {
     flex: 1,

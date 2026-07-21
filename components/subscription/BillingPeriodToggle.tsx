@@ -25,7 +25,7 @@ function BillingPeriodToggle({
 }: BillingPeriodToggleProps) {
   const theme = useTheme();
 
-  const renderPill = (
+  const renderOption = (
     period: BillingPeriod,
     label: string,
     sublabel?: string
@@ -35,63 +35,45 @@ function BillingPeriodToggle({
       <Pressable
         key={period}
         onPress={() => onSelect(period)}
-        style={[
-          styles.pill,
-          {
-            backgroundColor: isSelected
-              ? theme.accent.warning
-              : 'transparent',
-          },
-        ]}
+        style={styles.option}
         accessibilityRole="tab"
         accessibilityState={{ selected: isSelected }}
         accessibilityLabel={`${label}${sublabel ? `, ${sublabel}` : ''}`}
         testID={`billing-period-${period}`}
       >
-        <Text
-          style={[
-            styles.label,
-            {
-              color: isSelected ? theme.text.inverse : theme.text.primary,
-            },
-          ]}
-        >
-          {label}
-        </Text>
-        {sublabel && (
+        <View style={styles.optionRow}>
           <Text
             style={[
-              styles.sublabel,
-              {
-                color: isSelected
-                  ? theme.text.inverse
-                  : theme.accent.success,
-              },
+              styles.label,
+              { color: isSelected ? theme.text.primary : 'rgba(255,255,255,0.34)' },
             ]}
           >
-            {sublabel}
+            {label}
           </Text>
-        )}
+          {sublabel && (
+            <Text style={[styles.sublabel, { color: theme.accent.primary }]}>
+              {sublabel}
+            </Text>
+          )}
+        </View>
+        <View
+          style={[
+            styles.bar,
+            isSelected && { backgroundColor: theme.accent.primary },
+          ]}
+        />
       </Pressable>
     );
   };
 
   return (
     <View
-      style={[
-        styles.row,
-        {
-          backgroundColor: theme.isDark
-            ? 'rgba(255, 255, 255, 0.04)'
-            : theme.background.card,
-          borderColor: theme.border.subtle,
-        },
-      ]}
+      style={styles.row}
       accessibilityRole="tablist"
       accessibilityLabel="Choose billing period"
     >
-      {renderPill('monthly', 'Monthly')}
-      {renderPill('yearly', 'Annual', annualSavingsLabel)}
+      {renderOption('monthly', 'Monthly')}
+      {renderOption('yearly', 'Annual', annualSavingsLabel)}
     </View>
   );
 }
@@ -101,28 +83,32 @@ export default memo(BillingPeriodToggle);
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 4,
-    gap: 4,
-    marginBottom: 16,
+    gap: 28,
+    marginBottom: 24,
   },
-  pill: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    alignItems: 'center',
+  option: {
+    alignItems: 'flex-start',
+  },
+  optionRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
+    alignItems: 'center',
+    gap: 8,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
   sublabel: {
-    fontSize: 12,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 11,
+    letterSpacing: 0.6,
+  },
+  bar: {
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    marginTop: 8,
+    backgroundColor: 'transparent',
   },
 });

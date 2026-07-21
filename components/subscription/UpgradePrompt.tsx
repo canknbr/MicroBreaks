@@ -1,6 +1,5 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { IoniconsName } from '@/types/icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -11,6 +10,7 @@ interface UpgradePromptProps {
   bullets: readonly string[];
   ctaLabel: string;
   onPress: () => void;
+  // `icon` is accepted for call-site compatibility but no longer rendered.
   icon?: IoniconsName;
   accentColors?: readonly [string, string];
 }
@@ -21,38 +21,13 @@ export default function UpgradePrompt({
   bullets,
   ctaLabel,
   onPress,
-  icon = 'lock-closed',
-  accentColors = ['#FFD166', '#FF9500'],
+  accentColors = ['#FF2472', '#FF2472'],
 }: UpgradePromptProps) {
   const theme = useTheme();
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-          backgroundColor: theme.isDark ? 'rgba(19, 19, 26, 0.92)' : theme.background.card,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: theme.isDark ? 0 : 0.08,
-          shadowRadius: 12,
-          elevation: theme.isDark ? 0 : 5,
-        },
-      ]}
-    >
-      <LinearGradient
-        colors={[`${accentColors[0]}22`, `${accentColors[1]}12`]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <View style={styles.headerRow}>
-        <View style={styles.badge}>
-          <Ionicons name={icon} size={14} color={theme.text.inverse} />
-          <Text style={styles.badgeText}>PRO</Text>
-        </View>
-      </View>
-
+    <View style={[styles.card, { borderColor: theme.border.subtle }]}>
+      <Text style={[styles.eyebrow, { color: accentColors[0] }]}>PRO</Text>
       <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
       <Text style={[styles.subtitle, { color: theme.text.secondary }]}>{subtitle}</Text>
 
@@ -71,15 +46,8 @@ export default function UpgradePrompt({
         accessibilityRole="button"
         accessibilityLabel={ctaLabel}
       >
-        <LinearGradient
-          colors={[accentColors[0], accentColors[1]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.ctaGradient}
-        >
-          <Text style={styles.ctaText}>{ctaLabel}</Text>
-          <Ionicons name="arrow-forward" size={16} color="#000000" />
-        </LinearGradient>
+        <Text style={styles.ctaText}>{ctaLabel}</Text>
+        <Ionicons name="arrow-forward" size={16} color="#0B0A0D" />
       </Pressable>
     </View>
   );
@@ -87,78 +55,65 @@ export default function UpgradePrompt({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 22,
-    overflow: 'hidden',
-    borderWidth: 1,
-    padding: 20,
+    paddingVertical: 22,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     marginBottom: 20,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#111827',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  badgeText: {
-    color: '#FFFFFF',
+  eyebrow: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 1.8,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '800',
-    lineHeight: 26,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 24,
+    lineHeight: 28,
+    letterSpacing: -0.6,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 16,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 18,
   },
   bulletList: {
-    gap: 10,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 12,
+    paddingVertical: 7,
   },
   bulletDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
-    marginTop: 6,
+    marginTop: 8,
   },
   bulletText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 19,
-    fontWeight: '500',
+    fontFamily: 'GeneralSans-Medium',
+    fontSize: 15,
+    lineHeight: 22,
+    letterSpacing: -0.2,
   },
   ctaButton: {
     alignSelf: 'flex-start',
-  },
-  ctaGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 22,
+    paddingVertical: 14,
   },
   ctaText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 15,
+    color: '#0B0A0D',
   },
 });

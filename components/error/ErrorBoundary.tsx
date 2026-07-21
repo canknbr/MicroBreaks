@@ -127,7 +127,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#0f0f1a']}
+        colors={['#1C1922', '#16213e', '#141218']}
         style={styles.gradient}
       >
         <ScrollView
@@ -393,7 +393,7 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#141218',
   },
   gradient: {
     flex: 1,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#FF6B6B',
+    color: '#EB3E38',
   },
   title: {
     fontSize: 28,
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   errorName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FF6B6B',
+    color: '#EB3E38',
     marginBottom: 8,
   },
   errorMessage: {
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButton: {
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
   },
   secondaryButton: {
     backgroundColor: 'transparent',

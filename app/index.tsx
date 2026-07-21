@@ -32,7 +32,7 @@ export default function AppIndex() {
   if (!isHydrated) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#06FFA5" />
+        <ActivityIndicator size="large" color="#FF2472" />
       </View>
     );
   }

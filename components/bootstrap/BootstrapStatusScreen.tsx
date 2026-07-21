@@ -15,7 +15,7 @@ export function BootstrapStatusScreen({
     <View style={styles.container}>
       <View style={styles.panel}>
         <Text style={styles.eyebrow}>Startup Blocked</Text>
-        <Text style={styles.title}>MicroBreaks couldn&apos;t finish loading.</Text>
+        <Text style={styles.title}>Unwind couldn&apos;t finish loading.</Text>
         <Text style={styles.message}>{issue.message}</Text>
         <Text style={styles.meta}>Failed step: {issue.step}</Text>
         <Pressable accessibilityRole="button" onPress={onRetry} style={styles.button}>
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   eyebrow: {
-    color: '#FFD166',
+    color: '#FAE34B',
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
     borderRadius: 999,
     paddingVertical: 14,
     paddingHorizontal: 18,

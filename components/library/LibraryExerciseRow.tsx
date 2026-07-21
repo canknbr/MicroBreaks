@@ -1,7 +1,7 @@
 /**
- * Library Exercise Row
- * Compact list card for the movement library: thumbnail, localized name,
- * zone/duration/difficulty meta, and a lock badge for gated moves.
+ * Library Exercise Row — editorial. A flat hairline list row: GIF thumbnail
+ * (real movement art on a white plate), localized name, zone/duration/
+ * difficulty meta, favorite + chevron. No card chrome / emoji fallback.
  */
 
 import React, { memo } from 'react';
@@ -10,7 +10,6 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { ThemeColors } from '@/hooks/useTheme';
-import { cardShadow } from '@/utils/cardShadow';
 import type { LibraryExerciseRecord } from '@/features/exercise-library/types';
 import {
   getLibraryMedia,
@@ -81,17 +80,12 @@ function LibraryExerciseRowComponent({
       accessibilityLabel={`${name}. ${labels.zone}. ${minutes} min. ${labels.difficulty}.`}
       accessibilityHint={isLocked ? labels.lockedHint : labels.startHint}
       style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: theme.isDark ? 'rgba(25, 25, 35, 0.9)' : theme.background.card,
-          borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-          opacity: pressed ? 0.85 : 1,
-          ...cardShadow(theme.isDark, { height: 2, opacity: 0.07, radius: 6, elevation: 3 }),
-        },
+        styles.row,
+        { borderBottomColor: theme.border.subtle, opacity: pressed ? 0.6 : 1 },
       ]}
     >
       {/* Thumbnail — white plate so the dataset art blends in dark mode */}
-      <View style={[styles.thumbWrap, { borderColor: `${zone.color}30` }]}>
+      <View style={styles.thumbWrap}>
         {media ? (
           <Image
             source={media.thumb}
@@ -100,7 +94,7 @@ function LibraryExerciseRowComponent({
             accessibilityIgnoresInvertColors
           />
         ) : (
-          <Text style={styles.thumbFallback}>{zone.icon}</Text>
+          <Text style={styles.thumbFallback}>{name.charAt(0)}</Text>
         )}
         {isLocked && (
           <View style={styles.lockOverlay}>
@@ -136,7 +130,7 @@ function LibraryExerciseRowComponent({
         <Ionicons
           name={isFavorite ? 'heart' : 'heart-outline'}
           size={19}
-          color={isFavorite ? '#FF6B6B' : theme.text.muted}
+          color={isFavorite ? '#EB3E38' : theme.text.muted}
         />
       </Pressable>
       <Ionicons name="chevron-forward" size={18} color={theme.text.muted} />
@@ -147,30 +141,29 @@ function LibraryExerciseRowComponent({
 export const LibraryExerciseRow = memo(LibraryExerciseRowComponent);
 
 const styles = StyleSheet.create({
-  card: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 10,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   thumbWrap: {
     width: 60,
     height: 60,
     borderRadius: 14,
-    borderWidth: 1.5,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   thumb: {
-    width: 56,
-    height: 56,
+    width: 60,
+    height: 60,
   },
   thumbFallback: {
-    fontSize: 26,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 24,
+    color: '#0B0A0D',
   },
   lockOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -180,14 +173,15 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 14,
     marginRight: 8,
   },
   name: {
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 20,
-    marginBottom: 4,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 16,
+    letterSpacing: -0.2,
+    lineHeight: 21,
+    marginBottom: 5,
   },
   metaRow: {
     flexDirection: 'row',
@@ -197,9 +191,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 6,
+    marginRight: 7,
   },
   metaText: {
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 12,
     flexShrink: 1,
   },

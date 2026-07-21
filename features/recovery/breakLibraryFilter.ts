@@ -87,7 +87,7 @@ export function filterBreakCategories<TBreak extends FilterableBreak>(
         title: 'Your Favorites',
         subtitle: `${favoriteBreaksList.length} saved`,
         icon: 'heart' as IoniconsName,
-        color: '#FF6B6B',
+        color: '#EB3E38',
         breaks: favoriteBreaksList.filter(matches),
       },
     ].filter((cat) => cat.breaks.length > 0);

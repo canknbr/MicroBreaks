@@ -1,321 +1,239 @@
 /**
- * Color Design Tokens
+ * Color Design Tokens — "Outsiders" redesign
  *
- * Based on the MicroBreaks Design System
- * All colors support both light and dark mode
+ * Single editorial DARK theme. Warm near-black canvas, hot-pink brand accent,
+ * and a rigorous semantic accent palette (blue / green / red / orange / yellow
+ * / purple / mint) reused across states and data. `Colors.light` is an alias
+ * of `Colors.dark` so the app is effectively dark-only while every existing
+ * `Colors.light.*` / `Colors[mode].*` consumer keeps resolving to dark.
  */
 
 export const ColorPalette = {
-  // Core Brand Colors - Inspired by "How We Feel" design
+  // Brand + semantic accents
   brand: {
-    yellow: '#FFD166',
-    orange: '#FF9F1C',
-    coral: '#EF476F',
-    red: '#E63946',
-    teal: '#06FFA5',
-    green: '#4ECDC4',
-    blue: '#118AB2',
-    lightBlue: '#82C3EC',
-    purple: '#7B68EE',
-    lavender: '#B47EFF',
+    pink: '#FF2472', // primary brand
+    pinkSoft: '#FF5B93',
+    blue: '#21A3E6',
+    sky: '#54C4E8',
+    green: '#5BC741',
+    greenPure: '#00BC00',
+    red: '#EB3E38',
+    orange: '#EF8633',
+    yellow: '#FAE34B',
+    purple: '#BC26F4',
+    mint: '#6CE9CC',
+    // Legacy aliases — kept so any older references resolve to the new palette
+    teal: '#6CE9CC',
+    coral: '#FF2472',
+    lavender: '#BC26F4',
+    lightBlue: '#54C4E8',
   },
 
-  // Neutral Colors
+  // Warm-dark neutral scale
   neutral: {
     black: '#000000',
-    darkGray: '#1A1A1A',
-    mediumGray: '#2A2A2A',
-    gray: '#4A4A4A',
-    lightGray: '#9CA3AF',
-    silver: '#C4C4C4',
+    canvas: '#0C0B0F', // app base
+    surface: '#1C1922', // card
+    elevated: '#26222E',
+    chip: '#322D3A',
+    darkGray: '#141218',
+    mediumGray: '#26222E',
+    gray: '#6B6975',
+    lightGray: '#9A98A3',
+    silver: '#C4C2CB',
     white: '#FFFFFF',
   },
 
-  // Emotion Color Mapping
+  // Emotion mapping (vestigial — repointed to the new accents to stay safe)
   emotions: {
-    // Positive/High Energy
-    energized: '#FFD166',
-    cheerful: '#FFD166',
-    playful: '#FFD166',
-    eager: '#FF9F1C',
-    productive: '#FF9F1C',
-
-    // Positive/Low Energy
-    calm: '#4ECDC4',
-    peaceful: '#4ECDC4',
-    relaxed: '#06FFA5',
-    atEase: '#06FFA5',
-
-    // Negative/High Energy
-    stressed: '#E63946',
-    anxious: '#E63946',
-    restless: '#EF476F',
-    tense: '#EF476F',
-
-    // Negative/Low Energy
-    sad: '#118AB2',
-    tired: '#82C3EC',
-    bored: '#82C3EC',
-    lonely: '#7B68EE',
+    energized: '#FAE34B',
+    cheerful: '#FAE34B',
+    playful: '#FF2472',
+    eager: '#EF8633',
+    productive: '#21A3E6',
+    calm: '#6CE9CC',
+    peaceful: '#6CE9CC',
+    relaxed: '#5BC741',
+    atEase: '#5BC741',
+    stressed: '#EB3E38',
+    anxious: '#EB3E38',
+    restless: '#FF2472',
+    tense: '#EF8633',
+    sad: '#21A3E6',
+    tired: '#54C4E8',
+    bored: '#54C4E8',
+    lonely: '#BC26F4',
   },
 
-  // UI Element Colors
+  // UI element colors
   ui: {
-    border: '#2A2A2A',
-    divider: '#1A1A1A',
-    overlay: 'rgba(0, 0, 0, 0.85)',
-    backdrop: 'rgba(0, 0, 0, 0.6)',
-    cardBackground: '#1A1A1A',
-    inputBackground: '#2A2A2A',
+    border: 'rgba(255, 255, 255, 0.10)',
+    divider: 'rgba(255, 255, 255, 0.07)',
+    overlay: 'rgba(0, 0, 0, 0.6)',
+    backdrop: 'rgba(0, 0, 0, 0.55)',
+    cardBackground: '#1C1922',
+    inputBackground: '#26222E',
+  },
+} as const;
+
+// The single "Outsiders" dark scheme.
+const darkScheme = {
+  // Text
+  text: {
+    primary: ColorPalette.neutral.white,
+    secondary: ColorPalette.neutral.lightGray,
+    tertiary: ColorPalette.neutral.gray,
+    inverse: ColorPalette.neutral.canvas,
+    link: ColorPalette.brand.pink,
+    error: ColorPalette.brand.red,
+    success: ColorPalette.brand.green,
+    warning: ColorPalette.brand.orange,
+  },
+
+  // Background
+  background: {
+    primary: ColorPalette.neutral.canvas,
+    secondary: ColorPalette.neutral.darkGray,
+    tertiary: ColorPalette.neutral.surface,
+    inverse: ColorPalette.neutral.white,
+    surface: ColorPalette.neutral.surface,
+    overlay: ColorPalette.ui.overlay,
+  },
+
+  // Brand
+  brand: {
+    primary: ColorPalette.brand.pink,
+    secondary: ColorPalette.brand.blue,
+    accent: ColorPalette.brand.purple,
+    highlight: ColorPalette.brand.pinkSoft,
+  },
+
+  // Interactive elements — pink pill CTAs
+  interactive: {
+    primary: ColorPalette.brand.pink,
+    primaryHover: '#FF4586',
+    primaryActive: '#E01560',
+    primaryDisabled: ColorPalette.neutral.elevated,
+    secondary: ColorPalette.neutral.elevated,
+    secondaryHover: ColorPalette.neutral.chip,
+    secondaryActive: '#3C3746',
+    secondaryDisabled: ColorPalette.neutral.darkGray,
+  },
+
+  // Status colors — `*Background` = muted dark surface variant
+  status: {
+    error: ColorPalette.brand.red,
+    errorBackground: 'rgba(235, 62, 56, 0.14)',
+    warning: ColorPalette.brand.orange,
+    warningBackground: 'rgba(239, 134, 51, 0.14)',
+    success: ColorPalette.brand.green,
+    successBackground: 'rgba(91, 199, 65, 0.14)',
+    info: ColorPalette.brand.blue,
+    infoBackground: 'rgba(33, 163, 230, 0.14)',
+  },
+
+  // Border & divider
+  border: {
+    default: ColorPalette.ui.border,
+    light: ColorPalette.ui.divider,
+    dark: 'rgba(255, 255, 255, 0.16)',
+    focus: ColorPalette.brand.pink,
+    error: ColorPalette.brand.red,
+  },
+
+  // Icon
+  icon: {
+    primary: ColorPalette.neutral.white,
+    secondary: ColorPalette.neutral.lightGray,
+    tertiary: ColorPalette.neutral.gray,
+    inverse: ColorPalette.neutral.canvas,
+    brand: ColorPalette.brand.pink,
+  },
+
+  // Tab navigation (floating pill)
+  tab: {
+    iconDefault: ColorPalette.neutral.lightGray,
+    iconSelected: ColorPalette.brand.pink,
+    background: ColorPalette.neutral.surface,
+    activeIndicator: ColorPalette.brand.pink,
+  },
+
+  // Card — flat, hairline, no heavy shadow
+  card: {
+    background: ColorPalette.neutral.surface,
+    border: ColorPalette.ui.border,
+    shadow: 'rgba(0, 0, 0, 0.5)',
+  },
+
+  // Input — borderless / underline
+  input: {
+    background: ColorPalette.neutral.elevated,
+    border: ColorPalette.ui.border,
+    borderFocus: ColorPalette.brand.pink,
+    borderError: ColorPalette.brand.red,
+    placeholder: ColorPalette.neutral.gray,
+    text: ColorPalette.neutral.white,
+    disabled: ColorPalette.neutral.darkGray,
+  },
+
+  // Progress & loading
+  progress: {
+    background: 'rgba(255, 255, 255, 0.10)',
+    fill: ColorPalette.brand.pink,
+    success: ColorPalette.brand.green,
   },
 } as const;
 
 export const Colors = {
-  light: {
-    // Text
-    text: {
-      primary: ColorPalette.neutral.black,
-      secondary: ColorPalette.neutral.gray,
-      tertiary: ColorPalette.neutral.lightGray,
-      inverse: ColorPalette.neutral.white,
-      link: ColorPalette.brand.blue,
-      error: ColorPalette.brand.red,
-      success: ColorPalette.brand.teal,
-      warning: ColorPalette.brand.orange,
-    },
-
-    // Background
-    background: {
-      primary: ColorPalette.neutral.white,
-      secondary: '#F9FAFB',
-      tertiary: '#F3F4F6',
-      inverse: ColorPalette.neutral.black,
-      surface: ColorPalette.neutral.white,
-      overlay: ColorPalette.ui.overlay,
-    },
-
-    // Brand
-    brand: {
-      primary: ColorPalette.brand.teal,
-      secondary: ColorPalette.brand.yellow,
-      accent: ColorPalette.brand.purple,
-      highlight: ColorPalette.brand.coral,
-    },
-
-    // Interactive Elements
-    interactive: {
-      primary: ColorPalette.brand.teal,
-      primaryHover: '#05E094',
-      primaryActive: '#05CC84',
-      primaryDisabled: ColorPalette.neutral.lightGray,
-      secondary: ColorPalette.brand.yellow,
-      secondaryHover: '#FFC94D',
-      secondaryActive: '#FFB733',
-      secondaryDisabled: ColorPalette.neutral.silver,
-    },
-
-    // Status Colors
-    // The `*Background` tokens are the muted surface variant of each status
-    // colour — used as a chip / banner background under the matching solid
-    // text colour. They were previously called `*Light` which read wrong in
-    // dark mode where they map to a dark surface (B-UX7).
-    status: {
-      error: ColorPalette.brand.red,
-      errorBackground: '#FEE2E2',
-      warning: ColorPalette.brand.orange,
-      warningBackground: '#FEF3C7',
-      success: ColorPalette.brand.teal,
-      successBackground: '#D1FAE5',
-      info: ColorPalette.brand.blue,
-      infoBackground: '#DBEAFE',
-    },
-
-    // Border & Divider
-    border: {
-      default: '#E5E7EB',
-      light: '#F3F4F6',
-      dark: '#D1D5DB',
-      focus: ColorPalette.brand.teal,
-      error: ColorPalette.brand.red,
-    },
-
-    // Icon
-    icon: {
-      primary: ColorPalette.neutral.black,
-      secondary: ColorPalette.neutral.gray,
-      tertiary: ColorPalette.neutral.lightGray,
-      inverse: ColorPalette.neutral.white,
-      brand: ColorPalette.brand.teal,
-    },
-
-    // Tab Navigation
-    tab: {
-      iconDefault: ColorPalette.neutral.gray,
-      iconSelected: ColorPalette.brand.teal,
-      background: ColorPalette.neutral.white,
-      activeIndicator: ColorPalette.brand.teal,
-    },
-
-    // Card
-    card: {
-      background: ColorPalette.neutral.white,
-      border: '#E5E7EB',
-      shadow: 'rgba(0, 0, 0, 0.1)',
-    },
-
-    // Input
-    input: {
-      background: ColorPalette.neutral.white,
-      border: '#E5E7EB',
-      borderFocus: ColorPalette.brand.teal,
-      borderError: ColorPalette.brand.red,
-      placeholder: ColorPalette.neutral.lightGray,
-      text: ColorPalette.neutral.black,
-      disabled: '#F3F4F6',
-    },
-
-    // Progress & Loading
-    progress: {
-      background: '#E5E7EB',
-      fill: ColorPalette.brand.teal,
-      success: ColorPalette.brand.teal,
-    },
-  },
-
-  dark: {
-    // Text - Pure black background with white text
-    text: {
-      primary: ColorPalette.neutral.white,
-      secondary: ColorPalette.neutral.lightGray,
-      tertiary: ColorPalette.neutral.gray,
-      inverse: ColorPalette.neutral.black,
-      link: ColorPalette.brand.teal,
-      error: ColorPalette.brand.coral,
-      success: ColorPalette.brand.teal,
-      warning: ColorPalette.brand.orange,
-    },
-
-    // Background - Pure black like "How We Feel"
-    background: {
-      primary: ColorPalette.neutral.black,
-      secondary: ColorPalette.neutral.darkGray,
-      tertiary: ColorPalette.neutral.mediumGray,
-      inverse: ColorPalette.neutral.white,
-      surface: ColorPalette.ui.cardBackground,
-      overlay: ColorPalette.ui.overlay,
-    },
-
-    // Brand
-    brand: {
-      primary: ColorPalette.brand.teal,
-      secondary: ColorPalette.brand.yellow,
-      accent: ColorPalette.brand.lavender,
-      highlight: ColorPalette.brand.coral,
-    },
-
-    // Interactive Elements - White buttons with black text
-    interactive: {
-      primary: ColorPalette.neutral.white,
-      primaryHover: ColorPalette.neutral.silver,
-      primaryActive: '#E0E0E0',
-      primaryDisabled: ColorPalette.neutral.gray,
-      secondary: ColorPalette.neutral.mediumGray,
-      secondaryHover: ColorPalette.neutral.gray,
-      secondaryActive: '#5A5A5A',
-      secondaryDisabled: ColorPalette.neutral.darkGray,
-    },
-
-    // Status Colors
-    status: {
-      error: ColorPalette.brand.coral,
-      errorBackground: ColorPalette.neutral.darkGray,
-      warning: ColorPalette.brand.orange,
-      warningBackground: ColorPalette.neutral.darkGray,
-      success: ColorPalette.brand.teal,
-      successBackground: ColorPalette.neutral.darkGray,
-      info: ColorPalette.brand.lightBlue,
-      infoBackground: ColorPalette.neutral.darkGray,
-    },
-
-    // Border & Divider
-    border: {
-      default: ColorPalette.ui.border,
-      light: ColorPalette.neutral.darkGray,
-      dark: ColorPalette.neutral.mediumGray,
-      focus: ColorPalette.brand.teal,
-      error: ColorPalette.brand.coral,
-    },
-
-    // Icon
-    icon: {
-      primary: ColorPalette.neutral.white,
-      secondary: ColorPalette.neutral.lightGray,
-      tertiary: ColorPalette.neutral.gray,
-      inverse: ColorPalette.neutral.black,
-      brand: ColorPalette.brand.teal,
-    },
-
-    // Tab Navigation
-    tab: {
-      iconDefault: ColorPalette.neutral.gray,
-      iconSelected: ColorPalette.brand.teal,
-      background: ColorPalette.neutral.black,
-      activeIndicator: ColorPalette.brand.teal,
-    },
-
-    // Card
-    card: {
-      background: ColorPalette.ui.cardBackground,
-      border: ColorPalette.ui.border,
-      shadow: 'rgba(0, 0, 0, 0.8)',
-    },
-
-    // Input
-    input: {
-      background: ColorPalette.ui.inputBackground,
-      border: ColorPalette.ui.border,
-      borderFocus: ColorPalette.brand.teal,
-      borderError: ColorPalette.brand.coral,
-      placeholder: ColorPalette.neutral.gray,
-      text: ColorPalette.neutral.white,
-      disabled: ColorPalette.neutral.darkGray,
-    },
-
-    // Progress & Loading
-    progress: {
-      background: ColorPalette.neutral.mediumGray,
-      fill: ColorPalette.brand.teal,
-      success: ColorPalette.brand.teal,
-    },
-  },
+  // Dark-only: both schemes point at the same dark palette.
+  light: darkScheme,
+  dark: darkScheme,
 } as const;
 
-// Gradient definitions inspired by "How We Feel" colorful emotion design
+// Gradient definitions — the reference's signature per-section color washes.
 export const Gradients = {
-  // Emotion-based gradients
-  emotions: {
-    energized: ['#FFD166', '#FF9F1C'],
-    calm: ['#4ECDC4', '#06FFA5'],
-    happy: ['#FFD166', '#06FFA5'],
-    stressed: ['#EF476F', '#E63946'],
-    peaceful: ['#4ECDC4', '#7B68EE'],
-    rainbow: ['#06FFA5', '#4ECDC4', '#118AB2', '#7B68EE', '#FFD166', '#FF9F1C', '#EF476F'],
+  // Per-section washes: a saturated tint at the top fading to the canvas.
+  wash: {
+    today: ['#16394D', '#0C0B0F'],
+    progress: ['#123B5C', '#0C0B0F'],
+    sleep: ['#2A1650', '#0C0B0F'],
+    readiness: ['#123D1E', '#0C0B0F'],
+    cardio: ['#4A1420', '#0C0B0F'],
+    endurance: ['#3A3410', '#0C0B0F'],
+    focus: ['#4A2E10', '#0C0B0F'],
+    brand: ['#4A0E2A', '#0C0B0F'],
+  },
+
+  // Brand gradient (pink)
+  brand: {
+    pink: ['#FF2472', '#FF5B93'],
+    pinkDeep: ['#E01560', '#FF2472'],
   },
 
   // Background gradients
   background: {
-    pure: ['#000000', '#000000'],
-    subtle: ['#000000', '#0A0A0A'],
-    dark: ['#000000', '#1A1A1A'],
-    card: ['#1A1A1A', '#2A2A2A'],
+    pure: ['#0C0B0F', '#0C0B0F'],
+    subtle: ['#0C0B0F', '#141218'],
+    dark: ['#0C0B0F', '#1C1922'],
+    card: ['#1C1922', '#26222E'],
+  },
+
+  // Emotion-based (repointed to the new accents)
+  emotions: {
+    energized: ['#FAE34B', '#EF8633'],
+    calm: ['#6CE9CC', '#21A3E6'],
+    happy: ['#FF2472', '#FAE34B'],
+    stressed: ['#EB3E38', '#FF2472'],
+    peaceful: ['#6CE9CC', '#BC26F4'],
+    rainbow: ['#6CE9CC', '#21A3E6', '#5BC741', '#FAE34B', '#EF8633', '#EB3E38', '#BC26F4'],
   },
 
   // Special effect gradients
   special: {
-    aurora: ['#06FFA5', '#7B68EE', '#EF476F'],
-    sunset: ['#FFD166', '#FF9F1C', '#EF476F'],
-    ocean: ['#4ECDC4', '#118AB2', '#7B68EE'],
-    fire: ['#FFD166', '#FF9F1C', '#E63946'],
+    aurora: ['#6CE9CC', '#21A3E6', '#BC26F4'],
+    sunset: ['#FAE34B', '#EF8633', '#FF2472'],
+    ocean: ['#6CE9CC', '#21A3E6', '#BC26F4'],
+    fire: ['#FAE34B', '#EF8633', '#EB3E38'],
   },
 
   // Overlay gradients
@@ -356,29 +274,26 @@ export const ColorAccessibility = {
     largeText: 3,
     uiComponents: 3,
   },
-  touchTargetMinSize: 44, // iOS HIG minimum
+  touchTargetMinSize: 44,
 } as const;
 
 /**
  * WCAG-compliant text colors
- * All colors meet WCAG AA contrast ratio requirements
  */
 export const AccessibleText = {
-  // For dark backgrounds (e.g., black #000000)
   onDark: {
-    primary: 'rgba(255, 255, 255, 1)', // White - 21:1 ratio
-    secondary: 'rgba(255, 255, 255, 0.85)', // ~14:1 ratio - replaces 0.7
-    tertiary: 'rgba(255, 255, 255, 0.7)', // ~9:1 ratio - replaces 0.5
-    muted: 'rgba(255, 255, 255, 0.6)', // ~5:1 ratio - replaces 0.4, meets AA for normal text
-    disabled: 'rgba(255, 255, 255, 0.45)', // ~3.3:1 ratio - AA for large text/decorative
+    primary: 'rgba(255, 255, 255, 1)',
+    secondary: 'rgba(255, 255, 255, 0.85)',
+    tertiary: 'rgba(255, 255, 255, 0.7)',
+    muted: 'rgba(255, 255, 255, 0.6)',
+    disabled: 'rgba(255, 255, 255, 0.45)',
   },
-  // For light backgrounds (e.g., white #FFFFFF)
   onLight: {
-    primary: 'rgba(0, 0, 0, 1)', // Black - 21:1 ratio
-    secondary: 'rgba(0, 0, 0, 0.85)', // ~14:1 ratio
-    tertiary: 'rgba(0, 0, 0, 0.7)', // ~9:1 ratio
-    muted: 'rgba(0, 0, 0, 0.6)', // ~5:1 ratio
-    disabled: 'rgba(0, 0, 0, 0.45)', // ~3.3:1 ratio
+    primary: 'rgba(0, 0, 0, 1)',
+    secondary: 'rgba(0, 0, 0, 0.85)',
+    tertiary: 'rgba(0, 0, 0, 0.7)',
+    muted: 'rgba(0, 0, 0, 0.6)',
+    disabled: 'rgba(0, 0, 0, 0.45)',
   },
 } as const;
 

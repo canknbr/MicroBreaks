@@ -167,12 +167,6 @@ export default function WeeklyStoryScreen() {
             <View
               style={[
                 styles.metricGrid,
-                {
-                  borderColor: theme.border.subtle,
-                  backgroundColor: theme.isDark
-                    ? 'rgba(255,255,255,0.04)'
-                    : theme.background.card,
-                },
               ]}
             >
               <Metric
@@ -204,12 +198,6 @@ export default function WeeklyStoryScreen() {
             <View
               style={[
                 styles.calloutCard,
-                {
-                  borderColor: theme.border.subtle,
-                  backgroundColor: theme.isDark
-                    ? 'rgba(255,255,255,0.04)'
-                    : theme.background.card,
-                },
               ]}
             >
               <View style={styles.calloutHeader}>
@@ -236,12 +224,6 @@ export default function WeeklyStoryScreen() {
             <View
               style={[
                 styles.calloutCard,
-                {
-                  borderColor: theme.border.subtle,
-                  backgroundColor: theme.isDark
-                    ? 'rgba(255,255,255,0.04)'
-                    : theme.background.card,
-                },
               ]}
             >
               <View style={styles.calloutHeader}>
@@ -289,12 +271,6 @@ export default function WeeklyStoryScreen() {
               <View
                 style={[
                   styles.calloutCard,
-                  {
-                    borderColor: theme.border.subtle,
-                    backgroundColor: theme.isDark
-                      ? 'rgba(255,255,255,0.04)'
-                      : theme.background.card,
-                  },
                 ]}
               >
                 <View style={styles.calloutHeader}>
@@ -341,12 +317,6 @@ export default function WeeklyStoryScreen() {
               <View
                 style={[
                   styles.calloutCard,
-                  {
-                    borderColor: theme.border.subtle,
-                    backgroundColor: theme.isDark
-                      ? 'rgba(255,255,255,0.04)'
-                      : theme.background.card,
-                  },
                 ]}
               >
                 <View style={styles.calloutHeader}>
@@ -407,8 +377,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
   scrollView: { flex: 1 },
   content: {
@@ -459,29 +430,33 @@ const styles = StyleSheet.create({
   },
   metricDivider: { width: 1 },
   calloutCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 18,
-    marginBottom: Spacing.md,
+    paddingTop: 20,
+    marginTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   calloutHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   calloutTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
   },
   calloutValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 6,
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 28,
+    letterSpacing: -1,
+    marginBottom: 8,
   },
   calloutSub: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    lineHeight: 20,
   },
   barRow: {
     flexDirection: 'row',

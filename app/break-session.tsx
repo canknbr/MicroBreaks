@@ -7,9 +7,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -62,7 +59,6 @@ function breakSourceKind(id: string): 'core' | 'library' | 'circuit' | 'routine'
 }
 import { useBreakLiveActivity } from '@/services/widgets/liveActivity';
 import {
-  getLibraryMedia,
   isLibraryExerciseId,
   localizedName,
   toLibraryLocale,
@@ -494,12 +490,9 @@ function BreakSessionScreen() {
             exiting={FadeOut.duration(200).reduceMotion(ReduceMotion.System)}
             style={styles.preparationContainer}
           >
-            <Text style={[styles.preparationTitle, { color: theme.text.secondary }]}>{t('breakSession.preparation.title')}</Text>
-            <View style={[styles.preparationIconContainer, { borderColor: exercise.color, backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }]}>
-              <Text style={styles.preparationIcon}>{exercise.icon}</Text>
-            </View>
-            <Text style={[styles.preparationExercise, { color: theme.text.primary }]}>{exercise.title}</Text>
-            <Text style={[styles.preparationCountdown, { color: exercise.color }]}>
+            <Text style={styles.prepEyebrow}>{t('breakSession.preparation.title')}</Text>
+            <Text style={[styles.prepTitle, { color: theme.text.primary }]}>{exercise.title}</Text>
+            <Text style={[styles.prepCountdown, { color: exercise.color }]}>
               {state.timeRemaining}
             </Text>
             <Text style={[styles.disclaimerText, { color: theme.text.muted }]}>
@@ -565,7 +558,7 @@ function BreakSessionScreen() {
 
             {/* Done Button */}
             <Pressable
-              style={[styles.doneButton, { backgroundColor: exercise.color }]}
+              style={styles.doneButton}
               onPress={handleFinish}
               accessibilityRole="button"
               accessibilityLabel={t('common.done')}
@@ -582,9 +575,10 @@ function BreakSessionScreen() {
             style={styles.completionContainer}
           >
             <View style={styles.feedbackComplete}>
-              <Text style={styles.feedbackCompleteEmoji} accessibilityElementsHidden>🙏</Text>
-              <Text style={[styles.feedbackCompleteTitle, { color: theme.text.primary }]}>{t('breakSession.feedback.thankYou', { defaultValue: 'Thank you!' })}</Text>
-              <Text style={[styles.feedbackCompleteText, { color: theme.text.secondary }]}>
+              <Text style={styles.fbDoneEyebrow}>
+                {t('breakSession.feedback.thankYou', { defaultValue: 'Thank you' })}
+              </Text>
+              <Text style={[styles.fbDoneTitle, { color: theme.text.primary }]}>
                 {t('breakSession.feedback.subtitle')}
               </Text>
             </View>
@@ -595,28 +589,8 @@ function BreakSessionScreen() {
                 onPress={handleNextMove}
                 accessibilityRole="button"
                 accessibilityLabel={`${t('library.nextMove.start')}: ${localizedName(nextMove, toLibraryLocale(language))}`}
-                style={[
-                  styles.nextMoveCard,
-                  {
-                    backgroundColor: theme.isDark
-                      ? 'rgba(25, 25, 35, 0.9)'
-                      : 'rgba(0, 0, 0, 0.04)',
-                    borderColor: `${exercise.color}45`,
-                  },
-                ]}
+                style={styles.nextMoveRow}
               >
-                <View style={styles.nextMoveThumbWrap}>
-                  {getLibraryMedia(nextMove) ? (
-                    <Image
-                      source={getLibraryMedia(nextMove)?.thumb}
-                      style={styles.nextMoveThumb}
-                      contentFit="cover"
-                      accessibilityIgnoresInvertColors
-                    />
-                  ) : (
-                    <Text style={styles.nextMoveEmoji}>{exercise.icon}</Text>
-                  )}
-                </View>
                 <View style={styles.nextMoveInfo}>
                   <Text style={[styles.nextMoveLabel, { color: theme.text.muted }]}>
                     {t('library.nextMove.subtitle')}
@@ -628,15 +602,13 @@ function BreakSessionScreen() {
                     {localizedName(nextMove, toLibraryLocale(language))}
                   </Text>
                 </View>
-                <View style={[styles.nextMovePlay, { backgroundColor: exercise.color }]}>
-                  <Ionicons name="play" size={14} color="#000000" />
-                </View>
+                <Text style={[styles.nextMoveArrow, { color: exercise.color }]}>→</Text>
               </Pressable>
             )}
 
             {/* Done Button */}
             <Pressable
-              style={[styles.doneButton, { backgroundColor: exercise.color }]}
+              style={styles.doneButton}
               onPress={handleFinish}
               accessibilityRole="button"
               accessibilityLabel={t('common.continue')}
@@ -665,20 +637,8 @@ function BreakSessionScreen() {
     completedMissionFeedback,
   ]);
 
-  // Ambient background color based on exercise
-  const ambientColor = state.exercise?.color || '#06FFA5';
-
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      {/* Background gradient */}
-      <LinearGradient
-        colors={theme.isDark ? ['#000000', '#0a0a15', '#000000'] : ['#F8F9FA', '#FFFFFF', '#F8F9FA']}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Ambient glow */}
-      <View style={[styles.ambientGlow, { backgroundColor: ambientColor }]} />
-
       <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
         {/* Header - only show during active session */}
         {state.exercise &&
@@ -708,17 +668,7 @@ function BreakSessionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-  },
-  ambientGlow: {
-    position: 'absolute',
-    top: -200,
-    left: '50%',
-    marginLeft: -250,
-    width: 500,
-    height: 500,
-    borderRadius: 250,
-    opacity: 0.08,
+    backgroundColor: '#0B0A0D',
   },
   safeArea: {
     flex: 1,
@@ -741,43 +691,34 @@ const styles = StyleSheet.create({
   },
   preparationContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
   },
-  preparationTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 32,
+  prepEyebrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 12,
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 18,
   },
-  preparationIconContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginBottom: 24,
+  prepTitle: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -1,
+    marginBottom: 4,
   },
-  preparationIcon: {
-    fontSize: 80,
-  },
-  preparationExercise: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  preparationCountdown: {
-    fontSize: 64,
-    fontWeight: '200',
+  prepCountdown: {
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 104,
+    letterSpacing: -4,
   },
   disclaimerText: {
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 12,
-    textAlign: 'center',
+    lineHeight: 18,
     marginTop: 24,
-    paddingHorizontal: 32,
+    maxWidth: 300,
     opacity: 0.7,
   },
   exerciseContainer: {
@@ -793,78 +734,60 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     marginBottom: 20,
     paddingVertical: 18,
-    borderRadius: 16,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
   },
   doneButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    color: '#0B0A0D',
   },
   feedbackComplete: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
   },
-  nextMoveCard: {
+  fbDoneEyebrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 12,
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 16,
+  },
+  fbDoneTitle: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 32,
+    lineHeight: 36,
+    letterSpacing: -1,
+  },
+  nextMoveRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 14,
-  },
-  nextMoveThumbWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  nextMoveThumb: {
-    width: 42,
-    height: 42,
-  },
-  nextMoveEmoji: {
-    fontSize: 22,
+    paddingVertical: 18,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 8,
   },
   nextMoveInfo: {
     flex: 1,
-    marginHorizontal: 12,
   },
   nextMoveLabel: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 11,
-    fontWeight: '600',
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
   },
   nextMoveName: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 2,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
+    marginTop: 4,
   },
-  nextMovePlay: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  feedbackCompleteEmoji: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  feedbackCompleteTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  feedbackCompleteText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
+  nextMoveArrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 24,
+    marginLeft: 12,
   },
 });
 

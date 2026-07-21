@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Platform,
   Pressable,
   useWindowDimensions,
   RefreshControl,
@@ -19,10 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import type { IoniconsName } from '@/types/icons';
 
 import Animated, {
   useSharedValue,
@@ -36,7 +32,6 @@ import * as Haptics from 'expo-haptics';
 import i18n from 'i18next';
 import { Spacing } from '@/theme';
 import { formatDuration, formatRelativeTime } from '@/utils/format';
-import { cardShadow } from '@/utils/cardShadow';
 import {
   useStatsData,
   StatsPeriod,
@@ -69,22 +64,18 @@ const TIME_PERIODS: { label: string; value: StatsPeriod }[] = [
 
 // Animated Stat Card
 function StatCard({
-  icon,
   label,
   value,
   suffix,
   color,
   delay,
-  theme,
   screenWidth,
 }: {
-  icon: string;
   label: string;
   value: number;
   suffix?: string;
   color: string;
   delay: number;
-  theme: ThemeColors;
   screenWidth: number;
 }) {
   const opacity = useSharedValue(0);
@@ -104,31 +95,13 @@ function StatCard({
     <Animated.View
       accessibilityRole="text"
       accessibilityLabel={`${label}: ${Math.round(value)}${suffix || ''}`}
-      style={[
-      styles.statCard,
-      {
-        width: (screenWidth - Spacing.lg * 2 - 12) / 2,
-        borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-        ...cardShadow(theme.isDark, { height: 2, opacity: 0.08, radius: 10, elevation: 4 }),
-      },
-      containerStyle,
-    ]}>
-      {/* BlurView only for dark mode */}
-      {theme.isDark && (
-        Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-        )
-      )}
-      <View style={[styles.statIconContainer, { backgroundColor: `${color}12` }]}>
-        <Ionicons name={icon as IoniconsName} size={20} color={color} />
-      </View>
-      <Text style={[styles.statValue, { color: theme.text.primary }]}>
-        {Math.round(value)}{suffix}
+      style={[styles.statCard, { width: (screenWidth - Spacing.lg * 2 - 12) / 2 }, containerStyle]}
+    >
+      <Text style={[styles.statValue, { color }]}>
+        {Math.round(value)}
+        {suffix ? <Text style={styles.statSuffix}>{suffix}</Text> : null}
       </Text>
-      <Text style={[styles.statLabel, { color: theme.text.muted }]}>{label}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </Animated.View>
   );
 }
@@ -172,7 +145,7 @@ function AnimatedBar({
       <View style={[styles.barTrack, dataLength > 7 && styles.barTrackSmall, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : theme.border.subtle }]}>
         <Animated.View style={[styles.bar, barStyle]}>
           <LinearGradient
-            colors={isToday ? (theme.isDark ? ['#06FFA5', '#00E5FF'] : [theme.accent.primary, theme.accent.secondary]) : (theme.isDark ? ['#3A3A4A', '#2A2A3A'] : [theme.border.strong, theme.border.medium])}
+            colors={isToday ? (theme.isDark ? ['#FF2472', '#FF2472'] : [theme.accent.primary, theme.accent.secondary]) : (theme.isDark ? ['#3A3A4A', '#2A2A3A'] : [theme.border.strong, theme.border.medium])}
             style={StyleSheet.absoluteFill}
           />
         </Animated.View>
@@ -308,12 +281,13 @@ function TimePatternItem({
     <Animated.View style={[styles.timePatternItem, containerStyle]} accessibilityLabel={`${item.label} ${item.timeRange}: ${item.count} breaks, ${item.percentage} percent${isTop ? ', most active time' : ''}`}>
       <View style={styles.timePatternHeader}>
         <View style={styles.timePatternInfo}>
-          <Text style={styles.timePatternIcon}>{item.icon}</Text>
           <View>
             <Text style={[styles.timePatternLabel, { color: theme.text.primary }, isTop && { color: item.color }]}>
               {item.label}
             </Text>
-            <Text style={[styles.timePatternRange, { color: theme.text.muted }]}>{item.timeRange}</Text>
+            <Text style={[styles.timePatternRange, { color: theme.text.muted }]}>
+              {item.timeRange}{isTop ? '  ·  MOST ACTIVE' : ''}
+            </Text>
           </View>
         </View>
         <View style={styles.timePatternStats}>
@@ -330,11 +304,6 @@ function TimePatternItem({
           ]}
         />
       </View>
-      {isTop && (
-        <View style={[styles.topTimeBadge, { backgroundColor: `${item.color}20` }]}>
-          <Text style={[styles.topTimeBadgeText, { color: item.color }]}>Most Active</Text>
-        </View>
-      )}
     </Animated.View>
   );
 }
@@ -367,10 +336,7 @@ function RecentBreakItem({
   const locale = i18n.language || 'en';
 
   return (
-    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.medium }, style]} accessibilityLabel={`${item.title}, ${formatDuration(item.duration)}, ${formatRelativeTime(item.completedAt, { locale })}`}>
-      <View style={[styles.recentIcon, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border.subtle }]}>
-        <Text style={styles.recentIconText}>{item.icon}</Text>
-      </View>
+    <Animated.View style={[styles.recentItem, { borderBottomColor: theme.border.subtle }, style]} accessibilityLabel={`${item.title}, ${formatDuration(item.duration)}, ${formatRelativeTime(item.completedAt, { locale })}`}>
       <View style={styles.recentInfo}>
         <Text style={[styles.recentType, { color: theme.text.primary }]}>{item.title}</Text>
         <Text style={[styles.recentTime, { color: theme.text.muted }]}>{formatRelativeTime(item.completedAt, { locale })}</Text>
@@ -496,10 +462,6 @@ export default function StatsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      {/* Ambient Background */}
-      <View style={[styles.ambientGlow, styles.ambientBlue]} />
-      <View style={[styles.ambientGlow, styles.ambientGreen]} />
-
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
@@ -521,41 +483,26 @@ export default function StatsScreen() {
             </Text>
           </Animated.View>
 
-          {/* Period Selector */}
-          <View
-            style={[styles.periodSelector, {
-              backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : theme.background.card,
-              ...cardShadow(theme.isDark, { height: 2, opacity: 0.05, radius: 8, elevation: 2 }),
-            }]}
-            accessibilityRole="tablist"
-            accessibilityLabel="Statistics time period selector"
-          >
-            {TIME_PERIODS.map((period) => (
-              <Pressable
-                key={period.value}
-                style={[
-                  styles.periodButton,
-                  selectedPeriod === period.value && [
-                    styles.periodButtonActive,
-                    { backgroundColor: theme.isDark ? 'rgba(6, 255, 165, 0.15)' : `${theme.accent.primary}12` },
-                  ],
-                ]}
-                onPress={() => handlePeriodChange(period.value)}
-                accessibilityRole="tab"
-                accessibilityLabel={`View ${period.label.toLowerCase()} statistics`}
-                accessibilityState={{ selected: selectedPeriod === period.value }}
-              >
-                <Text
-                  style={[
-                    styles.periodText,
-                    { color: theme.text.muted },
-                    selectedPeriod === period.value && styles.periodTextActive,
-                  ]}
+          {/* Period — type-menu */}
+          <View style={styles.periodRow} accessibilityRole="tablist">
+            {TIME_PERIODS.map((period) => {
+              const on = selectedPeriod === period.value;
+              return (
+                <Pressable
+                  key={period.value}
+                  onPress={() => handlePeriodChange(period.value)}
+                  style={styles.periodItem}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={`View ${period.label.toLowerCase()} statistics`}
                 >
-                  {period.label}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text style={[styles.periodText, on ? styles.periodOn : styles.periodOff]}>
+                    {period.label}
+                  </Text>
+                  <View style={[styles.periodBar, { opacity: on ? 1 : 0 }]} />
+                </Pressable>
+              );
+            })}
           </View>
 
           {stats.isLoading ? (
@@ -579,60 +526,38 @@ export default function StatsScreen() {
               {/* Stats Grid */}
               <View style={styles.statsGrid}>
                 <StatCard
-                  icon="fitness"
                   label="Guided Resets"
                   value={stats.totalBreaks}
-                  color="#06FFA5"
+                  color="#FF2472"
                   delay={200}
-                  theme={theme}
                   screenWidth={screenWidth}
                 />
                 <StatCard
-                  icon="time"
                   label="Recovery Minutes"
                   value={stats.totalMinutes}
-                  color="#00E5FF"
+                  color="#FF2472"
                   delay={300}
-                  theme={theme}
                   screenWidth={screenWidth}
                 />
                 <StatCard
-                  icon="flame"
                   label="Current Rhythm"
                   value={stats.currentStreak}
                   suffix=" days"
-                  color="#FFD166"
+                  color="#FAE34B"
                   delay={400}
-                  theme={theme}
                   screenWidth={screenWidth}
                 />
                 <StatCard
-                  icon="trophy"
                   label="Best Rhythm"
                   value={stats.longestStreak}
                   suffix=" days"
-                  color="#B47EFF"
+                  color="#BC26F4"
                   delay={500}
-                  theme={theme}
                   screenWidth={screenWidth}
                 />
               </View>
 
-              <View style={[
-                styles.sectionCard,
-                {
-                  borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                  backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                  ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
-                },
-              ]}>
-                {theme.isDark && (
-                  Platform.OS === 'ios' ? (
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                  )
-                )}
+              <View style={styles.sectionCard}>
                 <View style={styles.sectionTitleRow}>
                   <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Current Rhythm</Text>
                   <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
@@ -707,22 +632,7 @@ export default function StatsScreen() {
 
               {/* Chart */}
               {advancedStats.hasFeature && stats.chartData.length > 0 && (
-                <View style={[
-                  styles.chartCard,
-                  {
-                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
-                  },
-                ]}>
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
+                <View style={styles.chartCard}>
                   <View style={styles.sectionTitleRow}>
                     <Text style={[styles.chartTitle, { color: theme.text.primary }]}>
                       Recovery Rhythm
@@ -741,22 +651,7 @@ export default function StatsScreen() {
 
               {/* Break Types Distribution */}
               {advancedStats.hasFeature && stats.breakTypes.length > 0 && (
-                <View style={[
-                  styles.sectionCard,
-                  {
-                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
-                  },
-                ]}>
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
+                <View style={styles.sectionCard}>
                   <View style={styles.sectionTitleRow}>
                     <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recovery Mix</Text>
                     <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
@@ -776,22 +671,7 @@ export default function StatsScreen() {
 
               {/* Time Patterns */}
               {advancedStats.hasFeature && stats.timePatterns.length > 0 && (
-                <View style={[
-                  styles.sectionCard,
-                  {
-                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
-                  },
-                ]}>
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
+                <View style={styles.sectionCard}>
                   <View style={styles.sectionTitleRow}>
                     <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recovery Windows</Text>
                     <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
@@ -818,28 +698,13 @@ export default function StatsScreen() {
                   ctaLabel="Preview Pro Analytics"
                   onPress={handleUpgradePress}
                   icon="analytics"
-                  accentColors={['#FFD166', '#FF9500']}
+                  accentColors={['#FAE34B', '#FF9500']}
                 />
               )}
 
               {/* Recent Activity */}
               {stats.recentBreaks.length > 0 && (
-                <View style={[
-                  styles.sectionCard,
-                  {
-                    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                    ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
-                  },
-                ]}>
-                  {/* BlurView only for dark mode */}
-                  {theme.isDark && (
-                    Platform.OS === 'ios' ? (
-                      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                    )
-                  )}
+                <View style={styles.sectionCard}>
                   <View style={styles.sectionTitleRow}>
                     <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Recent Resets</Text>
                     <Text style={[styles.sectionSubtitle, { color: theme.text.muted }]}>
@@ -853,22 +718,7 @@ export default function StatsScreen() {
               )}
 
               {/* XP & Level Card */}
-              <View style={[
-                styles.xpCard,
-                {
-                  borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-                  backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-                  ...cardShadow(theme.isDark, { height: 3, opacity: 0.08, radius: 12, elevation: 5 }),
-                },
-              ]}>
-                {/* BlurView only for dark mode */}
-                {theme.isDark && (
-                  Platform.OS === 'ios' ? (
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                  ) : (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-                  )
-                )}
+              <View style={styles.xpCard}>
                 <View style={styles.xpContent}>
                   <View style={styles.xpLeft}>
                     <Text style={[styles.xpLabel, { color: theme.text.secondary }]}>Level {stats.level}</Text>
@@ -915,14 +765,14 @@ const styles = StyleSheet.create({
     right: -100,
     width: 350,
     height: 350,
-    backgroundColor: '#00E5FF',
+    backgroundColor: '#FF2472',
   },
   ambientGreen: {
     bottom: 50,
     left: -150,
     width: 400,
     height: 400,
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
   },
   safeArea: {
     flex: 1,
@@ -937,39 +787,39 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 34,
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.55)',
   },
-  periodSelector: {
+  periodRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: Spacing.lg,
+    gap: 24,
+    marginBottom: 26,
   },
-  periodButton: {
-    flex: 1,
-    paddingVertical: 10,
+  periodItem: {
     alignItems: 'center',
-    borderRadius: 10,
-  },
-  periodButtonActive: {
-    backgroundColor: 'rgba(6, 255, 165, 0.2)',
+    paddingBottom: 4,
   },
   periodText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
-  periodTextActive: {
-    color: '#06FFA5',
+  periodOn: { color: '#FFFFFF' },
+  periodOff: { color: 'rgba(255,255,255,0.34)' },
+  periodBar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
+    marginTop: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -986,51 +836,43 @@ const styles = StyleSheet.create({
   recoveryInsightsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: Spacing.lg,
+    columnGap: 20,
+    rowGap: 24,
+    marginBottom: 34,
   },
   insightsHeader: {
-    marginBottom: Spacing.md,
+    marginBottom: 20,
   },
   statCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 16,
-    alignItems: 'center',
-  },
-  statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
+    paddingVertical: 8,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 36,
+    letterSpacing: -1.5,
     color: '#FFFFFF',
-    marginBottom: 2,
+  },
+  statSuffix: {
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.5)',
   },
   statLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.2,
+    color: 'rgba(255,255,255,0.45)',
+    marginTop: 8,
+    textTransform: 'uppercase',
   },
   chartCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: 34,
   },
   chartTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
     color: '#FFFFFF',
-    marginBottom: Spacing.md,
   },
   chartContainer: {
     height: 150,
@@ -1071,33 +913,29 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   barLabelActive: {
-    color: '#06FFA5',
+    color: '#FF2472',
     fontWeight: '600',
   },
   barLabelSmall: {
     fontSize: 9,
   },
   sectionCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: 34,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
     color: '#FFFFFF',
-    marginBottom: Spacing.md,
   },
   sectionTitleRow: {
-    marginBottom: Spacing.md,
+    marginBottom: 20,
   },
   sectionSubtitle: {
-    fontSize: 12,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 4,
+    marginTop: 5,
   },
   typeItem: {
     marginBottom: 16,
@@ -1119,15 +957,17 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   typeName: {
-    fontSize: 14,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 15,
     color: '#FFFFFF',
   },
   typeCount: {
+    fontFamily: 'JetBrainsMono-Medium',
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.5)',
   },
   typeBarTrack: {
-    height: 6,
+    height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 3,
     overflow: 'hidden',
@@ -1139,82 +979,74 @@ const styles = StyleSheet.create({
   recentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  recentIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  recentIconText: {
-    fontSize: 18,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   recentInfo: {
     flex: 1,
+    marginRight: 12,
   },
   recentType: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: -0.2,
     color: '#FFFFFF',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   recentTime: {
-    fontSize: 12,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.5)',
   },
   recentDuration: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#06FFA5',
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 15,
+    color: '#FF2472',
   },
   xpCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    marginBottom: Spacing.lg,
+    marginBottom: 34,
   },
   xpContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
+    paddingTop: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   xpLeft: {
     marginRight: 20,
   },
   xpLabel: {
-    fontSize: 14,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 4,
   },
   xpValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#06FFA5',
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 26,
+    letterSpacing: -0.8,
+    color: '#FF2472',
   },
   xpRight: {
     flex: 1,
   },
   xpNextLevel: {
+    fontFamily: 'JetBrainsMono-Regular',
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 8,
   },
   xpProgressTrack: {
-    height: 8,
+    height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 4,
     overflow: 'hidden',
   },
   xpProgressBar: {
     height: '100%',
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
     borderRadius: 4,
   },
   goalSummaryRow: {
@@ -1227,16 +1059,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   goalMetricValue: {
+    fontFamily: 'JetBrainsMono-Bold',
     fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
+    letterSpacing: -0.8,
+    marginBottom: 5,
   },
   goalMetricLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   goalProgressTrack: {
-    height: 10,
+    height: 4,
     borderRadius: 999,
     overflow: 'hidden',
   },
@@ -1267,29 +1102,34 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   timePatternLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 16,
+    letterSpacing: -0.2,
     color: '#FFFFFF',
   },
   timePatternRange: {
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 11,
+    letterSpacing: 0.3,
     color: 'rgba(255, 255, 255, 0.4)',
-    marginTop: 2,
+    marginTop: 3,
   },
   timePatternStats: {
     alignItems: 'flex-end',
   },
   timePatternCount: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 18,
+    letterSpacing: -0.5,
     color: '#FFFFFF',
   },
   timePatternPercent: {
+    fontFamily: 'JetBrainsMono-Regular',
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.5)',
   },
   timePatternBarTrack: {
-    height: 6,
+    height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 3,
     overflow: 'hidden',

@@ -1,33 +1,34 @@
 /**
- * ONB_013: Live Break Demo
- * Premium zen design with animated exercise demo
+ * ONB break demo — editorial. No emoji / circles / cards: the instruction is
+ * the hero (big type), the hold is a large mono countdown + thin progress,
+ * feedback is a type menu.
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
-  withSequence,
-  Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import OnboardingLayout from './components/OnboardingLayout';
 import SecondaryButton from './components/SecondaryButton';
-import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 
 type DemoPhase = 'preparation' | 'instruction' | 'execution' | 'feedback';
 
-const PREPARATION_DURATION_MS = 3000;
-const INSTRUCTION_DURATION_MS = 3000;
+const PREPARATION_DURATION_MS = 2500;
+const INSTRUCTION_DURATION_MS = 3500;
 const EXECUTION_DURATION_MS = 10000;
+
+const FEEDBACK = [
+  { id: 'good', label: 'Helpful' },
+  { id: 'neutral', label: 'Okay' },
+  { id: 'bad', label: 'Not helpful' },
+] as const;
 
 export default function BreakDemoScreen() {
   const router = useRouter();
@@ -35,203 +36,107 @@ export default function BreakDemoScreen() {
   const [countdown, setCountdown] = useState(EXECUTION_DURATION_MS / 1000);
   const [feedback, setFeedback] = useState<'good' | 'neutral' | 'bad' | null>(null);
 
-  // Animation values
-  const pulseScale = useSharedValue(1);
-  const ringProgress = useSharedValue(0);
   const contentOpacity = useSharedValue(1);
+  const progress = useSharedValue(0);
 
   useEffect(() => {
-    // Pulse animation for preparation phase
-    if (phase === 'preparation') {
-      pulseScale.value = withRepeat(
-        withSequence(
-          withTiming(1.1, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
-        -1,
-        true
-      );
-    }
-
-    // Phase transition helpers
-    const goToInstruction = () => setPhase('instruction');
-    const goToExecution = () => setPhase('execution');
-    const goToFeedback = () => setPhase('feedback');
-
-    // Phase timing
     const timers: number[] = [];
-    timers.push(window.setTimeout(() => {
+    const fadeTo = (fn: () => void) => {
       contentOpacity.value = withTiming(0, { duration: 200 }, () => {
-        runOnJS(goToInstruction)();
+        runOnJS(fn)();
         contentOpacity.value = withTiming(1, { duration: 300 });
       });
-    }, PREPARATION_DURATION_MS));
-    timers.push(window.setTimeout(() => {
-      contentOpacity.value = withTiming(0, { duration: 200 }, () => {
-        runOnJS(goToExecution)();
-        contentOpacity.value = withTiming(1, { duration: 300 });
-      });
-    }, PREPARATION_DURATION_MS + INSTRUCTION_DURATION_MS));
-    timers.push(window.setTimeout(() => {
-      contentOpacity.value = withTiming(0, { duration: 200 }, () => {
-        runOnJS(goToFeedback)();
-        contentOpacity.value = withTiming(1, { duration: 300 });
-      });
-    }, PREPARATION_DURATION_MS + INSTRUCTION_DURATION_MS + EXECUTION_DURATION_MS));
-
+    };
+    timers.push(window.setTimeout(() => fadeTo(() => setPhase('instruction')), PREPARATION_DURATION_MS));
+    timers.push(
+      window.setTimeout(
+        () => fadeTo(() => setPhase('execution')),
+        PREPARATION_DURATION_MS + INSTRUCTION_DURATION_MS
+      )
+    );
+    timers.push(
+      window.setTimeout(
+        () => fadeTo(() => setPhase('feedback')),
+        PREPARATION_DURATION_MS + INSTRUCTION_DURATION_MS + EXECUTION_DURATION_MS
+      )
+    );
     return () => timers.forEach(clearTimeout);
-  }, [contentOpacity, phase, pulseScale]);
+  }, [contentOpacity]);
 
   useEffect(() => {
     if (phase === 'execution') {
-      ringProgress.value = withTiming(100, {
-        duration: EXECUTION_DURATION_MS,
-        easing: Easing.linear,
-      });
+      progress.value = 0;
+      progress.value = withTiming(1, { duration: EXECUTION_DURATION_MS });
     }
-  }, [phase, ringProgress]);
+  }, [phase, progress]);
 
   useEffect(() => {
     if (phase === 'execution' && countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(t);
     }
     return undefined;
   }, [phase, countdown]);
 
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  const contentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-  }));
+  const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
+  const barStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
 
   const handleFeedback = (rating: 'good' | 'neutral' | 'bad') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.selectionAsync();
     setFeedback(rating);
-    setTimeout(() => {
-      router.push('./notification-permission');
-    }, 1000);
+    setTimeout(() => router.push('./notification-permission'), 650);
   };
-
-  const handleSkip = () => {
-    router.push('./notification-permission');
-  };
+  const handleSkip = () => router.push('./notification-permission');
 
   const renderContent = () => {
     switch (phase) {
       case 'preparation':
         return (
-          <Animated.View style={[styles.phaseContent, contentAnimatedStyle]}>
-            <Text style={styles.title}>Let&apos;s try a quick neck stretch</Text>
-            <Text style={styles.subtitle}>Get ready...</Text>
-            <Animated.View style={[styles.illustration, pulseAnimatedStyle]}>
-              <LinearGradient
-                colors={[ZenColors.primary.glow, 'transparent']}
-                style={styles.illustrationGlow}
-              />
-              <Text style={styles.illustrationText}>🧘‍♀️</Text>
-            </Animated.View>
+          <Animated.View style={contentStyle}>
+            <Text style={styles.eyebrow}>GET READY</Text>
+            <Text style={styles.hero}>Let&apos;s try a quick neck stretch.</Text>
           </Animated.View>
         );
-
       case 'instruction':
         return (
-          <Animated.View style={[styles.phaseContent, contentAnimatedStyle]}>
-            <Text style={styles.title}>Follow along</Text>
-            <View style={styles.illustration}>
-              <Text style={styles.illustrationText}>🔄</Text>
-            </View>
-            <Text style={styles.instruction}>
-              Gently tilt your head to the right, bringing your ear toward your
-              shoulder. Hold for 5 seconds.
-            </Text>
+          <Animated.View style={contentStyle}>
+            <Text style={styles.eyebrow}>FOLLOW ALONG</Text>
+            <Text style={styles.hero}>Tilt your head right, ear toward your shoulder.</Text>
+            <Text style={styles.meta}>Hold for 5 seconds</Text>
           </Animated.View>
         );
-
       case 'execution':
         return (
-          <Animated.View style={[styles.phaseContent, contentAnimatedStyle]}>
-            <Text style={styles.title}>Keep going!</Text>
-            <View style={styles.progressRing}>
-              <LinearGradient
-                colors={[ZenColors.primary.main, ZenColors.secondary.main]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.ringGradient}
-              />
-              <View style={styles.ringInner}>
-                <Text style={styles.countdown}>{countdown}</Text>
-                <Text style={styles.countdownLabel}>seconds</Text>
-              </View>
+          <Animated.View style={contentStyle}>
+            <Text style={styles.eyebrow}>HOLD</Text>
+            <Text style={styles.count}>{countdown}</Text>
+            <View style={styles.track}>
+              <Animated.View style={[styles.fill, barStyle]} />
             </View>
-            <Text style={styles.instruction}>
-              Nice! Now switch to the other side...
-            </Text>
+            <Text style={styles.meta}>Now switch to the other side…</Text>
           </Animated.View>
         );
-
       case 'feedback':
         return (
-          <Animated.View style={[styles.phaseContent, contentAnimatedStyle]}>
-            <Text style={styles.title}>Great job!</Text>
-            <Text style={styles.subtitle}>How did that feel?</Text>
-            <View style={styles.feedbackButtons}>
-              <Pressable
-                style={[
-                  styles.feedbackButton,
-                  feedback === 'good' && styles.feedbackButtonSelected,
-                ]}
-                onPress={() => handleFeedback('good')}>
-                {Platform.OS === 'ios' ? (
-                  <BlurView
-                    intensity={feedback === 'good' ? 40 : 25}
-                    tint="dark"
-                    style={StyleSheet.absoluteFill}
-                  />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-                )}
-                <Text style={styles.feedbackEmoji}>😊</Text>
-                <Text style={[styles.feedbackLabel, feedback === 'good' && styles.feedbackLabelSelected]}>Helpful</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.feedbackButton,
-                  feedback === 'neutral' && styles.feedbackButtonSelected,
-                ]}
-                onPress={() => handleFeedback('neutral')}>
-                {Platform.OS === 'ios' ? (
-                  <BlurView
-                    intensity={feedback === 'neutral' ? 40 : 25}
-                    tint="dark"
-                    style={StyleSheet.absoluteFill}
-                  />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-                )}
-                <Text style={styles.feedbackEmoji}>😐</Text>
-                <Text style={[styles.feedbackLabel, feedback === 'neutral' && styles.feedbackLabelSelected]}>Okay</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.feedbackButton,
-                  feedback === 'bad' && styles.feedbackButtonSelected,
-                ]}
-                onPress={() => handleFeedback('bad')}>
-                {Platform.OS === 'ios' ? (
-                  <BlurView
-                    intensity={feedback === 'bad' ? 40 : 25}
-                    tint="dark"
-                    style={StyleSheet.absoluteFill}
-                  />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-                )}
-                <Text style={styles.feedbackEmoji}>😟</Text>
-                <Text style={[styles.feedbackLabel, feedback === 'bad' && styles.feedbackLabelSelected]}>Not helpful</Text>
-              </Pressable>
+          <Animated.View style={contentStyle}>
+            <Text style={styles.eyebrow}>NICE WORK</Text>
+            <Text style={styles.hero}>How did that feel?</Text>
+            <View style={styles.fbList}>
+              {FEEDBACK.map((f) => {
+                const on = feedback === f.id;
+                return (
+                  <Pressable
+                    key={f.id}
+                    onPress={() => handleFeedback(f.id)}
+                    style={styles.fbRow}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                  >
+                    <View style={styles.lead}>{on ? <View style={styles.bar} /> : null}</View>
+                    <Text style={[styles.fbLabel, on ? styles.fbOn : styles.fbOff]}>{f.label}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </Animated.View>
         );
@@ -239,138 +144,57 @@ export default function BreakDemoScreen() {
   };
 
   return (
-    <OnboardingLayout
-      currentStep={5}
-      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
-      ambientColor="teal"
-    >
+    <OnboardingLayout currentStep={5} totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS} scrollable={false}>
       <View style={styles.container}>
-        {renderContent()}
-        <View style={styles.spacer} />
-        {phase !== 'feedback' && (
-          <SecondaryButton title="Skip" onPress={handleSkip} variant="muted" />
-        )}
+        <View style={styles.center}>{renderContent()}</View>
+        {phase !== 'feedback' && <SecondaryButton title="Skip" onPress={handleSkip} variant="muted" />}
       </View>
     </OnboardingLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: ZenSpacing.xl,
+  container: { flex: 1, paddingBottom: 8 },
+  center: { flex: 1, justifyContent: 'center' },
+  eyebrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 12,
+    letterSpacing: 2.4,
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 18,
   },
-  phaseContent: {
-    alignItems: 'center',
-    width: '100%',
+  hero: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -1,
+    color: '#FFFFFF',
   },
-  title: {
-    ...ZenTypography.headline.large,
-    color: ZenColors.text.primary,
-    textAlign: 'center',
-    marginBottom: ZenSpacing.xs,
+  meta: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 18,
   },
-  subtitle: {
-    ...ZenTypography.body.large,
-    color: ZenColors.text.secondary,
-    textAlign: 'center',
-    marginBottom: ZenSpacing.lg,
+  count: {
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 104,
+    letterSpacing: -4,
+    color: '#FFFFFF',
+    marginBottom: 26,
   },
-  illustration: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: ZenSpacing.xl,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: ZenColors.background.card,
+  track: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
   },
-  illustrationGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  illustrationText: {
-    fontSize: 100,
-  },
-  instruction: {
-    ...ZenTypography.body.large,
-    color: ZenColors.text.primary,
-    textAlign: 'center',
-    paddingHorizontal: ZenSpacing.md,
-    lineHeight: 28,
-  },
-  progressRing: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    padding: 6,
-    marginVertical: ZenSpacing.xl,
-  },
-  ringGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 90,
-  },
-  ringInner: {
-    flex: 1,
-    backgroundColor: ZenColors.background.pure,
-    borderRadius: 84,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countdown: {
-    ...ZenTypography.display.large,
-    color: ZenColors.primary.main,
-  },
-  countdownLabel: {
-    ...ZenTypography.body.medium,
-    color: ZenColors.text.secondary,
-  },
-  feedbackButtons: {
-    flexDirection: 'row',
-    gap: ZenSpacing.sm,
-    marginTop: ZenSpacing.lg,
-    paddingHorizontal: ZenSpacing.md,
-  },
-  feedbackButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: ZenSpacing.md,
-    backgroundColor: 'rgba(20, 20, 30, 0.7)',
-    borderRadius: ZenRadius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    overflow: 'hidden',
-  },
-  feedbackButtonSelected: {
-    borderColor: 'rgba(6, 255, 165, 0.5)',
-    backgroundColor: 'rgba(6, 255, 165, 0.15)',
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(18, 18, 26, 0.92)',
-    borderRadius: ZenRadius.lg,
-  },
-  feedbackEmoji: {
-    fontSize: 40,
-    marginBottom: ZenSpacing.xs,
-  },
-  feedbackLabel: {
-    ...ZenTypography.label.medium,
-    color: 'rgba(255, 255, 255, 0.85)',
-  },
-  feedbackLabelSelected: {
-    color: ZenColors.primary.main,
-  },
-  spacer: {
-    flex: 1,
-  },
+  fill: { height: '100%', backgroundColor: '#FF2472', borderRadius: 2 },
+  fbList: { marginTop: 28 },
+  fbRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  lead: { width: 30, justifyContent: 'center' },
+  bar: { width: 18, height: 3, borderRadius: 2, backgroundColor: '#FF2472' },
+  fbLabel: { fontFamily: 'GeneralSans-Bold', fontSize: 26, letterSpacing: -0.5 },
+  fbOn: { color: '#FFFFFF' },
+  fbOff: { color: 'rgba(255,255,255,0.3)' },
 });

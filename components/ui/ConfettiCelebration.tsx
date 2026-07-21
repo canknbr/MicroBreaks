@@ -52,7 +52,7 @@ const CELEBRATION_CONFIGS: Record<CelebrationType, CelebrationConfig> = {
     emoji: '🎯',
     title: 'Goal Complete!',
     subtitle: "You've crushed your daily goal",
-    colors: ['#06FFA5', '#00E5FF', '#FFFFFF'],
+    colors: ['#FF2472', '#FF2472', '#FFFFFF'],
     particleCount: 50,
   },
   new_level: {
@@ -60,7 +60,7 @@ const CELEBRATION_CONFIGS: Record<CelebrationType, CelebrationConfig> = {
     emoji: '⬆️',
     title: 'Level Up!',
     subtitle: 'You reached a new level',
-    colors: ['#B47EFF', '#FF6B9D', '#FFFFFF'],
+    colors: ['#BC26F4', '#FF5B93', '#FFFFFF'],
     particleCount: 60,
   },
   streak_milestone: {
@@ -68,7 +68,7 @@ const CELEBRATION_CONFIGS: Record<CelebrationType, CelebrationConfig> = {
     emoji: '🔥',
     title: 'Streak Milestone!',
     subtitle: 'days in a row - incredible!',
-    colors: ['#FFD166', '#FF9F1C', '#FF6B6B'],
+    colors: ['#FAE34B', '#FF9F1C', '#EB3E38'],
     particleCount: 55,
   },
   first_break: {
@@ -76,7 +76,7 @@ const CELEBRATION_CONFIGS: Record<CelebrationType, CelebrationConfig> = {
     emoji: '⭐',
     title: 'First Break!',
     subtitle: 'Your wellness journey begins',
-    colors: ['#00E5FF', '#06FFA5', '#FFFFFF'],
+    colors: ['#FF2472', '#FF2472', '#FFFFFF'],
     particleCount: 40,
   },
   achievement: {
@@ -84,7 +84,7 @@ const CELEBRATION_CONFIGS: Record<CelebrationType, CelebrationConfig> = {
     emoji: '🏆',
     title: 'Achievement Unlocked!',
     subtitle: 'You earned a new badge',
-    colors: ['#FFD166', '#B47EFF', '#06FFA5'],
+    colors: ['#FAE34B', '#BC26F4', '#FF2472'],
     particleCount: 65,
   },
   perfect_week: {
@@ -92,7 +92,7 @@ const CELEBRATION_CONFIGS: Record<CelebrationType, CelebrationConfig> = {
     emoji: '🌟',
     title: 'Perfect Week!',
     subtitle: 'You completed all daily goals',
-    colors: ['#FFD166', '#FF6B9D', '#B47EFF', '#06FFA5'],
+    colors: ['#FAE34B', '#FF5B93', '#BC26F4', '#FF2472'],
     particleCount: 80,
   },
 };
@@ -548,7 +548,7 @@ interface MiniCelebrationProps {
 export function MiniCelebration({
   visible,
   message,
-  color = '#06FFA5',
+  color = '#FF2472',
   onHide,
 }: MiniCelebrationProps) {
   const { successTick } = useHapticChoreography();

@@ -1,9 +1,9 @@
 /**
- * Breaks Screen - All break types and guided sessions
- * Premium design with categories, search, filtering, and featured breaks
+ * Breaks Screen — editorial. Pick a focus (type-menu), then a reset
+ * (hairline type-list). No featured card / search / filter chrome.
  */
 
-import React, { useDeferredValue, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,34 +13,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-  withSpring,
-  interpolate,
-  FadeIn,
-} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
-import { cardShadow } from '@/utils/cardShadow';
-import { useOnboardingStore, useUserStore } from '@/store';
+import { useOnboardingStore } from '@/store';
 import { useTierFeature } from '@/hooks/useTierFeature';
 import { useTheme } from '@/hooks/useTheme';
-import { ALL_EXERCISES, ExerciseCategory } from '@/data/exercises';
+import { ALL_EXERCISES } from '@/data/exercises';
 import { getBreakHistory } from '@/services/breakHistory';
 import {
-  PRO_LIBRARY_HIGHLIGHTS,
-} from '@/constants/subscription';
-import { UpgradePrompt } from '@/components/subscription';
-import {
   CATEGORY_DEFINITIONS,
-  FEATURED_EXERCISE_ID,
-  FEATURED_GRADIENT,
   OUTCOME_PACKS,
   OutcomePackId,
   formatDurationMinutes,
@@ -48,57 +31,31 @@ import {
   isStarterExercise,
 } from '@/features/recovery/outcomePacks';
 import {
-  getBreakOutcomeBadge,
   mapBreakHistoryToOutcomeSignals,
   sortBreakListByOutcome,
 } from '@/features/recovery/personalization';
-import { filterBreakCategories } from '@/features/recovery/breakLibraryFilter';
-import { selectFeaturedBreak } from '@/features/recovery/featuredBreak';
-import { CategorySection } from '@/components/breaks/CategorySection';
-import { FilterChips } from '@/components/breaks/FilterChips';
-import { MoveLibraryCard } from '@/components/breaks/MoveLibraryCard';
-import { SearchBar } from '@/components/breaks/SearchBar';
 import { useTranslation } from '@/i18n/hooks';
-import { getLibraryExercises, toLibraryLocale } from '@/features/exercise-library/catalog';
+import { toLibraryLocale } from '@/features/exercise-library/catalog';
 import { localizeExercise } from '@/data/exerciseLocalization';
-import { DURATION_FILTERS } from '@/components/breaks/constants';
 import type { BreakListItem } from '@/components/breaks/types';
 import type { RecommendationOutcomeSignal } from '@/services/recommendations/scoring';
 
 export default function BreaksScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { t, language } = useTranslation();
+  const { language } = useTranslation();
   const onboardingData = useOnboardingStore((state) => state.data);
-  const headerOpacity = useSharedValue(0);
-  const featuredScale = useSharedValue(0.9);
-  const featuredOpacity = useSharedValue(0);
 
-  // Search and filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState('all');
   const [selectedPackId, setSelectedPackId] = useState<OutcomePackId>(
     getDefaultOutcomePackId(onboardingData.painAreas, onboardingData.breakStyle)
   );
   const [historicalOutcomes, setHistoricalOutcomes] = useState<RecommendationOutcomeSignal[]>([]);
   const hasFullLibrary = useTierFeature('full_break_library').hasFeature;
 
-  // Favorites from store
-  const favoriteBreaks = useUserStore((state) => state.preferences.favoriteBreaks);
-  const toggleFavorite = useUserStore((state) => state.toggleFavorite);
-
-  useEffect(() => {
-    headerOpacity.value = withTiming(1, { duration: 600 });
-    featuredOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
-    featuredScale.value = withDelay(200, withSpring(1));
-  }, [featuredOpacity, featuredScale, headerOpacity]);
-
   const defaultPackId = useMemo(
     () => getDefaultOutcomePackId(onboardingData.painAreas, onboardingData.breakStyle),
     [onboardingData.breakStyle, onboardingData.painAreas]
   );
-  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   useEffect(() => {
     setSelectedPackId(defaultPackId);
@@ -162,106 +119,6 @@ export default function BreaksScreen() {
     [hasFullLibrary, historicalOutcomes, library, selectedPack.category, selectedPack.featuredBreakId]
   );
 
-  const featuredBreak = useMemo(
-    () =>
-      selectFeaturedBreak<BreakListItem>({
-        library,
-        sortedPackBreaks,
-        featuredBreakId: selectedPack.featuredBreakId,
-        fallbackFeaturedId: FEATURED_EXERCISE_ID,
-        hasFullLibrary,
-        resolveBadgeTone: (brk) =>
-          getBreakOutcomeBadge(brk.id, brk.category, historicalOutcomes)?.tone,
-      }),
-    [
-      hasFullLibrary,
-      historicalOutcomes,
-      library,
-      selectedPack.featuredBreakId,
-      sortedPackBreaks,
-    ]
-  );
-
-  const featuredBreakBadge = useMemo(
-    () =>
-      featuredBreak
-        ? getBreakOutcomeBadge(
-            featuredBreak.id,
-            featuredBreak.category,
-            historicalOutcomes
-          )
-        : null,
-    [featuredBreak, historicalOutcomes]
-  );
-
-  const lockedExerciseCount = useMemo(
-    () => library.filter((item) => item.isLocked).length,
-    [library]
-  );
-
-  const starterExerciseCount = useMemo(
-    () => library.length - lockedExerciseCount,
-    [library, lockedExerciseCount]
-  );
-
-  const packLibraryCount = useMemo(
-    () => library.filter((item) => item.category === selectedPack.category).length,
-    [library, selectedPack.category]
-  );
-
-  const packStarterCount = useMemo(
-    () =>
-      library.filter(
-        (item) => item.category === selectedPack.category && !item.isLocked
-      ).length,
-    [library, selectedPack.category]
-  );
-
-  const libraryByCategory = useMemo(
-    () => {
-      const grouped = library.reduce<Record<ExerciseCategory, BreakListItem[]>>(
-        (acc, item) => {
-          acc[item.category].push(item);
-          return acc;
-        },
-        {
-          quick: [],
-          stretch: [],
-          mindful: [],
-          active: [],
-        }
-      );
-
-      return {
-        quick: sortBreakListByOutcome(
-          grouped.quick,
-          historicalOutcomes,
-          FEATURED_EXERCISE_ID,
-          hasFullLibrary
-        ),
-        stretch: sortBreakListByOutcome(
-          grouped.stretch,
-          historicalOutcomes,
-          FEATURED_EXERCISE_ID,
-          hasFullLibrary
-        ),
-        mindful: sortBreakListByOutcome(
-          grouped.mindful,
-          historicalOutcomes,
-          FEATURED_EXERCISE_ID,
-          hasFullLibrary
-        ),
-        active: sortBreakListByOutcome(
-          grouped.active,
-          historicalOutcomes,
-          FEATURED_EXERCISE_ID,
-          hasFullLibrary
-        ),
-      };
-    },
-    [hasFullLibrary, historicalOutcomes, library]
-  );
-
   const openProPreview = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
@@ -269,43 +126,6 @@ export default function BreaksScreen() {
       params: { placement: 'breaks' },
     } as any);
   }, [router]);
-
-  // Filter breaks based on search and filters
-  const filteredCategories = useMemo(
-    () =>
-      filterBreakCategories<BreakListItem>({
-        searchQuery: deferredSearchQuery,
-        selectedCategory,
-        selectedDuration,
-        durationFilters: DURATION_FILTERS,
-        categoryDefinitions: CATEGORY_DEFINITIONS,
-        libraryByCategory,
-        library,
-        favoriteBreaks,
-      }),
-    [
-      deferredSearchQuery,
-      favoriteBreaks,
-      libraryByCategory,
-      library,
-      selectedCategory,
-      selectedDuration,
-    ]
-  );
-
-  // Check if we have any results
-  const hasResults = filteredCategories.length > 0;
-  const isFiltering = searchQuery.length > 0 || selectedCategory !== null || selectedDuration !== 'all';
-
-  const headerStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-    transform: [{ translateY: interpolate(headerOpacity.value, [0, 1], [20, 0]) }],
-  }));
-
-  const featuredStyle = useAnimatedStyle(() => ({
-    opacity: featuredOpacity.value,
-    transform: [{ scale: featuredScale.value }],
-  }));
 
   const handleBreakPress = useCallback((item: BreakListItem) => {
     if (item.isLocked) {
@@ -319,33 +139,6 @@ export default function BreaksScreen() {
     });
   }, [openProPreview, router]);
 
-  const handleFeaturedPress = useCallback(() => {
-    if (!featuredBreak) {
-      return;
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (featuredBreak.isLocked) {
-      openProPreview();
-      return;
-    }
-
-    router.push({
-      pathname: '/break-session',
-      params: { breakId: featuredBreak.id },
-    });
-  }, [featuredBreak, openProPreview, router]);
-
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery('');
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setSearchQuery('');
-    setSelectedCategory(null);
-    setSelectedDuration('all');
-  }, []);
-
   const handlePackPress = useCallback((packId: OutcomePackId) => {
     Haptics.selectionAsync();
     setSelectedPackId(packId);
@@ -353,10 +146,6 @@ export default function BreaksScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      {/* Ambient Background */}
-      <View style={[styles.ambientGlow, styles.ambientPurple]} />
-      <View style={[styles.ambientGlow, styles.ambientTeal]} />
-
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
@@ -364,208 +153,73 @@ export default function BreaksScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <Animated.View style={[styles.header, headerStyle]}>
-            <Text style={[styles.title, { color: theme.text.primary }]}>{t('breaks.title')}</Text>
-            <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-              {t('breaks.subtitle')}
-            </Text>
-          </Animated.View>
-
-          <View style={styles.packSection}>
-            <View style={styles.packSectionHeader}>
-              <Text style={[styles.packSectionTitle, { color: theme.text.primary }]}>
-                {t('breaks.packs.title')}
-              </Text>
-              <Text style={[styles.packSectionSubtitle, { color: theme.text.muted }]}>
-                {t('breaks.packs.subtitle')}
-              </Text>
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.packRail}
-            >
-              {OUTCOME_PACKS.map((pack) => {
-                const isSelected = pack.id === selectedPack.id;
-
-                return (
-                  <Pressable
-                    key={pack.id}
-                    style={[
-                      styles.packChip,
-                      {
-                        borderColor: isSelected ? pack.color : theme.border.subtle,
-                        backgroundColor: theme.isDark ? 'rgba(19, 19, 26, 0.92)' : theme.background.card,
-                        ...cardShadow(theme.isDark, { height: 1, opacity: 0.08, radius: 4, elevation: 2 }),
-                      },
-                    ]}
-                    onPress={() => handlePackPress(pack.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${pack.title}. ${pack.description}`}
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <View style={[styles.packChipIcon, { backgroundColor: `${pack.color}18` }]}>
-                      <Text style={styles.packChipEmoji}>{pack.icon}</Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.packChipText,
-                        { color: isSelected ? pack.color : theme.text.primary },
-                      ]}
-                    >
-                      {pack.shortLabel}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+          <View style={styles.header}>
+            <Text style={styles.title}>Breaks</Text>
+            <Text style={styles.subtitle}>Pick a focus, then a reset.</Text>
           </View>
 
-          {/* Movement Library entry */}
-          <MoveLibraryCard
-            title={t('library.entry.title')}
-            subtitle={t('library.entry.subtitle', { count: getLibraryExercises().length })}
-            badge={t('library.entry.badge')}
-            theme={theme}
-            onPress={() => router.push('/exercise-library' as never)}
-          />
-
-          {/* Search Bar */}
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onClear={handleClearSearch}
-            theme={theme}
-            placeholder={t('breaks.searchPlaceholder')}
-          />
-
-          {/* Filter Chips */}
-          <FilterChips
-            selectedCategory={selectedCategory}
-            selectedDuration={selectedDuration}
-            onCategoryChange={setSelectedCategory}
-            onDurationChange={setSelectedDuration}
-            theme={theme}
-          />
-
-          {!hasFullLibrary && !isFiltering && (
-            <UpgradePrompt
-              title={t('breaks.upsell.title', { pack: selectedPack.title })}
-              subtitle={t('breaks.upsell.subtitle', {
-                starterCount: starterExerciseCount,
-                lockedCount: lockedExerciseCount,
-                packLabel: selectedPack.shortLabel.toLowerCase(),
-              })}
-              bullets={PRO_LIBRARY_HIGHLIGHTS}
-              ctaLabel={t('breaks.upsell.cta')}
-              onPress={openProPreview}
-              icon="sparkles"
-              accentColors={FEATURED_GRADIENT}
-            />
-          )}
-
-          {/* Featured Break - only show when not filtering */}
-          {!isFiltering && featuredBreak && (
-            <Pressable onPress={handleFeaturedPress}>
-              <Animated.View style={[styles.featuredCard, featuredStyle]}>
-                <LinearGradient
-                  colors={FEATURED_GRADIENT}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.featuredContent}>
-                  <View style={styles.featuredBadge}>
-                    <Ionicons
-                      name={featuredBreak.isLocked ? 'lock-closed' : 'star'}
-                      size={12}
-                      color="#000"
-                    />
-                    <Text style={styles.featuredBadgeText}>
-                      {featuredBreak.isLocked
-                        ? t('breaks.featuredCard.proStarter')
-                        : t('breaks.featuredCard.startHere')}
-                    </Text>
-                  </View>
-                  <Text style={styles.featuredIcon}>{selectedPack.icon}</Text>
-                  <Text style={styles.featuredTitle}>{selectedPack.title}</Text>
-                  {featuredBreakBadge && (
-                    <View
-                      style={[
-                        styles.featuredInsightPill,
-                        featuredBreakBadge.tone === 'positive'
-                          ? styles.featuredInsightPillPositive
-                          : styles.featuredInsightPillWarning,
-                      ]}
-                    >
-                      <Text style={styles.featuredInsightText}>
-                        {featuredBreakBadge.label}
-                      </Text>
-                    </View>
-                  )}
-                  <Text style={styles.featuredDescription}>
-                    {t('breaks.featuredCard.description', {
-                      packDescription: selectedPack.description,
-                      breakTitle: featuredBreak.title,
-                      duration: featuredBreak.duration,
-                    })}
+          {/* Focus selector — horizontal type-menu */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.packRail}
+          >
+            {OUTCOME_PACKS.map((pack) => {
+              const on = pack.id === selectedPack.id;
+              return (
+                <Pressable
+                  key={pack.id}
+                  onPress={() => handlePackPress(pack.id)}
+                  style={styles.packItem}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={pack.title}
+                >
+                  <Text style={[styles.packLabel, on ? styles.packOn : styles.packOff]}>
+                    {pack.shortLabel}
                   </Text>
-                  <View style={styles.featuredFooter}>
-                    <View>
-                      <Text style={styles.featuredDuration}>{featuredBreak.title}</Text>
-                      <Text style={styles.featuredLibraryMeta}>
-                        {t('breaks.featuredCard.unlockedInPack', {
-                          unlocked: packStarterCount,
-                          total: packLibraryCount,
-                        })}
-                      </Text>
-                    </View>
-                    <View style={styles.featuredButton}>
-                      <Text style={styles.featuredButtonText}>
-                        {featuredBreak.isLocked
-                          ? t('breaks.featuredCard.unlockPro')
-                          : t('breaks.featuredCard.start')}
-                      </Text>
-                      <Ionicons
-                        name={featuredBreak.isLocked ? 'lock-open' : 'play'}
-                        size={16}
-                        color="#000"
-                      />
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-            </Pressable>
-          )}
+                  <View style={[styles.packBar, { opacity: on ? 1 : 0 }]} />
+                </Pressable>
+              );
+            })}
+          </ScrollView>
 
-          {/* Categories - show filtered results */}
-          {hasResults ? (
-            filteredCategories.map((category, index) => (
-              <CategorySection
-                key={category.id}
-                category={category}
-                delay={isFiltering ? 0 : 300 + index * 150}
-                onBreakPress={handleBreakPress}
-                favoriteBreaks={favoriteBreaks}
-                onToggleFavorite={toggleFavorite}
-                theme={theme}
-              />
-            ))
-          ) : (
-            <Animated.View entering={FadeIn.duration(300)} style={styles.noResultsContainer}>
-              <Ionicons name="search-outline" size={48} color={theme.text.muted} />
-              <Text style={[styles.noResultsTitle, { color: theme.text.primary }]}>
-                {t('breaks.noResults.title')}
-              </Text>
-              <Text style={[styles.noResultsText, { color: theme.text.muted }]}>
-                {t('breaks.noResults.subtitle')}
-              </Text>
-              <Pressable style={styles.clearFiltersButton} onPress={handleClearFilters}>
-                <Text style={styles.clearFiltersText}>{t('breaks.noResults.clear')}</Text>
+          {/* Exercises for the selected focus — type list */}
+          <View style={styles.list}>
+            {sortedPackBreaks.map((item, i) => (
+              <Pressable
+                key={item.id}
+                onPress={() => handleBreakPress(item)}
+                style={[styles.exRow, i > 0 && styles.exDivider]}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.title}, ${item.duration}`}
+              >
+                <View style={styles.exText}>
+                  <Text style={styles.exTitle} numberOfLines={1}>{item.title}</Text>
+                  {item.description ? (
+                    <Text style={styles.exDesc} numberOfLines={1}>{item.description}</Text>
+                  ) : null}
+                </View>
+                <View style={styles.exMeta}>
+                  {item.isLocked ? (
+                    <IconSymbol name="lock.fill" size={12} color="rgba(255,255,255,0.4)" />
+                  ) : null}
+                  <Text style={styles.exDuration}>{item.duration}</Text>
+                </View>
               </Pressable>
-            </Animated.View>
-          )}
+            ))}
+          </View>
+
+
+          {/* Full library link */}
+          <Pressable
+            style={styles.libraryLink}
+            onPress={() => router.push('/exercise-library' as never)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.libraryLinkText}>Full movement library</Text>
+            <IconSymbol name="arrow.right" size={16} color="#FF2472" />
+          </Pressable>
 
           {/* Bottom Spacing */}
           <View style={styles.bottomSpacer} />
@@ -590,14 +244,14 @@ const styles = StyleSheet.create({
     left: -150,
     width: 400,
     height: 400,
-    backgroundColor: '#B47EFF',
+    backgroundColor: '#BC26F4',
   },
   ambientTeal: {
     bottom: 100,
     right: -150,
     width: 350,
     height: 350,
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
   },
   safeArea: {
     flex: 1,
@@ -609,37 +263,86 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   header: {
-    marginBottom: Spacing.lg,
+    marginBottom: 18,
+    marginTop: 4,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 34,
+    letterSpacing: -0.8,
     color: '#FFFFFF',
-    letterSpacing: -0.5,
-    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  packSection: {
-    marginBottom: Spacing.lg,
-  },
-  packSectionHeader: {
-    marginBottom: Spacing.sm,
-  },
-  packSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  packSectionSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 4,
   },
   packRail: {
-    paddingRight: Spacing.lg,
-    gap: 10,
+    gap: 22,
+    paddingRight: 20,
+    paddingVertical: 4,
+  },
+  packItem: {
+    alignItems: 'center',
+    paddingBottom: 4,
+  },
+  packLabel: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: -0.2,
+  },
+  packOn: { color: '#FFFFFF' },
+  packOff: { color: 'rgba(255,255,255,0.34)' },
+  packBar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
+    marginTop: 8,
+  },
+  list: {
+    marginTop: 22,
+  },
+  exRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  exDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  exText: { flex: 1, marginRight: 12 },
+  exTitle: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 18,
+    letterSpacing: -0.2,
+    color: '#FFFFFF',
+  },
+  exDesc: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 2,
+  },
+  exMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  exDuration: {
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  libraryLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 28,
+    paddingVertical: 8,
+  },
+  libraryLinkText: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 15,
+    color: '#FF2472',
   },
   packChip: {
     minWidth: 92,
@@ -782,11 +485,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(6, 255, 165, 0.15)',
     borderWidth: 1,
-    borderColor: '#06FFA5',
+    borderColor: '#FF2472',
   },
   clearFiltersText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#06FFA5',
+    color: '#FF2472',
   },
 });

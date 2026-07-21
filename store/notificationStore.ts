@@ -116,7 +116,7 @@ export function createAchievementNotification(
     title: `Achievement Unlocked!`,
     message: `${title}: ${description}. +${xpReward} XP`,
     icon,
-    color: '#FFD166',
+    color: '#FAE34B',
     data: { achievementTitle: title, xpReward },
   };
 }
@@ -129,7 +129,7 @@ export function createStreakNotification(
     title: `${days}-Day Streak!`,
     message: `Amazing! You've maintained your wellness streak for ${days} days!`,
     icon: '🔥',
-    color: '#FF6B6B',
+    color: '#EB3E38',
     data: { streakDays: days },
   };
 }
@@ -140,7 +140,7 @@ export function createGoalNotification(): Omit<AppNotification, 'id' | 'createdA
     title: 'Daily Goal Complete!',
     message: "Great job! You've reached your daily wellness goal.",
     icon: '🎯',
-    color: '#06FFA5',
+    color: '#6CE9CC',
   };
 }
 
@@ -153,7 +153,7 @@ export function createLevelUpNotification(
     title: `Level ${level}!`,
     message: `Congratulations! You've reached ${title}.`,
     icon: '⭐',
-    color: '#B47EFF',
+    color: '#BC26F4',
     data: { level, levelTitle: title },
   };
 }

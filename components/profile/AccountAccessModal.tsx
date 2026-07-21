@@ -3,14 +3,12 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
 import {
@@ -137,7 +135,7 @@ export function AccountAccessModal({
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         'Reset Link Sent',
-        'If this email is linked to a MicroBreaks account, a password reset email is on its way.'
+        'If this email is linked to an Unwind account, a password reset email is on its way.'
       );
     } catch (error) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -202,12 +200,6 @@ export function AccountAccessModal({
           onPress={(event) => event.stopPropagation()}
           accessibilityViewIsModal={true}
         >
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
-
           <View style={styles.modeSwitcher}>
             <Pressable
               style={[styles.modeButton, isLinkMode && styles.modeButtonActive]}
@@ -338,82 +330,84 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: Spacing.lg,
-  },
-  androidModalFallback: {
-    backgroundColor: 'rgba(30, 30, 40, 0.98)',
+    backgroundColor: '#1C1922',
+    padding: 24,
   },
   modeSwitcher: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: Spacing.md,
+    gap: 12,
+    marginBottom: 22,
   },
   modeButton: {
     flex: 1,
-    borderRadius: 12,
     paddingVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   modeButtonActive: {
-    backgroundColor: 'rgba(6, 255, 165, 0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(6, 255, 165, 0.45)',
+    borderBottomColor: '#FF2472',
   },
   modeButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.72)',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    color: 'rgba(255, 255, 255, 0.34)',
   },
   modeButtonTextActive: {
-    color: '#06FFA5',
+    color: '#FFFFFF',
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 24,
+    letterSpacing: -0.6,
     color: '#FFFFFF',
     marginBottom: 8,
   },
   modalSubtitle: {
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 14,
     lineHeight: 20,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: Spacing.md,
   },
   inputContainer: {
-    marginTop: Spacing.md,
+    marginTop: 18,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.65)',
-    marginBottom: 8,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 10,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 16,
     color: '#FFFFFF',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   secondaryTextButton: {
     alignSelf: 'flex-start',
-    marginTop: 10,
+    marginTop: 12,
   },
   secondaryTextButtonLabel: {
-    color: '#06FFA5',
+    fontFamily: 'GeneralSans-Semibold',
+    color: '#FF2472',
     fontSize: 13,
-    fontWeight: '600',
   },
   errorText: {
     marginTop: Spacing.md,
-    color: '#FF6B6B',
+    fontFamily: 'GeneralSans-Medium',
+    color: '#EB3E38',
     fontSize: 14,
     lineHeight: 20,
   },
@@ -424,31 +418,30 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 15,
+    borderRadius: 100,
     alignItems: 'center',
   },
   cancelButtonText: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 16,
-    fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.72)',
   },
   linkButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#06FFA5',
+    paddingVertical: 15,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 52,
   },
   linkButtonDisabled: {
-    backgroundColor: 'rgba(6, 255, 165, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   linkButtonText: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
+    color: '#0B0A0D',
   },
 });

@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   comparisonPositive: {
-    color: '#06FFA5',
+    color: '#FF2472',
   },
   comparisonNegative: {
     color: '#EF476F',

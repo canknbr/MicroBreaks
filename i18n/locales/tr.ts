@@ -8,7 +8,7 @@ export default {
   // Common
   // ============================================
   common: {
-    appName: 'MicroBreaks',
+    appName: 'Unwind',
     loading: 'Yükleniyor...',
     error: 'Hata',
     success: 'Başarılı',
@@ -89,7 +89,7 @@ export default {
       streakWarning: 'Serinizi korumak için molanızı unutmayın!',
     },
     emptyState: {
-      title: "MicroBreaks'e Hoş Geldiniz",
+      title: "Unwind'e Hoş Geldiniz",
       subtitle: 'Sağlık yolculuğunuza ilk molanızla başlayın',
       action: 'İlk Molamı Al',
     },
@@ -512,7 +512,7 @@ export default {
       language: 'Dil',
       privacy: 'Gizlilik',
       help: 'Yardım ve Destek',
-      about: 'MicroBreaks Hakkında',
+      about: 'Unwind Hakkında',
       rateApp: 'Uygulamayı Değerlendir',
       shareApp: 'Arkadaşlarınla Paylaş',
       signOut: 'Çıkış Yap',
@@ -573,12 +573,12 @@ export default {
   // ============================================
   onboarding: {
     welcome: {
-      title: "MicroBreaks'e Hoş Geldiniz",
+      title: "Unwind'e Hoş Geldiniz",
       subtitle: 'Daha sağlıklı bir iş günü için sağlık arkadaşınız',
       action: 'Başlayalım',
     },
     benefits: {
-      title: 'Neden Mikro Molalar?',
+      title: 'Neden Unwind?',
       items: {
         eyes: 'Göz yorgunluğunu azalt',
         posture: 'Duruşu iyileştir',

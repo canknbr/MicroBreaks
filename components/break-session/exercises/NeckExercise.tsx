@@ -1,6 +1,7 @@
 /**
- * Neck Exercise Animation
- * Rotation direction arrows and head movement guidance
+ * Neck Exercise Animation — editorial. An abstract head-on-neck figure
+ * (dot + stem over a shoulder bar) that tilts, nods and rolls with the
+ * movement. No emoji / dashed rings / tinted circle badges.
  */
 
 import React, { useEffect } from 'react';
@@ -28,11 +29,9 @@ export default function NeckExercise({
   animation,
   instruction,
   color,
-  visualGuide,
 }: NeckExerciseProps) {
   const theme = useTheme();
   const rotation = useSharedValue(0);
-  const arrowOpacity = useSharedValue(0);
   const tiltX = useSharedValue(0);
   const tiltY = useSharedValue(0);
   const pulseScale = useSharedValue(1);
@@ -44,6 +43,7 @@ export default function NeckExercise({
     rotation.value = withTiming(0, { duration: 100 });
     tiltX.value = withTiming(0, { duration: 100 });
     tiltY.value = withTiming(0, { duration: 100 });
+    pulseScale.value = withTiming(1, { duration: 100 });
 
     switch (animation) {
       case 'rotate-right':
@@ -51,7 +51,6 @@ export default function NeckExercise({
           withTiming(360, { duration: 4000, easing: Easing.linear }),
           -1
         );
-        arrowOpacity.value = withTiming(1, { duration: 300 });
         break;
 
       case 'rotate-left':
@@ -59,7 +58,6 @@ export default function NeckExercise({
           withTiming(-360, { duration: 4000, easing: Easing.linear }),
           -1
         );
-        arrowOpacity.value = withTiming(1, { duration: 300 });
         break;
 
       case 'tilt-right':
@@ -71,7 +69,6 @@ export default function NeckExercise({
           -1,
           true
         );
-        arrowOpacity.value = withTiming(1, { duration: 300 });
         break;
 
       case 'tilt-left':
@@ -83,7 +80,6 @@ export default function NeckExercise({
           -1,
           true
         );
-        arrowOpacity.value = withTiming(1, { duration: 300 });
         break;
 
       case 'tilt-forward':
@@ -95,7 +91,6 @@ export default function NeckExercise({
           -1,
           true
         );
-        arrowOpacity.value = withTiming(1, { duration: 300 });
         break;
 
       case 'tilt-back':
@@ -107,7 +102,6 @@ export default function NeckExercise({
           -1,
           true
         );
-        arrowOpacity.value = withTiming(1, { duration: 300 });
         break;
 
       case 'hold':
@@ -119,11 +113,9 @@ export default function NeckExercise({
           -1,
           true
         );
-        arrowOpacity.value = withTiming(0.5, { duration: 300 });
         break;
 
       default:
-        arrowOpacity.value = withTiming(0, { duration: 300 });
         pulseScale.value = withRepeat(
           withSequence(
             withTiming(1.05, { duration: 1500 }),
@@ -134,78 +126,62 @@ export default function NeckExercise({
         );
         break;
     }
-  }, [animation, arrowOpacity, pulseScale, rotation, tiltX, tiltY]);
+  }, [animation, pulseScale, rotation, tiltX, tiltY]);
 
-  const headStyle = useAnimatedStyle(() => ({
+  // The figure pivots about its lower centre (the neck base) so a tilt reads
+  // as the head swinging over the shoulders rather than spinning in place.
+  const figureStyle = useAnimatedStyle(() => ({
     transform: [
       { rotateZ: `${tiltX.value}deg` },
       { rotateX: `${tiltY.value}deg` },
+      { rotate: `${rotation.value}deg` },
       { scale: pulseScale.value },
     ],
   }));
 
-  const rotationIndicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-    opacity: arrowOpacity.value,
-  }));
-
-  const getDirectionIcon = (): keyof typeof Ionicons.glyphMap => {
+  const getDirectionIcon = (): keyof typeof Ionicons.glyphMap | null => {
     switch (animation) {
       case 'tilt-right':
-        return 'arrow-forward';
+        return 'chevron-forward';
       case 'tilt-left':
-        return 'arrow-back';
+        return 'chevron-back';
       case 'tilt-forward':
-        return 'arrow-down';
+        return 'chevron-down';
       case 'tilt-back':
-        return 'arrow-up';
+        return 'chevron-up';
       case 'rotate-right':
       case 'rotate-left':
         return 'refresh';
       default:
-        return 'pause';
+        return null;
     }
   };
 
-  const isRotating = animation === 'rotate-right' || animation === 'rotate-left';
+  const directionIcon = getDirectionIcon();
 
   return (
     <View style={styles.container}>
-      {/* Main visualization area */}
-      <View style={styles.visualArea}>
-        {/* Rotation indicator for circular movements */}
-        {isRotating && (
-          <Animated.View style={[styles.rotationRing, rotationIndicatorStyle]}>
-            <View style={[styles.rotationDot, { backgroundColor: color }]} />
-          </Animated.View>
-        )}
+      <View style={styles.stage}>
+        {directionIcon ? (
+          <Ionicons
+            name={directionIcon}
+            size={26}
+            color={color}
+            style={styles.directionHint}
+          />
+        ) : null}
 
-        {/* Head/neck visualization */}
-        <Animated.View style={[styles.headContainer, headStyle]}>
-          <View style={[styles.head, { borderColor: `${color}40`, backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }]}>
-            <Text style={styles.headEmoji}>🧑</Text>
-          </View>
+        {/* Shoulders — static base the head pivots over */}
+        <View style={[styles.shoulders, { backgroundColor: 'rgba(255,255,255,0.14)' }]} />
+
+        {/* Head + neck */}
+        <Animated.View style={[styles.figure, figureStyle]}>
+          <View style={[styles.head, { backgroundColor: theme.text.primary }]} />
+          <View style={[styles.neck, { backgroundColor: 'rgba(255,255,255,0.28)' }]} />
         </Animated.View>
-
-        {/* Direction arrow */}
-        {!isRotating && animation !== 'hold' && animation !== 'rest' && (
-          <Animated.View
-            style={[
-              styles.directionArrow,
-              { backgroundColor: `${color}30` },
-              { opacity: arrowOpacity.value },
-            ]}
-          >
-            <Ionicons name={getDirectionIcon()} size={24} color={color} />
-          </Animated.View>
-        )}
       </View>
 
-      {/* Visual guide and instruction */}
-      <View style={styles.instructionContainer}>
-        <Text style={styles.visualGuide}>{visualGuide}</Text>
-        <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
-      </View>
+      <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
     </View>
   );
 }
@@ -217,68 +193,46 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  visualArea: {
-    width: 200,
-    height: 200,
+  stage: {
+    width: 220,
+    height: 220,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 44,
   },
-  rotationRing: {
+  directionHint: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderStyle: 'dashed',
+    top: 24,
+    opacity: 0.5,
   },
-  rotationDot: {
+  shoulders: {
     position: 'absolute',
-    top: -8,
-    left: '50%',
-    marginLeft: -8,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    bottom: 40,
+    width: 104,
+    height: 14,
+    borderRadius: 7,
   },
-  headContainer: {
+  figure: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   head: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
   },
-  headEmoji: {
-    fontSize: 50,
-  },
-  directionArrow: {
-    position: 'absolute',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    bottom: 10,
-  },
-  instructionContainer: {
-    marginTop: 40,
-    alignItems: 'center',
-  },
-  visualGuide: {
-    fontSize: 40,
-    marginBottom: 12,
+  neck: {
+    width: 12,
+    height: 34,
+    borderRadius: 6,
+    marginTop: -2,
   },
   instruction: {
+    marginTop: 36,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     lineHeight: 26,
+    textAlign: 'center',
     paddingHorizontal: 20,
   },
 });

@@ -72,7 +72,7 @@ private struct InlineLockView: View {
     } else if let next = entry.snapshot.nextRecommended {
       Text("Next break: \(next.title)")
     } else {
-      Text("MicroBreaks ready")
+      Text("Unwind ready")
     }
   }
 }
@@ -86,7 +86,7 @@ struct MicroBreaksLockScreenWidget: Widget {
     StaticConfiguration(kind: kind, provider: MicroBreaksProvider()) { entry in
       LockScreenRouter(entry: entry)
     }
-    .configurationDisplayName("MicroBreaks Streak")
+    .configurationDisplayName("Unwind Streak")
     .description("Your streak and next break, at a glance.")
     .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
   }

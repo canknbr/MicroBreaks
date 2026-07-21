@@ -1,6 +1,7 @@
 /**
- * Premium Zen Primary Button
- * Smooth, elegant press interactions
+ * Primary Button — "Outsiders" redesign.
+ * Flat pill, no gradient/glow. `primary` = white pill (dark label),
+ * `accent` = brand pink, `secondary` = subtle dark pill.
  */
 
 import React from 'react';
@@ -14,14 +15,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  ZenColors,
-  ZenSpacing,
-  ZenRadius,
-  ZenSizes,
-  ZenTypography,
-} from '../constants/design';
 
 interface PrimaryButtonProps {
   title: string;
@@ -37,6 +30,17 @@ interface PrimaryButtonProps {
 
 const PRESS_DURATION = 100;
 const RELEASE_DURATION = 200;
+
+const VARIANT_BG: Record<string, string> = {
+  primary: '#FFFFFF',
+  accent: '#FF2472',
+  secondary: 'rgba(255,255,255,0.08)',
+};
+const VARIANT_FG: Record<string, string> = {
+  primary: '#0B0A0D',
+  accent: '#FFFFFF',
+  secondary: '#FFFFFF',
+};
 
 export default function PrimaryButton({
   title,
@@ -56,7 +60,7 @@ export default function PrimaryButton({
     .enabled(!disabled && !loading)
     .onBegin(() => {
       scale.value = withTiming(0.98, { duration: PRESS_DURATION, easing: Easing.out(Easing.cubic) });
-      opacity.value = withTiming(0.9, { duration: PRESS_DURATION });
+      opacity.value = withTiming(0.92, { duration: PRESS_DURATION });
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
     })
     .onFinalize(() => {
@@ -72,74 +76,26 @@ export default function PrimaryButton({
     opacity: opacity.value,
   }));
 
-  const gradientColors = {
-    primary: [ZenColors.primary.main, ZenColors.primary.dark] as [string, string],
-    secondary: [ZenColors.secondary.main, ZenColors.secondary.dark] as [string, string],
-    accent: [ZenColors.accent.main, ZenColors.accent.dark] as [string, string],
-  };
-
-  const shadowColors = {
-    primary: ZenColors.primary.main,
-    secondary: ZenColors.secondary.main,
-    accent: ZenColors.accent.main,
-  };
-
-  const isLarge = size === 'large';
-  const buttonHeight = isLarge ? 64 : ZenSizes.button.height;
+  const fg = VARIANT_FG[variant] ?? '#0B0A0D';
+  const bg = disabled ? 'rgba(255,255,255,0.12)' : VARIANT_BG[variant] ?? '#FFFFFF';
+  const height = size === 'large' ? 58 : 54;
 
   return (
     <GestureDetector gesture={tap}>
       <Animated.View
-        style={[
-          styles.button,
-          { height: buttonHeight },
-          !disabled && {
-            shadowColor: shadowColors[variant],
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.35,
-            shadowRadius: 16,
-            elevation: 8,
-          },
-          disabled && styles.buttonDisabled,
-          animatedStyle,
-          style,
-        ]}
+        style={[styles.button, { height, backgroundColor: bg }, animatedStyle, style]}
       >
-        <LinearGradient
-          colors={
-            disabled
-              ? [ZenColors.border.default, ZenColors.border.subtle]
-              : gradientColors[variant]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          {loading ? (
-            <ActivityIndicator
-              color={disabled ? ZenColors.text.muted : ZenColors.text.inverse}
-              size="small"
-            />
-          ) : (
-            <View style={styles.content}>
-              {icon && iconPosition === 'left' && (
-                <View style={styles.iconLeft}>{icon}</View>
-              )}
-              <Text
-                style={[
-                  styles.text,
-                  isLarge && styles.textLarge,
-                  disabled && styles.textDisabled,
-                ]}
-              >
-                {title}
-              </Text>
-              {icon && iconPosition === 'right' && (
-                <View style={styles.iconRight}>{icon}</View>
-              )}
-            </View>
-          )}
-        </LinearGradient>
+        {loading ? (
+          <ActivityIndicator color={disabled ? 'rgba(255,255,255,0.5)' : fg} size="small" />
+        ) : (
+          <View style={styles.content}>
+            {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{icon}</View>}
+            <Text style={[styles.text, { color: disabled ? 'rgba(255,255,255,0.5)' : fg }]}>
+              {title}
+            </Text>
+            {icon && iconPosition === 'right' && <View style={styles.iconRight}>{icon}</View>}
+          </View>
+        )}
       </Animated.View>
     </GestureDetector>
   );
@@ -147,42 +103,23 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: ZenRadius.full,
-    overflow: 'hidden',
-    minWidth: ZenSizes.button.minWidth,
-  },
-  buttonDisabled: {
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  gradient: {
-    flex: 1,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: ZenSpacing.xl,
+    paddingHorizontal: 28,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: ZenSpacing.sm,
+    gap: 8,
   },
   text: {
-    ...ZenTypography.label.large,
-    color: ZenColors.text.inverse,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: 0,
     textAlign: 'center',
   },
-  textLarge: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  textDisabled: {
-    color: ZenColors.text.muted,
-  },
-  iconLeft: {
-    marginRight: ZenSpacing.xs,
-  },
-  iconRight: {
-    marginLeft: ZenSpacing.xs,
-  },
+  iconLeft: {},
+  iconRight: {},
 });

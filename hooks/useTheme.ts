@@ -1,11 +1,10 @@
 /**
- * Theme Hook
- * Provides theme colors based on user preference
+ * Theme Hook — "Outsiders" redesign
+ *
+ * The app now ships a single, editorial **dark** theme (dark-only, matching
+ * the reference). `useTheme()` always returns the dark palette; the light
+ * variant is kept as an alias so any legacy consumer resolves to dark.
  */
-
-import { useMemo } from 'react';
-import { useColorScheme } from 'react-native';
-import { useSettingsStore } from '@/store';
 
 export interface ThemeColors {
   // Background colors
@@ -31,14 +30,14 @@ export interface ThemeColors {
     strong: string;
   };
 
-  // Accent colors (same for both themes)
+  // Accent colors
   accent: {
-    primary: string;    // Teal/Green
-    secondary: string;  // Cyan
-    tertiary: string;   // Purple
-    warning: string;    // Yellow/Gold
-    error: string;      // Red
-    success: string;    // Green
+    primary: string; // Brand pink
+    secondary: string; // Blue
+    tertiary: string; // Purple
+    warning: string; // Orange
+    error: string; // Red
+    success: string; // Green
   };
 
   // Status bar style
@@ -48,97 +47,53 @@ export interface ThemeColors {
   isDark: boolean;
 }
 
-// Dark theme colors
+// The single "Outsiders" dark theme.
 const darkColors: ThemeColors = {
   background: {
-    primary: '#000000',
-    secondary: '#0A0A0F',
-    card: 'rgba(25, 25, 35, 0.9)',
-    elevated: 'rgba(40, 40, 50, 0.9)',
+    primary: '#0C0B0F', // near-black canvas (warm undertone)
+    secondary: '#141218', // lifted section
+    card: '#1C1922', // elevated card / surface
+    elevated: '#26222E', // higher elevation / chips
   },
   text: {
     primary: '#FFFFFF',
-    secondary: 'rgba(255, 255, 255, 0.7)',
-    muted: 'rgba(255, 255, 255, 0.5)',
-    inverse: '#000000',
+    secondary: '#9A98A3', // muted grey (≈ reference #97969D)
+    muted: '#6B6975',
+    inverse: '#0C0B0F',
   },
   border: {
     subtle: 'rgba(255, 255, 255, 0.08)',
-    medium: 'rgba(255, 255, 255, 0.15)',
-    strong: 'rgba(255, 255, 255, 0.25)',
+    medium: 'rgba(255, 255, 255, 0.14)',
+    strong: 'rgba(255, 255, 255, 0.22)',
   },
   accent: {
-    primary: '#06FFA5',
-    secondary: '#00E5FF',
-    tertiary: '#B47EFF',
-    warning: '#FFD166',
-    error: '#FF6B6B',
-    success: '#06FFA5',
+    primary: '#FF2472', // brand pink — CTAs, active states
+    secondary: '#21A3E6', // blue
+    tertiary: '#BC26F4', // purple
+    warning: '#EF8633', // orange
+    error: '#EB3E38', // red
+    success: '#5BC741', // green
   },
   statusBar: 'light',
   isDark: true,
 };
 
-// Light theme - Soft gray background, white cards
-const lightColors: ThemeColors = {
-  background: {
-    primary: '#F2F2F7',      // iOS system gray background
-    secondary: '#E5E5EA',    // Slightly darker sections
-    card: '#FFFFFF',         // White cards float on gray
-    elevated: '#FFFFFF',
-  },
-  text: {
-    primary: '#000000',      // Pure black
-    secondary: '#000000',    // Black
-    muted: '#666666',        // Dark gray
-    inverse: '#FFFFFF',
-  },
-  border: {
-    subtle: 'rgba(0, 0, 0, 0.06)',
-    medium: 'rgba(0, 0, 0, 0.10)',
-    strong: 'rgba(0, 0, 0, 0.15)',
-  },
-  accent: {
-    primary: '#34C759',      // Apple green
-    secondary: '#007AFF',    // Apple blue
-    tertiary: '#AF52DE',     // Apple purple
-    warning: '#FF9500',      // Apple orange
-    error: '#FF3B30',        // Apple red
-    success: '#34C759',
-  },
-  statusBar: 'dark',
-  isDark: false,
-};
+// Dark-only: the light theme resolves to the same palette.
+const lightColors: ThemeColors = darkColors;
 
 export function useTheme(): ThemeColors {
-  const systemColorScheme = useColorScheme();
-  const themeSetting = useSettingsStore((state) => state.settings.theme);
-
-  const colors = useMemo(() => {
-    if (themeSetting === 'system') {
-      return systemColorScheme === 'light' ? lightColors : darkColors;
-    }
-    return themeSetting === 'light' ? lightColors : darkColors;
-  }, [themeSetting, systemColorScheme]);
-
-  return colors;
+  return darkColors;
 }
 
-// Get effective theme (resolves 'system' to actual theme)
+// Resolves to the effective theme. The app is dark-only.
 export function useEffectiveTheme(): 'dark' | 'light' {
-  const systemColorScheme = useColorScheme();
-  const themeSetting = useSettingsStore((state) => state.settings.theme);
-
-  if (themeSetting === 'system') {
-    return systemColorScheme === 'light' ? 'light' : 'dark';
-  }
-  return themeSetting;
+  return 'dark';
 }
 
-// Check if dark mode
+// Check if dark mode (always true in the current design).
 export function useIsDarkMode(): boolean {
-  const theme = useEffectiveTheme();
-  return theme === 'dark';
+  return true;
 }
 
+export { lightColors, darkColors };
 export default useTheme;

@@ -123,7 +123,7 @@ struct SmallHomeWidgetView: View {
     WidgetContainer(accent: accent) {
       VStack(alignment: .leading, spacing: 8) {
         HStack {
-          Text("MicroBreaks")
+          Text("Unwind")
             .font(.system(size: 11, weight: .bold))
             .foregroundStyle(Color.white.opacity(0.55))
             .tracking(0.4)
@@ -269,7 +269,7 @@ struct MicroBreaksHomeWidget: Widget {
         UnsupportedSchemaView()
       }
     }
-    .configurationDisplayName("MicroBreaks")
+    .configurationDisplayName("Unwind")
     .description("Today's recovery, your streak, and what to do next.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
@@ -299,7 +299,7 @@ private struct UnsupportedSchemaView: View {
       Image(systemName: "arrow.up.circle.fill")
         .font(.system(size: 22, weight: .bold))
         .foregroundStyle(Color(hex: "#06FFA5"))
-      Text("Open MicroBreaks")
+      Text("Open Unwind")
         .font(.system(size: 13, weight: .heavy, design: .rounded))
         .foregroundStyle(.white)
       Text("Update to refresh the widget")

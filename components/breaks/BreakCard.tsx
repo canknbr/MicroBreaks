@@ -115,7 +115,7 @@ export function BreakCard({
               <Ionicons
                 name={isFavorite ? 'heart' : 'heart-outline'}
                 size={20}
-                color={isFavorite ? '#FF6B6B' : theme.text.muted}
+                color={isFavorite ? '#EB3E38' : theme.text.muted}
               />
             </Pressable>
             <Text

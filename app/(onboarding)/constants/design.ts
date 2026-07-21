@@ -12,41 +12,41 @@
 export const ZenColors = {
   // Primary - Healing Teal (represents growth, wellness)
   primary: {
-    main: '#06FFA5',
-    light: '#5FFFC4',
-    dark: '#00CC84',
-    glow: 'rgba(6, 255, 165, 0.15)',
-    glowStrong: 'rgba(6, 255, 165, 0.3)',
+    main: '#FF2472',
+    light: '#FF5B93',
+    dark: '#E01560',
+    glow: 'rgba(255, 36, 114, 0.16)',
+    glowStrong: 'rgba(255, 36, 114, 0.3)',
   },
 
   // Secondary - Calm Purple (represents mindfulness)
   secondary: {
-    main: '#B47EFF',
+    main: '#BC26F4',
     light: '#D4B3FF',
-    dark: '#9055E8',
+    dark: '#BC26F4',
     glow: 'rgba(180, 126, 255, 0.12)',
   },
 
   // Accent - Warm Gold (represents energy, achievement)
   accent: {
-    main: '#FFD166',
+    main: '#FAE34B',
     light: '#FFE099',
-    dark: '#FFBE33',
+    dark: '#FAE34B',
     glow: 'rgba(255, 209, 102, 0.15)',
   },
 
   // Semantic Colors
-  success: '#06FFA5',
-  warning: '#FFD166',
-  error: '#FF6B6B',
-  info: '#00E5FF',
+  success: '#FF2472',
+  warning: '#FAE34B',
+  error: '#EB3E38',
+  info: '#FF2472',
 
   // Background Layers (pure black base)
   background: {
-    pure: '#000000',
-    elevated: '#0A0A0F',
-    card: '#12121A',
-    cardHover: '#1A1A24',
+    pure: '#0C0B0F',
+    elevated: '#141218',
+    card: '#1C1922',
+    cardHover: '#26222E',
   },
 
   // Text Hierarchy
@@ -63,74 +63,85 @@ export const ZenColors = {
     subtle: 'rgba(255, 255, 255, 0.08)',
     default: 'rgba(255, 255, 255, 0.12)',
     strong: 'rgba(255, 255, 255, 0.2)',
-    focus: '#06FFA5',
+    focus: '#FF2472',
   },
 
   // Ambient Gradients (for background effects)
   ambient: {
-    teal: ['rgba(6, 255, 165, 0.08)', 'transparent'],
-    purple: ['rgba(180, 126, 255, 0.06)', 'transparent'],
-    warm: ['rgba(255, 209, 102, 0.05)', 'transparent'],
+    teal: ['rgba(255, 36, 114, 0.10)', 'transparent'],
+    purple: ['rgba(188, 38, 244, 0.07)', 'transparent'],
+    warm: ['rgba(250, 227, 75, 0.05)', 'transparent'],
   },
 } as const;
 
 // ==================== TYPOGRAPHY ====================
+// Uses General Sans (bold neo-grotesque) across the onboarding, matching the
+// rest of the app. Display/headline are heavy + tight (editorial); body is
+// regular General Sans.
 export const ZenTypography = {
-  // Display - For hero text, numbers
+  // Display - For hero text
   display: {
     large: {
-      fontSize: 56,
-      lineHeight: 64,
-      fontWeight: '200' as const,
-      letterSpacing: -1,
+      fontFamily: 'GeneralSans-Bold',
+      fontSize: 44,
+      lineHeight: 48,
+      fontWeight: '700' as const,
+      letterSpacing: -1.2,
     },
     medium: {
-      fontSize: 44,
-      lineHeight: 52,
-      fontWeight: '200' as const,
-      letterSpacing: -0.5,
+      fontFamily: 'GeneralSans-Bold',
+      fontSize: 38,
+      lineHeight: 42,
+      fontWeight: '700' as const,
+      letterSpacing: -1,
     },
     small: {
-      fontSize: 36,
-      lineHeight: 44,
-      fontWeight: '300' as const,
-      letterSpacing: 0,
+      fontFamily: 'GeneralSans-Bold',
+      fontSize: 32,
+      lineHeight: 36,
+      fontWeight: '700' as const,
+      letterSpacing: -0.6,
     },
   },
 
   // Headline - For section titles
   headline: {
     large: {
+      fontFamily: 'GeneralSans-Bold',
       fontSize: 28,
-      lineHeight: 36,
-      fontWeight: '600' as const,
-      letterSpacing: -0.3,
+      lineHeight: 34,
+      fontWeight: '700' as const,
+      letterSpacing: -0.5,
     },
     medium: {
+      fontFamily: 'GeneralSans-Bold',
       fontSize: 24,
-      lineHeight: 32,
-      fontWeight: '600' as const,
-      letterSpacing: -0.2,
+      lineHeight: 30,
+      fontWeight: '700' as const,
+      letterSpacing: -0.4,
     },
     small: {
+      fontFamily: 'GeneralSans-Bold',
       fontSize: 20,
-      lineHeight: 28,
-      fontWeight: '600' as const,
-      letterSpacing: 0,
+      lineHeight: 26,
+      fontWeight: '700' as const,
+      letterSpacing: -0.2,
     },
   },
 
   // Title - For card titles
   title: {
     large: {
+      fontFamily: 'GeneralSans-Semibold',
       fontSize: 18,
-      lineHeight: 26,
+      lineHeight: 24,
       fontWeight: '600' as const,
       letterSpacing: 0,
     },
     medium: {
+      fontFamily: 'GeneralSans-Semibold',
       fontSize: 16,
-      lineHeight: 24,
+      lineHeight: 22,
       fontWeight: '600' as const,
       letterSpacing: 0,
     },
@@ -139,53 +150,60 @@ export const ZenTypography = {
   // Body - For content
   body: {
     large: {
-      fontSize: 17,
-      lineHeight: 26,
+      fontFamily: 'GeneralSans-Regular',
+      fontSize: 16,
+      lineHeight: 24,
       fontWeight: '400' as const,
-      letterSpacing: 0.2,
+      letterSpacing: 0,
     },
     medium: {
+      fontFamily: 'GeneralSans-Regular',
       fontSize: 15,
       lineHeight: 22,
       fontWeight: '400' as const,
-      letterSpacing: 0.1,
+      letterSpacing: 0,
     },
     small: {
+      fontFamily: 'GeneralSans-Regular',
       fontSize: 13,
       lineHeight: 18,
       fontWeight: '400' as const,
-      letterSpacing: 0.1,
+      letterSpacing: 0,
     },
   },
 
   // Label - For buttons, tags
   label: {
     large: {
+      fontFamily: 'GeneralSans-Bold',
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '600' as const,
-      letterSpacing: 0.5,
+      fontWeight: '700' as const,
+      letterSpacing: 0,
     },
     medium: {
+      fontFamily: 'GeneralSans-Semibold',
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '600' as const,
-      letterSpacing: 0.3,
+      letterSpacing: 0.2,
     },
     small: {
+      fontFamily: 'GeneralSans-Semibold',
       fontSize: 12,
       lineHeight: 16,
-      fontWeight: '500' as const,
-      letterSpacing: 0.5,
+      fontWeight: '600' as const,
+      letterSpacing: 1.4,
       textTransform: 'uppercase' as const,
     },
   },
 
   // Caption - For hints, meta
   caption: {
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '400' as const,
+    fontWeight: '500' as const,
     letterSpacing: 0.2,
   },
 } as const;
@@ -307,8 +325,8 @@ export const ZenSizes = {
 export const ZenGradients = {
   // Background gradients
   background: {
-    default: ['#000000', '#050510', '#0A0A18'],
-    elevated: ['#0A0A0F', '#12121A'],
+    default: ['#0C0B0F', '#0C0B0F', '#141218'],
+    elevated: ['#141218', '#1C1922'],
   },
 
   // Button gradients
@@ -327,7 +345,7 @@ export const ZenGradients = {
 
   // Progress/ring gradients
   ring: {
-    teal: [ZenColors.primary.main, '#00E5FF', ZenColors.primary.dark],
+    teal: [ZenColors.primary.main, '#FF2472', ZenColors.primary.dark],
     purple: [ZenColors.secondary.light, ZenColors.secondary.main, ZenColors.secondary.dark],
     gold: [ZenColors.accent.light, ZenColors.accent.main, ZenColors.accent.dark],
   },

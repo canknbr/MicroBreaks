@@ -56,7 +56,7 @@ public class WidgetBridgeModule: Module {
     Name("WidgetBridge")
 
     Constants([
-      "appGroupId": appGroupId,
+      "appGroupId": self.appGroupId,
     ])
 
     /// Write the JSON snapshot to the App Group's shared UserDefaults

@@ -44,28 +44,28 @@ const EMPTY_STATE_CONFIG: Record<EmptyStateType, {
     title: 'Start Your Day Right',
     message: "You haven't taken any breaks yet today. Your body will thank you!",
     actionLabel: 'Take First Break',
-    gradient: ['#06FFA5', '#00E5FF'],
+    gradient: ['#FF2472', '#FF2472'],
   },
   no_streak: {
     icon: 'flame',
     title: 'Build Your Streak',
     message: 'Complete your daily goal to start a streak. Consistency is key!',
     actionLabel: 'Start Now',
-    gradient: ['#FFD166', '#FF9500'],
+    gradient: ['#FAE34B', '#FF9500'],
   },
   new_user: {
     icon: 'sparkles',
-    title: 'Welcome to MicroBreaks',
+    title: 'Welcome to Unwind',
     message: 'Take regular breaks to boost your productivity and well-being.',
     actionLabel: 'Take Your First Break',
-    gradient: ['#B47EFF', '#9055E8'],
+    gradient: ['#BC26F4', '#BC26F4'],
   },
   error: {
     icon: 'cloud-offline',
     title: 'Something Went Wrong',
     message: "We couldn't load your data. Please try again.",
     actionLabel: 'Retry',
-    gradient: ['#FF6B6B', '#FF4757'],
+    gradient: ['#EB3E38', '#FF4757'],
   },
 };
 

@@ -241,14 +241,14 @@ async function generateHomeData(
         label: 'Breaks',
         value: String(weekBreaksCount),
         change: weekBreaksCount > 0 ? Math.min(Math.round((weekBreaksCount / 20) * 100), 100) : 0,
-        color: '#06FFA5',
+        color: '#6CE9CC',
       },
       {
         icon: 'time',
         label: 'Minutes',
         value: `${weekMinutes}m`,
         change: weekMinutes > 0 ? Math.min(Math.round((weekMinutes / 60) * 100), 100) : 0,
-        color: '#00E5FF',
+        color: '#21A3E6',
       },
       {
         icon: 'flame',
@@ -257,14 +257,14 @@ async function generateHomeData(
         change: storedStreak.currentStreak > 0
           ? Math.min(Math.round((storedStreak.currentStreak / 7) * 100), 100)
           : 0,
-        color: '#FFD166',
+        color: '#FAE34B',
       },
       {
         icon: 'trophy',
         label: 'XP',
         value: `${userStats.totalXP}`,
         change: userStats.totalXP > 0 ? Math.min(Math.round((userStats.totalXP / 100) * 100), 100) : 0,
-        color: '#B47EFF',
+        color: '#BC26F4',
       },
     ],
     nextBreakMinutes:
@@ -478,44 +478,44 @@ export function useAmbientColors(): {
     if (hour < 6) {
       // Night - deep blues
       return {
-        primary: '#1a1a3e',
-        secondary: '#0d0d2b',
-        gradient: ['#1a1a3e', '#0d0d2b'] as [string, string],
+        primary: '#1C1922',
+        secondary: '#141218',
+        gradient: ['#1C1922', '#141218'] as [string, string],
       };
     } else if (hour < 10) {
       // Morning - fresh greens
       return {
-        primary: '#06FFA5',
-        secondary: '#00E5FF',
-        gradient: ['#06FFA5', '#00E5FF'] as [string, string],
+        primary: '#6CE9CC',
+        secondary: '#21A3E6',
+        gradient: ['#6CE9CC', '#21A3E6'] as [string, string],
       };
     } else if (hour < 14) {
       // Midday - energetic cyan
       return {
-        primary: '#00E5FF',
-        secondary: '#06FFA5',
-        gradient: ['#00E5FF', '#06FFA5'] as [string, string],
+        primary: '#21A3E6',
+        secondary: '#6CE9CC',
+        gradient: ['#21A3E6', '#6CE9CC'] as [string, string],
       };
     } else if (hour < 17) {
       // Afternoon - focused purple
       return {
-        primary: '#B47EFF',
-        secondary: '#06FFA5',
-        gradient: ['#B47EFF', '#06FFA5'] as [string, string],
+        primary: '#BC26F4',
+        secondary: '#6CE9CC',
+        gradient: ['#BC26F4', '#6CE9CC'] as [string, string],
       };
     } else if (hour < 20) {
       // Evening - warm gold
       return {
-        primary: '#FFD166',
-        secondary: '#B47EFF',
-        gradient: ['#FFD166', '#B47EFF'] as [string, string],
+        primary: '#FAE34B',
+        secondary: '#BC26F4',
+        gradient: ['#FAE34B', '#BC26F4'] as [string, string],
       };
     } else {
       // Night - calming purple
       return {
-        primary: '#B47EFF',
-        secondary: '#1a1a3e',
-        gradient: ['#B47EFF', '#1a1a3e'] as [string, string],
+        primary: '#BC26F4',
+        secondary: '#1C1922',
+        gradient: ['#BC26F4', '#1C1922'] as [string, string],
       };
     }
   }, [hour]);

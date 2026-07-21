@@ -5,10 +5,8 @@ import {
   StyleSheet,
   Pressable,
   Modal,
-  Platform,
   TextInput,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
 
@@ -53,11 +51,6 @@ export function EditProfileModal({
           onPress={(e) => e.stopPropagation()}
           accessibilityViewIsModal={true}
         >
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
           <Text style={styles.modalTitle}>Edit Profile</Text>
 
           <View style={styles.inputContainer}>
@@ -127,42 +120,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  androidModalFallback: {
-    backgroundColor: 'rgba(30, 30, 40, 0.98)',
-  },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
     color: '#FFFFFF',
-    textAlign: 'center',
     marginBottom: 4,
   },
   editModalContent: {
     width: '90%',
     maxHeight: '80%',
     borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: Spacing.lg,
+    backgroundColor: '#1C1922',
+    padding: 24,
   },
   inputContainer: {
-    marginTop: Spacing.md,
+    marginTop: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 8,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 10,
   },
   nameInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 16,
     color: '#FFFFFF',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   avatarGrid: {
@@ -174,19 +167,17 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   avatarOptionActive: {
-    borderColor: '#06FFA5',
-    backgroundColor: 'rgba(6, 255, 165, 0.15)',
+    borderColor: '#FF2472',
   },
   avatarInitialOption: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 20,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   avatarEmoji: {
@@ -199,29 +190,28 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 15,
+    borderRadius: 100,
     alignItems: 'center',
   },
   cancelButtonText: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 16,
-    fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.7)',
   },
   saveButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#06FFA5',
+    paddingVertical: 15,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
   },
   saveButtonDisabled: {
-    backgroundColor: 'rgba(6, 255, 165, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   saveButtonText: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 16,
-    fontWeight: '700',
-    color: '#000',
+    color: '#0B0A0D',
   },
 });

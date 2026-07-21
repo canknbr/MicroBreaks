@@ -230,7 +230,7 @@ export default function ProfileScreen() {
       if (!granted) {
         Alert.alert(
           'Apple Health unavailable',
-          "We couldn't get Mindful Sessions write access. Enable it in Settings → Health → Data Access → MicroBreaks.",
+          "We couldn't get Mindful Sessions write access. Enable it in Settings → Health → Data Access → Unwind.",
           [{ text: 'OK' }],
         );
         return;
@@ -287,7 +287,7 @@ export default function ProfileScreen() {
   };
 
   const handleSupportPress = useCallback(() => {
-    Linking.openURL('mailto:support@microbreaks.app?subject=MicroBreaks%20Support%20Request').catch(() => {
+    Linking.openURL('mailto:support@microbreaks.app?subject=Unwind%20Support%20Request').catch(() => {
       Alert.alert('Unable to Open Email', 'Please email us at support@microbreaks.app');
     });
   }, []);
@@ -344,10 +344,6 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      {/* Ambient Background */}
-      <View style={[styles.ambientGlow, styles.ambientPurple]} />
-      <View style={[styles.ambientGlow, styles.ambientGold]} />
-
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
@@ -624,14 +620,14 @@ const styles = StyleSheet.create({
     right: -100,
     width: 400,
     height: 400,
-    backgroundColor: '#B47EFF',
+    backgroundColor: '#BC26F4',
   },
   ambientGold: {
     bottom: 100,
     left: -150,
     width: 350,
     height: 350,
-    backgroundColor: '#FFD166',
+    backgroundColor: '#FAE34B',
   },
   safeArea: {
     flex: 1,
@@ -646,10 +642,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 34,
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
   bottomSpacer: {
     height: 120,

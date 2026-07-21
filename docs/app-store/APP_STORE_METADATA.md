@@ -8,20 +8,20 @@
 
 #### App Name (30 characters max)
 ```
-MicroBreaks
+Unwind: Desk Stretches
 ```
 
 #### Subtitle (30 characters max)
 ```
-Smart Screen Break Reminders
+Stretch, relax & refocus
 ```
 
 #### Description (4000 characters max)
 ```
-Take care of your eyes, body, and mind with MicroBreaks - the intelligent break reminder app designed for people who spend hours in front of screens.
+Take care of your eyes, body, and mind with Unwind - the intelligent break reminder app designed for people who spend hours in front of screens.
 
 SMART BREAK REMINDERS
-MicroBreaks uses intelligent scheduling to remind you when it's time to take a break. Customize your break intervals from 20 minutes to 2 hours based on your work style.
+Unwind uses intelligent scheduling to remind you when it's time to take a break. Customize your break intervals from 20 minutes to 2 hours based on your work style.
 
 GUIDED EXERCISES
 Each break features quick, effective exercises designed by wellness experts:
@@ -52,7 +52,7 @@ PERFECT FOR
 PRIVACY FIRST
 Your core data stays on your device first. No email/password setup is required, optional cloud sync is available, and anonymous diagnostics help improve stability.
 
-Download MicroBreaks today and start building healthier screen habits. Your eyes, neck, and back will thank you!
+Download Unwind today and start building healthier screen habits. Your eyes, neck, and back will thank you!
 ```
 
 #### Keywords (100 characters max)
@@ -62,14 +62,14 @@ break,reminder,eye,strain,posture,stretch,wellness,productivity,screen,health,er
 
 #### Promotional Text (170 characters max)
 ```
-Take smart breaks, feel better! MicroBreaks reminds you to rest your eyes, stretch your body, and refresh your mind with quick, guided exercises.
+Take smart breaks, feel better! Unwind reminds you to rest your eyes, stretch your body, and refresh your mind with quick, guided exercises.
 ```
 
 #### What's New (4000 characters max)
 ```
-Welcome to MicroBreaks 1.0!
+Welcome to Unwind 1.0!
 
-We're excited to launch the first version of MicroBreaks. This release includes:
+We're excited to launch the first version of Unwind. This release includes:
 
 • Smart break reminders with customizable intervals
 • 50+ guided exercises for eyes, neck, back, wrists, and breathing
@@ -87,20 +87,20 @@ Start your journey to healthier screen habits today!
 
 #### App Name (30 characters max)
 ```
-MicroBreaks
+Unwind: Desk Stretches
 ```
 
 #### Subtitle (30 characters max)
 ```
-Akıllı Ekran Molası Hatırlatıcı
+Esne, rahatla ve odaklan
 ```
 
 #### Description (4000 characters max)
 ```
-MicroBreaks ile gözlerinize, vücudunuza ve zihninize iyi bakın - ekran başında uzun saatler geçiren herkes için tasarlanmış akıllı mola hatırlatıcı uygulama.
+Unwind ile gözlerinize, vücudunuza ve zihninize iyi bakın - ekran başında uzun saatler geçiren herkes için tasarlanmış akıllı mola hatırlatıcı uygulama.
 
 AKILLI MOLA HATIRLATICLARI
-MicroBreaks, mola zamanı geldiğinde sizi uyarmak için akıllı zamanlama kullanır. Çalışma tarzınıza göre mola aralıklarınızı 20 dakikadan 2 saate kadar özelleştirin.
+Unwind, mola zamanı geldiğinde sizi uyarmak için akıllı zamanlama kullanır. Çalışma tarzınıza göre mola aralıklarınızı 20 dakikadan 2 saate kadar özelleştirin.
 
 REHBERLİ EGZERSİZLER
 Her mola, sağlık uzmanları tarafından tasarlanmış hızlı ve etkili egzersizler içerir:
@@ -131,7 +131,7 @@ KİM İÇİN İDEAL
 ÖNCELİK GİZLİLİK
 Verileriniz cihazınızda kalır. Hesap gerekli değil. Bulut depolama yok. Takip yok.
 
-MicroBreaks'i bugün indirin ve daha sağlıklı ekran alışkanlıkları oluşturmaya başlayın. Gözleriniz, boyununuz ve sırtınız size teşekkür edecek!
+Unwind'i bugün indirin ve daha sağlıklı ekran alışkanlıkları oluşturmaya başlayın. Gözleriniz, boyununuz ve sırtınız size teşekkür edecek!
 ```
 
 #### Keywords (100 characters max)
@@ -141,7 +141,7 @@ mola,hatırlatıcı,göz,yorgunluk,duruş,germe,sağlık,verimlilik,ekran,ergono
 
 #### Promotional Text (170 characters max)
 ```
-Akıllı molalar alın, kendinizi daha iyi hissedin! MicroBreaks gözlerinizi dinlendirmenizi, vücudunuzu germenizi hatırlatır.
+Akıllı molalar alın, kendinizi daha iyi hissedin! Unwind gözlerinizi dinlendirmenizi, vücudunuzu germenizi hatırlatır.
 ```
 
 ---
@@ -157,10 +157,10 @@ Smart break reminders with guided exercises for eyes, posture & wellness
 
 #### Full Description (4000 characters max)
 ```
-Take care of your eyes, body, and mind with MicroBreaks - the intelligent break reminder app designed for people who spend hours in front of screens.
+Take care of your eyes, body, and mind with Unwind - the intelligent break reminder app designed for people who spend hours in front of screens.
 
 ★ SMART BREAK REMINDERS
-MicroBreaks uses intelligent scheduling to remind you when it's time to take a break. Customize your break intervals from 20 minutes to 2 hours based on your work style.
+Unwind uses intelligent scheduling to remind you when it's time to take a break. Customize your break intervals from 20 minutes to 2 hours based on your work style.
 
 ★ GUIDED EXERCISES
 Each break features quick, effective exercises designed by wellness experts:
@@ -191,7 +191,7 @@ Each break features quick, effective exercises designed by wellness experts:
 ★ PRIVACY FIRST
 Your core data stays on your device first. No email/password setup is required, optional cloud sync is available, and anonymous diagnostics help improve stability.
 
-Download MicroBreaks today and start building healthier screen habits. Your eyes, neck, and back will thank you!
+Download Unwind today and start building healthier screen habits. Your eyes, neck, and back will thank you!
 
 Questions or feedback? Contact us at support@microbreaks.app
 ```

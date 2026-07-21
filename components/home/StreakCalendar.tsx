@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   streakCount: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFD166',
+    color: '#FAE34B',
   },
   daysRow: {
     flexDirection: 'row',
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
   },
   checkmark: {
     fontSize: 14,

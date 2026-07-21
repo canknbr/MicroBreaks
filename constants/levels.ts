@@ -18,15 +18,15 @@ export const LEVEL_TITLES: Record<number, string> = {
 
 export const LEVEL_COLORS: Record<number, [string, string]> = {
   1: ['#9CA3AF', '#6B7280'], // Gray - Beginner
-  2: ['#06FFA5', '#00CC84'], // Teal - Enthusiast
-  3: ['#00E5FF', '#0099CC'], // Cyan - Committed
-  4: ['#B47EFF', '#9055E8'], // Purple - Warrior
-  5: ['#FFD166', '#FFAA00'], // Gold - Master
-  6: ['#4ECDC4', '#2EB9AD'], // Jade - Apprentice
-  7: ['#FF9F1C', '#E68A00'], // Orange - Pro
-  8: ['#EF476F', '#D63359'], // Rose - Champion
-  9: ['#7B68EE', '#5A4CD4'], // Indigo - Legend
-  10: ['#FFD166', '#FF9F1C'], // Gold Gradient - Zen Master
+  2: ['#6CE9CC', '#3FA98C'], // Teal - Enthusiast
+  3: ['#21A3E6', '#0099CC'], // Cyan - Committed
+  4: ['#BC26F4', '#BC26F4'], // Purple - Warrior
+  5: ['#FAE34B', '#FFAA00'], // Gold - Master
+  6: ['#5BC741', '#2EB9AD'], // Jade - Apprentice
+  7: ['#EF8633', '#E68A00'], // Orange - Pro
+  8: ['#FF2472', '#D63359'], // Rose - Champion
+  9: ['#BC26F4', '#5A4CD4'], // Indigo - Legend
+  10: ['#FAE34B', '#EF8633'], // Gold Gradient - Zen Master
 };
 
 /**

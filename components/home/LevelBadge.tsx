@@ -27,10 +27,10 @@ interface LevelBadgeProps {
 
 const LEVEL_COLORS: Record<number, [string, string]> = {
   1: ['#9CA3AF', '#6B7280'], // Gray - Beginner
-  2: ['#06FFA5', '#00CC84'], // Green - Regular
-  3: ['#00E5FF', '#0099CC'], // Cyan - Committed
-  4: ['#B47EFF', '#9055E8'], // Purple - Dedicated
-  5: ['#FFD166', '#FFAA00'], // Gold - Master
+  2: ['#FF2472', '#E01560'], // Green - Regular
+  3: ['#FF2472', '#0099CC'], // Cyan - Committed
+  4: ['#BC26F4', '#BC26F4'], // Purple - Dedicated
+  5: ['#FAE34B', '#FFAA00'], // Gold - Master
 };
 
 function LevelBadge({

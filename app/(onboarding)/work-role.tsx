@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Text } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
-import OptionCard from './components/OptionCard';
 import PrimaryButton from './components/PrimaryButton';
+import WheelSelect from './components/WheelSelect';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
-import { ZenColors, ZenSpacing, ZenTypography } from './constants/design';
 import {
   ACTIVE_ONBOARDING_TOTAL_STEPS,
   SCREEN_TIME_BANDS,
@@ -19,12 +18,24 @@ export default function WorkRoleScreen() {
   const onboardingData = useOnboardingStore((state) => state.data);
   const updateData = useOnboardingStore((state) => state.updateData);
 
-  const [selectedRole, setSelectedRole] = useState<string | null>(onboardingData.workRole);
+  const [selectedRole, setSelectedRole] = useState<string>(
+    onboardingData.workRole ?? WORK_ROLES[0].id
+  );
   const [selectedScreenTime, setSelectedScreenTime] = useState<number>(
     onboardingData.screenTime ?? 8
   );
   const [selectedPattern, setSelectedPattern] = useState<string>(
-    onboardingData.workPattern ?? 'flexible'
+    onboardingData.workPattern ?? WORK_PATTERNS[0].id
+  );
+
+  const roleOptions = useMemo(() => WORK_ROLES.map((r) => ({ id: r.id, label: r.label })), []);
+  const screenOptions = useMemo(
+    () => SCREEN_TIME_BANDS.map((b) => ({ id: b.id, label: b.label })),
+    []
+  );
+  const patternOptions = useMemo(
+    () => WORK_PATTERNS.map((p) => ({ id: p.id, label: p.label })),
+    []
   );
 
   const selectedScreenBandId = useMemo(
@@ -34,9 +45,14 @@ export default function WorkRoleScreen() {
     [selectedScreenTime]
   );
 
+  const handleScreenChange = (id: string) => {
+    const band = SCREEN_TIME_BANDS.find((b) => b.id === id);
+    if (band) setSelectedScreenTime(band.hours);
+  };
+
   const handleContinue = () => {
     updateData({
-      workRole: selectedRole ?? 'other',
+      workRole: selectedRole,
       screenTime: selectedScreenTime,
       workPattern: selectedPattern,
     });
@@ -44,80 +60,47 @@ export default function WorkRoleScreen() {
   };
 
   return (
-    <OnboardingLayout
-      currentStep={2}
-      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
-      ambientColor="teal"
-    >
+    <OnboardingLayout currentStep={2} totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}>
       <View style={styles.container}>
-        <HeadlineText delay={0}>
-          Set your work context
-        </HeadlineText>
-
+        <HeadlineText delay={0}>Set your work context</HeadlineText>
         <SubheadText delay={100}>
-          A few defaults help us recommend breaks that fit your actual desk day.
+          Spin each dial to what fits your desk day — we tune the recommendations to it.
         </SubheadText>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Role</Text>
-            <Text style={styles.sectionHelp}>
-              Optional, but useful for tailoring language and defaults.
-            </Text>
-            {WORK_ROLES.map((item) => (
-              <OptionCard
-                key={item.id}
-                icon={item.icon}
-                title={item.label}
-                selected={selectedRole === item.id}
-                onPress={() => setSelectedRole(item.id)}
-                variant="compact"
-              />
-            ))}
+        <View style={styles.fields}>
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>ROLE</Text>
+            <WheelSelect
+              options={roleOptions}
+              value={selectedRole}
+              onChange={setSelectedRole}
+              itemHeight={44}
+              visibleCount={3}
+            />
           </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Daily screen time</Text>
-            <Text style={styles.sectionHelp}>
-              Pick the band that feels closest to a normal workday.
-            </Text>
-            {SCREEN_TIME_BANDS.map((item) => (
-              <OptionCard
-                key={item.id}
-                title={item.label}
-                description={item.description}
-                selected={selectedScreenBandId === item.id}
-                onPress={() => setSelectedScreenTime(item.hours)}
-                variant="compact"
-              />
-            ))}
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>DAILY SCREEN TIME</Text>
+            <WheelSelect
+              options={screenOptions}
+              value={selectedScreenBandId}
+              onChange={handleScreenChange}
+              itemHeight={44}
+              visibleCount={3}
+            />
           </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Work pattern</Text>
-            <Text style={styles.sectionHelp}>
-              This drives reminder timing and the type of reset we lead with.
-            </Text>
-            {WORK_PATTERNS.map((pattern) => (
-              <OptionCard
-                key={pattern.id}
-                title={pattern.label}
-                description={pattern.description}
-                selected={selectedPattern === pattern.id}
-                onPress={() => setSelectedPattern(pattern.id)}
-              />
-            ))}
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>WORK PATTERN</Text>
+            <WheelSelect
+              options={patternOptions}
+              value={selectedPattern}
+              onChange={setSelectedPattern}
+              itemHeight={44}
+              visibleCount={3}
+            />
           </View>
-        </ScrollView>
+        </View>
 
-        <PrimaryButton
-          title="Continue"
-          onPress={handleContinue}
-        />
+        <PrimaryButton title="Continue" onPress={handleContinue} />
       </View>
     </OnboardingLayout>
   );
@@ -127,24 +110,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
+  fields: {
     flex: 1,
-    marginTop: ZenSpacing.md,
+    justifyContent: 'space-around',
+    marginVertical: 4,
   },
-  scrollContent: {
-    paddingBottom: ZenSpacing.md,
-  },
-  section: {
-    marginBottom: ZenSpacing.lg,
-  },
-  sectionLabel: {
-    ...ZenTypography.label.large,
-    color: ZenColors.text.primary,
-    marginBottom: ZenSpacing.xxs,
-  },
-  sectionHelp: {
-    ...ZenTypography.body.small,
-    color: ZenColors.text.secondary,
-    marginBottom: ZenSpacing.sm,
+  field: {},
+  fieldLabel: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 2,
   },
 });

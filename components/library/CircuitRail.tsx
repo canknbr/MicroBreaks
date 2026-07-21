@@ -1,8 +1,6 @@
 /**
- * Zone Circuit Rail
- * Horizontal chips for the auto-composed 3-move zone circuits. Tapping an
- * unlocked circuit starts the chained session directly; locked circuits
- * route to the paywall.
+ * Zone Circuit Rail — editorial. Horizontal list of auto-composed 3-move zone
+ * circuits: a play/lock affordance + type, no emoji / card chrome.
  */
 
 import React from 'react';
@@ -11,7 +9,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { Exercise } from '@/data/exercises';
 import type { ThemeColors } from '@/hooks/useTheme';
-import { cardShadow } from '@/utils/cardShadow';
 
 interface CircuitRailProps {
   title: string;
@@ -36,10 +33,7 @@ export function CircuitRail({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="repeat" size={15} color={theme.accent.secondary} />
-        <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
-      </View>
+      <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
       <Text style={[styles.subtitle, { color: theme.text.muted }]}>{subtitle}</Text>
 
       <ScrollView
@@ -60,26 +54,13 @@ export function CircuitRail({
               }}
               accessibilityRole="button"
               accessibilityLabel={`${circuit.title}, ${durationLabel(minutes)}`}
-              style={({ pressed }) => [
-                styles.chip,
-                {
-                  backgroundColor: theme.isDark
-                    ? 'rgba(25, 25, 35, 0.9)'
-                    : theme.background.card,
-                  borderColor: `${circuit.color}45`,
-                  opacity: pressed ? 0.85 : 1,
-                  ...cardShadow(theme.isDark, {
-                    height: 1,
-                    opacity: 0.07,
-                    radius: 5,
-                    elevation: 2,
-                  }),
-                },
-              ]}
+              style={({ pressed }) => [styles.chip, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Text style={styles.chipIcon} accessibilityElementsHidden>
-                {circuit.icon}
-              </Text>
+              <Ionicons
+                name={locked ? 'lock-closed' : 'play-circle'}
+                size={30}
+                color={locked ? theme.text.muted : circuit.color}
+              />
               <View style={styles.chipText}>
                 <Text
                   style={[styles.chipTitle, { color: theme.text.primary }]}
@@ -87,15 +68,10 @@ export function CircuitRail({
                 >
                   {circuit.title}
                 </Text>
-                <Text style={[styles.chipMeta, { color: circuit.color }]}>
+                <Text style={[styles.chipMeta, { color: theme.text.muted }]}>
                   {durationLabel(minutes)}
                 </Text>
               </View>
-              <Ionicons
-                name={locked ? 'lock-closed' : 'play-circle'}
-                size={18}
-                color={locked ? theme.text.muted : circuit.color}
-              />
             </Pressable>
           );
         })}
@@ -106,50 +82,40 @@ export function CircuitRail({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 14,
-    marginBottom: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 10,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 16,
   },
   rail: {
-    gap: 10,
+    gap: 30,
     paddingRight: 16,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    maxWidth: 230,
-  },
-  chipIcon: {
-    fontSize: 18,
+    gap: 12,
+    maxWidth: 250,
   },
   chipText: {
     flexShrink: 1,
   },
   chipTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 16,
+    letterSpacing: -0.2,
   },
   chipMeta: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 1,
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 12,
+    marginTop: 3,
   },
 });

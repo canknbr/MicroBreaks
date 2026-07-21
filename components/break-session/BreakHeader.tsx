@@ -1,11 +1,10 @@
 /**
- * Break Header Component
- * Title, timer, and close button for break session
+ * Break Header — editorial. Close · title · mono timer · voice toggle in a
+ * plain row. No blur pill / emoji icon / filled circle buttons.
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
@@ -29,7 +28,6 @@ interface BreakHeaderProps {
 
 export default function BreakHeader({
   title,
-  icon,
   color,
   timeRemaining,
   isPaused,
@@ -76,145 +74,98 @@ export default function BreakHeader({
   };
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-      )}
+    <View style={styles.content}>
+      {/* Close Button */}
+      <Pressable
+        style={styles.iconButton}
+        onPress={handleClose}
+        accessibilityRole="button"
+        accessibilityLabel="End session"
+        accessibilityHint="Ends the current break session"
+        hitSlop={8}
+      >
+        <Ionicons name="close" size={26} color="rgba(255, 255, 255, 0.6)" />
+      </Pressable>
 
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Close Button */}
-        <Pressable
-          style={styles.closeButton}
-          onPress={handleClose}
-          accessibilityRole="button"
-          accessibilityLabel="End session"
-          accessibilityHint="Ends the current break session"
-        >
-          <Ionicons name="close" size={24} color="rgba(255, 255, 255, 0.7)" />
-        </Pressable>
-
-        {/* Title Section */}
-        <View
-          style={styles.titleSection}
-          accessibilityRole="header"
-          accessibilityLabel={title}
-        >
-          <Text style={styles.icon} accessibilityElementsHidden importantForAccessibility="no">
-            {icon}
-          </Text>
-          <Text style={styles.title}>{title}</Text>
-        </View>
-
-        {/* Timer */}
-        <Animated.View
-          style={[styles.timerContainer, timerStyle]}
-          accessibilityLiveRegion="polite"
-          accessibilityLabel={
-            isPaused
-              ? `Timer paused at ${formatTime(timeRemaining)}`
-              : `Time remaining ${Math.floor(timeRemaining / 60)} minutes ${timeRemaining % 60} seconds`
-          }
-        >
-          <Text style={[styles.timer, { color }]}>{formatTime(timeRemaining)}</Text>
-          {isPaused && (
-            <View style={styles.pausedBadge}>
-              <Text style={styles.pausedText}>PAUSED</Text>
-            </View>
-          )}
-        </Animated.View>
-
-        {/* Voice Toggle */}
-        <Pressable
-          style={[styles.voiceButton, !isVoiceEnabled && styles.voiceButtonDisabled]}
-          onPress={handleToggleVoice}
-          accessibilityRole="button"
-          accessibilityLabel={isVoiceEnabled ? 'Disable voice guidance' : 'Enable voice guidance'}
-          accessibilityState={{ selected: isVoiceEnabled }}
-        >
-          <Ionicons
-            name={isVoiceEnabled ? 'volume-high' : 'volume-mute'}
-            size={20}
-            color={isVoiceEnabled ? color : 'rgba(255, 255, 255, 0.4)'}
-          />
-        </Pressable>
+      {/* Title Section */}
+      <View
+        style={styles.titleSection}
+        accessibilityRole="header"
+        accessibilityLabel={title}
+      >
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
       </View>
+
+      {/* Timer */}
+      <Animated.View
+        style={[styles.timerContainer, timerStyle]}
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={
+          isPaused
+            ? `Timer paused at ${formatTime(timeRemaining)}`
+            : `Time remaining ${Math.floor(timeRemaining / 60)} minutes ${timeRemaining % 60} seconds`
+        }
+      >
+        <Text style={[styles.timer, { color }]}>{formatTime(timeRemaining)}</Text>
+        {isPaused && <Text style={styles.pausedText}>PAUSED</Text>}
+      </Animated.View>
+
+      {/* Voice Toggle */}
+      <Pressable
+        style={styles.iconButton}
+        onPress={handleToggleVoice}
+        accessibilityRole="button"
+        accessibilityLabel={isVoiceEnabled ? 'Disable voice guidance' : 'Enable voice guidance'}
+        accessibilityState={{ selected: isVoiceEnabled }}
+        hitSlop={8}
+      >
+        <Ionicons
+          name={isVoiceEnabled ? 'volume-high' : 'volume-mute'}
+          size={22}
+          color={isVoiceEnabled ? color : 'rgba(255, 255, 255, 0.4)'}
+        />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(20, 20, 30, 0.95)',
-  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 10,
+    marginBottom: 16,
   },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  iconButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   titleSection: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 12,
-  },
-  icon: {
-    fontSize: 24,
-    marginRight: 8,
+    marginHorizontal: 10,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 17,
+    letterSpacing: -0.3,
     color: '#FFFFFF',
   },
   timerContainer: {
-    alignItems: 'center',
-    marginRight: 12,
+    alignItems: 'flex-end',
+    marginRight: 8,
   },
   timer: {
-    fontSize: 24,
-    fontWeight: '300',
-    fontVariant: ['tabular-nums'],
-  },
-  pausedBadge: {
-    position: 'absolute',
-    bottom: -14,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 22,
+    letterSpacing: -0.5,
   },
   pausedText: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 8,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  voiceButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  voiceButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 1,
+    marginTop: 1,
   },
 });

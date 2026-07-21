@@ -43,13 +43,13 @@ export interface LibraryZoneMeta {
 
 /** Display order for zone rails and grouped lists. */
 export const LIBRARY_ZONES: readonly LibraryZoneMeta[] = [
-  { id: 'neck', icon: '🙆', color: '#06FFA5' },
-  { id: 'back', icon: '🧘', color: '#B47EFF' },
-  { id: 'chest', icon: '🫁', color: '#00E5FF' },
-  { id: 'arms', icon: '💪', color: '#4ECDC4' },
+  { id: 'neck', icon: '🙆', color: '#6CE9CC' },
+  { id: 'back', icon: '🧘', color: '#BC26F4' },
+  { id: 'chest', icon: '🫁', color: '#21A3E6' },
+  { id: 'arms', icon: '💪', color: '#5BC741' },
   { id: 'core', icon: '🎯', color: '#FF6B9D' },
-  { id: 'legs', icon: '🦵', color: '#FFD166' },
-  { id: 'cardio', icon: '🏃', color: '#FF6B6B' },
+  { id: 'legs', icon: '🦵', color: '#FAE34B' },
+  { id: 'cardio', icon: '🏃', color: '#EB3E38' },
 ];
 
 const ZONE_BY_ID = new Map(LIBRARY_ZONES.map((zone) => [zone.id, zone]));
@@ -75,7 +75,7 @@ export function getZoneMeta(zoneId: LibraryZoneId): LibraryZoneMeta {
   const zone = ZONE_BY_ID.get(zoneId);
   if (!zone) {
     // Unreachable with a well-formed taxonomy; keep a safe fallback anyway.
-    return { id: zoneId, icon: '🧩', color: '#06FFA5' };
+    return { id: zoneId, icon: '🧩', color: '#6CE9CC' };
   }
   return zone;
 }

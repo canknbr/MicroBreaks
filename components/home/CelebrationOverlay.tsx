@@ -38,25 +38,25 @@ const CELEBRATION_CONFIG: Record<CelebrationType, {
     icon: 'checkmark-circle',
     title: 'Goal Complete!',
     subtitle: "You've reached your daily goal",
-    color: '#06FFA5',
+    color: '#FF2472',
   },
   new_level: {
     icon: 'arrow-up-circle',
     title: 'Level Up!',
     subtitle: 'You reached a new level',
-    color: '#B47EFF',
+    color: '#BC26F4',
   },
   streak_milestone: {
     icon: 'flame',
     title: 'Streak Milestone!',
     subtitle: 'days in a row',
-    color: '#FFD166',
+    color: '#FAE34B',
   },
   first_break: {
     icon: 'star',
     title: 'First Break!',
     subtitle: "You've started your wellness journey",
-    color: '#00E5FF',
+    color: '#FF2472',
   },
 };
 
@@ -212,8 +212,8 @@ export default function CelebrationOverlay({
     config.color,
     '#FFFFFF',
     config.color + '80',
-    '#FFD166',
-    '#06FFA5',
+    '#FAE34B',
+    '#FF2472',
   ];
 
   return (

@@ -64,14 +64,14 @@ export function FilterChips({
           <Ionicons
             name="heart"
             size={14}
-            color={selectedCategory === 'favorites' ? '#FF6B6B' : theme.text.muted}
+            color={selectedCategory === 'favorites' ? '#EB3E38' : theme.text.muted}
             style={{ marginRight: 4 }}
           />
           <Text
             style={[
               styles.filterChipText,
               { color: theme.text.secondary },
-              selectedCategory === 'favorites' && { color: '#FF6B6B' },
+              selectedCategory === 'favorites' && { color: '#EB3E38' },
             ]}
           >
             Favorites
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   filterChipActive: {
     backgroundColor: 'rgba(6, 255, 165, 0.15)',
-    borderColor: '#06FFA5',
+    borderColor: '#FF2472',
   },
   filterChipText: {
     fontSize: 13,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
   },
   filterChipTextActive: {
-    color: '#06FFA5',
+    color: '#FF2472',
   },
   filterDivider: {
     width: 1,

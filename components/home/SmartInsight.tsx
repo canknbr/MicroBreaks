@@ -36,22 +36,22 @@ const INSIGHT_CONFIG: Record<InsightType, { icon: IoniconsName; colors: [string,
   warning: {
     icon: 'alert-circle',
     colors: ['rgba(255, 107, 107, 0.15)', 'rgba(255, 107, 107, 0.05)'],
-    iconColor: '#FF6B6B',
+    iconColor: '#EB3E38',
   },
   suggestion: {
     icon: 'bulb',
     colors: ['rgba(6, 255, 165, 0.15)', 'rgba(6, 255, 165, 0.05)'],
-    iconColor: '#06FFA5',
+    iconColor: '#FF2472',
   },
   achievement: {
     icon: 'trophy',
     colors: ['rgba(255, 209, 102, 0.15)', 'rgba(255, 209, 102, 0.05)'],
-    iconColor: '#FFD166',
+    iconColor: '#FAE34B',
   },
   motivation: {
     icon: 'sparkles',
     colors: ['rgba(180, 126, 255, 0.15)', 'rgba(180, 126, 255, 0.05)'],
-    iconColor: '#B47EFF',
+    iconColor: '#BC26F4',
   },
 };
 

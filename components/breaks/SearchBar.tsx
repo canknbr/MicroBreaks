@@ -1,9 +1,7 @@
-import { View, StyleSheet, Platform, Pressable, TextInput } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, StyleSheet, Pressable, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing } from '@/theme';
 import { ThemeColors } from '@/hooks/useTheme';
-import { cardShadow } from '@/utils/cardShadow';
 
 export function SearchBar({
   value,
@@ -19,22 +17,15 @@ export function SearchBar({
   placeholder?: string;
 }) {
   return (
-    <View style={[
-      styles.searchContainer,
-      {
-        borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-        backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-        ...cardShadow(theme.isDark, { height: 1, opacity: 0.06, radius: 4, elevation: 2 }),
-      }
-    ]}>
-      {/* BlurView only for dark mode */}
-      {theme.isDark && (
-        Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-        )
-      )}
+    <View
+      style={[
+        styles.searchContainer,
+        {
+          borderColor: theme.border.subtle,
+          backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : theme.background.card,
+        },
+      ]}
+    >
       <Ionicons name="search" size={18} color={theme.text.muted} />
       <TextInput
         style={[styles.searchInput, { color: theme.text.primary }]}
@@ -59,16 +50,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
-    overflow: 'hidden',
     marginBottom: Spacing.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 15,
     color: '#FFFFFF',
     paddingVertical: 0,

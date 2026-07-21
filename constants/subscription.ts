@@ -36,7 +36,7 @@ export const FREE_LIBRARY_EXERCISE_IDS = [
   'lib-0659', // Wall push-up
   'lib-3533', // Bodyweight squat
   'lib-1368', // Ankle circles
-  'lib-3147', // Lying pelvic tilt
+  'lib-1364', // Standing pelvic tilt
   'lib-3672', // Back and forth step
 ] as const;
 

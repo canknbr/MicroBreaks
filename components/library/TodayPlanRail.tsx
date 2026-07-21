@@ -1,8 +1,7 @@
 /**
- * Today's Plan Rail
- * Horizontal rail of the three daily suggested moves. Deterministic per
- * day (see features/exercise-library/suggestions.ts); tapping opens the
- * movement detail.
+ * Today's Plan Rail — editorial. A titled horizontal rail of the three daily
+ * suggested moves (deterministic per day). GIF thumb + type, no card chrome /
+ * number badges / emoji fallback.
  */
 
 import React from 'react';
@@ -11,12 +10,10 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { ThemeColors } from '@/hooks/useTheme';
-import { cardShadow } from '@/utils/cardShadow';
 import type { LibraryExerciseRecord } from '@/features/exercise-library/types';
 import {
   getLibraryMedia,
   localizedName,
-  zoneMetaForRecord,
   type LibraryLocale,
 } from '@/features/exercise-library/catalog';
 import { estimateSessionSeconds } from '@/features/exercise-library/session';
@@ -44,10 +41,7 @@ export function TodayPlanRail({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="sparkles" size={15} color={theme.accent.primary} />
-        <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
-      </View>
+      <Text style={[styles.title, { color: theme.text.primary }]}>{title}</Text>
       <Text style={[styles.subtitle, { color: theme.text.muted }]}>{subtitle}</Text>
 
       <ScrollView
@@ -56,7 +50,6 @@ export function TodayPlanRail({
         contentContainerStyle={styles.rail}
       >
         {plan.map((record, index) => {
-          const zone = zoneMetaForRecord(record);
           const media = getLibraryMedia(record);
           const name = localizedName(record, locale);
           const minutes = Math.max(1, Math.round(estimateSessionSeconds(record) / 60));
@@ -71,26 +64,8 @@ export function TodayPlanRail({
               }}
               accessibilityRole="button"
               accessibilityLabel={`${title} ${index + 1}: ${name}, ${minutes}m`}
-              style={({ pressed }) => [
-                styles.card,
-                {
-                  backgroundColor: theme.isDark
-                    ? 'rgba(25, 25, 35, 0.9)'
-                    : theme.background.card,
-                  borderColor: `${zone.color}35`,
-                  opacity: pressed ? 0.85 : 1,
-                  ...cardShadow(theme.isDark, {
-                    height: 2,
-                    opacity: 0.08,
-                    radius: 6,
-                    elevation: 3,
-                  }),
-                },
-              ]}
+              style={({ pressed }) => [styles.card, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <View style={[styles.badge, { backgroundColor: zone.color }]}>
-                <Text style={styles.badgeText}>{index + 1}</Text>
-              </View>
               <View style={styles.thumbWrap}>
                 {media ? (
                   <Image
@@ -100,7 +75,7 @@ export function TodayPlanRail({
                     accessibilityIgnoresInvertColors
                   />
                 ) : (
-                  <Text style={styles.thumbFallback}>{zone.icon}</Text>
+                  <Text style={styles.thumbFallback}>{name.charAt(0)}</Text>
                 )}
                 {locked && (
                   <View style={styles.lockOverlay}>
@@ -125,66 +100,45 @@ export function TodayPlanRail({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
+    marginTop: 4,
   },
   subtitle: {
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 10,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 16,
   },
   rail: {
-    gap: 10,
+    gap: 18,
     paddingRight: 16,
   },
   card: {
-    width: 128,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 10,
-    alignItems: 'center',
-  },
-  badge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#000000',
+    width: 120,
   },
   thumbWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 14,
+    width: 120,
+    height: 120,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   thumb: {
-    width: 60,
-    height: 60,
+    width: 112,
+    height: 112,
   },
   thumbFallback: {
-    fontSize: 26,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 40,
+    color: '#0B0A0D',
   },
   lockOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -193,15 +147,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   name: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 17,
-    minHeight: 34,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 14,
+    letterSpacing: -0.2,
+    lineHeight: 18,
+    minHeight: 36,
   },
   meta: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 12,
     marginTop: 4,
   },
 });

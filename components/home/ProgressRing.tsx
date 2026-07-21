@@ -33,7 +33,7 @@ export default function ProgressRing({
   progress,
   size = 200,
   strokeWidth = 12,
-  colors = ['#06FFA5', '#00E5FF'],
+  colors = ['#FF2472', '#FF2472'],
   backgroundColor = 'rgba(255, 255, 255, 0.08)',
   delay = 0,
   showPulse = true,

@@ -18,29 +18,9 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1405.gif'),
     thumb: require('../assets/exercises/thumbs/1405.jpg'),
   },
-  '1346': {
-    gif: require('../assets/exercises/gifs/1346.gif'),
-    thumb: require('../assets/exercises/thumbs/1346.jpg'),
-  },
-  '1352': {
-    gif: require('../assets/exercises/gifs/1352.gif'),
-    thumb: require('../assets/exercises/thumbs/1352.jpg'),
-  },
   '0690': {
     gif: require('../assets/exercises/gifs/0690.gif'),
     thumb: require('../assets/exercises/thumbs/0690.jpg'),
-  },
-  '1358': {
-    gif: require('../assets/exercises/gifs/1358.gif'),
-    thumb: require('../assets/exercises/thumbs/1358.jpg'),
-  },
-  '1362': {
-    gif: require('../assets/exercises/gifs/1362.gif'),
-    thumb: require('../assets/exercises/thumbs/1362.jpg'),
-  },
-  '1363': {
-    gif: require('../assets/exercises/gifs/1363.gif'),
-    thumb: require('../assets/exercises/thumbs/1363.jpg'),
   },
   '3669': {
     gif: require('../assets/exercises/gifs/3669.gif'),
@@ -58,17 +38,9 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1365.gif'),
     thumb: require('../assets/exercises/thumbs/1365.jpg'),
   },
-  '1366': {
-    gif: require('../assets/exercises/gifs/1366.gif'),
-    thumb: require('../assets/exercises/thumbs/1366.jpg'),
-  },
   '3672': {
     gif: require('../assets/exercises/gifs/3672.gif'),
     thumb: require('../assets/exercises/thumbs/3672.jpg'),
-  },
-  '3360': {
-    gif: require('../assets/exercises/gifs/3360.gif'),
-    thumb: require('../assets/exercises/thumbs/3360.jpg'),
   },
   '1160': {
     gif: require('../assets/exercises/gifs/1160.gif'),
@@ -85,10 +57,6 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
   '3224': {
     gif: require('../assets/exercises/gifs/3224.gif'),
     thumb: require('../assets/exercises/thumbs/3224.jpg'),
-  },
-  '0630': {
-    gif: require('../assets/exercises/gifs/0630.gif'),
-    thumb: require('../assets/exercises/thumbs/0630.jpg'),
   },
   '3219': {
     gif: require('../assets/exercises/gifs/3219.gif'),
@@ -134,29 +102,9 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1297.gif'),
     thumb: require('../assets/exercises/thumbs/1297.jpg'),
   },
-  '3211': {
-    gif: require('../assets/exercises/gifs/3211.gif'),
-    thumb: require('../assets/exercises/thumbs/3211.jpg'),
-  },
-  '0662': {
-    gif: require('../assets/exercises/gifs/0662.gif'),
-    thumb: require('../assets/exercises/thumbs/0662.jpg'),
-  },
-  '3145': {
-    gif: require('../assets/exercises/gifs/3145.gif'),
-    thumb: require('../assets/exercises/thumbs/3145.jpg'),
-  },
-  '3021': {
-    gif: require('../assets/exercises/gifs/3021.gif'),
-    thumb: require('../assets/exercises/thumbs/3021.jpg'),
-  },
   '0659': {
     gif: require('../assets/exercises/gifs/0659.gif'),
     thumb: require('../assets/exercises/thumbs/0659.jpg'),
-  },
-  '1421': {
-    gif: require('../assets/exercises/gifs/1421.gif'),
-    thumb: require('../assets/exercises/thumbs/1421.jpg'),
   },
   '0721': {
     gif: require('../assets/exercises/gifs/0721.gif'),
@@ -218,10 +166,6 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1770.gif'),
     thumb: require('../assets/exercises/thumbs/1770.jpg'),
   },
-  '1771': {
-    gif: require('../assets/exercises/gifs/1771.gif'),
-    thumb: require('../assets/exercises/thumbs/1771.jpg'),
-  },
   '0129': {
     gif: require('../assets/exercises/gifs/0129.gif'),
     thumb: require('../assets/exercises/thumbs/0129.jpg'),
@@ -229,10 +173,6 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
   '2398': {
     gif: require('../assets/exercises/gifs/2398.gif'),
     thumb: require('../assets/exercises/thumbs/2398.jpg'),
-  },
-  '0283': {
-    gif: require('../assets/exercises/gifs/0283.gif'),
-    thumb: require('../assets/exercises/thumbs/0283.jpg'),
   },
   '0490': {
     gif: require('../assets/exercises/gifs/0490.gif'),
@@ -242,21 +182,9 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/0643.gif'),
     thumb: require('../assets/exercises/thumbs/0643.jpg'),
   },
-  '1512': {
-    gif: require('../assets/exercises/gifs/1512.gif'),
-    thumb: require('../assets/exercises/thumbs/1512.jpg'),
-  },
-  '3639': {
-    gif: require('../assets/exercises/gifs/3639.gif'),
-    thumb: require('../assets/exercises/thumbs/3639.jpg'),
-  },
   '3533': {
     gif: require('../assets/exercises/gifs/3533.gif'),
     thumb: require('../assets/exercises/thumbs/3533.jpg'),
-  },
-  '1494': {
-    gif: require('../assets/exercises/gifs/1494.gif'),
-    thumb: require('../assets/exercises/thumbs/1494.jpg'),
   },
   '1548': {
     gif: require('../assets/exercises/gifs/1548.gif'),
@@ -266,17 +194,9 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/3769.gif'),
     thumb: require('../assets/exercises/thumbs/3769.jpg'),
   },
-  '0459': {
-    gif: require('../assets/exercises/gifs/0459.gif'),
-    thumb: require('../assets/exercises/thumbs/0459.jpg'),
-  },
   '3470': {
     gif: require('../assets/exercises/gifs/3470.gif'),
     thumb: require('../assets/exercises/thumbs/3470.jpg'),
-  },
-  '3561': {
-    gif: require('../assets/exercises/gifs/3561.gif'),
-    thumb: require('../assets/exercises/thumbs/3561.jpg'),
   },
   '1511': {
     gif: require('../assets/exercises/gifs/1511.gif'),
@@ -286,69 +206,25 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1418.gif'),
     thumb: require('../assets/exercises/thumbs/1418.jpg'),
   },
-  '1419': {
-    gif: require('../assets/exercises/gifs/1419.gif'),
-    thumb: require('../assets/exercises/thumbs/1419.jpg'),
-  },
   '0514': {
     gif: require('../assets/exercises/gifs/0514.gif'),
     thumb: require('../assets/exercises/thumbs/0514.jpg'),
-  },
-  '1576': {
-    gif: require('../assets/exercises/gifs/1576.gif'),
-    thumb: require('../assets/exercises/thumbs/1576.jpg'),
-  },
-  '3013': {
-    gif: require('../assets/exercises/gifs/3013.gif'),
-    thumb: require('../assets/exercises/thumbs/3013.jpg'),
   },
   '3132': {
     gif: require('../assets/exercises/gifs/3132.gif'),
     thumb: require('../assets/exercises/thumbs/3132.jpg'),
   },
-  '0613': {
-    gif: require('../assets/exercises/gifs/0613.gif'),
-    thumb: require('../assets/exercises/thumbs/0613.jpg'),
-  },
-  '1422': {
-    gif: require('../assets/exercises/gifs/1422.gif'),
-    thumb: require('../assets/exercises/thumbs/1422.jpg'),
-  },
   '3552': {
     gif: require('../assets/exercises/gifs/3552.gif'),
     thumb: require('../assets/exercises/thumbs/3552.jpg'),
-  },
-  '2571': {
-    gif: require('../assets/exercises/gifs/2571.gif'),
-    thumb: require('../assets/exercises/thumbs/2571.jpg'),
   },
   '1585': {
     gif: require('../assets/exercises/gifs/1585.gif'),
     thumb: require('../assets/exercises/thumbs/1585.jpg'),
   },
-  '1424': {
-    gif: require('../assets/exercises/gifs/1424.gif'),
-    thumb: require('../assets/exercises/thumbs/1424.jpg'),
-  },
-  '2567': {
-    gif: require('../assets/exercises/gifs/2567.gif'),
-    thumb: require('../assets/exercises/thumbs/2567.jpg'),
-  },
-  '1587': {
-    gif: require('../assets/exercises/gifs/1587.gif'),
-    thumb: require('../assets/exercises/thumbs/1587.jpg'),
-  },
   '0710': {
     gif: require('../assets/exercises/gifs/0710.gif'),
     thumb: require('../assets/exercises/thumbs/0710.jpg'),
-  },
-  '3667': {
-    gif: require('../assets/exercises/gifs/3667.gif'),
-    thumb: require('../assets/exercises/thumbs/3667.jpg'),
-  },
-  '3645': {
-    gif: require('../assets/exercises/gifs/3645.gif'),
-    thumb: require('../assets/exercises/thumbs/3645.jpg'),
   },
   '2368': {
     gif: require('../assets/exercises/gifs/2368.gif'),
@@ -382,53 +258,9 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1604.gif'),
     thumb: require('../assets/exercises/thumbs/1604.jpg'),
   },
-  '0001': {
-    gif: require('../assets/exercises/gifs/0001.gif'),
-    thumb: require('../assets/exercises/thumbs/0001.jpg'),
-  },
   '0002': {
     gif: require('../assets/exercises/gifs/0002.gif'),
     thumb: require('../assets/exercises/thumbs/0002.jpg'),
-  },
-  '0003': {
-    gif: require('../assets/exercises/gifs/0003.gif'),
-    thumb: require('../assets/exercises/thumbs/0003.jpg'),
-  },
-  '0006': {
-    gif: require('../assets/exercises/gifs/0006.gif'),
-    thumb: require('../assets/exercises/thumbs/0006.jpg'),
-  },
-  '0262': {
-    gif: require('../assets/exercises/gifs/0262.gif'),
-    thumb: require('../assets/exercises/thumbs/0262.jpg'),
-  },
-  '0274': {
-    gif: require('../assets/exercises/gifs/0274.gif'),
-    thumb: require('../assets/exercises/thumbs/0274.jpg'),
-  },
-  '3016': {
-    gif: require('../assets/exercises/gifs/3016.gif'),
-    thumb: require('../assets/exercises/thumbs/3016.jpg'),
-  },
-  '0276': {
-    gif: require('../assets/exercises/gifs/0276.gif'),
-    thumb: require('../assets/exercises/thumbs/0276.jpg'),
-  },
-  '0443': {
-    gif: require('../assets/exercises/gifs/0443.gif'),
-    thumb: require('../assets/exercises/thumbs/0443.jpg'),
-  },
-  '0464': {
-    gif: require('../assets/exercises/gifs/0464.gif'),
-    thumb: require('../assets/exercises/thumbs/0464.jpg'),
-  },
-  '1471': {
-    gif: require('../assets/exercises/gifs/1471.gif'),
-    thumb: require('../assets/exercises/thumbs/1471.jpg'),
-  },
-  '3239': {
-    gif: require('../assets/exercises/gifs/3239.gif'),
-    thumb: require('../assets/exercises/thumbs/3239.jpg'),
   },
   '3119': {
     gif: require('../assets/exercises/gifs/3119.gif'),
@@ -438,52 +270,16 @@ export const LIBRARY_EXERCISE_MEDIA: Record<string, LibraryExerciseMedia> = {
     gif: require('../assets/exercises/gifs/1688.gif'),
     thumb: require('../assets/exercises/thumbs/1688.jpg'),
   },
-  '0865': {
-    gif: require('../assets/exercises/gifs/0865.gif'),
-    thumb: require('../assets/exercises/thumbs/0865.jpg'),
-  },
-  '3147': {
-    gif: require('../assets/exercises/gifs/3147.gif'),
-    thumb: require('../assets/exercises/thumbs/3147.jpg'),
-  },
   '1687': {
     gif: require('../assets/exercises/gifs/1687.gif'),
     thumb: require('../assets/exercises/thumbs/1687.jpg'),
-  },
-  '0664': {
-    gif: require('../assets/exercises/gifs/0664.gif'),
-    thumb: require('../assets/exercises/thumbs/0664.jpg'),
-  },
-  '3201': {
-    gif: require('../assets/exercises/gifs/3201.gif'),
-    thumb: require('../assets/exercises/thumbs/3201.jpg'),
-  },
-  '0872': {
-    gif: require('../assets/exercises/gifs/0872.gif'),
-    thumb: require('../assets/exercises/thumbs/0872.jpg'),
-  },
-  '0687': {
-    gif: require('../assets/exercises/gifs/0687.gif'),
-    thumb: require('../assets/exercises/thumbs/0687.jpg'),
   },
   '0689': {
     gif: require('../assets/exercises/gifs/0689.gif'),
     thumb: require('../assets/exercises/thumbs/0689.jpg'),
   },
-  '3699': {
-    gif: require('../assets/exercises/gifs/3699.gif'),
-    thumb: require('../assets/exercises/thumbs/3699.jpg'),
-  },
-  '0705': {
-    gif: require('../assets/exercises/gifs/0705.gif'),
-    thumb: require('../assets/exercises/thumbs/0705.jpg'),
-  },
   '3213': {
     gif: require('../assets/exercises/gifs/3213.gif'),
     thumb: require('../assets/exercises/thumbs/3213.jpg'),
-  },
-  '2329': {
-    gif: require('../assets/exercises/gifs/2329.gif'),
-    thumb: require('../assets/exercises/thumbs/2329.jpg'),
   },
 };

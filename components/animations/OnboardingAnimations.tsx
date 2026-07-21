@@ -101,7 +101,7 @@ export function WelcomeAnimation({ size = 200 }: { size?: number }) {
       {/* Main breathing circle */}
       <Animated.View style={breathStyle}>
         <LinearGradient
-          colors={['#06FFA5', '#00E5FF']}
+          colors={['#FF2472', '#FF2472']}
           style={[
             styles.mainCircle,
             { width: size * 0.6, height: size * 0.6, borderRadius: size * 0.3 },
@@ -114,9 +114,9 @@ export function WelcomeAnimation({ size = 200 }: { size?: number }) {
       </Animated.View>
 
       {/* Floating particles */}
-      <FloatingParticle delay={0} size={size} color="#06FFA5" />
-      <FloatingParticle delay={1000} size={size} color="#00E5FF" />
-      <FloatingParticle delay={2000} size={size} color="#B47EFF" />
+      <FloatingParticle delay={0} size={size} color="#FF2472" />
+      <FloatingParticle delay={1000} size={size} color="#FF2472" />
+      <FloatingParticle delay={2000} size={size} color="#BC26F4" />
     </View>
   );
 }
@@ -261,27 +261,27 @@ export function StretchAnimation({ size = 200 }: { size?: number }) {
       {/* Stick figure */}
       <View style={styles.stickFigure}>
         {/* Head */}
-        <View style={[styles.head, { backgroundColor: '#B47EFF' }]} />
+        <View style={[styles.head, { backgroundColor: '#BC26F4' }]} />
 
         {/* Body */}
         <Animated.View style={[styles.body, bodyStyle]}>
-          <View style={[styles.torso, { backgroundColor: '#B47EFF' }]} />
+          <View style={[styles.torso, { backgroundColor: '#BC26F4' }]} />
         </Animated.View>
 
         {/* Arms */}
         <View style={styles.armsContainer}>
           <Animated.View style={[styles.arm, styles.leftArm, leftArmStyle]}>
-            <View style={[styles.armLine, { backgroundColor: '#B47EFF' }]} />
+            <View style={[styles.armLine, { backgroundColor: '#BC26F4' }]} />
           </Animated.View>
           <Animated.View style={[styles.arm, styles.rightArm, rightArmStyle]}>
-            <View style={[styles.armLine, { backgroundColor: '#B47EFF' }]} />
+            <View style={[styles.armLine, { backgroundColor: '#BC26F4' }]} />
           </Animated.View>
         </View>
 
         {/* Legs */}
         <View style={styles.legsContainer}>
-          <View style={[styles.leg, { backgroundColor: '#B47EFF' }]} />
-          <View style={[styles.leg, { backgroundColor: '#B47EFF' }]} />
+          <View style={[styles.leg, { backgroundColor: '#BC26F4' }]} />
+          <View style={[styles.leg, { backgroundColor: '#BC26F4' }]} />
         </View>
       </View>
 
@@ -456,7 +456,7 @@ export function SuccessAnimation({ size = 200 }: { size?: number }) {
       {/* Check circle */}
       <Animated.View style={checkStyle}>
         <LinearGradient
-          colors={['#06FFA5', '#00E5FF']}
+          colors={['#FF2472', '#FF2472']}
           style={[
             styles.checkCircle,
             { width: size * 0.5, height: size * 0.5, borderRadius: size * 0.25 },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   // Welcome Animation
   ambientGlow: {
     position: 'absolute',
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
     opacity: 0.15,
   },
   dashedRing: {
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   mainCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#06FFA5',
+    shadowColor: '#FF2472',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   // Stretch Animation
   pulseCircle: {
     position: 'absolute',
-    backgroundColor: '#B47EFF',
+    backgroundColor: '#BC26F4',
   },
   stickFigure: {
     alignItems: 'center',
@@ -568,13 +568,13 @@ const styles = StyleSheet.create({
   // Timer Animation
   timerGlow: {
     position: 'absolute',
-    backgroundColor: '#FFD166',
+    backgroundColor: '#FAE34B',
     opacity: 0.2,
   },
   clockFace: {
     backgroundColor: 'rgba(255, 209, 102, 0.15)',
     borderWidth: 3,
-    borderColor: '#FFD166',
+    borderColor: '#FAE34B',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 3,
     height: 10,
-    backgroundColor: '#FFD166',
+    backgroundColor: '#FAE34B',
     borderRadius: 2,
   },
   clockCenter: {
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FFD166',
+    backgroundColor: '#FAE34B',
   },
   secondHand: {
     position: 'absolute',
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   handLine: {
     width: 2,
     height: 35,
-    backgroundColor: '#FFD166',
+    backgroundColor: '#FAE34B',
     borderRadius: 1,
   },
   timerText: {
@@ -609,19 +609,19 @@ const styles = StyleSheet.create({
     bottom: 15,
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFD166',
+    color: '#FAE34B',
   },
   // Success Animation
   successRing: {
     position: 'absolute',
     borderWidth: 3,
-    borderColor: '#06FFA5',
+    borderColor: '#FF2472',
     opacity: 0.5,
   },
   checkCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#06FFA5',
+    shadowColor: '#FF2472',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 15,

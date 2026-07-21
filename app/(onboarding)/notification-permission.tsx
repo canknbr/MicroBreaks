@@ -1,25 +1,16 @@
 /**
- * ONB_017: Notification Permission
- * Premium zen design with smooth animations
+ * ONB_017: Notification permission — editorial. No banner card / icon-box
+ * benefits / bordered trust pills: one example reminder shown as type, a
+ * hairline type-list of reassurances, white pill CTA.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withDelay,
-  withTiming,
-  interpolate,
-  Easing,
-} from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
-import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import { ACTIVE_ONBOARDING_TOTAL_STEPS } from '@/constants/onboarding';
 import { useOnboardingStore } from '@/store';
 import {
@@ -30,52 +21,17 @@ import { getCurrentUserId } from '@/services/firebase/auth';
 import { registerForPushNotifications } from '@/services/firebase/messaging';
 import { applyOnboardingNotificationChoice } from '@/features/onboarding/runtime';
 
-const BENEFITS = [
-  { icon: 'eye-outline', text: 'Stay focused without burning out your eyes' },
-  { icon: 'options-outline', text: 'Mute or change frequency in one tap' },
-  { icon: 'moon-outline', text: 'Silenced on weekends and in quiet hours' },
+const REASSURANCES = [
+  'A gentle nudge about every 30 minutes',
+  'Silenced on weekends and in quiet hours',
+  'Mute or change the rhythm in one tap',
 ];
-
-const SAMPLE_NOTIFICATION = {
-  appName: 'MicroBreaks',
-  title: 'Time for a 30 sec reset',
-  body: 'Look 20 feet away for 20 seconds — your eyes will thank you.',
-  meta: 'now',
-};
 
 export default function NotificationPermissionScreen() {
   const router = useRouter();
   const updateData = useOnboardingStore((state) => state.updateData);
   const [, setPermissionGranted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Animation values
-  const bellOpacity = useSharedValue(0);
-  const bellScale = useSharedValue(0.9);
-  const benefitsOpacity = useSharedValue(0);
-  const trustOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    const easing = Easing.out(Easing.cubic);
-    bellOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing }));
-    bellScale.value = withDelay(200, withTiming(1, { duration: 600, easing }));
-    benefitsOpacity.value = withDelay(350, withTiming(1, { duration: 400, easing }));
-    trustOpacity.value = withDelay(500, withTiming(1, { duration: 400, easing }));
-  }, [bellOpacity, bellScale, benefitsOpacity, trustOpacity]);
-
-  const bellAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: bellOpacity.value,
-    transform: [{ scale: bellScale.value }],
-  }));
-
-  const benefitsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: benefitsOpacity.value,
-    transform: [{ translateY: interpolate(benefitsOpacity.value, [0, 1], [20, 0]) }],
-  }));
-
-  const trustAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: trustOpacity.value,
-  }));
 
   const handleEnable = async () => {
     if (isSubmitting) {
@@ -152,11 +108,7 @@ export default function NotificationPermissionScreen() {
   };
 
   return (
-    <OnboardingLayout
-      currentStep={6}
-      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
-      ambientColor="purple"
-    >
+    <OnboardingLayout currentStep={6} totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}>
       <View style={styles.container}>
         <HeadlineText delay={0}>
           Do you want reset reminders on by default?
@@ -165,62 +117,31 @@ export default function NotificationPermissionScreen() {
           They help the habit stick, but you stay in control and can change this later.
         </SubheadText>
 
-        {/* Sample notification preview — sets accurate expectations about
-            cadence and tone before the user grants permission. */}
-        <Animated.View
-          style={[styles.sampleContainer, bellAnimatedStyle]}
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={`Preview: ${SAMPLE_NOTIFICATION.title}. ${SAMPLE_NOTIFICATION.body}`}
-        >
-          <Text style={styles.sampleHint}>You&apos;ll see something like this:</Text>
-          <View style={styles.sampleBanner}>
-            <View style={styles.sampleIcon}>
-              <Ionicons name="notifications" size={20} color={ZenColors.primary.main} />
-            </View>
-            <View style={styles.sampleContent}>
-              <View style={styles.sampleHeader}>
-                <Text style={styles.sampleAppName}>{SAMPLE_NOTIFICATION.appName}</Text>
-                <Text style={styles.sampleMeta}>{SAMPLE_NOTIFICATION.meta}</Text>
-              </View>
-              <Text style={styles.sampleTitle}>{SAMPLE_NOTIFICATION.title}</Text>
-              <Text style={styles.sampleBody}>{SAMPLE_NOTIFICATION.body}</Text>
-            </View>
-          </View>
-        </Animated.View>
+        {/* Example reminder as type — sets the tone without a fake banner. */}
+        <View style={styles.sample}>
+          <Text style={styles.sampleLabel}>A REMINDER READS LIKE</Text>
+          <Text style={styles.sampleTitle}>Time for a 30-second reset</Text>
+          <Text style={styles.sampleBody}>
+            Look 20 feet away for 20 seconds — your eyes will thank you.
+          </Text>
+        </View>
 
-        {/* Benefits */}
-        <Animated.View style={[styles.benefits, benefitsAnimatedStyle]}>
-          {BENEFITS.map((benefit, index) => (
-            <View key={index} style={styles.benefitItem}>
-              <View style={styles.benefitIcon}>
-                <Ionicons name={benefit.icon as any} size={20} color={ZenColors.primary.main} />
+        {/* Reassurances as a hairline type-list with a pink em-dash lead. */}
+        <View style={styles.list}>
+          {REASSURANCES.map((line, i) => (
+            <View key={line} style={[styles.row, i > 0 && styles.divider]}>
+              <View style={styles.lead}>
+                <View style={styles.bar} />
               </View>
-              <Text style={styles.benefitText}>{benefit.text}</Text>
+              <Text style={styles.rowText}>{line}</Text>
             </View>
           ))}
-        </Animated.View>
-
-        {/* Trust builders */}
-        <Animated.View style={[styles.trustContainer, trustAnimatedStyle]}>
-          <View style={styles.trustBadge}>
-            <Ionicons name="shield-checkmark-outline" size={14} color={ZenColors.text.muted} />
-            <Text style={styles.trustText}>Easy to mute</Text>
-          </View>
-          <View style={styles.trustBadge}>
-            <Ionicons name="pause-outline" size={14} color={ZenColors.text.muted} />
-            <Text style={styles.trustText}>Adjust anytime</Text>
-          </View>
-          <View style={styles.trustBadge}>
-            <Ionicons name="time-outline" size={14} color={ZenColors.text.muted} />
-            <Text style={styles.trustText}>Built for workdays</Text>
-          </View>
-        </Animated.View>
+        </View>
 
         <View style={styles.spacer} />
 
         <PrimaryButton
-          title="Enable Reminders"
+          title="Enable reminders"
           onPress={handleEnable}
           variant="primary"
           disabled={isSubmitting}
@@ -241,108 +162,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  sampleContainer: {
-    marginTop: ZenSpacing.lg,
-    marginBottom: ZenSpacing.md,
+  sample: {
+    marginTop: 32,
+    marginBottom: 8,
   },
-  sampleHint: {
-    ...ZenTypography.caption,
-    color: ZenColors.text.muted,
-    textAlign: 'center',
-    marginBottom: ZenSpacing.xs,
-  },
-  sampleBanner: {
-    flexDirection: 'row',
-    backgroundColor: ZenColors.background.card,
-    borderRadius: ZenRadius.lg,
-    padding: ZenSpacing.sm,
-    borderWidth: 1,
-    borderColor: ZenColors.border.subtle,
-    gap: ZenSpacing.sm,
-  },
-  sampleIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: ZenRadius.sm,
-    backgroundColor: ZenColors.background.elevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sampleContent: {
-    flex: 1,
-  },
-  sampleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  sampleAppName: {
-    ...ZenTypography.caption,
-    color: ZenColors.text.muted,
-    fontWeight: '600',
-  },
-  sampleMeta: {
-    ...ZenTypography.caption,
-    color: ZenColors.text.muted,
+  sampleLabel: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: 'rgba(255,255,255,0.4)',
+    marginBottom: 10,
   },
   sampleTitle: {
-    ...ZenTypography.body.medium,
-    color: ZenColors.text.primary,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.4,
+    color: '#FFFFFF',
   },
   sampleBody: {
-    ...ZenTypography.caption,
-    color: ZenColors.text.secondary,
-    marginTop: 1,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    lineHeight: 22,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 6,
   },
-  benefits: {
-    backgroundColor: ZenColors.background.card,
-    borderRadius: ZenRadius.xl,
-    padding: ZenSpacing.md,
-    marginBottom: ZenSpacing.md,
-    borderWidth: 1,
-    borderColor: ZenColors.border.subtle,
+  list: {
+    marginTop: 28,
   },
-  benefitItem: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: ZenSpacing.sm,
+    paddingVertical: 15,
   },
-  benefitIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: ZenRadius.md,
-    backgroundColor: ZenColors.background.elevated,
-    alignItems: 'center',
+  divider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  lead: {
+    width: 30,
     justifyContent: 'center',
-    marginRight: ZenSpacing.sm,
   },
-  benefitText: {
-    ...ZenTypography.body.medium,
-    color: ZenColors.text.primary,
+  bar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
+  },
+  rowText: {
     flex: 1,
-  },
-  trustContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: ZenSpacing.xs,
-    marginBottom: ZenSpacing.sm,
-  },
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ZenColors.background.card,
-    paddingHorizontal: ZenSpacing.sm,
-    paddingVertical: ZenSpacing.xs,
-    borderRadius: ZenRadius.full,
-    gap: ZenSpacing.xxs,
-    borderWidth: 1,
-    borderColor: ZenColors.border.subtle,
-  },
-  trustText: {
-    ...ZenTypography.caption,
-    color: ZenColors.text.muted,
+    fontFamily: 'GeneralSans-Medium',
+    fontSize: 17,
+    letterSpacing: -0.2,
+    color: 'rgba(255,255,255,0.85)',
   },
   spacer: {
     flex: 1,

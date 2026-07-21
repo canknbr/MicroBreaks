@@ -1,11 +1,10 @@
 /**
- * Break Controls Component
- * Pause, skip step, and end session buttons
+ * Break Controls — editorial. A single solid transport button (pause/resume)
+ * flanked by plain icon+label controls. No blur circles / borders / shadows.
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { useTranslation } from '@/i18n/hooks';
@@ -63,19 +62,13 @@ export default function BreakControls({
         <Pressable
           {...endPress.handlers}
           onPress={handleEnd}
+          style={styles.secondaryButton}
           accessibilityRole="button"
           accessibilityLabel={t('breakSession.controls.end')}
           accessibilityHint="Ends the current exercise session and returns to home"
         >
-          <View style={styles.secondaryButton}>
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-            )}
-            <Ionicons name="stop" size={20} color="rgba(255, 255, 255, 0.85)" />
-            <Text style={styles.secondaryButtonText}>{t('breakSession.controls.end').replace(' Session', '')}</Text>
-          </View>
+          <Ionicons name="stop" size={22} color="rgba(255, 255, 255, 0.7)" />
+          <Text style={styles.secondaryButtonText}>{t('breakSession.controls.end').replace(' Session', '')}</Text>
         </Pressable>
       </Animated.View>
 
@@ -104,19 +97,13 @@ export default function BreakControls({
         <Pressable
           {...skipPress.handlers}
           onPress={handleSkip}
+          style={styles.secondaryButton}
           accessibilityRole="button"
           accessibilityLabel={t('breakSession.controls.skip')}
           accessibilityHint="Skips to the next step in the exercise"
         >
-          <View style={styles.secondaryButton}>
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-            )}
-            <Ionicons name="play-skip-forward" size={20} color="rgba(255, 255, 255, 0.85)" />
-            <Text style={styles.secondaryButtonText}>{t('breakSession.controls.skip')}</Text>
-          </View>
+          <Ionicons name="play-skip-forward" size={22} color="rgba(255, 255, 255, 0.7)" />
+          <Text style={styles.secondaryButtonText}>{t('breakSession.controls.skip')}</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -129,7 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
-    gap: 20,
+    gap: 36,
   },
   mainButton: {
     width: 80,
@@ -137,30 +124,16 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   secondaryButton: {
     width: 60,
-    height: 60,
-    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(30, 30, 40, 0.9)',
-    borderRadius: 30,
+    gap: 5,
   },
   secondaryButtonText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.85)', // WCAG AA compliant
-    marginTop: 2,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 });

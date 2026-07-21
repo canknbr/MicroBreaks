@@ -9,12 +9,10 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Platform,
 } from 'react-native';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeIn,
@@ -38,19 +36,19 @@ function localeBcp47(): string {
 function getNotificationColor(type: AppNotification['type']): string {
   switch (type) {
     case 'achievement':
-      return '#FFD166';
+      return '#FAE34B';
     case 'streak_milestone':
-      return '#FF6B6B';
+      return '#EB3E38';
     case 'goal_complete':
-      return '#06FFA5';
+      return '#FF2472';
     case 'level_up':
-      return '#B47EFF';
+      return '#BC26F4';
     case 'tip':
-      return '#00E5FF';
+      return '#FF2472';
     case 'welcome':
-      return '#06FFA5';
+      return '#FF2472';
     default:
-      return '#06FFA5';
+      return '#FF2472';
   }
 }
 
@@ -75,38 +73,14 @@ function NotificationItem({
       layout={Layout.springify()}
     >
       <Pressable
-        style={[
-          styles.notificationItem,
-          {
-            borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-            backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: theme.isDark ? 0 : 0.06,
-            shadowRadius: 8,
-            elevation: theme.isDark ? 0 : 3,
-          },
-          !notification.read && styles.notificationItemUnread,
-        ]}
+        style={[styles.notificationItem, { borderBottomColor: theme.border.subtle }]}
         onPress={onPress}
       >
-        {/* BlurView only for dark mode */}
-        {theme.isDark && (
-          Platform.OS === 'ios' ? (
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(25, 25, 35, 0.9)' }]} />
-          )
-        )}
-
-        {/* Unread indicator */}
-        {!notification.read && (
-          <View style={[styles.unreadDot, { backgroundColor: color }]} />
-        )}
-
-        {/* Icon */}
-        <View style={[styles.notificationIcon, { backgroundColor: `${color}20` }]}>
-          <Text style={styles.notificationIconText}>{notification.icon}</Text>
+        {/* Unread indicator in a fixed lead column so rows align */}
+        <View style={styles.lead}>
+          {!notification.read && (
+            <View style={[styles.unreadDot, { backgroundColor: color }]} />
+          )}
         </View>
 
         {/* Content */}
@@ -247,10 +221,6 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      {/* Background */}
-      <View style={[styles.ambientGlow, styles.ambientPurple]} />
-      <View style={[styles.ambientGlow, styles.ambientTeal]} />
-
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         {/* Header */}
         <Animated.View
@@ -342,25 +312,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  ambientGlow: {
-    position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.06,
-  },
-  ambientPurple: {
-    top: -100,
-    right: -100,
-    width: 350,
-    height: 350,
-    backgroundColor: '#B47EFF',
-  },
-  ambientTeal: {
-    bottom: 100,
-    left: -150,
-    width: 400,
-    height: 400,
-    backgroundColor: '#06FFA5',
-  },
   safeArea: {
     flex: 1,
   },
@@ -387,14 +338,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 26,
+    letterSpacing: -0.6,
     color: '#FFFFFF',
   },
   headerSubtitle: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 13,
-    color: '#06FFA5',
-    marginTop: 2,
+    color: '#FF2472',
+    marginTop: 3,
   },
   headerActions: {
     flexDirection: 'row',
@@ -412,69 +365,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
   },
   group: {
-    marginBottom: Spacing.lg,
+    marginTop: 22,
+    marginBottom: 4,
   },
   groupTitle: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.5)',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: Spacing.sm,
+    letterSpacing: 1.4,
   },
   notificationItem: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
     flexDirection: 'row',
-    padding: 16,
-    position: 'relative',
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  notificationItemUnread: {
-    borderColor: 'rgba(6, 255, 165, 0.2)',
+  lead: {
+    width: 18,
+    paddingTop: 7,
   },
   unreadDot: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
     width: 8,
     height: 8,
     borderRadius: 4,
   },
-  notificationIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  notificationIconText: {
-    fontSize: 24,
-  },
   notificationContent: {
     flex: 1,
-    paddingRight: 16,
+    paddingRight: 8,
   },
   notificationTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 16,
+    letterSpacing: -0.2,
     marginBottom: 4,
   },
   notificationMessage: {
-    fontSize: 13,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 18,
     marginBottom: 6,
   },
   notificationTime: {
+    fontFamily: 'JetBrainsMono-Regular',
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.4)',
+    marginTop: 6,
   },
   emptyState: {
     flex: 1,

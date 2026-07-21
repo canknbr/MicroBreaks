@@ -173,7 +173,6 @@ function RoutineBuilderScreen() {
 
   const renderPickerRow = useCallback(
     ({ item }: { item: LibraryExerciseRecord }) => {
-      const zone = zoneMetaForRecord(item);
       const media = getLibraryMedia(item);
       const selected = moveIds.includes(item.id);
       const displayName = localizedName(item, locale);
@@ -185,14 +184,8 @@ function RoutineBuilderScreen() {
           accessibilityLabel={displayName}
           style={[
             styles.pickerRow,
-            {
-              backgroundColor: selected
-                ? `${theme.accent.tertiary}14`
-                : theme.isDark
-                  ? 'rgba(25, 25, 35, 0.9)'
-                  : theme.background.card,
-              borderColor: selected ? `${theme.accent.tertiary}60` : theme.border.subtle,
-            },
+            { borderBottomColor: theme.border.subtle },
+            selected && { backgroundColor: `${theme.accent.tertiary}12` },
           ]}
         >
           <View style={styles.pickerThumbWrap}>
@@ -204,7 +197,7 @@ function RoutineBuilderScreen() {
                 accessibilityIgnoresInvertColors
               />
             ) : (
-              <Text style={styles.pickerThumbFallback}>{zone.icon}</Text>
+              <Text style={styles.pickerThumbFallback}>{displayName.charAt(0)}</Text>
             )}
           </View>
           <Text
@@ -421,7 +414,7 @@ function RoutineBuilderScreen() {
             styles.saveButton,
             {
               backgroundColor: isValid
-                ? theme.accent.tertiary
+                ? '#FFFFFF'
                 : theme.isDark
                   ? 'rgba(255,255,255,0.12)'
                   : 'rgba(0,0,0,0.10)',
@@ -436,7 +429,7 @@ function RoutineBuilderScreen() {
           <Text
             style={[
               styles.saveButtonText,
-              { color: isValid ? '#000000' : theme.text.muted },
+              { color: isValid ? '#0B0A0D' : theme.text.muted },
             ]}
           >
             {t('library.routines.save')}
@@ -469,8 +462,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
   listContent: {
     paddingBottom: 16,
@@ -491,8 +485,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
   },
   selectedMeta: {
     fontSize: 13,
@@ -533,47 +528,48 @@ const styles = StyleSheet.create({
   pickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 8,
-    gap: 10,
+    paddingVertical: 12,
+    gap: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   pickerThumbWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 11,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   pickerThumb: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
   },
   pickerThumbFallback: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 20,
+    color: '#0B0A0D',
   },
   pickerName: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 19,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 16,
+    letterSpacing: -0.2,
+    lineHeight: 21,
   },
   saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 15,
-    borderRadius: 16,
+    paddingVertical: 17,
+    borderRadius: 100,
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
   },
   saveButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 16,
   },
 });
 

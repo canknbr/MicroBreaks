@@ -10,5 +10,6 @@ export { PreferencesSection } from './PreferencesSection';
 export { PremiumCard } from './PremiumCard';
 export { ProfileCard } from './ProfileCard';
 export { SettingItem } from './SettingItem';
+export { SettingsGroup } from './SettingsGroup';
 export { SignOutButton } from './SignOutButton';
 export { TimerSettingsSection } from './TimerSettingsSection';

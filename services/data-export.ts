@@ -107,7 +107,7 @@ export async function exportUserData(): Promise<void> {
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(file.uri, {
       mimeType: 'application/json',
-      dialogTitle: 'Export Your MicroBreaks Data',
+      dialogTitle: 'Export Your Unwind Data',
     });
   }
 }

@@ -104,7 +104,7 @@ export function MoveLibraryCard({
 
       <View style={[styles.countPill, { backgroundColor: 'rgba(6, 255, 165, 0.14)' }]}>
         <Text style={styles.countText}>{count}</Text>
-        <Ionicons name="chevron-forward" size={14} color="#06FFA5" />
+        <Ionicons name="chevron-forward" size={14} color="#FF2472" />
       </View>
     </Pressable>
   );
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   badge: {
-    backgroundColor: '#06FFA5',
+    backgroundColor: '#FF2472',
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -179,6 +179,6 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#06FFA5',
+    color: '#FF2472',
   },
 });

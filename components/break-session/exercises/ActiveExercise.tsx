@@ -1,6 +1,7 @@
 /**
- * Active Exercise Animation
- * Timer with motivational prompts for walking/active breaks
+ * Active Exercise Animation — editorial. A bouncing mark for movement rhythm,
+ * a big mono countdown as the hero, and quiet rotating encouragement. No
+ * emoji / gradient circle / badge pill.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -13,20 +14,18 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { AnimationType } from '@/data/exercises';
 import { useTheme } from '@/hooks/useTheme';
 
 const MOTIVATIONAL_MESSAGES = [
-  'Keep going!',
-  'You got this!',
-  'Great pace!',
-  'Stay strong!',
-  'Almost there!',
+  'Keep going',
+  'You got this',
+  'Great pace',
+  'Stay strong',
+  'Almost there',
   'Feeling good?',
-  'Energy boost!',
-  'Keep moving!',
+  'Energy boost',
+  'Keep moving',
 ];
 
 interface ActiveExerciseProps {
@@ -41,7 +40,6 @@ export default function ActiveExercise({
   animation,
   instruction,
   color,
-  visualGuide,
   timeRemaining,
 }: ActiveExerciseProps) {
   const theme = useTheme();
@@ -63,7 +61,6 @@ export default function ActiveExercise({
 
     switch (animation) {
       case 'walk':
-        // Walking bounce animation
         bounceY.value = withRepeat(
           withSequence(
             withTiming(-10, { duration, easing: Easing.out(Easing.quad) }),
@@ -71,7 +68,6 @@ export default function ActiveExercise({
           ),
           -1
         );
-        // Subtle side-to-side movement
         walkingX.value = withRepeat(
           withSequence(
             withTiming(5, { duration, easing: Easing.inOut(Easing.ease) }),
@@ -82,7 +78,6 @@ export default function ActiveExercise({
         break;
 
       case 'active':
-        // Energetic pulse
         pulseScale.value = withRepeat(
           withSequence(
             withTiming(1.1, { duration: 300, easing: Easing.out(Easing.quad) }),
@@ -100,7 +95,6 @@ export default function ActiveExercise({
         break;
 
       default:
-        // Gentle pulse for rest/other
         pulseScale.value = withRepeat(
           withSequence(
             withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -113,7 +107,7 @@ export default function ActiveExercise({
     }
   }, [animation, bounceY, pulseScale, walkingX]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const markStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: bounceY.value },
       { translateX: walkingX.value },
@@ -132,31 +126,23 @@ export default function ActiveExercise({
 
   return (
     <View style={styles.container}>
-      {/* Main visual */}
-      <Animated.View style={[styles.visualContainer, animatedStyle]}>
-        <View style={[styles.iconCircle, { borderColor: color }]}>
-          <LinearGradient
-            colors={[`${color}40`, `${color}10`]}
-            style={StyleSheet.absoluteFill}
-          />
-          <Text style={styles.emoji}>{visualGuide}</Text>
-        </View>
-      </Animated.View>
+      {/* Bouncing rhythm mark */}
+      <View style={styles.markStage}>
+        <Animated.View style={[styles.mark, { backgroundColor: color, shadowColor: color }, markStyle]} />
+        <View style={[styles.markBase, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+      </View>
 
       {/* Timer display */}
       <View style={styles.timerContainer}>
         <Text style={[styles.timer, { color }]}>{formatTime(timeRemaining)}</Text>
-        <Text style={[styles.timerLabel, { color: theme.text.muted }]}>remaining</Text>
+        <Text style={[styles.timerLabel, { color: theme.text.muted }]}>REMAINING</Text>
       </View>
 
       {/* Motivational message */}
       {(isWalking || isActive) && (
-        <View style={[styles.motivationBadge, { backgroundColor: `${color}20` }]}>
-          <Ionicons name="sparkles" size={16} color={color} />
-          <Text style={[styles.motivationText, { color }]}>
-            {MOTIVATIONAL_MESSAGES[motivationIndex]}
-          </Text>
-        </View>
+        <Text style={[styles.motivationText, { color }]}>
+          {MOTIVATIONAL_MESSAGES[motivationIndex]}
+        </Text>
       )}
 
       {/* Instruction */}
@@ -203,55 +189,53 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  visualContainer: {
+  markStage: {
+    height: 120,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     marginBottom: 24,
   },
-  iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+  mark: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 5,
   },
-  emoji: {
-    fontSize: 60,
+  markBase: {
+    width: 64,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 12,
   },
   timerContainer: {
     alignItems: 'center',
     marginBottom: 20,
   },
   timer: {
-    fontSize: 48,
-    fontWeight: '200',
-    fontVariant: ['tabular-nums'],
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 60,
+    letterSpacing: -2,
   },
   timerLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginTop: -4,
-  },
-  motivationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginBottom: 20,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.6,
+    marginTop: 2,
   },
   motivationText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: -0.2,
+    marginBottom: 18,
   },
   instruction: {
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     lineHeight: 26,
+    textAlign: 'center',
     paddingHorizontal: 20,
   },
   activityDots: {

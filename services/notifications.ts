@@ -250,7 +250,7 @@ export async function initializeNotifications(): Promise<void> {
       description: 'Reminders to take breaks during work',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#06FFA5',
+      lightColor: '#6CE9CC',
     });
 
     await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.STREAK_ALERTS, {
@@ -258,14 +258,14 @@ export async function initializeNotifications(): Promise<void> {
       description: 'Alerts to protect your daily streak',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FFD166',
+      lightColor: '#FAE34B',
     });
 
     await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.GOALS, {
       name: 'Goal Notifications',
       description: 'Updates about your daily goals',
       importance: Notifications.AndroidImportance.DEFAULT,
-      lightColor: '#00E5FF',
+      lightColor: '#21A3E6',
     });
 
     await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.TIMER_ALERTS, {
@@ -273,7 +273,7 @@ export async function initializeNotifications(): Promise<void> {
       description: 'Notifications when a focus or break timer completes',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF6B6B',
+      lightColor: '#EB3E38',
       sound: 'default',
     });
   } catch (error) {

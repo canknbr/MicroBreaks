@@ -146,7 +146,7 @@ export default function LottieAnimation({
 // Fallback animated placeholder when Lottie isn't available
 export function AnimatedPlaceholder({
   size = 200,
-  color = '#06FFA5',
+  color = '#FF2472',
   type = 'pulse',
 }: {
   size?: number;
@@ -245,7 +245,7 @@ interface ExerciseLottieAnimationProps {
 
 export function ExerciseLottieAnimation({
   animationType,
-  color = '#06FFA5',
+  color = '#FF2472',
   size = 200,
   lottieSource,
   style,

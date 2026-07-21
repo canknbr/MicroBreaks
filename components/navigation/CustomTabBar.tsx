@@ -1,19 +1,18 @@
 /**
- * Premium Custom Tab Bar
- * Floating glassmorphism design with animated indicator
+ * Floating pill tab bar — "Outsiders" redesign.
+ * A dark, rounded, blurred pill containing icon-over-label items. The active
+ * item sits on a raised inner pill and is tinted with the brand pink.
  */
 
 import React from 'react';
-import { View, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSpring,
-  interpolateColor,
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -35,23 +34,21 @@ interface TabItemProps {
 
 function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress, theme }: TabItemProps) {
   const scale = useSharedValue(1);
-  const animatedFocus = useSharedValue(isFocused ? 1 : 0);
+  const focus = useSharedValue(isFocused ? 1 : 0);
 
   React.useEffect(() => {
-    animatedFocus.value = withTiming(isFocused ? 1 : 0, {
-      duration: 250,
+    focus.value = withTiming(isFocused ? 1 : 0, {
+      duration: 220,
       easing: Easing.out(Easing.cubic),
     });
-  }, [animatedFocus, isFocused]);
+  }, [focus, isFocused]);
 
   const handlePressIn = () => {
-    scale.value = withTiming(0.9, { duration: 100 });
+    scale.value = withTiming(0.92, { duration: 90 });
   };
-
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 150 });
+    scale.value = withSpring(1, { damping: 15, stiffness: 180 });
   };
-
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
@@ -60,31 +57,12 @@ function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress, th
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
-
-  const iconStyle = useAnimatedStyle(() => ({
-    opacity: interpolateColor(
-      animatedFocus.value,
-      [0, 1],
-      ['rgba(255,255,255,0.5)', 'rgba(255,255,255,1)']
-    ) === 'rgba(255,255,255,1)' ? 1 : 0.5,
-    transform: [
-      { scale: 0.95 + animatedFocus.value * 0.05 },
-      { translateY: -animatedFocus.value * 2 },
-    ],
+  const pillStyle = useAnimatedStyle(() => ({
+    opacity: focus.value,
+    transform: [{ scale: 0.9 + focus.value * 0.1 }],
   }));
 
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: animatedFocus.value,
-    transform: [
-      { translateY: (1 - animatedFocus.value) * 5 },
-      { scale: 0.9 + animatedFocus.value * 0.1 },
-    ],
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: animatedFocus.value * 0.6,
-    transform: [{ scale: 0.8 + animatedFocus.value * 0.4 }],
-  }));
+  const tint = isFocused ? theme.accent.primary : theme.text.muted;
 
   return (
     <AnimatedPressable
@@ -93,32 +71,18 @@ function TabItem({ label, icon, iconFocused, isFocused, onPress, onLongPress, th
       onLongPress={onLongPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isFocused }}
     >
-      {/* Glow effect - only for dark mode */}
-      {theme.isDark && (
-        <Animated.View style={[styles.glow, glowStyle]}>
-          <LinearGradient
-            colors={['#06FFA5', 'transparent']}
-            style={styles.glowGradient}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-          />
-        </Animated.View>
-      )}
-
-      {/* Icon */}
-      <Animated.View style={iconStyle}>
-        <Ionicons
-          name={(isFocused ? iconFocused : icon) as any}
-          size={22}
-          color={isFocused ? theme.accent.primary : theme.text.muted}
-        />
-      </Animated.View>
-
-      {/* Label */}
-      <Animated.Text style={[styles.label, { color: isFocused ? theme.accent.primary : theme.text.muted }, labelStyle]}>
+      {/* Raised inner pill behind the active item */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.activePill, { backgroundColor: theme.background.elevated }, pillStyle]}
+      />
+      <Ionicons name={(isFocused ? iconFocused : icon) as any} size={21} color={tint} />
+      <Text style={[styles.label, { color: tint }]} numberOfLines={1}>
         {label}
-      </Animated.Text>
+      </Text>
     </AnimatedPressable>
   );
 }
@@ -135,45 +99,18 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
   const theme = useTheme();
 
   return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <View style={[
-        styles.tabBarWrapper,
-        {
-          borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-          backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: theme.isDark ? 0.3 : 0.12,
-          shadowRadius: 12,
-          elevation: theme.isDark ? 0 : 10,
-        }
-      ]}>
-        {/* BlurView only for dark mode */}
-        {theme.isDark && (
-          Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15, 15, 20, 0.95)' }]} />
-          )
-        )}
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      <View style={[styles.pill, { borderColor: theme.border.subtle }]}>
+        {Platform.OS === 'ios' ? (
+          <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : null}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(28, 25, 34, 0.82)' }]} />
 
-        {/* Border highlight - only for dark mode */}
-        {theme.isDark && (
-          <LinearGradient
-            colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
-            style={styles.borderHighlight}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          />
-        )}
-
-        {/* Tabs */}
-        <View style={styles.tabBar}>
+        <View style={styles.row}>
           {state.routes.map((route, index) => {
             const { options } = descriptors[route.key];
-            const label = options.title ?? route.name;
+            const label = (options.title ?? route.name) as string;
             const isFocused = state.index === index;
-
             const config = TAB_CONFIG[route.name] || { icon: 'ellipse-outline', iconFocused: 'ellipse' };
 
             const onPress = () => {
@@ -182,17 +119,12 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                 target: route.key,
                 canPreventDefault: true,
               });
-
               if (!isFocused && !event.defaultPrevented) {
                 navigation.navigate(route.name);
               }
             };
-
             const onLongPress = () => {
-              navigation.emit({
-                type: 'tabLongPress',
-                target: route.key,
-              });
+              navigation.emit({ type: 'tabLongPress', target: route.key });
             };
 
             return (
@@ -220,50 +152,40 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
   },
-  tabBarWrapper: {
-    borderRadius: 28,
+  pill: {
+    alignSelf: 'center',
+    borderRadius: 999,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  borderHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  tabBar: {
+  row: {
     flexDirection: 'row',
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 8,
   },
   tabItem: {
-    flex: 1,
+    minWidth: 76,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-    position: 'relative',
+    paddingHorizontal: 6,
+    gap: 3,
   },
-  glow: {
+  activePill: {
     position: 'absolute',
-    top: -8,
-    width: 50,
-    height: 36,
-    alignItems: 'center',
-  },
-  glowGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 30,
+    top: 2,
+    bottom: 2,
+    left: 6,
+    right: 6,
+    borderRadius: 999,
   },
   label: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 4,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 0.2,
   },
 });

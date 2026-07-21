@@ -74,7 +74,7 @@ interface SettingsState {
 export const defaultAppSettings: AppSettings = {
   // Appearance
   theme: 'dark',
-  accentColor: '#06FFA5',
+  accentColor: '#6CE9CC',
 
   // Audio & Haptics
   soundEnabled: true,

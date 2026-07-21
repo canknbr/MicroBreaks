@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { usePressScale } from '@/hooks/usePressScale';
@@ -461,55 +460,39 @@ export default function PaywallContent({
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      <View
-        style={[
-          styles.heroCard,
-          {
-            backgroundColor: theme.isDark ? 'rgba(19, 19, 26, 0.92)' : theme.background.card,
-            borderColor: theme.border.subtle,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={theme.isDark ? ['rgba(255, 209, 102, 0.16)', 'rgba(0, 229, 255, 0.08)'] : ['rgba(255, 149, 0, 0.14)', 'rgba(0, 122, 255, 0.08)']}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.heroTopRow}>
-          <View style={styles.heroBadge}>
-            <Ionicons
-              name={hasActiveSubscription ? 'sparkles' : 'star'}
-              size={16}
-              color={theme.text.inverse}
-            />
-            <Text style={styles.heroBadgeText}>{accessLabel}</Text>
-          </View>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <Text style={[styles.eyebrow, { color: theme.text.muted }]}>
+            {accessLabel?.toUpperCase()}
+          </Text>
           {onDismiss && (
             <Pressable
               onPress={onDismiss}
-              style={[styles.closeButton, { backgroundColor: theme.border.subtle }]}
+              style={styles.closeButton}
+              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Close subscription screen"
             >
-              <Ionicons name="close" size={18} color={theme.text.primary} />
+              <Ionicons name="close" size={24} color={theme.text.muted} />
             </Pressable>
           )}
         </View>
 
         <Text
           style={[
-            styles.heroTitle,
+            styles.headline,
             { color: theme.text.primary },
-            compactHeader && styles.heroTitleCompact,
+            compactHeader && styles.headlineCompact,
           ]}
         >
           {copy.headline}
         </Text>
-        <Text style={[styles.heroSubtitle, { color: theme.text.secondary }]}>
+        <Text style={[styles.subhead, { color: theme.text.secondary }]}>
           {copy.subheadline}
         </Text>
 
         {accessDateLabel && (
-          <Text style={[styles.accessMeta, { color: theme.text.muted }]}>
+          <Text style={[styles.fineMeta, { color: theme.text.muted }]}>
             Current access valid through {accessDateLabel}
           </Text>
         )}
@@ -535,50 +518,24 @@ export default function PaywallContent({
 
       {selectedOffer && (
         <View
-          style={[
-            styles.offerCard,
-            {
-              borderColor: theme.accent.warning,
-              backgroundColor: theme.isDark
-                ? 'rgba(19, 19, 26, 0.92)'
-                : theme.background.card,
-            },
-          ]}
+          style={styles.planBlock}
           accessibilityLabel={`${selectedOffer.title}, ${selectedOffer.priceLabel}`}
         >
-          <View style={styles.offerHeader}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.offerTitle, { color: theme.text.primary }]}>
-                {selectedOffer.title}
-              </Text>
-              <Text style={[styles.offerSubtitle, { color: theme.text.secondary }]}>
-                {selectedOffer.subtitle}
-              </Text>
-            </View>
+          <View style={styles.planHead}>
+            <Text style={[styles.planTitle, { color: theme.text.primary }]}>
+              {selectedOffer.title}
+            </Text>
             {selectedOffer.badge && (
-              <View
-                style={[
-                  styles.offerBadge,
-                  { backgroundColor: theme.accent.warning },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.offerBadgeText,
-                    { color: theme.text.inverse },
-                  ]}
-                >
-                  {selectedOffer.badge}
-                </Text>
-              </View>
+              <Text style={[styles.planBadge, { color: theme.accent.primary }]}>
+                {selectedOffer.badge.toUpperCase()}
+              </Text>
             )}
           </View>
-
-          <Text style={[styles.offerPrice, { color: theme.text.primary }]}>
+          <Text style={[styles.planPrice, { color: theme.text.primary }]}>
             {selectedOffer.priceLabel}
           </Text>
-          <Text style={[styles.offerDescription, { color: theme.text.muted }]}>
-            {selectedOffer.description}
+          <Text style={[styles.planDesc, { color: theme.text.muted }]}>
+            {selectedOffer.subtitle} · {selectedOffer.description}
           </Text>
         </View>
       )}
@@ -590,157 +547,24 @@ export default function PaywallContent({
       )}
 
       <View style={styles.featureList}>
-        {TIER_HIGHLIGHTS[selectedTier].map((feature) => (
-          <View key={feature} style={styles.featureRow}>
-            <View
-              style={[
-                styles.featureIcon,
-                { backgroundColor: theme.isDark ? 'rgba(6, 255, 165, 0.12)' : 'rgba(52, 199, 89, 0.12)' },
-              ]}
-            >
-              <Ionicons name="checkmark" size={16} color={theme.accent.primary} />
-            </View>
+        {TIER_HIGHLIGHTS[selectedTier].map((feature, i) => (
+          <View key={feature} style={[styles.featureRow, i > 0 && styles.featureDivider]}>
+            <Text style={[styles.featureCheck, { color: theme.accent.primary }]}>✓</Text>
             <Text style={[styles.featureText, { color: theme.text.primary }]}>{feature}</Text>
           </View>
         ))}
       </View>
 
       {placement === 'onboarding' && featureList.length > 0 && (
-        <View
-          style={[
-            styles.placementHintCard,
-            {
-              borderColor: theme.border.subtle,
-              backgroundColor: theme.isDark
-                ? 'rgba(255,255,255,0.04)'
-                : theme.background.card,
-            },
-          ]}
-        >
-          <Text style={[styles.placementHintTitle, { color: theme.text.primary }]}>
-            Why this for you
+        <View style={styles.whyBlock}>
+          <Text style={[styles.whyLabel, { color: theme.text.muted }]}>
+            WHY THIS FOR YOU
           </Text>
-          <Text style={[styles.placementHintBody, { color: theme.text.secondary }]}>
+          <Text style={[styles.whyBody, { color: theme.text.secondary }]}>
             {featureList[0]}
           </Text>
         </View>
       )}
-
-      <View
-        style={[
-          styles.noticeCard,
-          {
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : theme.background.card,
-            borderColor: theme.border.subtle,
-          },
-        ]}
-      >
-        <Ionicons
-          name={customer.isPreview ? 'construct-outline' : 'information-circle-outline'}
-          size={18}
-          color={theme.accent.secondary}
-        />
-        <Text style={[styles.noticeText, { color: theme.text.secondary }]}>
-          {customer.isPreview
-            ? 'Development preview mode is active. Purchase actions are simulated locally so the full flow can be tested without a billing SDK.'
-            : 'Billing is not enabled in this build yet. This paywall is wired to the app so future provider integration can be added without changing navigation or state.'}
-        </Text>
-      </View>
-
-      <View
-        style={[
-          styles.healthCard,
-          {
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : theme.background.card,
-            borderColor: theme.border.subtle,
-          },
-        ]}
-      >
-        <View style={styles.healthHeader}>
-          <View style={styles.healthHeaderCopy}>
-            <Text style={[styles.healthTitle, { color: theme.text.primary }]}>
-              Billing Health
-            </Text>
-            <Text style={[styles.healthSubtitle, { color: theme.text.secondary }]}>
-              Provider: {customer.billingProvider}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.healthBadge,
-              { backgroundColor: `${healthAccent}18`, borderColor: `${healthAccent}33` },
-            ]}
-          >
-            <View style={[styles.healthDot, { backgroundColor: healthAccent }]} />
-            <Text style={[styles.healthBadgeText, { color: healthAccent }]}>
-              {healthLabel}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.healthMetrics}>
-          <View style={styles.healthMetric}>
-            <Text style={[styles.healthMetricLabel, { color: theme.text.muted }]}>
-              Last Operation
-            </Text>
-            <Text style={[styles.healthMetricValue, { color: theme.text.primary }]}>
-              {formatOperationLabel(diagnostics.lastOperation)}
-            </Text>
-          </View>
-          <View style={styles.healthMetric}>
-            <Text style={[styles.healthMetricLabel, { color: theme.text.muted }]}>
-              Last Sync
-            </Text>
-            <Text style={[styles.healthMetricValue, { color: theme.text.primary }]}>
-              {formatTimestamp(lastSyncedAt)}
-            </Text>
-          </View>
-          <View style={styles.healthMetric}>
-            <Text style={[styles.healthMetricLabel, { color: theme.text.muted }]}>
-              Last Success
-            </Text>
-            <Text style={[styles.healthMetricValue, { color: theme.text.primary }]}>
-              {formatTimestamp(diagnostics.lastSuccessAt)}
-            </Text>
-          </View>
-        </View>
-
-        {!diagnostics.isInitialized && (
-          <Text style={[styles.healthMeta, { color: theme.text.muted }]}>
-            Billing has not completed initialization in this session yet.
-          </Text>
-        )}
-
-        {entitlementHealth.status !== 'healthy' && (
-          <View
-            style={[
-              styles.healthIssueCard,
-              {
-                backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.background.elevated,
-                borderColor: theme.border.subtle,
-              },
-            ]}
-          >
-            <Text style={[styles.healthIssueTitle, { color: theme.text.primary }]}>
-              Entitlement Check
-            </Text>
-            <Text style={[styles.healthIssueText, { color: theme.text.secondary }]}>
-              {entitlementHealth.summary}
-            </Text>
-            {entitlementHealth.issues.slice(1, 3).map((issue) => (
-              <Text key={issue} style={[styles.healthIssueBullet, { color: theme.text.muted }]}>
-                • {issue}
-              </Text>
-            ))}
-          </View>
-        )}
-
-        {diagnostics.lastErrorMessage && (
-          <Text style={[styles.healthMeta, { color: theme.text.muted }]}>
-            Last billing message: {diagnostics.lastErrorMessage}
-          </Text>
-        )}
-      </View>
 
       {lastError && (
         <Text style={[styles.inlineError, { color: theme.accent.error }]}>{lastError}</Text>
@@ -749,37 +573,30 @@ export default function PaywallContent({
       <Animated.View style={primaryPress.style}>
         <Pressable
           {...primaryPress.handlers}
-          style={[
-            styles.primaryButton,
-            { backgroundColor: theme.accent.warning, opacity: isLoading ? 0.7 : 1 },
-          ]}
+          style={[styles.primaryButton, { opacity: isLoading ? 0.7 : 1 }]}
           onPress={handlePurchase}
           disabled={isLoading}
           accessibilityRole="button"
           accessibilityLabel={primaryButtonLabel}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color={theme.text.inverse} />
+            <ActivityIndicator size="small" color="#0B0A0D" />
           ) : (
-            <Text style={[styles.primaryButtonText, { color: theme.text.inverse }]}>
+            <Text style={styles.primaryButtonText}>
               {primaryButtonLabel}
             </Text>
           )}
         </Pressable>
       </Animated.View>
 
-      {/* Continue free is rendered as a real secondary button with the same
-          width and a visible border so it is not hidden as a low-contrast
-          link — this is the dark-pattern Calm/Headspace get flagged for in
-          mindfulness app reviews. */}
+      {/* Continue free stays a full-width, readable text action — never a
+          low-contrast link — so it isn't the dark pattern Calm/Headspace get
+          flagged for in mindfulness app reviews. */}
       {!hasActiveSubscription && (
         <Animated.View style={secondaryPress.style}>
           <Pressable
             {...secondaryPress.handlers}
-            style={[
-              styles.secondaryButton,
-              { borderColor: theme.border.subtle, backgroundColor: 'transparent' },
-            ]}
+            style={styles.secondaryButton}
             onPress={() => {
               tapBack();
               onContinueFree();
@@ -787,7 +604,7 @@ export default function PaywallContent({
             accessibilityRole="button"
             accessibilityLabel={copy.primaryFallback}
           >
-            <Text style={[styles.secondaryButtonText, { color: theme.text.primary }]}>
+            <Text style={[styles.secondaryButtonText, { color: theme.text.secondary }]}>
               {copy.primaryFallback}
             </Text>
           </Pressable>
@@ -801,10 +618,41 @@ export default function PaywallContent({
         accessibilityRole="button"
         accessibilityLabel="Restore purchases"
       >
-        <Text style={[styles.linkButton, { color: theme.accent.secondary }]}>
-          Restore Purchases
+        <Text style={[styles.linkButton, { color: theme.text.muted }]}>
+          Restore purchases
         </Text>
       </Pressable>
+
+      {/* Billing scaffolding — quiet fine print, and full diagnostics only in
+          the dev preview build (never fronting a real paywall). */}
+      <Text style={[styles.fineNotice, { color: theme.text.muted }]}>
+        {customer.isPreview
+          ? 'Development preview — purchases are simulated locally so the full flow can be tested without a billing SDK.'
+          : 'Billing is not enabled in this build yet.'}
+      </Text>
+
+      {customer.isPreview && (
+        <View style={[styles.healthBlock, { borderTopColor: theme.border.subtle }]}>
+          <Text style={[styles.healthLine, { color: theme.text.muted }]}>
+            BILLING · {customer.billingProvider} ·{' '}
+            <Text style={{ color: healthAccent }}>{healthLabel}</Text>
+          </Text>
+          <Text style={[styles.healthMeta, { color: theme.text.muted }]}>
+            last sync {formatTimestamp(lastSyncedAt)} · last op{' '}
+            {formatOperationLabel(diagnostics.lastOperation)}
+          </Text>
+          {entitlementHealth.status !== 'healthy' && (
+            <Text style={[styles.healthMeta, { color: theme.text.muted }]}>
+              {entitlementHealth.summary}
+            </Text>
+          )}
+          {diagnostics.lastErrorMessage && (
+            <Text style={[styles.healthMeta, { color: theme.text.muted }]}>
+              {diagnostics.lastErrorMessage}
+            </Text>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -814,286 +662,185 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
-  heroCard: {
-    borderRadius: 28,
-    padding: 24,
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: 20,
+  header: {
+    marginBottom: 28,
   },
-  heroTopRow: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 14,
   },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#111827',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  heroBadgeText: {
-    color: '#FFFFFF',
+  eyebrow: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 12,
-    fontWeight: '700',
+    letterSpacing: 2.4,
   },
   closeButton: {
-    width: 34,
-    height: 34,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 17,
   },
-  heroTitle: {
+  headline: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -1,
+  },
+  headlineCompact: {
     fontSize: 30,
-    fontWeight: '800',
     lineHeight: 34,
-    marginBottom: 12,
   },
-  heroTitleCompact: {
-    fontSize: 28,
+  subhead: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: 14,
   },
-  heroSubtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  accessMeta: {
-    marginTop: 12,
+  fineMeta: {
+    marginTop: 14,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 12,
-    fontWeight: '600',
+  },
+  planBlock: {
+    marginBottom: 24,
+  },
+  planHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  planTitle: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 20,
+    letterSpacing: -0.4,
+  },
+  planBadge: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 11,
+    letterSpacing: 1.2,
+  },
+  planPrice: {
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 36,
+    letterSpacing: -1.5,
+  },
+  planDesc: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  tierIncludesHint: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   featureList: {
-    gap: 12,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: 14,
+    paddingVertical: 14,
   },
-  featureIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
+  featureDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  featureCheck: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 16,
+    lineHeight: 24,
   },
   featureText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: '500',
+    fontFamily: 'GeneralSans-Medium',
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: -0.2,
   },
-  offerList: {
-    gap: 12,
-    marginBottom: 20,
+  whyBlock: {
+    marginBottom: 24,
   },
-  offerCard: {
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 16,
-  },
-  tierIncludesHint: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 10,
-  },
-  placementHintCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-    marginBottom: 16,
-  },
-  placementHintTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 6,
-  },
-  placementHintBody: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  offerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 10,
-  },
-  offerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  offerSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  offerBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  offerBadgeText: {
+  whyLabel: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 11,
-    fontWeight: '800',
-  },
-  offerPrice: {
-    fontSize: 20,
-    fontWeight: '800',
+    letterSpacing: 1.2,
     marginBottom: 8,
   },
-  offerDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  noticeCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  healthCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
-  },
-  healthHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 14,
-  },
-  healthHeaderCopy: {
-    flex: 1,
-  },
-  healthTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  healthSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  healthBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  healthDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  healthBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  healthMetrics: {
-    gap: 10,
-    marginBottom: 12,
-  },
-  healthMetric: {
-    gap: 2,
-  },
-  healthMetricLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  healthMetricValue: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  healthMeta: {
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  healthIssueCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 4,
-  },
-  healthIssueTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  healthIssueText: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 4,
-  },
-  healthIssueBullet: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  noticeText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 19,
+  whyBody: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    lineHeight: 22,
   },
   inlineError: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   primaryButton: {
     minHeight: 56,
-    borderRadius: 20,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
     paddingHorizontal: 20,
   },
   primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    color: '#0B0A0D',
   },
   secondaryButton: {
-    minHeight: 56,
-    borderRadius: 20,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    marginBottom: 14,
-    borderWidth: 1.5,
+    marginBottom: 8,
   },
   secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 15,
   },
   restoreRow: {
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 10,
   },
   linkButton: {
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 14,
-    fontWeight: '700',
+  },
+  fineNotice: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 18,
+    paddingHorizontal: 8,
+  },
+  healthBlock: {
+    marginTop: 18,
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  healthLine: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  healthMeta: {
+    fontFamily: 'JetBrainsMono-Regular',
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 4,
   },
 });

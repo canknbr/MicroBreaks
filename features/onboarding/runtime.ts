@@ -168,10 +168,10 @@ export async function syncOnboardingRuntimeState(
   await runBestEffortStep('welcome_notification', () => {
     deps.addNotification({
       type: 'welcome',
-      title: 'Welcome to MicroBreaks!',
+      title: 'Welcome to Unwind!',
       message: 'Your wellness journey starts now. Take your first break to earn XP!',
       icon: '🎉',
-      color: '#06FFA5',
+      color: '#6CE9CC',
     });
   }, errors);
 
@@ -181,7 +181,7 @@ export async function syncOnboardingRuntimeState(
       title: 'Achievement Unlocked!',
       message: 'Health Pioneer: Completed your wellness setup. +25 XP',
       icon: '🏆',
-      color: '#FFD166',
+      color: '#FAE34B',
       data: { achievementTitle: 'Health Pioneer', xpReward: 25 },
     });
   }, errors);

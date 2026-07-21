@@ -5,13 +5,10 @@ import {
   StyleSheet,
   Pressable,
   Modal,
-  Platform,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import type { IoniconsName } from '@/types/icons';
 import * as Haptics from 'expo-haptics';
-import { Spacing } from '@/theme';
 
 const REMINDER_INTERVALS = [
   { label: '15 min', value: 15 },
@@ -26,6 +23,42 @@ const THEME_OPTIONS: { label: string; value: 'dark' | 'light' | 'system' }[] = [
   { label: 'Light', value: 'light' },
   { label: 'System', value: 'system' },
 ];
+
+function PickerRow({
+  label,
+  active,
+  icon,
+  first,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  icon?: IoniconsName;
+  first?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={[styles.option, !first && styles.optionDivider]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+    >
+      <View style={styles.lead}>{active ? <View style={styles.bar} /> : null}</View>
+      {icon ? (
+        <Ionicons
+          name={icon}
+          size={19}
+          color={active ? '#FF2472' : 'rgba(255,255,255,0.4)'}
+          style={styles.optionIcon}
+        />
+      ) : null}
+      <Text style={[styles.optionText, active ? styles.optionTextActive : styles.optionTextInactive]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 export function IntervalPickerModal({
   visible,
@@ -42,36 +75,21 @@ export function IntervalPickerModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <View style={styles.modalContent} accessibilityViewIsModal={true}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
           <Text style={styles.modalTitle}>Reminder Interval</Text>
           <Text style={styles.modalSubtitle}>How often should we remind you?</Text>
-          <View style={styles.intervalOptions}>
-            {REMINDER_INTERVALS.map((interval) => (
-              <Pressable
+          <View style={styles.options}>
+            {REMINDER_INTERVALS.map((interval, i) => (
+              <PickerRow
                 key={interval.value}
-                style={[
-                  styles.intervalOption,
-                  currentValue === interval.value && styles.intervalOptionActive,
-                ]}
+                label={interval.label}
+                active={currentValue === interval.value}
+                first={i === 0}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onSelect(interval.value);
                   onClose();
                 }}
-              >
-                <Text
-                  style={[
-                    styles.intervalOptionText,
-                    currentValue === interval.value && styles.intervalOptionTextActive,
-                  ]}
-                >
-                  {interval.label}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
@@ -101,47 +119,22 @@ export function ThemePickerModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <View style={styles.modalContent} accessibilityViewIsModal={true}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidModalFallback]} />
-          )}
           <Text style={styles.modalTitle}>App Theme</Text>
           <Text style={styles.modalSubtitle}>Choose your preferred appearance</Text>
-          <View style={styles.intervalOptions}>
-            {THEME_OPTIONS.map((option) => (
-              <Pressable
+          <View style={styles.options}>
+            {THEME_OPTIONS.map((option, i) => (
+              <PickerRow
                 key={option.value}
-                style={[
-                  styles.intervalOption,
-                  styles.themeOption,
-                  currentValue === option.value && styles.intervalOptionActive,
-                ]}
+                label={option.label}
+                active={currentValue === option.value}
+                icon={themeIcons[option.value]}
+                first={i === 0}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onSelect(option.value);
                   onClose();
                 }}
-              >
-                <Ionicons
-                  name={themeIcons[option.value]}
-                  size={20}
-                  color={
-                    currentValue === option.value
-                      ? '#06FFA5'
-                      : 'rgba(255, 255, 255, 0.6)'
-                  }
-                  style={styles.themeOptionIcon}
-                />
-                <Text
-                  style={[
-                    styles.intervalOptionText,
-                    currentValue === option.value && styles.intervalOptionTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
@@ -158,57 +151,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    width: '80%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
+    width: '82%',
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: Spacing.lg,
-  },
-  androidModalFallback: {
-    backgroundColor: 'rgba(30, 30, 40, 0.98)',
+    backgroundColor: '#1C1922',
+    paddingHorizontal: 24,
+    paddingVertical: 26,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
     color: '#FFFFFF',
-    textAlign: 'center',
     marginBottom: 4,
   },
   modalSubtitle: {
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: 12,
   },
-  intervalOptions: {
-    gap: 10,
+  options: {
+    marginTop: 8,
   },
-  intervalOption: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-  },
-  intervalOptionActive: {
-    backgroundColor: 'rgba(6, 255, 165, 0.2)',
-    borderWidth: 1,
-    borderColor: '#06FFA5',
-  },
-  intervalOptionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  intervalOptionTextActive: {
-    color: '#06FFA5',
-  },
-  themeOption: {
+  option: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingVertical: 15,
   },
-  themeOptionIcon: {
+  optionDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  lead: {
+    width: 28,
+    justifyContent: 'center',
+  },
+  bar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
+  },
+  optionIcon: {
     marginRight: 12,
+  },
+  optionText: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+  optionTextActive: {
+    color: '#FFFFFF',
+  },
+  optionTextInactive: {
+    color: 'rgba(255,255,255,0.34)',
   },
 });

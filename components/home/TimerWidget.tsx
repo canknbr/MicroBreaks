@@ -177,7 +177,7 @@ function TimerWidget({ onPresetPress }: TimerWidgetProps) {
             accessibilityRole="button"
             accessibilityLabel="Reset timer"
           >
-            <Ionicons name="refresh" size={20} color="#FF6B6B" />
+            <Ionicons name="refresh" size={20} color="#EB3E38" />
           </Pressable>
         )}
 

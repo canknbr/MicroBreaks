@@ -1,9 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { Spacing } from '@/theme';
 import type { PremiumHealthSummary } from '@/services/billing/healthSummary';
 
 export function PremiumCard({
@@ -25,96 +23,71 @@ export function PremiumCard({
       accessibilityRole="button"
       accessibilityLabel={`${premiumTitle}. ${premiumDescription}. ${premiumHealthSummary.label}. ${premiumHealthSummary.detail}`}
     >
-      <Animated.View style={[styles.premiumCard, premiumStyle]}>
-        <LinearGradient
-          colors={['#FFD166', '#FF9500']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.premiumContent}>
-          <View style={styles.premiumIcon}>
-            <Ionicons name="star" size={24} color="#000" />
-          </View>
-          <View style={styles.premiumInfo}>
-            <Text style={styles.premiumTitle}>{premiumTitle}</Text>
-            <Text style={styles.premiumDescription}>
-              {premiumDescription}
-            </Text>
-            <View style={styles.premiumHealthRow}>
-              <View style={styles.premiumHealthBadge}>
-                <Ionicons name={premiumHealthSummary.icon} size={14} color="#000" />
-                <Text style={styles.premiumHealthBadgeText}>
-                  {premiumHealthSummary.label}
-                </Text>
-              </View>
-              <Text style={styles.premiumHealthText}>
-                {premiumHealthSummary.detail}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#000" />
+      <Animated.View style={[styles.container, premiumStyle]}>
+        <View style={styles.lead}>
+          <View style={styles.bar} />
         </View>
+        <View style={styles.info}>
+          <Text style={styles.title}>{premiumTitle}</Text>
+          <Text style={styles.description}>{premiumDescription}</Text>
+          <View style={styles.healthRow}>
+            <Ionicons name={premiumHealthSummary.icon} size={13} color="rgba(255,255,255,0.45)" />
+            <Text style={styles.healthText}>
+              {premiumHealthSummary.label} · {premiumHealthSummary.detail}
+            </Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.4)" />
       </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  premiumCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: Spacing.lg,
-  },
-  premiumContent: {
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 30,
   },
-  premiumIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    alignItems: 'center',
+  lead: {
+    width: 26,
     justifyContent: 'center',
-    marginRight: 12,
   },
-  premiumInfo: {
+  bar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
+  },
+  info: {
     flex: 1,
   },
-  premiumTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 2,
+  title: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: '#FFFFFF',
   },
-  premiumDescription: {
-    fontSize: 12,
-    color: 'rgba(0, 0, 0, 0.7)',
+  description: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 3,
   },
-  premiumHealthRow: {
-    marginTop: 10,
-    gap: 8,
-  },
-  premiumHealthBadge: {
-    alignSelf: 'flex-start',
+  healthRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+    marginTop: 10,
   },
-  premiumHealthBadgeText: {
+  healthText: {
+    fontFamily: 'JetBrainsMono-Regular',
     fontSize: 11,
-    fontWeight: '700',
-    color: '#000',
-  },
-  premiumHealthText: {
-    fontSize: 11,
-    lineHeight: 16,
-    color: 'rgba(0, 0, 0, 0.72)',
+    color: 'rgba(255,255,255,0.45)',
   },
 });

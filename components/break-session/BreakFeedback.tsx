@@ -1,16 +1,10 @@
 /**
- * Break Feedback Component
- * Rating selection for break experience
+ * Break Feedback — editorial. Ratings are a type menu (no emoji faces / blur
+ * boxes): dim → white by selection, a short accent bar marks the choice.
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '@/i18n/hooks';
 
@@ -24,17 +18,17 @@ interface BreakFeedbackProps {
   color: string;
 }
 
-const FEEDBACK_OPTIONS: { rating: FeedbackRating; emoji: string; labelKey: string; fallback: string }[] = [
-  { rating: 'good', emoji: '😊', labelKey: 'breakSession.feedback.buttons.good', fallback: 'Helpful' },
-  { rating: 'neutral', emoji: '😐', labelKey: 'breakSession.feedback.buttons.neutral', fallback: 'Okay' },
-  { rating: 'bad', emoji: '😟', labelKey: 'breakSession.feedback.buttons.bad', fallback: 'Not helpful' },
+const FEEDBACK_OPTIONS: { rating: FeedbackRating; labelKey: string; fallback: string }[] = [
+  { rating: 'good', labelKey: 'breakSession.feedback.buttons.good', fallback: 'Helpful' },
+  { rating: 'neutral', labelKey: 'breakSession.feedback.buttons.neutral', fallback: 'Okay' },
+  { rating: 'bad', labelKey: 'breakSession.feedback.buttons.bad', fallback: 'Not helpful' },
 ];
 
-const RELIEF_OPTIONS: { score: ReliefScore; emoji: string; labelKey: string; fallback: string }[] = [
-  { score: 'worse', emoji: '😣', labelKey: 'breakSession.feedback.relief.worse', fallback: 'Worse' },
-  { score: 'same', emoji: '🙂', labelKey: 'breakSession.feedback.relief.same', fallback: 'Same' },
-  { score: 'better', emoji: '😌', labelKey: 'breakSession.feedback.relief.better', fallback: 'Better' },
-  { score: 'much_better', emoji: '🤩', labelKey: 'breakSession.feedback.relief.muchBetter', fallback: 'Much better' },
+const RELIEF_OPTIONS: { score: ReliefScore; labelKey: string; fallback: string }[] = [
+  { score: 'worse', labelKey: 'breakSession.feedback.relief.worse', fallback: 'Worse' },
+  { score: 'same', labelKey: 'breakSession.feedback.relief.same', fallback: 'Same' },
+  { score: 'better', labelKey: 'breakSession.feedback.relief.better', fallback: 'Better' },
+  { score: 'much_better', labelKey: 'breakSession.feedback.relief.muchBetter', fallback: 'Much better' },
 ];
 
 export default function BreakFeedback({
@@ -62,11 +56,6 @@ export default function BreakFeedback({
       <Text style={styles.title} accessibilityRole="header">
         {t('breakSession.feedback.heading', { defaultValue: 'How did that feel?' })}
       </Text>
-      <Text style={styles.subtitle}>
-        {t('breakSession.feedback.subtitle', {
-          defaultValue: 'Your feedback helps us personalize better resets',
-        })}
-      </Text>
 
       <View
         style={styles.options}
@@ -74,9 +63,8 @@ export default function BreakFeedback({
         accessibilityLabel={t('breakSession.feedback.heading', { defaultValue: 'How did that feel?' })}
       >
         {FEEDBACK_OPTIONS.map((option) => (
-          <FeedbackButton
+          <FeedbackOption
             key={option.rating}
-            emoji={option.emoji}
             label={t(option.labelKey, { defaultValue: option.fallback })}
             isSelected={pendingRating === option.rating}
             onPress={() => setPendingRating(option.rating)}
@@ -93,16 +81,15 @@ export default function BreakFeedback({
             })}
           </Text>
           <View
-            style={[styles.options, styles.reliefOptions]}
+            style={styles.options}
             accessibilityRole="radiogroup"
             accessibilityLabel={t('breakSession.feedback.reliefHeading', {
               defaultValue: 'How much better do you feel now?',
             })}
           >
             {RELIEF_OPTIONS.map((option) => (
-              <FeedbackButton
+              <FeedbackOption
                 key={option.score}
-                emoji={option.emoji}
                 label={t(option.labelKey, { defaultValue: option.fallback })}
                 isSelected={pendingReliefScore === option.score}
                 onPress={() => {
@@ -120,35 +107,19 @@ export default function BreakFeedback({
   );
 }
 
-function FeedbackButton({
-  emoji,
+function FeedbackOption({
   label,
   isSelected,
   onPress,
   color,
   compact = false,
 }: {
-  emoji: string;
   label: string;
   isSelected: boolean;
   onPress: () => void;
   color: string;
   compact?: boolean;
 }) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.95);
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
-
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onPress();
@@ -156,106 +127,73 @@ function FeedbackButton({
 
   return (
     <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       onPress={handlePress}
+      style={styles.option}
       accessibilityRole="radio"
       accessibilityLabel={label}
       accessibilityState={{ selected: isSelected, checked: isSelected }}
     >
-      <Animated.View
+      <Text
         style={[
-          styles.button,
-          compact && styles.compactButton,
-          isSelected && { borderColor: color, backgroundColor: `${color}20` },
-          animatedStyle,
+          styles.optionLabel,
+          compact && styles.optionLabelCompact,
+          isSelected ? styles.optionOn : styles.optionOff,
         ]}
       >
-        {Platform.OS === 'ios' && !isSelected ? (
-          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : !isSelected ? (
-          <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-        ) : null}
-        <Text
-          style={styles.emoji}
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        >
-          {emoji}
-        </Text>
-        <Text
-          style={[styles.label, isSelected && { color }]}
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        >
-          {label}
-        </Text>
-      </Animated.View>
+        {label}
+      </Text>
+      <View style={[styles.optionBar, isSelected && { backgroundColor: color }]} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
     color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginBottom: 32,
-    textAlign: 'center',
+    marginBottom: 18,
   },
   secondaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 28,
-    marginBottom: 14,
-    textAlign: 'center',
+    marginBottom: 16,
   },
   options: {
     flexDirection: 'row',
-    gap: 12,
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    columnGap: 24,
+    rowGap: 14,
+    alignItems: 'flex-start',
   },
-  reliefOptions: {
-    gap: 10,
+  option: {
+    alignItems: 'flex-start',
   },
-  button: {
-    width: 100,
-    paddingVertical: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: 'rgba(30, 30, 40, 0.6)',
+  optionLabel: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.4,
   },
-  compactButton: {
-    width: 88,
-    paddingVertical: 16,
+  optionLabelCompact: {
+    fontSize: 18,
   },
-  androidFallback: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-    borderRadius: 16,
+  optionOn: {
+    color: '#FFFFFF',
   },
-  emoji: {
-    fontSize: 40,
-    marginBottom: 8,
+  optionOff: {
+    color: 'rgba(255, 255, 255, 0.3)',
   },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+  optionBar: {
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    marginTop: 8,
+    backgroundColor: 'transparent',
   },
 });

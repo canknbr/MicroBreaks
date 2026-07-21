@@ -50,7 +50,15 @@ const VALID_POSITIONS = ['desk', 'standing', 'floor'];
 
 describe('exercise library — generated data integrity', () => {
   it('contains a substantial curated set', () => {
-    expect(LIBRARY_EXERCISES.length).toBeGreaterThanOrEqual(100);
+    // Desk-app curation: floor/lying/kneeling moves are excluded by the
+    // generator, so the catalog is intentionally standing/seated only.
+    expect(LIBRARY_EXERCISES.length).toBeGreaterThanOrEqual(60);
+  });
+
+  it('excludes floor exercises — every move is standing or seated', () => {
+    for (const record of LIBRARY_EXERCISES) {
+      expect(record.position).not.toBe('floor');
+    }
   });
 
   it('has unique, namespaced ids matching their dataset ids', () => {

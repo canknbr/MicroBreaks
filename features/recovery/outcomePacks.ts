@@ -17,33 +17,33 @@ export const CATEGORY_DEFINITIONS: Array<{
     title: 'Quick Breaks',
     subtitle: 'Fast resets for eyes, neck, and breathing',
     icon: 'flash',
-    color: '#06FFA5',
+    color: '#6CE9CC',
   },
   {
     id: 'stretch',
     title: 'Stretching',
     subtitle: 'Posture, hips, spine, and desk mobility',
     icon: 'body',
-    color: '#B47EFF',
+    color: '#BC26F4',
   },
   {
     id: 'mindful',
     title: 'Mindfulness',
     subtitle: 'Calm, focus, and mental reset routines',
     icon: 'leaf',
-    color: '#00E5FF',
+    color: '#21A3E6',
   },
   {
     id: 'active',
     title: 'Active Breaks',
     subtitle: 'Movement and energy boosts between work blocks',
     icon: 'walk',
-    color: '#FFD166',
+    color: '#FAE34B',
   },
 ];
 
 export const FEATURED_EXERCISE_ID = 'afternoon-reset';
-export const FEATURED_GRADIENT = ['#06FFA5', '#00E5FF'] as const;
+export const FEATURED_GRADIENT = ['#6CE9CC', '#21A3E6'] as const;
 
 export const OUTCOME_PACKS: Array<{
   id: OutcomePackId;
@@ -61,7 +61,7 @@ export const OUTCOME_PACKS: Array<{
     title: 'Eye Rescue',
     description: 'For dry, tired, or blurry screen-heavy work sessions.',
     icon: '👀',
-    color: '#00E5FF',
+    color: '#21A3E6',
     category: 'quick',
     featuredBreakId: 'eye-rest',
   },
@@ -71,7 +71,7 @@ export const OUTCOME_PACKS: Array<{
     title: 'Desk Neck Reset',
     description: 'For tight neck and shoulders after long desk blocks.',
     icon: '🧍',
-    color: '#06FFA5',
+    color: '#6CE9CC',
     category: 'quick',
     featuredBreakId: 'neck-roll',
   },
@@ -81,7 +81,7 @@ export const OUTCOME_PACKS: Array<{
     title: 'Posture Rescue',
     description: 'For upper-body compression and desk posture fatigue.',
     icon: '💺',
-    color: '#B47EFF',
+    color: '#BC26F4',
     category: 'stretch',
     featuredBreakId: 'upper-body',
   },
@@ -91,7 +91,7 @@ export const OUTCOME_PACKS: Array<{
     title: 'Focus Reset',
     description: 'For attention drift between tasks and meetings.',
     icon: '🧠',
-    color: '#4ECDC4',
+    color: '#5BC741',
     category: 'mindful',
     featuredBreakId: 'deep-breath',
   },
@@ -101,7 +101,7 @@ export const OUTCOME_PACKS: Array<{
     title: 'Energy Lift',
     description: 'For slow patches and afternoon dips when you need movement.',
     icon: '⚡',
-    color: '#FFD166',
+    color: '#FAE34B',
     category: 'active',
     featuredBreakId: 'walk',
   },
@@ -111,7 +111,7 @@ export const OUTCOME_PACKS: Array<{
     title: 'Calm Reset',
     description: 'For noisy workdays when you need a lower-friction reset.',
     icon: '🌿',
-    color: '#7DD3FC',
+    color: '#54C4E8',
     category: 'mindful',
     featuredBreakId: 'meditation',
   },

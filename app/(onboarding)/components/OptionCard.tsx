@@ -1,29 +1,13 @@
 /**
- * Premium Zen Option Card
- * Glassmorphism selection card with smooth animations
+ * Option row — "Outsiders" editorial redesign.
+ * No card / box / blur / icon / checkbox. Choices are type: brightness carries
+ * the selection, with a single thin pink accent bar. (The `icon` prop is
+ * intentionally ignored — emoji chrome is gone.)
  */
 
 import React from 'react';
-import { Text, View, StyleSheet, Platform } from 'react-native';
+import { Text, View, StyleSheet, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  runOnJS,
-  interpolate,
-  Easing,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
-import {
-  ZenColors,
-  ZenSpacing,
-  ZenRadius,
-  ZenTypography,
-} from '../constants/design';
 
 interface OptionCardProps {
   icon?: string;
@@ -36,7 +20,6 @@ interface OptionCardProps {
 }
 
 export default function OptionCard({
-  icon,
   title,
   description,
   selected = false,
@@ -44,222 +27,79 @@ export default function OptionCard({
   variant = 'default',
   style,
 }: OptionCardProps) {
-  const scale = useSharedValue(1);
-  const pressed = useSharedValue(0);
+  const compact = variant === 'compact';
 
-  const tap = Gesture.Tap()
-    .onBegin(() => {
-      scale.value = withTiming(0.98, { duration: 100, easing: Easing.out(Easing.cubic) });
-      pressed.value = withTiming(1, { duration: 100 });
-      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
-    })
-    .onFinalize(() => {
-      scale.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) });
-      pressed.value = withTiming(0, { duration: 200 });
-    })
-    .onEnd(() => {
-      runOnJS(onPress)();
-    });
-
-  const animatedContainerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const animatedBorderStyle = useAnimatedStyle(() => ({
-    opacity: selected ? 1 : interpolate(pressed.value, [0, 1], [0, 0.5]),
-  }));
-
-  const isCompact = variant === 'compact';
+  const handlePress = () => {
+    Haptics.selectionAsync();
+    onPress();
+  };
 
   return (
-    <GestureDetector gesture={tap}>
-      <Animated.View style={[styles.container, style, animatedContainerStyle]}>
-        {/* Gradient Border (visible when selected) */}
-        <Animated.View style={[styles.gradientBorder, animatedBorderStyle]}>
-          <LinearGradient
-            colors={[ZenColors.primary.main, ZenColors.secondary.main]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-
-        {/* Glassmorphism Background */}
-        <View style={[styles.card, isCompact && styles.cardCompact, selected && styles.cardSelected]}>
-          {Platform.OS === 'ios' ? (
-            <BlurView
-              intensity={selected ? 40 : 25}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.androidFallback]} />
-          )}
-
-          {/* Glass highlight (top edge shine) */}
-          <LinearGradient
-            colors={['rgba(255, 255, 255, 0.08)', 'transparent']}
-            style={styles.glassHighlight}
-          />
-
-          {/* Content wrapper */}
-          <View style={styles.cardContent}>
-            {/* Icon */}
-            {icon && (
-              <View style={[styles.iconContainer, selected && styles.iconContainerSelected]}>
-                <Text style={styles.icon}>{icon}</Text>
-              </View>
-            )}
-
-            {/* Text Content */}
-            <View style={styles.textContainer}>
-              <Text
-                style={[
-                  styles.title,
-                  isCompact && styles.titleCompact,
-                  selected && styles.titleSelected,
-                ]}
-                numberOfLines={2}
-              >
-                {title}
-              </Text>
-              {description && !isCompact && (
-                <Text style={styles.description} numberOfLines={2}>
-                  {description}
-                </Text>
-              )}
-            </View>
-
-            {/* Checkbox */}
-            <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-              {selected && (
-                <Ionicons
-                  name="checkmark"
-                  size={14}
-                  color={ZenColors.text.inverse}
-                />
-              )}
-            </View>
-          </View>
-
-          {/* Selection glow effect */}
-          {selected && (
-            <LinearGradient
-              colors={[ZenColors.primary.glow, 'transparent']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.selectionGlow}
-            />
-          )}
-        </View>
-      </Animated.View>
-    </GestureDetector>
+    <Pressable
+      onPress={handlePress}
+      style={[styles.row, style]}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={description ? `${title}. ${description}` : title}
+    >
+      <View style={styles.lead}>{selected ? <View style={styles.bar} /> : null}</View>
+      <View style={styles.text}>
+        <Text style={[compact ? styles.titleCompact : styles.title, selected ? styles.on : styles.off]}>
+          {title}
+        </Text>
+        {description && !compact ? (
+          <Text style={[styles.desc, selected && styles.descOn]} numberOfLines={2}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: ZenSpacing.sm,
-    borderRadius: ZenRadius.lg,
-    overflow: 'hidden',
-  },
-  gradientBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: ZenRadius.lg,
-  },
-  card: {
-    backgroundColor: 'rgba(20, 20, 30, 0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: ZenRadius.lg - 1,
-    margin: 1,
-    minHeight: 72,
-    overflow: 'hidden',
-  },
-  cardCompact: {
-    minHeight: 56,
-  },
-  cardSelected: {
-    backgroundColor: 'rgba(6, 255, 165, 0.12)',
-    borderColor: 'rgba(6, 255, 165, 0.4)',
-  },
-  androidFallback: {
-    backgroundColor: 'rgba(18, 18, 26, 0.92)',
-  },
-  glassHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  cardContent: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: ZenSpacing.md,
+    paddingVertical: 13,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: ZenRadius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    alignItems: 'center',
+  lead: {
+    width: 30,
     justifyContent: 'center',
-    marginRight: ZenSpacing.md,
   },
-  iconContainerSelected: {
-    backgroundColor: 'rgba(6, 255, 165, 0.1)',
+  bar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
   },
-  icon: {
-    fontSize: 20,
-  },
-  textContainer: {
+  text: {
     flex: 1,
-    marginRight: ZenSpacing.sm,
   },
   title: {
-    ...ZenTypography.title.medium,
-    color: ZenColors.text.primary,
-    marginBottom: 2,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.4,
   },
   titleCompact: {
-    ...ZenTypography.body.medium,
-    fontWeight: '600',
-    marginBottom: 0,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
-  titleSelected: {
-    color: ZenColors.primary.main,
+  on: {
+    color: '#FFFFFF',
   },
-  description: {
-    ...ZenTypography.body.small,
-    color: 'rgba(255, 255, 255, 0.8)',
+  off: {
+    color: 'rgba(255,255,255,0.34)',
+  },
+  desc: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 13,
     lineHeight: 18,
+    color: 'rgba(255,255,255,0.3)',
+    marginTop: 2,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: ZenRadius.full,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  checkboxSelected: {
-    borderColor: ZenColors.primary.main,
-    backgroundColor: ZenColors.primary.main,
-    shadowColor: ZenColors.primary.main,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  selectionGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-    opacity: 0.5,
+  descOn: {
+    color: 'rgba(255,255,255,0.55)',
   },
 });

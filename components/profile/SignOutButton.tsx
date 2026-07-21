@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   signOutText: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 15,
-    color: '#FF6B6B',
-    fontWeight: '600',
+    color: '#EB3E38',
   },
 });

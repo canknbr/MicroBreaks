@@ -87,7 +87,7 @@ export default function BuddiesScreen() {
     if (!ownCode) return;
     try {
       await Share.share({
-        message: `Be my MicroBreaks streak buddy — pair with this code: ${ownCode}`,
+        message: `Be my Unwind streak buddy — pair with this code: ${ownCode}`,
       });
     } catch {
       Alert.alert(
@@ -157,10 +157,6 @@ export default function BuddiesScreen() {
           <View
             style={[
               styles.card,
-              {
-                backgroundColor: theme.background.card,
-                borderColor: theme.border.subtle,
-              },
             ]}
             accessibilityRole="summary"
           >
@@ -188,10 +184,6 @@ export default function BuddiesScreen() {
           <View
             style={[
               styles.card,
-              {
-                backgroundColor: theme.background.card,
-                borderColor: theme.border.subtle,
-              },
             ]}
           >
             <Text style={[styles.cardLabel, { color: theme.text.muted }]}>
@@ -255,10 +247,6 @@ export default function BuddiesScreen() {
           <View
             style={[
               styles.card,
-              {
-                backgroundColor: theme.background.card,
-                borderColor: theme.border.subtle,
-              },
             ]}
           >
             <Text style={[styles.cardLabel, { color: theme.text.muted }]}>
@@ -308,10 +296,6 @@ export default function BuddiesScreen() {
             <View
               style={[
                 styles.card,
-                {
-                  backgroundColor: theme.background.card,
-                  borderColor: theme.border.subtle,
-                },
               ]}
             >
               <Text style={[styles.cardLabel, { color: theme.text.muted }]}>
@@ -342,10 +326,6 @@ export default function BuddiesScreen() {
           <View
             style={[
               styles.card,
-              {
-                backgroundColor: theme.background.card,
-                borderColor: theme.border.subtle,
-              },
             ]}
           >
             <Text style={[styles.cardLabel, { color: theme.text.muted }]}>
@@ -359,8 +339,8 @@ export default function BuddiesScreen() {
             ) : (
               buddyEntries.map(({ buddy, snapshot: bs }) => (
                 <View key={buddy.id} style={styles.buddyRow}>
-                  <Text style={styles.buddyAvatar}>
-                    {buddy.avatar ?? '🤝'}
+                  <Text style={[styles.buddyAvatar, { color: theme.text.primary }]}>
+                    {(buddy.displayName?.charAt(0) ?? '?').toUpperCase()}
                   </Text>
                   <View style={styles.buddyMeta}>
                     <Text style={[styles.buddyName, { color: theme.text.primary }]}>
@@ -398,34 +378,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontSize: 18, fontWeight: '700' },
+  title: { fontFamily: 'GeneralSans-Bold', fontSize: 20, letterSpacing: -0.4 },
   scroll: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: Spacing.lg,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 28,
   },
   card: {
-    padding: Spacing.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
+    marginBottom: 30,
   },
   cardLabel: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.xs,
+    letterSpacing: 1.4,
+    marginBottom: 10,
   },
-  cardValue: { fontSize: 20, fontWeight: '700' },
-  cardHint: { fontSize: 13, marginTop: 4 },
+  cardValue: { fontFamily: 'GeneralSans-Bold', fontSize: 26, letterSpacing: -0.6 },
+  cardHint: { fontFamily: 'GeneralSans-Regular', fontSize: 14, marginTop: 5 },
   bigCode: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 6,
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 34,
+    letterSpacing: 8,
     marginVertical: Spacing.sm,
   },
   rowActions: {
@@ -435,8 +413,8 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 999,
     gap: 6,
   },
@@ -444,15 +422,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
   },
-  actionButtonText: { fontWeight: '600' },
+  actionButtonText: { fontFamily: 'GeneralSans-Bold' },
   input: {
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 14,
+    fontFamily: 'JetBrainsMono-Bold',
     fontSize: 18,
     letterSpacing: 4,
-    fontWeight: '600',
     textAlign: 'center',
   },
   pendingRow: {
@@ -462,19 +440,21 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   pendingCode: {
+    fontFamily: 'JetBrainsMono-Medium',
     fontSize: 16,
-    fontWeight: '600',
     letterSpacing: 2,
   },
-  empty: { fontSize: 14, lineHeight: 20, marginTop: 4 },
+  empty: { fontFamily: 'GeneralSans-Regular', fontSize: 14, lineHeight: 20, marginTop: 4 },
   buddyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  buddyAvatar: { fontSize: 28 },
+  buddyAvatar: { fontFamily: 'GeneralSans-Bold', fontSize: 22 },
   buddyMeta: { flex: 1 },
-  buddyName: { fontSize: 15, fontWeight: '600' },
-  buddyState: { fontSize: 13, marginTop: 2 },
+  buddyName: { fontFamily: 'GeneralSans-Semibold', fontSize: 16 },
+  buddyState: { fontFamily: 'GeneralSans-Regular', fontSize: 13, marginTop: 3 },
 });

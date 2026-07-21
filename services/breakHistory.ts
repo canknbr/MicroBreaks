@@ -855,10 +855,10 @@ export function getTimePatternsFromBreaks(
 
   // Define time periods
   const timePeriods = {
-    morning: { start: 5, end: 12, label: 'Morning', timeRange: '5 AM - 12 PM', color: '#FFD166', icon: '🌅' },
-    afternoon: { start: 12, end: 17, label: 'Afternoon', timeRange: '12 PM - 5 PM', color: '#06FFA5', icon: '☀️' },
-    evening: { start: 17, end: 21, label: 'Evening', timeRange: '5 PM - 9 PM', color: '#B47EFF', icon: '🌆' },
-    night: { start: 21, end: 5, label: 'Night', timeRange: '9 PM - 5 AM', color: '#00E5FF', icon: '🌙' },
+    morning: { start: 5, end: 12, label: 'Morning', timeRange: '5 AM - 12 PM', color: '#FAE34B', icon: '🌅' },
+    afternoon: { start: 12, end: 17, label: 'Afternoon', timeRange: '12 PM - 5 PM', color: '#6CE9CC', icon: '☀️' },
+    evening: { start: 17, end: 21, label: 'Evening', timeRange: '5 PM - 9 PM', color: '#BC26F4', icon: '🌆' },
+    night: { start: 21, end: 5, label: 'Night', timeRange: '9 PM - 5 AM', color: '#21A3E6', icon: '🌙' },
   };
 
   // Count breaks by time period

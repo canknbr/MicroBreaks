@@ -3,13 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  Platform,
   Pressable,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import type { IoniconsName } from '@/types/icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -53,21 +49,34 @@ export function RecoveryEmptyState({
 }) {
   return (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateEmoji}>📊</Text>
-      <Text style={[styles.emptyStateTitle, { color: theme.text.primary }]}>
-        No recovery story yet
+      <Text style={styles.emptyEyebrow}>NO STORY YET</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text.primary }]}>
+        Your recovery story starts with one break.
       </Text>
-      <Text style={[styles.emptyStateText, { color: theme.text.muted }]}>
-        Start one short {primaryNeedLabel} session and this screen will begin turning your breaks into a weekly rhythm story.
+      <Text style={[styles.emptyText, { color: theme.text.muted }]}>
+        Start one short {primaryNeedLabel} session and this screen begins turning your breaks into a weekly rhythm story.
       </Text>
       <Pressable
-        style={[styles.emptyStateButton, { backgroundColor: theme.accent.primary }]}
+        style={styles.emptyButton}
         onPress={onStart}
         accessibilityRole="button"
         accessibilityLabel="Browse starter resets"
       >
-        <Text style={styles.emptyStateButtonText}>Browse starter resets</Text>
+        <Text style={styles.emptyButtonText}>Browse starter resets</Text>
       </Pressable>
+    </View>
+  );
+}
+
+function MetricsRow({ metrics, theme }: { metrics: { id: string; label: string; value: string }[]; theme: ThemeColors }) {
+  return (
+    <View style={styles.metricsRow}>
+      {metrics.map((metric) => (
+        <View key={metric.id} style={styles.metric}>
+          <Text style={[styles.metricValue, { color: theme.text.primary }]}>{metric.value}</Text>
+          <Text style={[styles.metricLabel, { color: theme.text.muted }]}>{metric.label.toUpperCase()}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -95,93 +104,28 @@ export function RecoveryStoryCard({
   }));
 
   const accent = story.tone === 'positive'
-    ? '#06FFA5'
+    ? '#FF2472'
     : story.tone === 'steady'
-      ? '#FFD166'
+      ? '#FAE34B'
       : '#FF8A65';
-  const secondaryAccent = story.tone === 'positive'
-    ? '#00E5FF'
-    : story.tone === 'steady'
-      ? '#FFB703'
-      : '#FF6B6B';
 
   return (
-    <Animated.View
-      style={[
-        styles.storyCard,
-        themedSurface(theme),
-        containerStyle,
-      ]}
-    >
-      {theme.isDark && (
-        Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidDarkSurface]} />
-        )
-      )}
-      <LinearGradient
-        colors={[`${accent}20`, `${secondaryAccent}10`]}
-        style={StyleSheet.absoluteFill}
-      />
-
+    <Animated.View style={[styles.block, containerStyle]}>
       <View style={styles.storyHeader}>
-        <View style={[styles.storyBadge, { backgroundColor: `${accent}18` }]}>
-          <Ionicons name="pulse-outline" size={14} color={accent} />
-          <Text style={[styles.storyBadgeText, { color: accent }]}>RECOVERY STORY</Text>
-        </View>
-        <View style={[styles.storyFocusPill, { borderColor: `${accent}35` }]}>
-          <Text style={[styles.storyFocusPillText, { color: theme.text.primary }]}>
-            {story.focusLabel}
-          </Text>
-        </View>
+        <Text style={[styles.eyebrow, { color: accent }]}>RECOVERY STORY</Text>
+        <Text style={[styles.focusLabel, { color: theme.text.muted }]} numberOfLines={1}>
+          {story.focusLabel}
+        </Text>
       </View>
 
-      <Text style={[styles.storyTitle, { color: theme.text.primary }]}>
-        {story.title}
-      </Text>
-      <Text style={[styles.storySummary, { color: theme.text.secondary }]}>
-        {story.summary}
-      </Text>
+      <Text style={[styles.title, { color: theme.text.primary }]}>{story.title}</Text>
+      <Text style={[styles.summary, { color: theme.text.secondary }]}>{story.summary}</Text>
 
-      <View style={styles.storyMetricsRow}>
-        {story.metrics.map((metric) => (
-          <View
-            key={metric.id}
-            style={[
-              styles.storyMetricCard,
-              {
-                backgroundColor: theme.isDark
-                  ? 'rgba(255,255,255,0.05)'
-                  : theme.background.elevated,
-              },
-            ]}
-          >
-            <Text style={[styles.storyMetricValue, { color: theme.text.primary }]}>
-              {metric.value}
-            </Text>
-            <Text style={[styles.storyMetricLabel, { color: theme.text.muted }]}>
-              {metric.label}
-            </Text>
-          </View>
-        ))}
-      </View>
+      <MetricsRow metrics={story.metrics} theme={theme} />
 
-      <View
-        style={[
-          styles.storyNextStep,
-          {
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.background.elevated,
-            borderColor: theme.border.subtle,
-          },
-        ]}
-      >
-        <Text style={[styles.storyNextStepTitle, { color: theme.text.primary }]}>
-          What to improve next
-        </Text>
-        <Text style={[styles.storyNextStepText, { color: theme.text.secondary }]}>
-          {story.nextStep}
-        </Text>
+      <View style={[styles.nextStep, { borderTopColor: theme.border.subtle }]}>
+        <Text style={[styles.nextLabel, { color: accent }]}>WHAT TO IMPROVE NEXT</Text>
+        <Text style={[styles.nextText, { color: theme.text.secondary }]}>{story.nextStep}</Text>
       </View>
     </Animated.View>
   );
@@ -219,132 +163,39 @@ export function WeeklyRecoveryReportCard({
   ];
 
   return (
-    <Animated.View style={[styles.reportCard, themedSurface(theme), containerStyle]}>
-      {theme.isDark && (
-        Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidDarkSurface]} />
-        )
-      )}
-      <LinearGradient
-        colors={
-          theme.isDark
-            ? ['rgba(255, 209, 102, 0.18)', 'rgba(0, 229, 255, 0.06)']
-            : ['rgba(255, 149, 0, 0.16)', 'rgba(0, 122, 255, 0.08)']
-        }
-        style={StyleSheet.absoluteFill}
-      />
+    <Animated.View style={[styles.block, containerStyle]}>
+      <Text style={[styles.eyebrow, { color: theme.text.muted }]}>PRO REPORT · WEEKLY RECOVERY</Text>
 
-      <View style={styles.reportHeader}>
-        <View style={styles.reportHeaderLeft}>
-          <View style={styles.reportBadge}>
-            <Ionicons name="sparkles" size={14} color={theme.text.inverse} />
-            <Text style={styles.reportBadgeText}>PRO REPORT</Text>
-          </View>
-          <Text style={[styles.reportTitle, { color: theme.text.primary }]}>
-            Weekly Recovery Report
-          </Text>
-          <Text style={[styles.reportSubtitle, { color: theme.text.secondary }]}>
-            {report.scoreLabel}
-          </Text>
-        </View>
-        <View style={[styles.reportScoreBadge, { borderColor: theme.border.subtle }]}>
-          <Text style={[styles.reportScoreValue, { color: theme.text.primary }]}>
-            {report.score}
-          </Text>
-          <Text style={[styles.reportScoreLabel, { color: theme.text.muted }]}>/100</Text>
-        </View>
+      <View style={styles.scoreRow}>
+        <Text style={[styles.score, { color: theme.text.primary }]}>
+          {report.score}
+          <Text style={[styles.scoreMax, { color: theme.text.muted }]}>/100</Text>
+        </Text>
+        <Text style={[styles.scoreLabel, { color: theme.text.secondary }]}>{report.scoreLabel}</Text>
       </View>
 
-      <Text style={[styles.reportSummary, { color: theme.text.primary }]}>
-        {report.summary}
+      <Text style={[styles.summary, { color: theme.text.secondary }]}>{report.summary}</Text>
+
+      <Text style={[styles.tagLine, { color: theme.text.muted }]}>
+        {formatWeekOverWeek(report.weekOverWeekChange)}   ·   Focus: {report.focusArea}
       </Text>
 
-      <View style={styles.reportPills}>
-        <View
-          style={[
-            styles.reportPill,
-            {
-              backgroundColor: theme.isDark ? 'rgba(255,255,255,0.06)' : theme.background.elevated,
-            },
-          ]}
-        >
-          <Ionicons name="trending-up" size={14} color={theme.accent.primary} />
-          <Text style={[styles.reportPillText, { color: theme.text.primary }]}>
-            {formatWeekOverWeek(report.weekOverWeekChange)}
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.reportPill,
-            {
-              backgroundColor: theme.isDark ? 'rgba(255,255,255,0.06)' : theme.background.elevated,
-            },
-          ]}
-        >
-          <Ionicons name="flag-outline" size={14} color={theme.accent.warning} />
-          <Text style={[styles.reportPillText, { color: theme.text.primary }]}>
-            Focus: {report.focusArea}
-          </Text>
-        </View>
-      </View>
+      <MetricsRow metrics={metrics} theme={theme} />
 
-      <View style={styles.reportMetricsGrid}>
-        {metrics.map((metric) => (
-          <View
-            key={metric.id}
-            style={[
-              styles.reportMetricCard,
-              {
-                backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : theme.background.elevated,
-              },
-            ]}
-          >
-            <Text style={[styles.reportMetricValue, { color: theme.text.primary }]}>
-              {metric.value}
-            </Text>
-            <Text style={[styles.reportMetricLabel, { color: theme.text.muted }]}>
-              {metric.label}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      <View
-        style={[
-          styles.reportRecommendation,
-          {
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.background.elevated,
-            borderColor: theme.border.subtle,
-          },
-        ]}
-      >
-        <Text style={[styles.reportRecommendationTitle, { color: theme.text.primary }]}>
-          Next Focus
-        </Text>
-        <Text style={[styles.reportRecommendationText, { color: theme.text.secondary }]}>
-          {report.recommendation}
-        </Text>
+      <View style={[styles.nextStep, { borderTopColor: theme.border.subtle }]}>
+        <Text style={[styles.nextLabel, { color: theme.accent.primary }]}>NEXT FOCUS</Text>
+        <Text style={[styles.nextText, { color: theme.text.secondary }]}>{report.recommendation}</Text>
       </View>
 
       <Pressable
-        style={[
-          styles.reportShareButton,
-          {
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.06)' : theme.background.elevated,
-            borderColor: theme.border.subtle,
-          },
-        ]}
+        style={[styles.shareButton, { borderTopColor: theme.border.subtle }]}
         onPress={() => onShare?.(report)}
         accessibilityRole="button"
         accessibilityLabel="Share weekly recovery report"
         accessibilityHint="Opens the share sheet with your weekly recovery summary"
       >
-        <Ionicons name="share-social-outline" size={16} color={theme.accent.primary} />
-        <Text style={[styles.reportShareButtonText, { color: theme.text.primary }]}>
-          Share Report
-        </Text>
+        <Ionicons name="share-social-outline" size={16} color={theme.text.primary} />
+        <Text style={[styles.shareButtonText, { color: theme.text.primary }]}>Share report</Text>
       </Pressable>
     </Animated.View>
   );
@@ -362,7 +213,7 @@ export function RecoveryInsightCard({
   screenWidth: number;
 }) {
   const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.92);
+  const scale = useSharedValue(0.96);
   const toneColor = getInsightToneColor(item.tone, theme);
 
   useEffect(() => {
@@ -378,326 +229,203 @@ export function RecoveryInsightCard({
   return (
     <Animated.View
       style={[
-        styles.recoveryInsightCard,
-        {
-          width: (screenWidth - Spacing.lg * 2 - 12) / 2,
-        },
-        themedSurface(theme, 2, 10),
+        styles.insightCell,
+        { width: (screenWidth - Spacing.lg * 2 - 20) / 2 },
         containerStyle,
       ]}
       accessibilityRole="text"
       accessibilityLabel={`${item.title}: ${item.value}. ${item.detail}`}
     >
-      {theme.isDark && (
-        Platform.OS === 'ios' ? (
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.androidDarkSurface]} />
-        )
-      )}
-      <View style={[styles.recoveryInsightIcon, { backgroundColor: `${toneColor}18` }]}>
-        <Ionicons name={item.icon as IoniconsName} size={18} color={toneColor} />
-      </View>
-      <Text style={[styles.recoveryInsightTitle, { color: theme.text.primary }]}>
-        {item.title}
-      </Text>
-      <Text style={[styles.recoveryInsightValue, { color: theme.text.primary }]}>
-        {item.value}
-      </Text>
-      <Text style={[styles.recoveryInsightDetail, { color: theme.text.muted }]}>
-        {item.detail}
-      </Text>
+      <View style={[styles.insightRule, { backgroundColor: toneColor }]} />
+      <Text style={[styles.insightTitle, { color: theme.text.muted }]}>{item.title.toUpperCase()}</Text>
+      <Text style={[styles.insightValue, { color: theme.text.primary }]}>{item.value}</Text>
+      <Text style={[styles.insightDetail, { color: theme.text.muted }]}>{item.detail}</Text>
     </Animated.View>
   );
 }
 
-function themedSurface(theme: ThemeColors, elevation = 5, radius = 12) {
-  return {
-    borderColor: theme.isDark ? theme.border.subtle : 'transparent',
-    backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 } as const,
-    shadowOpacity: theme.isDark ? 0 : 0.08,
-    shadowRadius: radius,
-    elevation: theme.isDark ? 0 : elevation,
-  };
-}
-
 const styles = StyleSheet.create({
-  androidDarkSurface: {
-    backgroundColor: 'rgba(25, 25, 35, 0.9)',
-  },
+  // Empty state
   emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: Spacing.xxxl,
-    paddingHorizontal: Spacing.xl,
   },
-  emptyStateEmoji: {
-    fontSize: 56,
-    marginBottom: Spacing.md,
+  emptyEyebrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 12,
+    letterSpacing: 2.4,
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 14,
   },
-  emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: Spacing.sm,
-    textAlign: 'center',
+  emptyTitle: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 30,
+    lineHeight: 34,
+    letterSpacing: -1,
+    marginBottom: 14,
   },
-  emptyStateText: {
+  emptyText: {
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 15,
     lineHeight: 22,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: 26,
   },
-  emptyStateButton: {
-    borderRadius: 14,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
+  emptyButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 26,
+    paddingVertical: 15,
   },
-  emptyStateButtonText: {
-    color: '#000',
+  emptyButtonText: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 15,
-    fontWeight: '700',
+    color: '#0B0A0D',
   },
-  storyCard: {
-    borderWidth: 1,
-    borderRadius: 28,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    overflow: 'hidden',
+
+  // Shared block (story + report)
+  block: {
+    marginBottom: 36,
+  },
+  eyebrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 11,
+    letterSpacing: 1.8,
   },
   storyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
+    gap: 12,
+    marginBottom: 14,
   },
-  storyBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  storyBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  storyFocusPill: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  storyFocusPillText: {
+  focusLabel: {
+    fontFamily: 'GeneralSans-Semibold',
     fontSize: 12,
-    fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'right',
   },
-  storyTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: Spacing.sm,
+  title: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 27,
+    lineHeight: 31,
+    letterSpacing: -0.8,
+    marginBottom: 12,
   },
-  storySummary: {
+  summary: {
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 15,
     lineHeight: 22,
-    marginBottom: Spacing.md,
+    marginBottom: 8,
   },
-  storyMetricsRow: {
+
+  // Score (report)
+  scoreRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: Spacing.md,
+    alignItems: 'baseline',
+    gap: 14,
+    marginTop: 14,
+    marginBottom: 14,
   },
-  storyMetricCard: {
-    minWidth: 88,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  score: {
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 52,
+    letterSpacing: -2,
   },
-  storyMetricValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 2,
+  scoreMax: {
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 20,
   },
-  storyMetricLabel: {
+  scoreLabel: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 15,
+    flexShrink: 1,
+  },
+  tagLine: {
+    fontFamily: 'JetBrainsMono-Regular',
     fontSize: 12,
-    fontWeight: '500',
-  },
-  storyNextStep: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: Spacing.md,
-  },
-  storyNextStepTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  storyNextStepText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  reportCard: {
-    borderWidth: 1,
-    borderRadius: 28,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    overflow: 'hidden',
-  },
-  reportHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  reportHeaderLeft: {
-    flex: 1,
-  },
-  reportBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#111827',
-    marginBottom: 10,
-  },
-  reportBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    color: '#FFFFFF',
-  },
-  reportTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  reportSubtitle: {
-    fontSize: 14,
     marginTop: 4,
+    marginBottom: 4,
   },
-  reportScoreBadge: {
-    borderWidth: 1,
-    borderRadius: 18,
-    minWidth: 74,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  reportScoreValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    lineHeight: 26,
-  },
-  reportScoreLabel: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  reportSummary: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: Spacing.md,
-  },
-  reportPills: {
+
+  // Metrics (mono type grid, no tiles)
+  metricsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: Spacing.md,
+    marginTop: 14,
   },
-  reportPill: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  reportPillText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  reportMetricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: Spacing.md,
-  },
-  reportMetricCard: {
-    minWidth: 88,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  reportMetricValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  reportMetricLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  reportRecommendation: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  reportRecommendationTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  reportRecommendationText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  reportShareButton: {
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 14,
+  metric: {
+    width: '50%',
     paddingVertical: 12,
+  },
+  metricValue: {
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 24,
+    letterSpacing: -0.8,
+  },
+  metricLabel: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 10,
+    letterSpacing: 1,
+    marginTop: 5,
+  },
+
+  // Next step (shared)
+  nextStep: {
+    marginTop: 18,
+    paddingTop: 18,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  nextLabel: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    marginBottom: 8,
+  },
+  nextText: {
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 14,
+    lineHeight: 21,
+  },
+
+  // Share (report)
+  shareButton: {
+    marginTop: 18,
+    paddingTop: 18,
+    borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  reportShareButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+  shareButtonText: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 15,
   },
-  recoveryInsightCard: {
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: Spacing.md,
-    overflow: 'hidden',
-  },
-  recoveryInsightIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  recoveryInsightTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+
+  // Insight cell (2-col grid)
+  insightCell: {
     marginBottom: 4,
   },
-  recoveryInsightValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 6,
+  insightRule: {
+    width: 24,
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 14,
   },
-  recoveryInsightDetail: {
+  insightTitle: {
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 10,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  insightValue: {
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 22,
+    letterSpacing: -0.6,
+    marginBottom: 8,
+  },
+  insightDetail: {
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 12,
     lineHeight: 18,
   },

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import {
-  View,
   Text,
   StyleSheet,
   Pressable,
@@ -19,7 +18,6 @@ import * as Haptics from 'expo-haptics';
 import type { ThemeColors } from '@/hooks/useTheme';
 
 export function SettingItem({
-  icon,
   label,
   type,
   value,
@@ -31,7 +29,9 @@ export function SettingItem({
   disabled,
   theme,
 }: {
-  icon: IoniconsName;
+  // `icon` is accepted for call-site compatibility but no longer rendered —
+  // the editorial rows are type-driven, not icon-in-a-box.
+  icon?: IoniconsName;
   label: string;
   type: 'toggle' | 'value' | 'arrow';
   value?: string;
@@ -44,7 +44,7 @@ export function SettingItem({
   theme: ThemeColors;
 }) {
   const opacity = useSharedValue(0);
-  const translateX = useSharedValue(20);
+  const translateX = useSharedValue(16);
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function SettingItem({
 
   const handlePressIn = () => {
     if (type !== 'toggle') {
-      scale.value = withSpring(0.98);
+      scale.value = withSpring(0.99);
     }
   };
 
@@ -107,27 +107,11 @@ export function SettingItem({
       <Animated.View
         style={[
           styles.settingItem,
-          { borderBottomColor: theme.border.subtle },
+          index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border.subtle },
           animatedStyle,
           disabled && styles.settingItemDisabled,
         ]}
       >
-        <View
-          style={[
-            styles.settingIcon,
-            {
-              backgroundColor: theme.isDark
-                ? 'rgba(255, 255, 255, 0.08)'
-                : theme.border.subtle,
-            },
-          ]}
-        >
-          <Ionicons
-            name={icon}
-            size={20}
-            color={disabled ? theme.text.muted : theme.text.secondary}
-          />
-        </View>
         <Text
           style={[
             styles.settingLabel,
@@ -170,29 +154,20 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 17,
   },
   settingItemDisabled: {
     opacity: 0.5,
   },
-  settingIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
   settingLabel: {
     flex: 1,
-    fontSize: 15,
-    color: '#FFFFFF',
+    fontFamily: 'GeneralSans-Medium',
+    fontSize: 16,
+    letterSpacing: -0.2,
+    marginRight: 12,
   },
   settingValue: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'GeneralSans-Medium',
+    fontSize: 15,
   },
 });

@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { View, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { View, StyleSheet, AppState, AppStateStatus, LogBox } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as ExpoSplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -55,20 +56,29 @@ import OfflineBanner from '@/components/common/OfflineBanner';
 // Prevent the native splash screen from auto-hiding
 ExpoSplashScreen.preventAutoHideAsync();
 
+// Dev-only: silence known-benign console noise so the LogBox stays clean.
+if (__DEV__) {
+  LogBox.ignoreLogs([
+    'i18next::pluralResolver',
+    'This method is deprecated',
+    '[Auth] initialize skipped',
+  ]);
+}
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
 // Custom dark theme matching our design system
-const MicroBreaksDarkTheme = {
+const UnwindDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: '#000000',
-    card: '#1A1A1A',
-    primary: '#06FFA5',
+    background: '#0C0B0F',
+    card: '#1C1922',
+    primary: '#FF2472',
     text: '#FFFFFF',
-    border: '#2A2A2A',
+    border: '#26222E',
   },
 };
 
@@ -113,6 +123,15 @@ function syncAuthenticatedUserState(user: FirebaseAuthTypes.User): boolean {
 export default function RootLayout() {
   const effectiveTheme = useEffectiveTheme();
   const { i18n } = useTranslation();
+  const [fontsLoaded, fontError] = useFonts({
+    'GeneralSans-Regular': require('../assets/fonts/GeneralSans-Regular.ttf'),
+    'GeneralSans-Medium': require('../assets/fonts/GeneralSans-Medium.ttf'),
+    'GeneralSans-Semibold': require('../assets/fonts/GeneralSans-Semibold.ttf'),
+    'GeneralSans-Bold': require('../assets/fonts/GeneralSans-Bold.ttf'),
+    'JetBrainsMono-Regular': require('../assets/fonts/JetBrainsMono-Regular.ttf'),
+    'JetBrainsMono-Medium': require('../assets/fonts/JetBrainsMono-Medium.ttf'),
+    'JetBrainsMono-Bold': require('../assets/fonts/JetBrainsMono-Bold.ttf'),
+  });
   useNotificationDeepLinks();
   // Bridges the React-side effective tier into the `tierState`
   // singleton so non-React services (HealthKit writes, calendar reads,
@@ -419,6 +438,16 @@ export default function RootLayout() {
           run: async () => {
             const user = await initializeAuth();
             if (!user) {
+              if (__DEV__) {
+                // Dev-only bypass: the repo ships a mock GoogleService-Info.plist
+                // (mock-project-id), so signInAnonymously() returns
+                // auth/internal-error. Don't hard-block the simulator build — boot
+                // into a local/offline (no-session) mode instead of "Startup Blocked".
+                console.warn(
+                  '[Bootstrap] Auth unavailable in dev (mock Firebase config) — continuing without a signed-in session.'
+                );
+                return;
+              }
               throw new Error('Failed to establish an anonymous session.');
             }
 
@@ -544,15 +573,16 @@ export default function RootLayout() {
   const appIsReady = bootstrapPhase !== 'loading';
   const blockedIssue = bootstrapIssues.find((issue) => issue.critical) ?? bootstrapIssues[0];
 
-  // Don't render anything until app is ready
-  if (!appIsReady) {
+  // Don't render anything until app is ready (incl. custom fonts).
+  // A font error still lets us render with the system fallback.
+  if (!appIsReady || (!fontsLoaded && !fontError)) {
     return null;
   }
 
   return (
     <GestureHandlerRootView style={styles.container} accessibilityLanguage={i18n.language}>
       <SafeAreaProvider>
-        <ThemeProvider value={effectiveTheme === 'dark' ? MicroBreaksDarkTheme : DefaultTheme}>
+        <ThemeProvider value={effectiveTheme === 'dark' ? UnwindDarkTheme : DefaultTheme}>
           <View style={styles.container}>
             {bootstrapPhase === 'blocked' && blockedIssue ? (
               <BootstrapStatusScreen
@@ -652,7 +682,7 @@ export default function RootLayout() {
                 {showSplash && bootstrapPhase !== 'blocked' && (
                   <SplashScreen
                     onAnimationComplete={handleSplashComplete}
-                    minimumDuration={1200}
+                    minimumDuration={2000}
                   />
                 )}
               </>

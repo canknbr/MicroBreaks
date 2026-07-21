@@ -9,7 +9,7 @@ export const PRIVACY_POLICY = `# Privacy Policy
 
 ## 1. Introduction
 
-MicroBreaks ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.
+Unwind ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.
 
 ## 2. Information We Collect
 
@@ -67,11 +67,11 @@ We use the following third-party services:
 
 ## 7.1 Advertising & Tracking
 
-MicroBreaks does **not** use the Identifier for Advertisers (IDFA) and does **not** track you across other apps or websites. We do not participate in ad networks or share data with advertisers. Firebase Analytics collects anonymous usage data only within our app and does not link it to your identity or activities in other apps. Because we do not engage in tracking as defined by Apple's App Tracking Transparency framework, you will not be prompted with a tracking permission request.
+Unwind does **not** use the Identifier for Advertisers (IDFA) and does **not** track you across other apps or websites. We do not participate in ad networks or share data with advertisers. Firebase Analytics collects anonymous usage data only within our app and does not link it to your identity or activities in other apps. Because we do not engage in tracking as defined by Apple's App Tracking Transparency framework, you will not be prompted with a tracking permission request.
 
 ## 8. Children's Privacy
 
-MicroBreaks is not intended for children under 13. We do not knowingly collect data from children.
+Unwind is not intended for children under 13. We do not knowingly collect data from children.
 
 ## 9. Changes to This Policy
 
@@ -89,11 +89,11 @@ export const TERMS_OF_SERVICE = `# Terms of Service
 
 ## 1. Acceptance of Terms
 
-By downloading, installing, or using MicroBreaks ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
+By downloading, installing, or using Unwind ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
 
 ## 2. Description of Service
 
-MicroBreaks is a wellness application that provides guided micro-break exercises, focus timers, and progress tracking to help reduce the negative effects of prolonged screen time and sedentary work.
+Unwind is a wellness application that provides guided micro-break exercises, focus timers, and progress tracking to help reduce the negative effects of prolonged screen time and sedentary work.
 
 ## 3. User Accounts
 
@@ -111,7 +111,7 @@ You agree not to:
 
 ## 5. Health Disclaimer
 
-- MicroBreaks provides general wellness exercises and is NOT a medical device or service.
+- Unwind provides general wellness exercises and is NOT a medical device or service.
 - The exercises and recommendations are for informational purposes only.
 - Always consult a healthcare professional before starting any exercise program.
 - Stop any exercise immediately if you experience pain or discomfort.
@@ -119,7 +119,7 @@ You agree not to:
 
 ## 6. Intellectual Property
 
-- The App, including its code, design, content, and exercises, is owned by MicroBreaks, except for the third-party content identified below.
+- The App, including its code, design, content, and exercises, is owned by Unwind, except for the third-party content identified below.
 - Movement-library demonstration media (exercise animations and thumbnails) is © Gym visual — https://gymvisual.com/ — and is used with attribution at 180×180 resolution. Movement names, categories, and instruction text derive from the MIT-licensed open exercises dataset.
 - You are granted a limited, non-exclusive, non-transferable license to use the App for personal, non-commercial purposes.
 

@@ -134,7 +134,6 @@ function ExerciseDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background.primary }]}>
-      <View style={[styles.ambientGlow, { backgroundColor: zone.color }]} />
       <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
@@ -155,14 +154,9 @@ function ExerciseDetailScreen() {
             <Ionicons name="chevron-back" size={22} color={theme.text.primary} />
           </Pressable>
           <View style={styles.headerRight}>
-            <View style={[styles.zoneBadge, { backgroundColor: `${zone.color}18` }]}>
-              <Text style={styles.zoneBadgeIcon} accessibilityElementsHidden>
-                {zone.icon}
-              </Text>
-              <Text style={[styles.zoneBadgeText, { color: zone.color }]}>
-                {t(`library.zones.${zoneForBodyPart(record.bodyPart)}`)}
-              </Text>
-            </View>
+            <Text style={[styles.zoneBadgeText, { color: zone.color }]}>
+              {t(`library.zones.${zoneForBodyPart(record.bodyPart)}`).toUpperCase()}
+            </Text>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -184,7 +178,7 @@ function ExerciseDetailScreen() {
               <Ionicons
                 name={isFavorite ? 'heart' : 'heart-outline'}
                 size={20}
-                color={isFavorite ? '#FF6B6B' : theme.text.primary}
+                color={isFavorite ? '#EB3E38' : theme.text.primary}
               />
             </Pressable>
           </View>
@@ -201,7 +195,7 @@ function ExerciseDetailScreen() {
               onPress={openPaywall}
               accessibilityRole="button"
               accessibilityLabel={t('library.detail.lockedPreviewBadge')}
-              style={[styles.gifCard, { borderColor: `${zone.color}40`, shadowColor: zone.color }]}
+              style={styles.gifCard}
             >
               {media ? (
                 <Image
@@ -211,7 +205,7 @@ function ExerciseDetailScreen() {
                   accessibilityIgnoresInvertColors
                 />
               ) : (
-                <Text style={styles.gifFallback}>{zone.icon}</Text>
+                <Text style={styles.gifFallback}>{name.charAt(0)}</Text>
               )}
               <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
               <View style={styles.lockedPreviewOverlay}>
@@ -224,7 +218,7 @@ function ExerciseDetailScreen() {
               </View>
             </Pressable>
           ) : (
-            <View style={[styles.gifCard, { borderColor: `${zone.color}40`, shadowColor: zone.color }]}>
+            <View style={styles.gifCard}>
               {media ? (
                 <Image
                   source={media.gif}
@@ -235,7 +229,7 @@ function ExerciseDetailScreen() {
                   accessibilityLabel={name}
                 />
               ) : (
-                <Text style={styles.gifFallback}>{zone.icon}</Text>
+                <Text style={styles.gifFallback}>{name.charAt(0)}</Text>
               )}
             </View>
           )}
@@ -246,71 +240,38 @@ function ExerciseDetailScreen() {
           {/* Title */}
           <Text style={[styles.title, { color: theme.text.primary }]}>{name}</Text>
 
-          {/* Meta chips */}
-          <View style={styles.chipRow}>
-            <MetaChip
-              icon="time-outline"
-              label={t('library.detail.aboutDuration', { minutes })}
-              theme={theme}
-            />
-            <MetaChip
-              icon="body-outline"
-              label={t(`library.kinds.${record.kind}`)}
-              theme={theme}
-            />
-            <MetaChip
-              icon="speedometer-outline"
-              label={t(`library.difficulty.${record.difficulty}`)}
-              theme={theme}
-            />
-            <MetaChip
-              icon="location-outline"
-              label={t(`library.positions.${record.position}`)}
-              theme={theme}
-            />
-          </View>
+          {/* Meta line */}
+          <Text style={[styles.metaLine, { color: theme.text.muted }]}>
+            {t('library.detail.aboutDuration', { minutes })}
+            {'   ·   '}{t(`library.kinds.${record.kind}`)}
+            {'   ·   '}{t(`library.difficulty.${record.difficulty}`)}
+            {'   ·   '}{t(`library.positions.${record.position}`)}
+          </Text>
 
           {/* Muscles */}
-          <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
-            {t('library.detail.muscles')}
+          <Text style={[styles.sectionTitle, { color: theme.text.muted }]}>
+            {t('library.detail.muscles').toUpperCase()}
           </Text>
           <View style={styles.muscleRow}>
-            <View style={[styles.muscleChip, { backgroundColor: `${zone.color}18`, borderColor: `${zone.color}50` }]}>
-              <Text style={[styles.muscleChipText, { color: zone.color }]}>
-                {muscleLabel(record.target, locale)}
-              </Text>
-            </View>
+            <Text style={[styles.musclePrimary, { color: zone.color }]}>
+              {muscleLabel(record.target, locale)}
+            </Text>
             {record.secondaryMuscles.map((muscle) => (
-              <View
-                key={muscle}
-                style={[
-                  styles.muscleChip,
-                  {
-                    backgroundColor: theme.isDark
-                      ? 'rgba(255,255,255,0.06)'
-                      : 'rgba(0,0,0,0.04)',
-                    borderColor: 'transparent',
-                  },
-                ]}
-              >
-                <Text style={[styles.muscleChipText, { color: theme.text.secondary }]}>
-                  {muscleLabel(muscle, locale)}
-                </Text>
-              </View>
+              <Text key={muscle} style={[styles.muscleSecondary, { color: theme.text.muted }]}>
+                {muscleLabel(muscle, locale)}
+              </Text>
             ))}
           </View>
 
           {/* Steps */}
-          <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
-            {t('library.detail.howTo')}
+          <Text style={[styles.sectionTitle, { color: theme.text.muted }]}>
+            {t('library.detail.howTo').toUpperCase()}
           </Text>
           {visibleSteps.map((step, index) => (
-            <View key={index} style={styles.stepRow}>
-              <View style={[styles.stepNumber, { backgroundColor: `${zone.color}18` }]}>
-                <Text style={[styles.stepNumberText, { color: zone.color }]}>
-                  {index + 1}
-                </Text>
-              </View>
+            <View key={index} style={[styles.stepRow, index > 0 && styles.stepDivider, { borderTopColor: theme.border.subtle }]}>
+              <Text style={[styles.stepNumberText, { color: zone.color }]}>
+                {String(index + 1).padStart(2, '0')}
+              </Text>
               <Text style={[styles.stepText, { color: theme.text.secondary }]}>{step}</Text>
             </View>
           ))}
@@ -340,18 +301,9 @@ function ExerciseDetailScreen() {
           )}
 
           {/* Safety note */}
-          <View
-            style={[
-              styles.safetyNote,
-              {
-                backgroundColor: theme.isDark
-                  ? 'rgba(255, 209, 102, 0.08)'
-                  : 'rgba(255, 149, 0, 0.08)',
-              },
-            ]}
-          >
-            <Ionicons name="shield-checkmark-outline" size={16} color={theme.accent.warning} />
-            <Text style={[styles.safetyText, { color: theme.text.secondary }]}>
+          <View style={[styles.safetyNote, { borderTopColor: theme.border.subtle }]}>
+            <Ionicons name="shield-checkmark-outline" size={16} color={theme.text.muted} />
+            <Text style={[styles.safetyText, { color: theme.text.muted }]}>
               {t('library.detail.safety')}
             </Text>
           </View>
@@ -360,7 +312,7 @@ function ExerciseDetailScreen() {
         {/* Start CTA */}
         <Pressable
           onPress={handleStart}
-          style={[styles.startButton, { backgroundColor: isLocked ? theme.accent.warning : zone.color }]}
+          style={styles.startButton}
           accessibilityRole="button"
           accessibilityLabel={
             isLocked ? t('library.detail.unlockWithPro') : t('library.detail.startSession')
@@ -369,7 +321,7 @@ function ExerciseDetailScreen() {
           <Ionicons
             name={isLocked ? 'lock-closed' : 'play'}
             size={18}
-            color="#000000"
+            color="#0B0A0D"
           />
           <Text style={styles.startButtonText}>
             {isLocked ? t('library.detail.unlockWithPro') : t('library.detail.startSession')}
@@ -380,43 +332,9 @@ function ExerciseDetailScreen() {
   );
 }
 
-function MetaChip({
-  icon,
-  label,
-  theme,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  label: string;
-  theme: ReturnType<typeof useTheme>;
-}) {
-  return (
-    <View
-      style={[
-        styles.metaChip,
-        {
-          backgroundColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-        },
-      ]}
-    >
-      <Ionicons name={icon} size={13} color={theme.text.muted} />
-      <Text style={[styles.metaChipText, { color: theme.text.secondary }]}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  ambientGlow: {
-    position: 'absolute',
-    top: -180,
-    left: '50%',
-    marginLeft: -220,
-    width: 440,
-    height: 440,
-    borderRadius: 220,
-    opacity: 0.07,
   },
   safeArea: {
     flex: 1,
@@ -447,46 +365,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  zoneBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-  },
-  zoneBadgeIcon: {
-    fontSize: 13,
-    marginRight: 6,
-  },
   zoneBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 11,
+    letterSpacing: 1.4,
   },
   scrollContent: {
     paddingBottom: 24,
   },
   gifCard: {
     alignSelf: 'center',
-    width: 250,
-    height: 250,
+    width: 260,
+    height: 260,
     borderRadius: 28,
-    borderWidth: 2,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     marginTop: Spacing.sm,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    elevation: 8,
   },
   gif: {
-    width: 226,
-    height: 226,
+    width: 236,
+    height: 236,
   },
   gifFallback: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 72,
+    color: '#0B0A0D',
   },
   lockedPreviewOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -499,130 +404,119 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 16,
+    borderRadius: 100,
   },
   lockedPreviewPillText: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 12,
-    fontWeight: '800',
     color: '#000000',
   },
   lockedStepsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 4,
+    gap: 10,
+    paddingVertical: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   lockedStepsText: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 14,
   },
   attribution: {
     alignSelf: 'center',
+    fontFamily: 'GeneralSans-Regular',
     fontSize: 10,
-    marginTop: 8,
+    marginTop: 10,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: -0.3,
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 30,
+    letterSpacing: -0.8,
     marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: 12,
   },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+  metaLine: {
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 12,
+    lineHeight: 18,
     marginBottom: Spacing.md,
   },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 5,
-  },
-  metaChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.sm,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    marginTop: 24,
+    marginBottom: 12,
   },
   muscleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    columnGap: 14,
+    rowGap: 6,
     marginBottom: Spacing.sm,
   },
-  muscleChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
+  musclePrimary: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 15,
+    letterSpacing: -0.2,
   },
-  muscleChipText: {
-    fontSize: 12,
-    fontWeight: '600',
+  muscleSecondary: {
+    fontFamily: 'GeneralSans-Medium',
+    fontSize: 15,
+    letterSpacing: -0.2,
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    gap: 14,
+    paddingVertical: 14,
   },
-  stepNumber: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    marginTop: 1,
+  stepDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   stepNumberText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 14,
+    width: 22,
+    marginTop: 2,
   },
   stepText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 21,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    lineHeight: 22,
   },
   safetyNote: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    borderRadius: 14,
-    padding: 12,
-    marginTop: Spacing.sm,
+    gap: 10,
+    paddingTop: 18,
+    marginTop: 22,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   safetyText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 18,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 13,
+    lineHeight: 19,
   },
   startButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: 17,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
   },
   startButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 17,
+    color: '#0B0A0D',
   },
   notFound: {
     flex: 1,

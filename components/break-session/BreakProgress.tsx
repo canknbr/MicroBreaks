@@ -1,6 +1,6 @@
 /**
- * Break Progress Component
- * Step indicators and progress bar
+ * Break Progress — editorial. Mono step counter + a thin solid progress
+ * line + mono percentage. No gradient.
  */
 
 import React from 'react';
@@ -10,7 +10,6 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 
 interface BreakProgressProps {
   currentStep: number;
@@ -40,83 +39,65 @@ export default function BreakProgress({
       accessibilityLabel={`Step ${currentStep + 1} of ${totalSteps}, ${Math.round(progress)} percent complete`}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(progress) }}
     >
-      {/* Step Counter */}
-      <View style={styles.stepCounter} importantForAccessibility="no">
-        <Text style={styles.stepLabel}>Step</Text>
+      <View style={styles.topRow} importantForAccessibility="no">
+        <Text style={styles.stepLabel}>STEP</Text>
         <Text style={[styles.stepNumber, { color }]}>
           {currentStep + 1}
           <Text style={styles.stepTotal}>/{totalSteps}</Text>
         </Text>
+        <View style={styles.spacer} />
+        <Text style={styles.percentage}>{Math.round(progress)}%</Text>
       </View>
 
-      {/* Progress Bar */}
-      <View style={styles.progressBar} importantForAccessibility="no">
-        <View style={styles.progressTrack}>
-          <Animated.View style={[styles.progressFill, progressStyle]}>
-            <LinearGradient
-              colors={[color, `${color}80`]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
-        </View>
+      <View style={styles.progressTrack} importantForAccessibility="no">
+        <Animated.View style={[styles.progressFill, { backgroundColor: color }, progressStyle]} />
       </View>
-
-      {/* Percentage */}
-      <Text style={styles.percentage} importantForAccessibility="no">
-        {Math.round(progress)}%
-      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
     marginBottom: 24,
   },
-  stepCounter: {
-    alignItems: 'center',
-    marginRight: 16,
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 12,
   },
   stepLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.5)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: 'GeneralSans-Semibold',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.4)',
+    letterSpacing: 1.4,
+    marginRight: 8,
   },
   stepNumber: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontFamily: 'JetBrainsMono-Bold',
+    fontSize: 16,
+    letterSpacing: -0.5,
   },
   stepTotal: {
+    fontFamily: 'JetBrainsMono-Regular',
     fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.4)',
   },
-  progressBar: {
+  spacer: {
     flex: 1,
-    marginRight: 12,
+  },
+  percentage: {
+    fontFamily: 'JetBrainsMono-Medium',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   progressTrack: {
-    height: 6,
+    height: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 3,
+    borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
-  },
-  percentage: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-    minWidth: 40,
-    textAlign: 'right',
+    borderRadius: 2,
   },
 });

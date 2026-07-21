@@ -119,7 +119,7 @@ function CountdownTimer({
         <Animated.View
           style={[
             styles.glow,
-            { backgroundColor: isUrgent ? '#FFD166' : '#06FFA5' },
+            { backgroundColor: isUrgent ? '#FAE34B' : '#FF2472' },
             glowStyle,
           ]}
         />
@@ -160,7 +160,7 @@ function CountdownTimer({
         <View style={styles.progressContainer} importantForAccessibility="no">
           <View style={[styles.progressTrack, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : theme.border.medium }]}>
             <LinearGradient
-              colors={isUrgent ? ['#FFD166', '#FF9F1C'] : [theme.accent.primary, theme.accent.secondary]}
+              colors={isUrgent ? ['#FAE34B', '#FF9F1C'] : [theme.accent.primary, theme.accent.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.progressFill, { width: `${progress}%` }]}

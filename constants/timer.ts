@@ -30,7 +30,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     longBreakMinutes: 15,
     sessionsUntilLongBreak: 4,
     icon: '🍅',
-    color: '#FF6B6B',
+    color: '#EB3E38',
   },
   {
     id: 'deep-work',
@@ -41,7 +41,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     longBreakMinutes: 20,
     sessionsUntilLongBreak: 3,
     icon: '🧠',
-    color: '#B47EFF',
+    color: '#BC26F4',
   },
   {
     id: 'micro-session',
@@ -52,7 +52,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     longBreakMinutes: 5,
     sessionsUntilLongBreak: 6,
     icon: '⚡',
-    color: '#FFD166',
+    color: '#FAE34B',
   },
   {
     id: 'custom',
@@ -63,7 +63,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     longBreakMinutes: 15,
     sessionsUntilLongBreak: 4,
     icon: '⚙️',
-    color: '#06FFA5',
+    color: '#6CE9CC',
   },
 ] as const;
 
@@ -75,9 +75,9 @@ export const TIMER_TICK_MS = 1000;
 
 // Phase colors for UI
 export const PHASE_COLORS: Record<TimerPhase, string> = {
-  work: '#FF6B6B',
-  break: '#06FFA5',
-  longBreak: '#00E5FF',
+  work: '#EB3E38',
+  break: '#6CE9CC',
+  longBreak: '#21A3E6',
 };
 
 // Phase icons for UI

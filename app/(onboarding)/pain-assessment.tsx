@@ -1,24 +1,17 @@
 /**
- * ONB_006: Current Pain Assessment
- * Premium zen design with animated body area selection
+ * ONB_006: Current Pain Assessment — editorial multi-select. A type-list of
+ * body areas (dim → white + pink em-dash when picked); a selected area reveals
+ * an inline 3-dot intensity control. No cards / shape-icons / gradient glow.
  */
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
-import { ZenColors, ZenSpacing, ZenRadius, ZenTypography } from './constants/design';
 import {
   ACTIVE_ONBOARDING_TOTAL_STEPS,
   PAIN_AREAS,
@@ -26,71 +19,57 @@ import {
 import { useOnboardingStore } from '@/store';
 
 type Severity = 'mild' | 'moderate' | 'severe';
+const SEVERITY_LEVELS: Severity[] = ['mild', 'moderate', 'severe'];
 
-function PainAreaCard({ area, isSelected, severity, onToggle, onSeverityChange }: {
-  area: { id: string; icon: string; label: string };
+function PainRow({
+  area,
+  isSelected,
+  severity,
+  first,
+  onToggle,
+  onSeverityChange,
+}: {
+  area: { id: string; label: string };
   isSelected: boolean;
   severity?: Severity;
+  first: boolean;
   onToggle: () => void;
   onSeverityChange: (_level: Severity) => void;
 }) {
-  const cardScale = useSharedValue(1);
-
-  const handlePress = () => {
-    cardScale.value = withTiming(0.97, { duration: 80, easing: Easing.out(Easing.cubic) });
-    setTimeout(() => {
-      cardScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) });
-    }, 80);
-    onToggle();
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: cardScale.value }],
-  }));
-
-  const getSeverityColor = (level: Severity) => {
-    switch (level) {
-      case 'mild': return ZenColors.primary.main;
-      case 'moderate': return ZenColors.accent.main;
-      case 'severe': return ZenColors.secondary.main;
-    }
-  };
+  const activeLevel = severity ? SEVERITY_LEVELS.indexOf(severity) : 0;
+  const showSeverity = isSelected && area.id !== 'none';
 
   return (
-    <Animated.View style={[styles.areaContainer, animatedStyle]}>
+    <View style={[styles.row, !first && styles.divider]}>
       <Pressable
-        style={[styles.areaCard, isSelected && styles.areaCardSelected]}
-        onPress={handlePress}
+        style={styles.rowMain}
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
+        accessibilityLabel={area.label}
       >
-        {isSelected && (
-          <LinearGradient
-            colors={[ZenColors.primary.glow, 'transparent']}
-            style={styles.areaCardGlow}
-          />
-        )}
-        <Text style={styles.areaIcon}>{area.icon}</Text>
-        <Text style={[styles.areaLabel, isSelected && styles.areaLabelSelected]}>
+        <View style={styles.lead}>{isSelected ? <View style={styles.bar} /> : null}</View>
+        <Text style={[styles.label, isSelected ? styles.labelOn : styles.labelOff]}>
           {area.label}
         </Text>
       </Pressable>
 
-      {/* Severity selector */}
-      {isSelected && area.id !== 'none' && (
-        <View style={styles.severityContainer}>
-          {(['mild', 'moderate', 'severe'] as Severity[]).map((level) => (
+      {showSeverity && (
+        <View style={styles.severity} accessibilityLabel={`Intensity for ${area.label}`}>
+          {SEVERITY_LEVELS.map((level, i) => (
             <Pressable
               key={level}
-              style={[
-                styles.severityDot,
-                { backgroundColor: getSeverityColor(level) },
-                severity !== level && styles.severityDotInactive,
-              ]}
+              hitSlop={8}
               onPress={() => onSeverityChange(level)}
-            />
+              accessibilityRole="button"
+              accessibilityLabel={level}
+            >
+              <View style={[styles.sevDot, i <= activeLevel ? styles.sevDotOn : styles.sevDotOff]} />
+            </Pressable>
           ))}
         </View>
       )}
-    </Animated.View>
+    </View>
   );
 }
 
@@ -154,28 +133,25 @@ export default function PainAssessmentScreen() {
   };
 
   return (
-    <OnboardingLayout
-      currentStep={3}
-      totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}
-      ambientColor="purple"
-    >
+    <OnboardingLayout currentStep={3} totalSteps={ACTIVE_ONBOARDING_TOTAL_STEPS}>
       <View style={styles.container}>
         <HeadlineText delay={0}>
           What usually bothers you during screen-heavy work?
         </HeadlineText>
         <SubheadText delay={100}>
-          Pick what needs relief most often. You can change this later.
+          Pick what needs relief most often — dots set intensity. You can change this later.
         </SubheadText>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.areaGrid}
+          contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
         >
-          {PAIN_AREAS.map((area) => (
-            <PainAreaCard
+          {PAIN_AREAS.map((area, i) => (
+            <PainRow
               key={area.id}
               area={area}
+              first={i === 0}
               isSelected={selectedAreas.has(area.id)}
               severity={severity[area.id]}
               onToggle={() => toggleArea(area.id)}
@@ -184,17 +160,7 @@ export default function PainAssessmentScreen() {
           ))}
         </ScrollView>
 
-        <View style={styles.legend}>
-          <View style={styles.legendDot} />
-          <Text style={styles.legendText}>
-            Dots show intensity if you want to be more specific
-          </Text>
-        </View>
-
-        <PrimaryButton
-          title="Build My Starting Plan"
-          onPress={handleContinue}
-        />
+        <PrimaryButton title="Build my starting plan" onPress={handleContinue} />
         <SecondaryButton
           title="Nothing specific today"
           onPress={handleNoPain}
@@ -211,82 +177,62 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginTop: ZenSpacing.md,
+    marginTop: 16,
   },
-  areaGrid: {
+  list: {
+    paddingBottom: 8,
+  },
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingBottom: ZenSpacing.sm,
-  },
-  areaContainer: {
-    width: '48%',
-    marginBottom: ZenSpacing.sm,
-  },
-  areaCard: {
-    backgroundColor: ZenColors.background.card,
-    borderWidth: 1,
-    borderColor: ZenColors.border.subtle,
-    borderRadius: ZenRadius.lg,
-    padding: ZenSpacing.md,
     alignItems: 'center',
-    minHeight: 100,
-    justifyContent: 'center',
-    overflow: 'hidden',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
   },
-  areaCardSelected: {
-    borderColor: ZenColors.primary.main,
-    backgroundColor: ZenColors.background.cardHover,
+  divider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  areaCardGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-  },
-  areaIcon: {
-    fontSize: 32,
-    marginBottom: ZenSpacing.xs,
-  },
-  areaLabel: {
-    ...ZenTypography.body.medium,
-    color: ZenColors.text.primary,
-    textAlign: 'center',
-  },
-  areaLabelSelected: {
-    ...ZenTypography.label.medium,
-    color: ZenColors.text.primary,
-  },
-  severityContainer: {
+  rowMain: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: ZenSpacing.xs,
-    gap: ZenSpacing.xs,
+    alignItems: 'center',
+    flex: 1,
   },
-  severityDot: {
-    width: 12,
-    height: 12,
+  lead: {
+    width: 30,
+    justifyContent: 'center',
+  },
+  bar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FF2472',
+  },
+  label: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
+  },
+  labelOn: {
+    color: '#FFFFFF',
+  },
+  labelOff: {
+    color: 'rgba(255,255,255,0.3)',
+  },
+  severity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    paddingLeft: 12,
+  },
+  sevDot: {
+    width: 11,
+    height: 11,
     borderRadius: 6,
   },
-  severityDotInactive: {
-    opacity: 0.3,
+  sevDotOn: {
+    backgroundColor: '#FF2472',
   },
-  legend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: ZenSpacing.sm,
-    gap: ZenSpacing.xs,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: ZenColors.text.muted,
-  },
-  legendText: {
-    ...ZenTypography.body.small,
-    color: ZenColors.text.muted,
+  sevDotOff: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
 });

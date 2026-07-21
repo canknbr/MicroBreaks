@@ -1,27 +1,21 @@
 {
   "expo": {
-    "name": "MicroBreaks",
-    "slug": "MicroBreaks",
+    "name": "Unwind",
+    "slug": "unwind-desk-stretches",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "microbreaks",
+    "scheme": "unwind",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "owner": "cankanbur",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cankanbur.MicroBreaks",
+      "bundleIdentifier": "com.cankanbur.Unwind",
       "buildNumber": "1",
-      "associatedDomains": ["applinks:microbreaks.app"],
       "infoPlist": {
         "UIBackgroundModes": ["fetch", "remote-notification"],
-        "CFBundleAllowMixedLocalizations": true,
-        "NSSupportsLiveActivities": true,
-        "NSSupportsLiveActivitiesFrequentUpdates": true
-      },
-      "entitlements": {
-        "com.apple.security.application-groups": ["group.com.cankanbur.MicroBreaks"]
+        "CFBundleAllowMixedLocalizations": true
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -56,7 +50,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.cankanbur.MicroBreaks",
+      "package": "com.cankanbur.Unwind",
       "versionCode": 1,
       "permissions": [
         "com.android.vending.BILLING",
@@ -74,7 +68,7 @@
               "pathPrefix": "/"
             },
             {
-              "scheme": "microbreaks"
+              "scheme": "unwind"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -112,8 +106,6 @@
       "@react-native-firebase/auth",
       "@react-native-firebase/messaging",
       "expo-audio",
-      "@bacons/apple-targets",
-      "./plugins/with-app-intents/plugin.js",
       [
         "expo-build-properties",
         {

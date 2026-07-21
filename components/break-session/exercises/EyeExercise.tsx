@@ -1,6 +1,6 @@
 /**
- * Eye Exercise Animation
- * Follow-the-dot and focus exercises
+ * Eye Exercise Animation — editorial. A clean follow-the-dot inside a soft
+ * hairline field with a faint reference cross. No emoji.
  */
 
 import React, { useEffect } from 'react';
@@ -184,50 +184,26 @@ export default function EyeExercise({
     opacity: dotOpacity.value,
   }));
 
-  const getVisualGuide = () => {
-    switch (animation) {
-      case 'eye-rest':
-        return '😌';
-      case 'eye-focus-far':
-        return '🏔️';
-      case 'eye-focus-near':
-        return '📱';
-      case 'eye-move-figure8':
-        return '♾️';
-      case 'eye-palming':
-        return '🙌';
-      default:
-        return '👁️';
-    }
-  };
-
   const isResting = animation === 'eye-rest' || animation === 'eye-palming';
 
   return (
     <View style={styles.container}>
-      {/* Guide area */}
-      <View style={[styles.guideArea, { borderColor: `${color}30`, backgroundColor: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)' }]}>
-        {/* Dot to follow */}
-        <Animated.View style={[styles.dot, { backgroundColor: color }, dotStyle]}>
-          {isResting ? (
-            <Text style={styles.restEmoji}>{getVisualGuide()}</Text>
-          ) : null}
-        </Animated.View>
-
+      {/* Guide field */}
+      <View style={[styles.guideArea, { borderColor: 'rgba(255,255,255,0.1)' }]}>
         {/* Center cross for reference */}
         {!isResting && (
           <>
-            <View style={[styles.crossHorizontal, { backgroundColor: `${color}20` }]} />
-            <View style={[styles.crossVertical, { backgroundColor: `${color}20` }]} />
+            <View style={[styles.crossHorizontal, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+            <View style={[styles.crossVertical, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
           </>
         )}
+
+        {/* Dot to follow */}
+        <Animated.View style={[styles.dot, { backgroundColor: color, shadowColor: color }, dotStyle]} />
       </View>
 
       {/* Instruction */}
-      <View style={styles.instructionContainer}>
-        <Text style={styles.emoji}>{getVisualGuide()}</Text>
-        <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
-      </View>
+      <Text style={[styles.instruction, { color: theme.text.secondary }]}>{instruction}</Text>
     </View>
   );
 }
@@ -243,26 +219,18 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 125,
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   dot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
     elevation: 5,
-  },
-  restEmoji: {
-    fontSize: 24,
   },
   crossHorizontal: {
     position: 'absolute',
@@ -274,19 +242,12 @@ const styles = StyleSheet.create({
     width: 1,
     height: 200,
   },
-  instructionContainer: {
-    marginTop: 40,
-    alignItems: 'center',
-  },
-  emoji: {
-    fontSize: 32,
-    marginBottom: 12,
-  },
   instruction: {
+    marginTop: 40,
+    fontFamily: 'GeneralSans-Medium',
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     lineHeight: 26,
+    textAlign: 'center',
     paddingHorizontal: 20,
   },
 });

@@ -1,24 +1,16 @@
 /**
- * UpgradeGateCard
- *
- * Drop-in replacement for any paywalled surface. Renders a
- * tier-aware "Upgrade to <Tier>" card that taps through to the
- * paywall. Use it from `useTierFeature` blocked branches:
+ * UpgradeGateCard — editorial. Drop-in tier-aware upgrade prompt for any
+ * paywalled surface: a hairline band with a tier eyebrow, headline, body, and
+ * a white pill CTA. No card blur / gradient / icon bubble.
  *
  *   const gate = useTierFeature('weekly_recovery_story');
  *   if (!gate.hasFeature) {
  *     return <UpgradeGateCard requiredTier={gate.requiredTier} ... />;
  *   }
- *
- * Visual language mirrors other home/screen cards (border, blur in
- * dark mode) so the upgrade prompt doesn't feel like a foreign
- * dialog interrupting the flow.
  */
 
 import React, { memo } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -61,71 +53,29 @@ function UpgradeGateCard({
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          borderColor: theme.border.subtle,
-          backgroundColor: theme.isDark ? 'transparent' : theme.background.card,
-        },
-      ]}
+      style={[styles.card, { borderColor: theme.border.subtle }]}
       accessibilityLabel={`${resolvedTitle}. ${body}`}
       accessibilityRole="summary"
     >
-      {theme.isDark &&
-        (Platform.OS === 'ios' ? (
-          <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-        ) : (
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: 'rgba(25, 25, 35, 0.92)' },
-            ]}
-          />
-        ))}
-      <LinearGradient
-        colors={[
-          `${theme.accent.warning}22`,
-          'transparent',
-        ]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <View style={styles.row}>
-        <View
-          style={[
-            styles.iconBubble,
-            { backgroundColor: `${theme.accent.warning}24` },
-          ]}
-        >
-          <Ionicons name="lock-closed" size={20} color={theme.accent.warning} />
-        </View>
-        <View style={styles.body}>
-          <Text style={[styles.title, { color: theme.text.primary }]}>
-            {resolvedTitle}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-            {body}
-          </Text>
-        </View>
-      </View>
+      <Text style={[styles.eyebrow, { color: theme.accent.primary }]}>
+        {tierLabel.toUpperCase()}
+      </Text>
+      <Text style={[styles.title, { color: theme.text.primary }]}>
+        {resolvedTitle}
+      </Text>
+      <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
+        {body}
+      </Text>
 
       <Pressable
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel={resolvedCta}
         testID="upgrade-gate-cta"
-        style={({ pressed }) => [
-          styles.cta,
-          {
-            backgroundColor: theme.accent.warning,
-            opacity: pressed ? 0.86 : 1,
-          },
-        ]}
+        style={({ pressed }) => [styles.cta, { opacity: pressed ? 0.8 : 1 }]}
       >
-        <Text style={[styles.ctaText, { color: theme.text.inverse }]}>
-          {resolvedCta}
-        </Text>
-        <Ionicons name="arrow-forward" size={16} color={theme.text.inverse} />
+        <Text style={styles.ctaText}>{resolvedCta}</Text>
+        <Ionicons name="arrow-forward" size={16} color="#0B0A0D" />
       </Pressable>
     </View>
   );
@@ -135,47 +85,42 @@ export default memo(UpgradeGateCard);
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 20,
-    overflow: 'hidden',
-    gap: 18,
+    paddingVertical: 22,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  row: {
-    flexDirection: 'row',
-    gap: 14,
-    alignItems: 'center',
-  },
-  iconBubble: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-    gap: 4,
+  eyebrow: {
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 11,
+    letterSpacing: 1.8,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 20,
   },
   cta: {
+    alignSelf: 'flex-start',
     minHeight: 48,
-    borderRadius: 14,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 22,
   },
   ctaText: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 15,
+    color: '#0B0A0D',
   },
 });

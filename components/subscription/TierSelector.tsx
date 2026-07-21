@@ -30,78 +30,51 @@ function TierSelector({ selected, onSelect, recommended }: TierSelectorProps) {
 
   return (
     <View
-      style={[
-        styles.row,
-        {
-          backgroundColor: theme.isDark
-            ? 'rgba(255, 255, 255, 0.04)'
-            : theme.background.card,
-          borderColor: theme.border.subtle,
-        },
-      ]}
+      style={styles.list}
       accessibilityRole="tablist"
       accessibilityLabel="Choose a subscription tier"
     >
-      {PURCHASABLE_TIERS.map((tier) => {
+      {PURCHASABLE_TIERS.map((tier, i) => {
         const isSelected = tier === selected;
         const isRecommended = tier === recommended;
         return (
           <Pressable
             key={tier}
             onPress={() => onSelect(tier)}
-            style={[
-              styles.tab,
-              isSelected && {
-                backgroundColor: theme.isDark
-                  ? 'rgba(255, 209, 102, 0.16)'
-                  : 'rgba(255, 149, 0, 0.10)',
-                borderColor: theme.accent.warning,
-              },
-              !isSelected && { borderColor: 'transparent' },
-            ]}
+            style={[styles.row, i > 0 && styles.divider]}
             accessibilityRole="tab"
             accessibilityState={{ selected: isSelected }}
             accessibilityLabel={`${TIER_LABELS[tier]} tier. ${TIER_TAGLINES[tier]}`}
             testID={`tier-tab-${tier}`}
           >
-            <View style={styles.labelRow}>
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    color: isSelected
-                      ? theme.accent.warning
-                      : theme.text.primary,
-                  },
-                ]}
-              >
-                {TIER_LABELS[tier]}
-              </Text>
-              {isRecommended && (
-                <View
-                  style={[
-                    styles.recommendBadge,
-                    { backgroundColor: theme.accent.warning },
-                  ]}
-                  accessibilityLabel="Recommended"
-                >
-                  <Text
-                    style={[
-                      styles.recommendText,
-                      { color: theme.text.inverse },
-                    ]}
-                  >
-                    ★
-                  </Text>
-                </View>
-              )}
+            <View style={styles.lead}>
+              {isSelected ? (
+                <View style={[styles.bar, { backgroundColor: theme.accent.primary }]} />
+              ) : null}
             </View>
-            <Text
-              style={[styles.tagline, { color: theme.text.muted }]}
-              numberOfLines={1}
-            >
-              {TIER_TAGLINES[tier]}
-            </Text>
+            <View style={styles.body}>
+              <View style={styles.labelRow}>
+                <Text
+                  style={[
+                    styles.label,
+                    { color: isSelected ? theme.text.primary : 'rgba(255,255,255,0.34)' },
+                  ]}
+                >
+                  {TIER_LABELS[tier]}
+                </Text>
+                {isRecommended && (
+                  <Text style={[styles.recommend, { color: theme.accent.primary }]}>
+                    RECOMMENDED
+                  </Text>
+                )}
+              </View>
+              <Text
+                style={[styles.tagline, { color: theme.text.muted }]}
+                numberOfLines={1}
+              >
+                {TIER_TAGLINES[tier]}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -112,47 +85,48 @@ function TierSelector({ selected, onSelect, recommended }: TierSelectorProps) {
 export default memo(TierSelector);
 
 const styles = StyleSheet.create({
+  list: {
+    marginBottom: 20,
+  },
   row: {
     flexDirection: 'row',
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 4,
-    gap: 4,
-    marginBottom: 16,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 14,
-    borderWidth: 1,
     alignItems: 'center',
-    gap: 4,
+    paddingVertical: 14,
+  },
+  divider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  lead: {
+    width: 30,
+    justifyContent: 'center',
+  },
+  bar: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+  },
+  body: {
+    flex: 1,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'GeneralSans-Bold',
+    fontSize: 22,
+    letterSpacing: -0.5,
   },
-  recommendBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recommendText: {
+  recommend: {
+    fontFamily: 'GeneralSans-Bold',
     fontSize: 10,
-    fontWeight: '900',
-    lineHeight: 12,
+    letterSpacing: 1.2,
   },
   tagline: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontFamily: 'GeneralSans-Regular',
+    fontSize: 13,
+    marginTop: 3,
   },
 });

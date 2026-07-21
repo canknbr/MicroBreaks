@@ -251,6 +251,13 @@ function main() {
 
   for (const entry of CURATED) {
     const exercise = byId.get(entry.id);
+
+    // MicroBreaks is a desk app — only surface movements a seated or standing
+    // worker can do without getting on the floor. Floor/lying/kneeling/plank
+    // moves are dropped from the generated catalog entirely.
+    const position = classifyPosition(entry, exercise);
+    if (position === 'floor') continue;
+
     const gifSource = path.join(datasetDir, exercise.gif_url);
     const thumbSource = path.join(datasetDir, exercise.image);
     if (!fs.existsSync(gifSource)) {
@@ -281,7 +288,7 @@ function main() {
       target: exercise.target,
       secondaryMuscles: exercise.secondary_muscles ?? [],
       kind: entry.kind,
-      position: classifyPosition(entry, exercise),
+      position,
       difficulty: entry.difficulty,
       steps: { en: stepsEn, tr: stepsTr },
     });
