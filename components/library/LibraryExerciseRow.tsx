@@ -1,6 +1,6 @@
 /**
  * Library Exercise Row — editorial. A flat hairline list row: GIF thumbnail
- * (real movement art on a white plate), localized name, zone/duration/
+ * (drawn move on a dark plate), localized name, zone/duration/
  * difficulty meta, favorite + chevron. No card chrome / emoji fallback.
  */
 
@@ -84,11 +84,11 @@ function LibraryExerciseRowComponent({
         { borderBottomColor: theme.border.subtle, opacity: pressed ? 0.6 : 1 },
       ]}
     >
-      {/* Thumbnail — white plate so the dataset art blends in dark mode */}
+      {/* Thumbnail — transparent drawn pose on a dark plate */}
       <View style={styles.thumbWrap}>
         {media ? (
           <Image
-            source={media.thumb}
+            source={media.still}
             style={styles.thumb}
             contentFit="cover"
             accessibilityIgnoresInvertColors
@@ -151,7 +151,9 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F4EF',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

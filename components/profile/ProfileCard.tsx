@@ -50,7 +50,7 @@ export function ProfileCard({
       >
         <View style={[styles.avatar, { borderColor: levelColors[0] }]}>
           <Text style={[styles.avatarText, { color: theme.text.primary }]}>
-            {profile.avatar || profile.name.charAt(0).toUpperCase()}
+            {profile.name.charAt(0).toUpperCase()}
           </Text>
         </View>
 

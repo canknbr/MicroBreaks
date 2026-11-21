@@ -3,7 +3,7 @@ import { View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
-import WheelSelect from './components/WheelSelect';
+import OptionCard from './components/OptionCard';
 import { HeadlineText, SubheadText } from './components/AnimatedText';
 import {
   ACTIVE_ONBOARDING_TOTAL_STEPS,
@@ -64,39 +64,45 @@ export default function WorkRoleScreen() {
       <View style={styles.container}>
         <HeadlineText delay={0}>Set your work context</HeadlineText>
         <SubheadText delay={100}>
-          Spin each dial to what fits your desk day — we tune the recommendations to it.
+          Pick what fits your desk day — we tune the recommendations to it.
         </SubheadText>
 
         <View style={styles.fields}>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>ROLE</Text>
-            <WheelSelect
-              options={roleOptions}
-              value={selectedRole}
-              onChange={setSelectedRole}
-              itemHeight={44}
-              visibleCount={3}
-            />
+            {roleOptions.map((option) => (
+              <OptionCard
+                key={option.id}
+                variant="compact"
+                title={option.label}
+                selected={selectedRole === option.id}
+                onPress={() => setSelectedRole(option.id)}
+              />
+            ))}
           </View>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>DAILY SCREEN TIME</Text>
-            <WheelSelect
-              options={screenOptions}
-              value={selectedScreenBandId}
-              onChange={handleScreenChange}
-              itemHeight={44}
-              visibleCount={3}
-            />
+            {screenOptions.map((option) => (
+              <OptionCard
+                key={option.id}
+                variant="compact"
+                title={option.label}
+                selected={selectedScreenBandId === option.id}
+                onPress={() => handleScreenChange(option.id)}
+              />
+            ))}
           </View>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>WORK PATTERN</Text>
-            <WheelSelect
-              options={patternOptions}
-              value={selectedPattern}
-              onChange={setSelectedPattern}
-              itemHeight={44}
-              visibleCount={3}
-            />
+            {patternOptions.map((option) => (
+              <OptionCard
+                key={option.id}
+                variant="compact"
+                title={option.label}
+                selected={selectedPattern === option.id}
+                onPress={() => setSelectedPattern(option.id)}
+              />
+            ))}
           </View>
         </View>
 
@@ -111,9 +117,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fields: {
-    flex: 1,
-    justifyContent: 'space-around',
-    marginVertical: 4,
+    gap: 22,
+    marginTop: 8,
+    marginBottom: 24,
   },
   field: {},
   fieldLabel: {

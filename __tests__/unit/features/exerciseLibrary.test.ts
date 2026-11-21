@@ -46,26 +46,19 @@ const VALID_BODY_PARTS = [
   'waist',
 ];
 const VALID_KINDS = ['stretch', 'mobility', 'strength', 'cardio'];
-const VALID_POSITIONS = ['desk', 'standing', 'floor'];
+const VALID_POSITIONS = ['desk', 'standing'];
 
 describe('exercise library — generated data integrity', () => {
-  it('contains a substantial curated set', () => {
-    // Desk-app curation: floor/lying/kneeling moves are excluded by the
-    // generator, so the catalog is intentionally standing/seated only.
-    expect(LIBRARY_EXERCISES.length).toBeGreaterThanOrEqual(60);
+  it('contains a substantial desk-move set', () => {
+    // Every move is drawn by scripts/moves/ and doable seated or standing at a desk.
+    expect(LIBRARY_EXERCISES.length).toBeGreaterThanOrEqual(40);
   });
 
-  it('excludes floor exercises — every move is standing or seated', () => {
-    for (const record of LIBRARY_EXERCISES) {
-      expect(record.position).not.toBe('floor');
-    }
-  });
-
-  it('has unique, namespaced ids matching their dataset ids', () => {
+  it('has unique, namespaced ids matching their media keys', () => {
     const ids = new Set<string>();
     for (const record of LIBRARY_EXERCISES) {
-      expect(record.id).toBe(`lib-${record.datasetId}`);
-      expect(record.datasetId).toMatch(/^\d{4}$/);
+      expect(record.id).toBe(`lib-${record.mediaKey}`);
+      expect(record.mediaKey).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
       expect(ids.has(record.id)).toBe(false);
       ids.add(record.id);
     }
@@ -94,15 +87,15 @@ describe('exercise library — generated data integrity', () => {
   });
 
   it('has media registered for every record and no orphan media', () => {
-    const datasetIds = new Set(LIBRARY_EXERCISES.map((record) => record.datasetId));
+    const mediaKeys = new Set(LIBRARY_EXERCISES.map((record) => record.mediaKey));
     for (const record of LIBRARY_EXERCISES) {
-      const media = LIBRARY_EXERCISE_MEDIA[record.datasetId];
+      const media = LIBRARY_EXERCISE_MEDIA[record.mediaKey];
       expect(media).toBeDefined();
-      expect(media.gif).toBeDefined();
-      expect(media.thumb).toBeDefined();
+      expect(media.animation).toBeDefined();
+      expect(media.still).toBeDefined();
     }
     for (const key of Object.keys(LIBRARY_EXERCISE_MEDIA)) {
-      expect(datasetIds.has(key)).toBe(true);
+      expect(mediaKeys.has(key)).toBe(true);
     }
   });
 
@@ -146,11 +139,11 @@ describe('exercise library — catalog', () => {
   });
 
   it('searches EN and TR names case-insensitively (incl. Turkish İ/i)', () => {
-    const englishHits = filterLibraryExercises({ query: 'WALL PUSH' });
-    expect(englishHits.some((record) => record.id === 'lib-0659')).toBe(true);
+    const englishHits = filterLibraryExercises({ query: 'DESK PUSH' });
+    expect(englishHits.some((record) => record.id === 'lib-desk-push-up')).toBe(true);
 
     const turkishHits = filterLibraryExercises({ query: 'BİLEK' });
-    expect(turkishHits.some((record) => record.id === 'lib-1428')).toBe(true);
+    expect(turkishHits.some((record) => record.id === 'lib-wrist-circles')).toBe(true);
 
     const muscleHits = filterLibraryExercises({ query: 'triceps' });
     expect(muscleHits.length).toBeGreaterThan(0);
@@ -161,8 +154,8 @@ describe('exercise library — catalog', () => {
     const sitHits = filterLibraryExercises({ query: 'SIT' });
     expect(sitHits.some((record) => record.name.en.toLowerCase().includes('sit'))).toBe(true);
 
-    const inclineHits = filterLibraryExercises({ query: 'INCLINE' });
-    expect(inclineHits.some((record) => record.id === 'lib-0493')).toBe(true);
+    const inclineHits = filterLibraryExercises({ query: 'WRIST CIRCLES' });
+    expect(inclineHits.some((record) => record.id === 'lib-wrist-circles')).toBe(true);
 
     // Dotless Turkish query still matches Turkish names.
     const dotlessHits = filterLibraryExercises({ query: 'AYAKTA' });
@@ -189,7 +182,7 @@ describe('exercise library — catalog', () => {
   });
 
   it('localizes names, steps, and muscle labels with safe fallbacks', () => {
-    const record = getLibraryExerciseRecord('lib-1403');
+    const record = getLibraryExerciseRecord('lib-neck-side-tilt');
     expect(record).toBeDefined();
     if (!record) return;
     expect(localizedName(record, 'tr')).toBe(record.name.tr);
@@ -237,7 +230,7 @@ describe('exercise library — session conversion', () => {
   });
 
   it('localizes session copy and caches per id+locale', () => {
-    const record = getLibraryExerciseRecord('lib-1403');
+    const record = getLibraryExerciseRecord('lib-neck-side-tilt');
     expect(record).toBeDefined();
     if (!record) return;
 
@@ -251,7 +244,7 @@ describe('exercise library — session conversion', () => {
   });
 
   it('resolves through the data-layer bridge', () => {
-    const viaBridge = getExerciseById('lib-1403', 'tr');
+    const viaBridge = getExerciseById('lib-neck-side-tilt', 'tr');
     expect(viaBridge).toBeDefined();
     expect(viaBridge?.media).toBeDefined();
     expect(getExerciseById('lib-9999')).toBeUndefined();
@@ -261,7 +254,7 @@ describe('exercise library — session conversion', () => {
   });
 
   it('is accepted by break-session param resolution', () => {
-    expect(resolveBreakSessionBreakId('lib-1403')).toBe('lib-1403');
+    expect(resolveBreakSessionBreakId('lib-neck-side-tilt')).toBe('lib-neck-side-tilt');
     expect(resolveBreakSessionBreakId('lib-0000')).toBe('deep-breath');
   });
 });

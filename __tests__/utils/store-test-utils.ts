@@ -114,7 +114,6 @@ export const initialSettingsState = {
     accentColor: '#06FFA5',
     soundEnabled: true,
     hapticsEnabled: true,
-    voiceGuidanceEnabled: true,
     notificationsEnabled: true,
     breakReminders: true,
     reminderIntervalMinutes: 25,

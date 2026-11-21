@@ -24,7 +24,6 @@ const PLAN_SIZE = 3;
 const POSITION_RANK: Record<LibraryExerciseRecord['position'], number> = {
   desk: 0,
   standing: 1,
-  floor: 2,
 };
 
 function sortedZoneRecords(zoneId: LibraryZoneId): LibraryExerciseRecord[] {

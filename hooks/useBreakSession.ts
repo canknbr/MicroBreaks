@@ -9,7 +9,6 @@ import { Exercise, ExerciseStep, getExerciseById } from '@/data/exercises';
 import { localizeExercise } from '@/data/exerciseLocalization';
 import { toLibraryLocale } from '@/features/exercise-library/catalog';
 import { useTranslation } from '@/i18n/hooks';
-import { useVoiceGuidance } from './useVoiceGuidance';
 import {
   PREPARATION_DURATION,
   INSTRUCTION_DURATION,
@@ -38,7 +37,6 @@ export interface SessionState {
   timeRemaining: number;
   totalTimeElapsed: number;
   isPaused: boolean;
-  isVoiceEnabled: boolean;
   feedbackRating: FeedbackRating | null;
   feedbackReliefScore: ReliefScore | null;
 }
@@ -49,7 +47,6 @@ export interface SessionActions {
   resume: () => void;
   skipStep: () => void;
   endSession: () => void;
-  toggleVoice: () => void;
   submitFeedback: (rating: FeedbackRating, reliefScore: ReliefScore) => void;
 }
 
@@ -71,19 +68,14 @@ interface UseBreakSessionReturn {
 
 export function useBreakSession(breakId: string): UseBreakSessionReturn {
   const { language } = useTranslation();
-  // Resolve the exercise first so voice guidance can speak in the language
-  // of the exercise's step text (library sessions are locale-built; the
-  // hand-authored library is English). Core exercises get locale-appropriate
-  // title/description so the header, completion screen, and saved history
-  // read in the UI language — their steps stay English to match en-US voice.
+  // Core exercises get locale-appropriate title/description so the header,
+  // completion screen, and saved history read in the UI language (library
+  // sessions are fully locale-built).
   const exercise = useMemo(() => {
     const locale = toLibraryLocale(language);
     const resolved = getExerciseById(breakId, locale);
     return resolved ? localizeExercise(resolved, locale) : null;
   }, [breakId, language]);
-  const { speak, stop: stopSpeech } = useVoiceGuidance({
-    language: exercise?.voiceLanguage ?? 'en-US',
-  });
 
   // Core state
   const [phase, setPhase] = useState<SessionPhase>('loading');
@@ -91,7 +83,6 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [totalTimeElapsed, setTotalTimeElapsed] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [feedbackRating, setFeedbackRating] = useState<FeedbackRating | null>(null);
   const [feedbackReliefScore, setFeedbackReliefScore] = useState<ReliefScore | null>(null);
 
@@ -141,15 +132,11 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     }
   }, []);
 
-  // Speak helper
-  const speakInstruction = useCallback(
-    (text: string) => {
-      if (isVoiceEnabled) {
-        speak(text);
-      }
-    },
-    [isVoiceEnabled, speak]
-  );
+  // Notification-style cue when a new step starts (replaces spoken guidance):
+  // a distinct haptic so the user can follow along without watching the screen.
+  const cueNextStep = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  }, []);
 
   // Move to next phase/step
   const moveToNextPhase = useCallback(() => {
@@ -163,7 +150,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         setPhase('instruction');
         setTimeRemaining(INSTRUCTION_DURATION);
         if (currentStep) {
-          speakInstruction(currentStep.voiceInstruction || currentStep.instruction);
+          cueNextStep();
         }
         isTransitioningRef.current = false;
         break;
@@ -186,7 +173,6 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
           // Exercise complete
           setPhase('completion');
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          speakInstruction('Great job! You completed the exercise.');
         }
         isTransitioningRef.current = false;
         break;
@@ -198,7 +184,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         setPhase('instruction');
         setTimeRemaining(INSTRUCTION_DURATION);
         if (nextStepData) {
-          speakInstruction(nextStepData.voiceInstruction || nextStepData.instruction);
+          cueNextStep();
         }
         isTransitioningRef.current = false;
         break;
@@ -210,7 +196,7 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
         isTransitioningRef.current = false;
         break;
     }
-  }, [phase, exercise, currentStep, currentStepIndex, clearTimer, speakInstruction]);
+  }, [phase, exercise, currentStep, currentStepIndex, clearTimer, cueNextStep]);
 
   // Keep a ref to the latest moveToNextPhase to avoid stale closure in setInterval
   const moveToNextPhaseRef = useRef(moveToNextPhase);
@@ -259,32 +245,28 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
       setPhase('preparation');
       setTimeRemaining(PREPARATION_DURATION);
       startTimeRef.current = Date.now();
-      speakInstruction(`Get ready for ${exercise.title}`);
     }
-  }, [exercise, phase, speakInstruction]);
+  }, [exercise, phase]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearTimer();
-      stopSpeech();
     };
-  }, [clearTimer, stopSpeech]);
+  }, [clearTimer]);
 
   // Actions
   const start = useCallback(() => {
     if (phase === 'loading' && exercise) {
       setPhase('preparation');
       setTimeRemaining(PREPARATION_DURATION);
-      speakInstruction(`Get ready for ${exercise.title}`);
     }
-  }, [phase, exercise, speakInstruction]);
+  }, [phase, exercise]);
 
   const pause = useCallback(() => {
     setIsPaused(true);
-    stopSpeech();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [stopSpeech]);
+  }, []);
 
   const resume = useCallback(() => {
     setIsPaused(false);
@@ -297,41 +279,23 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
 
     isTransitioningRef.current = true;
     clearTimer();
-    stopSpeech();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (currentStepIndex < exercise.steps.length - 1) {
-      const newStepIndex = currentStepIndex + 1;
-      const nextStepToPlay = exercise.steps[newStepIndex];
-      setCurrentStepIndex(newStepIndex);
+      setCurrentStepIndex(currentStepIndex + 1);
       setPhase('instruction');
       setTimeRemaining(INSTRUCTION_DURATION);
-      if (nextStepToPlay) {
-        speakInstruction(nextStepToPlay.voiceInstruction || nextStepToPlay.instruction);
-      }
     } else {
       setPhase('completion');
-      speakInstruction('Exercise complete!');
     }
     isTransitioningRef.current = false;
-  }, [exercise, phase, currentStepIndex, clearTimer, stopSpeech, speakInstruction]);
+  }, [exercise, phase, currentStepIndex, clearTimer]);
 
   const endSession = useCallback(() => {
     clearTimer();
-    stopSpeech();
     setPhase('completion');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  }, [clearTimer, stopSpeech]);
-
-  const toggleVoice = useCallback(() => {
-    setIsVoiceEnabled((prev) => {
-      if (prev) {
-        stopSpeech();
-      }
-      return !prev;
-    });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [stopSpeech]);
+  }, [clearTimer]);
 
   const submitFeedback = useCallback((rating: FeedbackRating, reliefScore: ReliefScore) => {
     setFeedbackRating(rating);
@@ -349,7 +313,6 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     timeRemaining,
     totalTimeElapsed,
     isPaused,
-    isVoiceEnabled,
     feedbackRating,
     feedbackReliefScore,
   };
@@ -360,7 +323,6 @@ export function useBreakSession(breakId: string): UseBreakSessionReturn {
     resume,
     skipStep,
     endSession,
-    toggleVoice,
     submitFeedback,
   };
 

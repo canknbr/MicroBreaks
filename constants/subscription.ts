@@ -26,18 +26,18 @@ export const FREE_EXERCISE_IDS = [
 
 /**
  * Always-free movement-library starter set — one gentle move per body zone
- * so free users can feel the GIF-guided experience before the paywall.
+ * so free users can feel the animated, drawn demos before the paywall.
  * Ids must exist in data/exerciseLibrary.generated.ts (unit-tested).
  */
 export const FREE_LIBRARY_EXERCISE_IDS = [
-  'lib-1403', // Neck side stretch
-  'lib-1428', // Wrist circles
-  'lib-1365', // Upper back stretch
-  'lib-0659', // Wall push-up
-  'lib-3533', // Bodyweight squat
-  'lib-1368', // Ankle circles
-  'lib-1364', // Standing pelvic tilt
-  'lib-3672', // Back and forth step
+  'lib-neck-side-tilt',
+  'lib-seated-cat-cow',
+  'lib-chest-opener',
+  'lib-wrist-circles',
+  'lib-seated-knee-lift',
+  'lib-chair-squat',
+  'lib-ankle-circles',
+  'lib-march-in-place',
 ] as const;
 
 /**

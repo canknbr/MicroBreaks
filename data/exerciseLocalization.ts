@@ -30,7 +30,6 @@ export const CORE_EXERCISE_TR: Record<string, LocalizedMeta> = {
   'shoulder-shrugs': { title: 'Omuz Silkme', description: 'Omuz gerginliğini bırak' },
   'wrist-circles': { title: 'Bilek Daireleri', description: 'Klavye yorgunluğuna iyi gelir' },
   'jaw-release': { title: 'Çene Gevşetme', description: 'Çenede biriken stresi bırak' },
-  'ear-massage': { title: 'Kulak Masajı', description: 'Enerji noktalarını uyar' },
   'hand-stretch': { title: 'El Esnetme', description: 'Fare kullanımına karşı rahatlama' },
 
   // Stretch
@@ -47,23 +46,16 @@ export const CORE_EXERCISE_TR: Record<string, LocalizedMeta> = {
   'spine-twist': { title: 'Omurga Dönüşü', description: 'Omurganı hareketlendir' },
 
   // Mindful
-  meditation: { title: 'Mini Meditasyon', description: 'Zihnini sakinleştir' },
-  'body-scan': { title: 'Vücut Taraması', description: 'Fiziksel gerginliği bırak' },
-  gratitude: { title: 'Şükran', description: 'Olumlu bir düşünce anı' },
+  meditation: { title: 'Odak Nefesi', description: 'Derin işe başlamadan önce zihnini topla' },
   'box-breathing': { title: 'Kutu Nefesi', description: 'Sakin odak için kutu nefes tekniği' },
-  'loving-kindness': { title: 'Sevgi ve Şefkat', description: 'Şefkati ve pozitifliği besle' },
-  'focus-meditation': { title: 'Odak Güçlendirme', description: '3 dakikada konsantrasyonu keskinleştir' },
-  '5-4-3-2-1-grounding': { title: '5-4-3-2-1 Topraklama', description: 'Duyusal farkındalık tekniği' },
-  'positive-affirmation': { title: 'Olumlu Telkin', description: 'Özgüveni ve modu yükselt' },
-  'tension-release-scan': { title: 'Gerginlik Taraması', description: 'Vücuttaki gerginliği bul ve bırak' },
+  'screen-detach': { title: 'Ekrandan Kopma', description: 'Gözler ve nefesle ekrandan bir adım uzaklaş' },
+  'tension-release-scan': { title: 'Masa Başı Gerginlik Taraması', description: 'Oturmanın biriktirdiği gerginliği bul ve bırak' },
 
   // Active
-  walk: { title: 'Kısa Yürüyüş', description: 'Harekete geç ve tazelen' },
+  walk: { title: 'Masadan Kalk', description: 'Sandalyeden kalk, kanı harekete geçir' },
   'desk-exercises': { title: 'Masa Başı Egzersizleri', description: 'Masada hafif egzersizler' },
   energizer: { title: 'Enerji Artırıcı', description: 'Enerjini yükselt' },
-  'stair-climb': { title: 'Merdiven Tırmanışı', description: 'Merdivenlerle harekete geç' },
-  'dancing-break': { title: 'Dans Molası', description: 'Hareket et ve keyfini çıkar' },
-  'balance-challenge': { title: 'Denge Mücadelesi', description: 'Odağı ve dengeyi geliştir' },
+  'balance-challenge': { title: 'Masada Denge', description: 'Bir elin masada, daha sağlam bilekler ve odak' },
 
   // Featured
   'afternoon-reset': {

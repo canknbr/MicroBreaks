@@ -35,7 +35,6 @@ describe('core exercise localization', () => {
     // Everything else — steps, timing, category — is untouched.
     expect(localized.steps).toBe(exercise.steps);
     expect(localized.totalDuration).toBe(exercise.totalDuration);
-    expect(localized.voiceLanguage).toBeUndefined();
   });
 
   it('returns a stable cached instance per exercise for tr', () => {

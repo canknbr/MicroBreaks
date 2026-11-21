@@ -22,7 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { PhotoBackdrop } from '@/components/ui/PhotoBackdrop';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -194,9 +193,6 @@ export function SplashScreen({
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient colors={['#000000', '#0C0B0F', '#0C0B0F']} style={StyleSheet.absoluteFill} />
       </View>
-
-      {/* Blurred + dimmed photo backdrop */}
-      <PhotoBackdrop source={require('../../assets/images/backdrops/bg.jpg')} opacity={0.72} blurRadius={11} />
 
       {/* Wordmark hero */}
       <View style={styles.textContainer}>

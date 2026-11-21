@@ -18,7 +18,6 @@ export interface AppSettings {
   // Audio & Haptics
   soundEnabled: boolean;
   hapticsEnabled: boolean;
-  voiceGuidanceEnabled: boolean;
 
   // Notifications
   notificationsEnabled: boolean;
@@ -59,7 +58,6 @@ interface SettingsState {
   updateSettings: (settings: Partial<AppSettings>) => void;
   toggleSound: () => void;
   toggleHaptics: () => void;
-  toggleVoiceGuidance: () => void;
   toggleNotifications: () => void;
   toggleBreakReminders: () => void;
   toggleStreakAlerts: () => void;
@@ -79,7 +77,6 @@ export const defaultAppSettings: AppSettings = {
   // Audio & Haptics
   soundEnabled: true,
   hapticsEnabled: true,
-  voiceGuidanceEnabled: true,
 
   // Notifications
   notificationsEnabled: true,
@@ -150,10 +147,6 @@ function sanitizePersistedSettingsState(state: unknown): Pick<
         typeof settings.hapticsEnabled === 'boolean'
           ? settings.hapticsEnabled
           : defaultAppSettings.hapticsEnabled,
-      voiceGuidanceEnabled:
-        typeof settings.voiceGuidanceEnabled === 'boolean'
-          ? settings.voiceGuidanceEnabled
-          : defaultAppSettings.voiceGuidanceEnabled,
       notificationsEnabled:
         typeof settings.notificationsEnabled === 'boolean'
           ? settings.notificationsEnabled
@@ -231,7 +224,6 @@ export const useThemeSetting = () => useSettingsStore((state) => state.settings.
 export const useAccentColor = () => useSettingsStore((state) => state.settings.accentColor);
 export const useSoundEnabled = () => useSettingsStore((state) => state.settings.soundEnabled);
 export const useHapticsEnabled = () => useSettingsStore((state) => state.settings.hapticsEnabled);
-export const useVoiceGuidanceEnabled = () => useSettingsStore((state) => state.settings.voiceGuidanceEnabled);
 export const useNotificationsEnabled = () => useSettingsStore((state) => state.settings.notificationsEnabled);
 export const useBreakReminders = () => useSettingsStore((state) => state.settings.breakReminders);
 export const useReminderInterval = () => useSettingsStore((state) => state.settings.reminderIntervalMinutes);
@@ -241,7 +233,6 @@ export const useSettingsActions = () => useSettingsStore(useShallow((state) => (
   updateSettings: state.updateSettings,
   toggleSound: state.toggleSound,
   toggleHaptics: state.toggleHaptics,
-  toggleVoiceGuidance: state.toggleVoiceGuidance,
   toggleNotifications: state.toggleNotifications,
   toggleBreakReminders: state.toggleBreakReminders,
   setReminderInterval: state.setReminderInterval,
@@ -273,14 +264,6 @@ export const useSettingsStore = create<SettingsState>()(
       toggleHaptics: () => {
         set((state) => ({
           settings: { ...state.settings, hapticsEnabled: !state.settings.hapticsEnabled },
-          settingsUpdatedAt: Date.now(),
-        }));
-        notifySettingsChange();
-      },
-
-      toggleVoiceGuidance: () => {
-        set((state) => ({
-          settings: { ...state.settings, voiceGuidanceEnabled: !state.settings.voiceGuidanceEnabled },
           settingsUpdatedAt: Date.now(),
         }));
         notifySettingsChange();

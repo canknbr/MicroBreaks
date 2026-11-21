@@ -19,7 +19,6 @@ export type SyncDataType = 'profile' | 'progress' | 'preferences' | 'achievement
 export const SYNCABLE_SETTINGS_KEYS = [
   'theme',
   'accentColor',
-  'voiceGuidanceEnabled',
   'quietHoursEnabled',
   'quietHoursStart',
   'quietHoursEnd',

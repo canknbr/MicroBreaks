@@ -22,8 +22,6 @@ interface BreakHeaderProps {
   timeRemaining: number;
   isPaused: boolean;
   onClose: () => void;
-  onToggleVoice: () => void;
-  isVoiceEnabled: boolean;
 }
 
 export default function BreakHeader({
@@ -32,8 +30,6 @@ export default function BreakHeader({
   timeRemaining,
   isPaused,
   onClose,
-  onToggleVoice,
-  isVoiceEnabled,
 }: BreakHeaderProps) {
   const pulseScale = useSharedValue(1);
 
@@ -66,11 +62,6 @@ export default function BreakHeader({
   const handleClose = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onClose();
-  };
-
-  const handleToggleVoice = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onToggleVoice();
   };
 
   return (
@@ -110,21 +101,8 @@ export default function BreakHeader({
         {isPaused && <Text style={styles.pausedText}>PAUSED</Text>}
       </Animated.View>
 
-      {/* Voice Toggle */}
-      <Pressable
-        style={styles.iconButton}
-        onPress={handleToggleVoice}
-        accessibilityRole="button"
-        accessibilityLabel={isVoiceEnabled ? 'Disable voice guidance' : 'Enable voice guidance'}
-        accessibilityState={{ selected: isVoiceEnabled }}
-        hitSlop={8}
-      >
-        <Ionicons
-          name={isVoiceEnabled ? 'volume-high' : 'volume-mute'}
-          size={22}
-          color={isVoiceEnabled ? color : 'rgba(255, 255, 255, 0.4)'}
-        />
-      </Pressable>
+      {/* Spacer keeps the title centred against the close button */}
+      <View style={styles.iconButton} />
     </View>
   );
 }

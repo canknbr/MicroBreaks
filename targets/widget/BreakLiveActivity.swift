@@ -70,7 +70,7 @@ private struct BreakLockScreenView: View {
   var body: some View {
     let accent = accentColor(for: context.attributes)
     HStack(spacing: 14) {
-      Text(context.attributes.icon)
+      Image(systemName: "figure.mind.and.body")
         .font(.system(size: 32))
         .frame(width: 48, height: 48)
         .background(
@@ -119,7 +119,7 @@ private struct DynamicIslandCompactLeading: View {
         .font(.system(size: 12, weight: .semibold))
         .lineLimit(1)
     } icon: {
-      Text(context.attributes.icon)
+      Image(systemName: "figure.mind.and.body")
         .font(.system(size: 14))
     }
   }
@@ -147,7 +147,7 @@ private struct DynamicIslandMinimal: View {
         .trim(from: 0, to: context.state.progress.clamped01)
         .stroke(accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
         .rotationEffect(.degrees(-90))
-      Text(context.attributes.icon)
+      Image(systemName: "figure.mind.and.body")
         .font(.system(size: 10))
     }
   }
@@ -168,7 +168,7 @@ private struct DynamicIslandExpandedCenter: View {
           .stroke(accent, style: StrokeStyle(lineWidth: 5, lineCap: .round))
           .rotationEffect(.degrees(-90))
           .frame(width: 50, height: 50)
-        Text(context.attributes.icon)
+        Image(systemName: "figure.mind.and.body")
           .font(.system(size: 18))
       }
       VStack(alignment: .leading, spacing: 2) {

@@ -21,7 +21,8 @@
     "test:functions": "npm --prefix functions test",
     "test:all": "npm test -- --watchman=false && npm run test:functions",
     "prepare": "husky",
-    "generate:exercises": "node ./scripts/generate-exercise-library.mjs"
+    "generate:moves": "node ./scripts/generate-move-library.mjs",
+    "check:moves": "node ./scripts/moves/check.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -62,7 +63,6 @@
     "expo-notifications": "~0.32.15",
     "expo-router": "~6.0.14",
     "expo-sharing": "~14.0.8",
-    "expo-speech": "~14.0.8",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "expo-store-review": "~9.0.9",
@@ -102,6 +102,7 @@
     "jest-junit": "^16.0.0",
     "lint-staged": "^15.2.10",
     "react-test-renderer": "19.1.0",
+    "sharp": "^0.35.5",
     "typescript": "~5.9.2"
   },
   "private": true

@@ -21,7 +21,7 @@ private struct CircularLockView: View {
   var body: some View {
     let progress = Double(max(0, min(100, entry.snapshot.today.progressPct))) / 100.0
     Gauge(value: progress) {
-      Text("🔥")
+      Image(systemName: "flame.fill")
     } currentValueLabel: {
       Text("\(entry.snapshot.streak.current)")
         .font(.system(size: 14, weight: .heavy, design: .rounded))
@@ -39,7 +39,7 @@ private struct RectangularLockView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 4) {
-        Text("🔥")
+        Image(systemName: "flame.fill")
         Text("\(entry.snapshot.streak.current)-day streak")
           .font(.system(size: 12, weight: .semibold, design: .rounded))
       }
@@ -66,9 +66,9 @@ private struct InlineLockView: View {
 
   var body: some View {
     if entry.snapshot.streak.atRisk {
-      Text("🔥 \(entry.snapshot.streak.current)-day streak at risk")
+      Text("\(Image(systemName: "flame.fill")) \(entry.snapshot.streak.current)-day streak at risk")
     } else if entry.snapshot.streak.current > 0 {
-      Text("🔥 \(entry.snapshot.streak.current)-day streak")
+      Text("\(Image(systemName: "flame.fill")) \(entry.snapshot.streak.current)-day streak")
     } else if let next = entry.snapshot.nextRecommended {
       Text("Next break: \(next.title)")
     } else {

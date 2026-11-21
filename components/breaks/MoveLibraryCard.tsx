@@ -18,7 +18,7 @@ import {
 } from '@/features/exercise-library/catalog';
 
 /** Stable, always-free sample thumbnails for the collage. */
-const PREVIEW_IDS = ['lib-1403', 'lib-3533', 'lib-1365'] as const;
+const PREVIEW_IDS = ['lib-neck-side-tilt', 'lib-seated-cat-cow', 'lib-chair-squat'] as const;
 
 interface MoveLibraryCardProps {
   title: string;
@@ -79,7 +79,7 @@ export function MoveLibraryCard({
             ]}
           >
             <Image
-              source={media.thumb}
+              source={media.still}
               style={styles.collageImage}
               contentFit="cover"
               accessibilityIgnoresInvertColors
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'rgba(6, 255, 165, 0.35)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F4EF',
     overflow: 'hidden',
   },
   collageImage: {

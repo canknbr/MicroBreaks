@@ -7,12 +7,10 @@ export function PreferencesSection({
   themeLabel,
   soundEnabled,
   hapticsEnabled,
-  voiceGuidanceEnabled,
   appleHealthMirrorEnabled,
   onPressTheme,
   onToggleSound,
   onToggleHaptics,
-  onToggleVoiceGuidance,
   onToggleAppleHealth,
   onPressStreakBuddies,
   theme,
@@ -20,12 +18,10 @@ export function PreferencesSection({
   themeLabel: string;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
-  voiceGuidanceEnabled: boolean;
   appleHealthMirrorEnabled: boolean;
   onPressTheme: () => void;
   onToggleSound: () => void;
   onToggleHaptics: () => void;
-  onToggleVoiceGuidance: () => void;
   onToggleAppleHealth: () => void;
   onPressStreakBuddies: () => void;
   theme: ThemeColors;
@@ -62,16 +58,6 @@ export function PreferencesSection({
         index={2}
         theme={theme}
       />
-      <SettingItem
-        icon="mic"
-        label="Voice Guidance"
-        type="toggle"
-        isEnabled={voiceGuidanceEnabled}
-        onToggle={onToggleVoiceGuidance}
-        delay={500}
-        index={3}
-        theme={theme}
-      />
       {Platform.OS === 'ios' && (
         <SettingItem
           icon="heart"
@@ -80,7 +66,7 @@ export function PreferencesSection({
           isEnabled={appleHealthMirrorEnabled}
           onToggle={onToggleAppleHealth}
           delay={500}
-          index={4}
+          index={3}
           theme={theme}
         />
       )}
@@ -90,7 +76,7 @@ export function PreferencesSection({
         type="arrow"
         onPress={onPressStreakBuddies}
         delay={500}
-        index={5}
+        index={4}
         theme={theme}
       />
     </SettingsGroup>

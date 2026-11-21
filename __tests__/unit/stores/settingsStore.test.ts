@@ -12,7 +12,6 @@ import {
   useThemeSetting,
   useSoundEnabled,
   useHapticsEnabled,
-  useVoiceGuidanceEnabled,
   useNotificationsEnabled,
   useBreakReminders,
   useReminderInterval,
@@ -39,7 +38,6 @@ describe('SettingsStore', () => {
 
       expect(settings.soundEnabled).toBe(true);
       expect(settings.hapticsEnabled).toBe(true);
-      expect(settings.voiceGuidanceEnabled).toBe(true);
     });
 
     it('should have correct default notification settings', () => {
@@ -135,19 +133,6 @@ describe('SettingsStore', () => {
       expect(useSettingsStore.getState().settings.hapticsEnabled).toBe(true);
     });
 
-    it('should toggle voice guidance on and off', () => {
-      expect(useSettingsStore.getState().settings.voiceGuidanceEnabled).toBe(true);
-
-      act(() => {
-        useSettingsStore.getState().toggleVoiceGuidance();
-      });
-      expect(useSettingsStore.getState().settings.voiceGuidanceEnabled).toBe(false);
-
-      act(() => {
-        useSettingsStore.getState().toggleVoiceGuidance();
-      });
-      expect(useSettingsStore.getState().settings.voiceGuidanceEnabled).toBe(true);
-    });
 
     it('should toggle notifications on and off', () => {
       expect(useSettingsStore.getState().settings.notificationsEnabled).toBe(true);
@@ -265,7 +250,6 @@ describe('SettingsStore', () => {
           theme: 'light',
           soundEnabled: false,
           hapticsEnabled: false,
-          voiceGuidanceEnabled: false,
           notificationsEnabled: false,
           reminderIntervalMinutes: 60,
           quietHoursStart: 20,
@@ -283,7 +267,6 @@ describe('SettingsStore', () => {
       expect(settings.theme).toBe('dark');
       expect(settings.soundEnabled).toBe(true);
       expect(settings.hapticsEnabled).toBe(true);
-      expect(settings.voiceGuidanceEnabled).toBe(true);
       expect(settings.notificationsEnabled).toBe(true);
       expect(settings.reminderIntervalMinutes).toBe(25);
       expect(settings.quietHoursStart).toBe(22);
@@ -325,10 +308,6 @@ describe('SettingsStore', () => {
       expect(result.current).toBe(true);
     });
 
-    it('should return voice guidance setting via useVoiceGuidanceEnabled hook', () => {
-      const { result } = renderHook(() => useVoiceGuidanceEnabled());
-      expect(result.current).toBe(true);
-    });
 
     it('should return notifications setting via useNotificationsEnabled hook', () => {
       const { result } = renderHook(() => useNotificationsEnabled());
@@ -437,7 +416,6 @@ describe('SettingsStore', () => {
       act(() => {
         useSettingsStore.getState().toggleSound();
         useSettingsStore.getState().toggleHaptics();
-        useSettingsStore.getState().toggleVoiceGuidance();
         useSettingsStore.getState().toggleNotifications();
         useSettingsStore.getState().toggleBreakReminders();
       });
@@ -445,7 +423,6 @@ describe('SettingsStore', () => {
       const { settings } = useSettingsStore.getState();
       expect(settings.soundEnabled).toBe(false);
       expect(settings.hapticsEnabled).toBe(false);
-      expect(settings.voiceGuidanceEnabled).toBe(false);
       expect(settings.notificationsEnabled).toBe(false);
       expect(settings.breakReminders).toBe(false);
     });
@@ -457,7 +434,6 @@ describe('SettingsStore', () => {
           accentColor: '#FF0000',
           soundEnabled: false,
           hapticsEnabled: false,
-          voiceGuidanceEnabled: false,
           notificationsEnabled: false,
           breakReminders: false,
           reminderIntervalMinutes: 60,
@@ -601,7 +577,6 @@ describe('SettingsStore', () => {
           accentColor: '',
           soundEnabled: 'yes',
           hapticsEnabled: false,
-          voiceGuidanceEnabled: 'sometimes',
           notificationsEnabled: false,
           breakReminders: 'later',
           reminderIntervalMinutes: 999,
@@ -625,7 +600,6 @@ describe('SettingsStore', () => {
       expect(snapshot.settings.accentColor).toBe(defaultAppSettings.accentColor);
       expect(snapshot.settings.soundEnabled).toBe(defaultAppSettings.soundEnabled);
       expect(snapshot.settings.hapticsEnabled).toBe(false);
-      expect(snapshot.settings.voiceGuidanceEnabled).toBe(defaultAppSettings.voiceGuidanceEnabled);
       expect(snapshot.settings.notificationsEnabled).toBe(false);
       expect(snapshot.settings.breakReminders).toBe(defaultAppSettings.breakReminders);
       expect(snapshot.settings.reminderIntervalMinutes).toBe(120);

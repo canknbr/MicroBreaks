@@ -446,12 +446,10 @@ export default function ProfileScreen() {
             themeLabel={getThemeLabel(settingsStore.settings.theme)}
             soundEnabled={settingsStore.settings.soundEnabled}
             hapticsEnabled={settingsStore.settings.hapticsEnabled}
-            voiceGuidanceEnabled={settingsStore.settings.voiceGuidanceEnabled}
             appleHealthMirrorEnabled={settingsStore.settings.appleHealthMirrorEnabled}
             onPressTheme={() => setShowThemePicker(true)}
             onToggleSound={() => settingsStore.toggleSound()}
             onToggleHaptics={() => settingsStore.toggleHaptics()}
-            onToggleVoiceGuidance={() => settingsStore.toggleVoiceGuidance()}
             onToggleAppleHealth={handleAppleHealthToggle}
             onPressStreakBuddies={() => router.push('/buddies' as any)}
             theme={theme}

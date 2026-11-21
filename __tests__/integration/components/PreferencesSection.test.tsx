@@ -6,24 +6,20 @@ function Harness({
   themeLabel = 'System',
   soundEnabled = false,
   hapticsEnabled = false,
-  voiceGuidanceEnabled = false,
   appleHealthMirrorEnabled = false,
   onPressTheme = jest.fn(),
   onToggleSound = jest.fn(),
   onToggleHaptics = jest.fn(),
-  onToggleVoiceGuidance = jest.fn(),
   onToggleAppleHealth = jest.fn(),
   onPressStreakBuddies = jest.fn(),
 }: {
   themeLabel?: string;
   soundEnabled?: boolean;
   hapticsEnabled?: boolean;
-  voiceGuidanceEnabled?: boolean;
   appleHealthMirrorEnabled?: boolean;
   onPressTheme?: () => void;
   onToggleSound?: () => void;
   onToggleHaptics?: () => void;
-  onToggleVoiceGuidance?: () => void;
   onToggleAppleHealth?: () => void;
   onPressStreakBuddies?: () => void;
 }) {
@@ -33,12 +29,10 @@ function Harness({
       themeLabel={themeLabel}
       soundEnabled={soundEnabled}
       hapticsEnabled={hapticsEnabled}
-      voiceGuidanceEnabled={voiceGuidanceEnabled}
       appleHealthMirrorEnabled={appleHealthMirrorEnabled}
       onPressTheme={onPressTheme}
       onToggleSound={onToggleSound}
       onToggleHaptics={onToggleHaptics}
-      onToggleVoiceGuidance={onToggleVoiceGuidance}
       onToggleAppleHealth={onToggleAppleHealth}
       onPressStreakBuddies={onPressStreakBuddies}
       theme={theme}
@@ -55,7 +49,6 @@ describe('PreferencesSection', () => {
     expect(screen.getByText('Dark')).toBeTruthy();
     expect(screen.getByText('Sounds')).toBeTruthy();
     expect(screen.getByText('Haptic Feedback')).toBeTruthy();
-    expect(screen.getByText('Voice Guidance')).toBeTruthy();
     expect(screen.getByText('Streak Buddies')).toBeTruthy();
   });
 

@@ -43,13 +43,13 @@ export interface LibraryZoneMeta {
 
 /** Display order for zone rails and grouped lists. */
 export const LIBRARY_ZONES: readonly LibraryZoneMeta[] = [
-  { id: 'neck', icon: '🙆', color: '#6CE9CC' },
-  { id: 'back', icon: '🧘', color: '#BC26F4' },
-  { id: 'chest', icon: '🫁', color: '#21A3E6' },
-  { id: 'arms', icon: '💪', color: '#5BC741' },
-  { id: 'core', icon: '🎯', color: '#FF6B9D' },
-  { id: 'legs', icon: '🦵', color: '#FAE34B' },
-  { id: 'cardio', icon: '🏃', color: '#EB3E38' },
+  { id: 'neck', icon: '', color: '#6CE9CC' },
+  { id: 'back', icon: '', color: '#BC26F4' },
+  { id: 'chest', icon: '', color: '#21A3E6' },
+  { id: 'arms', icon: '', color: '#5BC741' },
+  { id: 'core', icon: '', color: '#FF6B9D' },
+  { id: 'legs', icon: '', color: '#FAE34B' },
+  { id: 'cardio', icon: '', color: '#EB3E38' },
 ];
 
 const ZONE_BY_ID = new Map(LIBRARY_ZONES.map((zone) => [zone.id, zone]));
@@ -75,7 +75,7 @@ export function getZoneMeta(zoneId: LibraryZoneId): LibraryZoneMeta {
   const zone = ZONE_BY_ID.get(zoneId);
   if (!zone) {
     // Unreachable with a well-formed taxonomy; keep a safe fallback anyway.
-    return { id: zoneId, icon: '🧩', color: '#6CE9CC' };
+    return { id: zoneId, icon: '', color: '#6CE9CC' };
   }
   return zone;
 }
@@ -104,7 +104,7 @@ export function getLibraryExerciseRecord(
 export function getLibraryMedia(
   record: LibraryExerciseRecord
 ): LibraryExerciseMedia | undefined {
-  return LIBRARY_EXERCISE_MEDIA[record.datasetId];
+  return LIBRARY_EXERCISE_MEDIA[record.mediaKey];
 }
 
 export function localizedName(
@@ -218,6 +218,7 @@ const MUSCLE_LABELS: Record<string, { en: string; tr: string }> = {
   'cardiovascular system': { en: 'Cardio', tr: 'Kardiyo' },
   chest: { en: 'Chest', tr: 'Göğüs' },
   core: { en: 'Core', tr: 'Merkez (core)' },
+  'deep neck flexors': { en: 'Deep neck flexors', tr: 'Derin boyun kasları' },
   deltoids: { en: 'Deltoids', tr: 'Omuz (deltoid)' },
   delts: { en: 'Delts', tr: 'Omuz (deltoid)' },
   feet: { en: 'Feet', tr: 'Ayaklar' },
@@ -226,6 +227,7 @@ const MUSCLE_LABELS: Record<string, { en: string; tr: string }> = {
   groin: { en: 'Groin', tr: 'Kasık' },
   hamstrings: { en: 'Hamstrings', tr: 'Arka bacak' },
   hands: { en: 'Hands', tr: 'Eller' },
+  hips: { en: 'Hips', tr: 'Kalçalar' },
   'hip flexors': { en: 'Hip flexors', tr: 'Kalça fleksörleri' },
   lats: { en: 'Lats', tr: 'Kanat (latissimus)' },
   'levator scapulae': { en: 'Levator scapulae', tr: 'Boyun-kürek kası' },

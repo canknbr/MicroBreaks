@@ -4,7 +4,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import OnboardingLayout from './components/OnboardingLayout';
 import PrimaryButton from './components/PrimaryButton';
 import SecondaryButton from './components/SecondaryButton';
-import WheelSelect from './components/WheelSelect';
+import OptionCard from './components/OptionCard';
 import { AccountAccessModal, type AccountAccessMode } from '@/components/profile';
 import {
   ACTIVE_ONBOARDING_TOTAL_STEPS,
@@ -93,13 +93,16 @@ export default function WelcomeScreen() {
           <Text style={styles.headline}>What&apos;s the desk doing to you?</Text>
         </View>
 
-        {/* Choices as a subtle wheel — centered = selected */}
-        <View style={styles.menu}>
-          <WheelSelect
-            options={PRIMARY_NEEDS.map((n) => ({ id: n.id, label: n.label }))}
-            value={selectedNeed}
-            onChange={(id) => setSelectedNeed(id as PrimaryNeedId)}
-          />
+        {/* Choices — tap a row; brightness + pink bar mark the selection */}
+        <View style={styles.menu} accessibilityRole="radiogroup">
+          {PRIMARY_NEEDS.map((need) => (
+            <OptionCard
+              key={need.id}
+              title={need.label}
+              selected={selectedNeed === need.id}
+              onPress={() => setSelectedNeed(need.id as PrimaryNeedId)}
+            />
+          ))}
         </View>
 
         {/* Action */}
@@ -153,32 +156,6 @@ const styles = StyleSheet.create({
   },
   menu: {
     marginVertical: 8,
-  },
-  choiceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  lead: {
-    width: 34,
-    justifyContent: 'center',
-  },
-  bar: {
-    width: 22,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: '#FF2472',
-  },
-  choice: {
-    fontFamily: 'GeneralSans-Bold',
-    fontSize: 30,
-    letterSpacing: -0.6,
-  },
-  choiceOn: {
-    color: '#FFFFFF',
-  },
-  choiceOff: {
-    color: 'rgba(255,255,255,0.3)',
   },
   actions: {
     gap: 6,

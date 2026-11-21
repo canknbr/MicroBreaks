@@ -10,7 +10,7 @@ function Harness({
   const theme = useTheme();
   return (
     <ProfileCard
-      profile={{ name: 'Can', avatar: '🙂' }}
+      profile={{ name: 'Can', avatar: null }}
       progress={{ totalBreaks: 42, totalXP: 360, currentStreak: 7 }}
       level={4}
       levelTitle="Focused"
@@ -54,7 +54,7 @@ describe('ProfileCard', () => {
     const onEditPress = jest.fn();
     render(<Harness onEditPress={onEditPress} />);
 
-    fireEvent.press(screen.getByText('🙂'));
+    fireEvent.press(screen.getByText('C'));
 
     expect(onEditPress).toHaveBeenCalled();
   });

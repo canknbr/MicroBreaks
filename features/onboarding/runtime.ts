@@ -170,7 +170,7 @@ export async function syncOnboardingRuntimeState(
       type: 'welcome',
       title: 'Welcome to Unwind!',
       message: 'Your wellness journey starts now. Take your first break to earn XP!',
-      icon: '🎉',
+      icon: '',
       color: '#6CE9CC',
     });
   }, errors);
@@ -180,7 +180,7 @@ export async function syncOnboardingRuntimeState(
       type: 'achievement',
       title: 'Achievement Unlocked!',
       message: 'Health Pioneer: Completed your wellness setup. +25 XP',
-      icon: '🏆',
+      icon: '',
       color: '#FAE34B',
       data: { achievementTitle: 'Health Pioneer', xpReward: 25 },
     });

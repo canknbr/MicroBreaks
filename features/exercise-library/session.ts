@@ -158,7 +158,7 @@ export function buildLibrarySessionExercise(
     instruction: copy.release,
     duration: RELEASE_SECONDS,
     animation: 'rest',
-    visualGuide: '😌',
+    visualGuide: '',
   };
 
   const exercise: Exercise = {
@@ -171,7 +171,6 @@ export function buildLibrarySessionExercise(
     icon: zone.icon,
     steps: [...walkthroughSteps, flowStep, releaseStep],
     media: getLibraryMedia(record),
-    voiceLanguage: locale === 'tr' ? 'tr-TR' : 'en-US',
   };
 
   sessionCache.set(cacheKey, exercise);

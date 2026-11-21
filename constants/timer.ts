@@ -29,7 +29,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     breakMinutes: 5,
     longBreakMinutes: 15,
     sessionsUntilLongBreak: 4,
-    icon: '🍅',
+    icon: '',
     color: '#EB3E38',
   },
   {
@@ -40,7 +40,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     breakMinutes: 10,
     longBreakMinutes: 20,
     sessionsUntilLongBreak: 3,
-    icon: '🧠',
+    icon: '',
     color: '#BC26F4',
   },
   {
@@ -51,7 +51,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     breakMinutes: 2,
     longBreakMinutes: 5,
     sessionsUntilLongBreak: 6,
-    icon: '⚡',
+    icon: '',
     color: '#FAE34B',
   },
   {
@@ -62,7 +62,7 @@ export const TIMER_PRESETS: TimerPreset[] = [
     breakMinutes: 5,
     longBreakMinutes: 15,
     sessionsUntilLongBreak: 4,
-    icon: '⚙️',
+    icon: '',
     color: '#6CE9CC',
   },
 ] as const;
@@ -82,9 +82,9 @@ export const PHASE_COLORS: Record<TimerPhase, string> = {
 
 // Phase icons for UI
 export const PHASE_ICONS: Record<TimerPhase, string> = {
-  work: '💻',
-  break: '☕',
-  longBreak: '🌿',
+  work: '',
+  break: '',
+  longBreak: '',
 };
 
 // Notification IDs

@@ -83,7 +83,7 @@ export function composeChainedSession(
     instruction: copy.release,
     duration: CHAIN_RELEASE_SECONDS,
     animation: 'rest',
-    visualGuide: '😌',
+    visualGuide: '',
   });
 
   return {
@@ -96,6 +96,5 @@ export function composeChainedSession(
     icon: meta.icon,
     steps,
     media: members.length > 0 ? getLibraryMedia(members[0]) : undefined,
-    voiceLanguage: locale === 'tr' ? 'tr-TR' : 'en-US',
   };
 }

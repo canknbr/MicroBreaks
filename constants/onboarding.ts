@@ -25,25 +25,25 @@ export const PRIMARY_NEEDS = [
     id: 'eyes',
     label: 'Eye strain',
     description: 'Dry, tired, or blurry eyes during screen-heavy work',
-    icon: '👀',
+    icon: '',
   },
   {
     id: 'neck',
     label: 'Neck tension',
     description: 'Tight neck and shoulders after long desk blocks',
-    icon: '🧍',
+    icon: '',
   },
   {
     id: 'focus',
     label: 'Focus reset',
     description: 'Mental fog, task-switching fatigue, and attention drops',
-    icon: '🧠',
+    icon: '',
   },
   {
     id: 'energy',
     label: 'Energy dip',
     description: 'Low energy between meetings or during afternoon slumps',
-    icon: '⚡',
+    icon: '',
   },
 ] as const;
 
@@ -75,26 +75,26 @@ export const SCREEN_TIME_BANDS = [
 ] as const;
 
 export const WORK_ROLES = [
-  { id: 'developer', label: 'Software Developer', icon: '💻' },
-  { id: 'designer', label: 'Designer/Creative', icon: '🎨' },
-  { id: 'analyst', label: 'Data Analyst', icon: '📊' },
-  { id: 'student', label: 'Student', icon: '📚' },
-  { id: 'manager', label: 'Manager/Executive', icon: '👔' },
-  { id: 'writer', label: 'Writer/Editor', icon: '✍️' },
-  { id: 'support', label: 'Customer Support', icon: '🎧' },
-  { id: 'other', label: 'Other', icon: '➕' },
+  { id: 'developer', label: 'Software Developer', icon: '' },
+  { id: 'designer', label: 'Designer/Creative', icon: '' },
+  { id: 'analyst', label: 'Data Analyst', icon: '' },
+  { id: 'student', label: 'Student', icon: '' },
+  { id: 'manager', label: 'Manager/Executive', icon: '' },
+  { id: 'writer', label: 'Writer/Editor', icon: '' },
+  { id: 'support', label: 'Customer Support', icon: '' },
+  { id: 'other', label: 'Other', icon: '' },
 ] as const;
 
 export const PAIN_AREAS = [
-  { id: 'eyes', label: 'Eyes', icon: '◉' },
-  { id: 'head', label: 'Head', icon: '○' },
+  { id: 'eyes', label: 'Eyes', icon: '' },
+  { id: 'head', label: 'Head', icon: '' },
   { id: 'neck', label: 'Neck', icon: '│' },
   { id: 'shoulders', label: 'Shoulders', icon: '─' },
-  { id: 'upper_back', label: 'Upper Back', icon: '▲' },
-  { id: 'lower_back', label: 'Lower Back', icon: '▼' },
+  { id: 'upper_back', label: 'Upper Back', icon: '' },
+  { id: 'lower_back', label: 'Lower Back', icon: '' },
   { id: 'wrists', label: 'Wrists', icon: '║' },
   { id: 'hands', label: 'Hands', icon: '╬' },
-  { id: 'none', label: "I'm pain-free!", icon: '✓' },
+  { id: 'none', label: "I'm pain-free!", icon: '' },
 ] as const;
 
 export const WORK_PATTERNS = [
@@ -148,10 +148,10 @@ export const NOTIFICATION_STYLES = [
 ] as const;
 
 export const ENERGY_PATTERNS = [
-  { id: 'morning_person', label: 'Morning Person', icon: '☀️' },
-  { id: 'night_owl', label: 'Night Owl', icon: '🦉' },
-  { id: 'afternoon_slump', label: 'Afternoon Slump', icon: '😴' },
-  { id: 'steady_energy', label: 'Steady Energy', icon: '⚡' },
+  { id: 'morning_person', label: 'Morning Person', icon: '' },
+  { id: 'night_owl', label: 'Night Owl', icon: '' },
+  { id: 'afternoon_slump', label: 'Afternoon Slump', icon: '' },
+  { id: 'steady_energy', label: 'Steady Energy', icon: '' },
 ] as const;
 
 export const BREAK_STYLES = [

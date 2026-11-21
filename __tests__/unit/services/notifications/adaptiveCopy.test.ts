@@ -99,7 +99,7 @@ describe('composeAdaptiveCopy', () => {
     // verify we got SOMETHING valid.
     expect(['pain_focused', 'time_of_day']).toContain(copy.rationale);
     if (copy.rationale === 'pain_focused') {
-      expect(copy.title).toContain('👁️');
+      expect(copy.title).toContain('20-20-20');
     }
   });
 

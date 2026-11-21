@@ -128,7 +128,7 @@ export function createStreakNotification(
     type: 'streak_milestone',
     title: `${days}-Day Streak!`,
     message: `Amazing! You've maintained your wellness streak for ${days} days!`,
-    icon: '🔥',
+    icon: '',
     color: '#EB3E38',
     data: { streakDays: days },
   };
@@ -139,7 +139,7 @@ export function createGoalNotification(): Omit<AppNotification, 'id' | 'createdA
     type: 'goal_complete',
     title: 'Daily Goal Complete!',
     message: "Great job! You've reached your daily wellness goal.",
-    icon: '🎯',
+    icon: '',
     color: '#6CE9CC',
   };
 }
@@ -152,7 +152,7 @@ export function createLevelUpNotification(
     type: 'level_up',
     title: `Level ${level}!`,
     message: `Congratulations! You've reached ${title}.`,
-    icon: '⭐',
+    icon: '',
     color: '#BC26F4',
     data: { level, levelTitle: title },
   };

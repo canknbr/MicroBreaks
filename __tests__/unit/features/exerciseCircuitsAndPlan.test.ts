@@ -58,7 +58,6 @@ describe('zone circuits', () => {
     const en = buildZoneCircuit('neck', 'en');
     const tr = buildZoneCircuit('neck', 'tr');
     expect(en.title).not.toBe(tr.title);
-    expect(tr.voiceLanguage).toBe('tr-TR');
     expect(buildZoneCircuit('neck', 'en')).toBe(en);
   });
 
@@ -115,21 +114,21 @@ describe('today plan', () => {
 
 describe('next zone move', () => {
   it('suggests another move from the same zone and cycles deterministically', () => {
-    const next = getNextZoneMove('lib-1403', () => true);
+    const next = getNextZoneMove('lib-neck-side-tilt', () => true);
     expect(next).not.toBeNull();
-    expect(next?.id).not.toBe('lib-1403');
+    expect(next?.id).not.toBe('lib-neck-side-tilt');
     if (next) {
       expect(zoneForBodyPart(next.bodyPart)).toBe('neck');
     }
-    expect(getNextZoneMove('lib-1403', () => true)?.id).toBe(next?.id);
+    expect(getNextZoneMove('lib-neck-side-tilt', () => true)?.id).toBe(next?.id);
   });
 
   it('skips unplayable candidates and returns null when nothing is playable', () => {
-    const blockedId = getNextZoneMove('lib-1403', () => true)?.id;
-    const alternative = getNextZoneMove('lib-1403', (id) => id !== blockedId);
+    const blockedId = getNextZoneMove('lib-neck-side-tilt', () => true)?.id;
+    const alternative = getNextZoneMove('lib-neck-side-tilt', (id) => id !== blockedId);
     expect(alternative?.id).not.toBe(blockedId);
 
-    expect(getNextZoneMove('lib-1403', () => false)).toBeNull();
+    expect(getNextZoneMove('lib-neck-side-tilt', () => false)).toBeNull();
     expect(getNextZoneMove('not-a-library-id', () => true)).toBeNull();
   });
 });

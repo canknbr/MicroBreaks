@@ -92,13 +92,13 @@ struct WidgetSnapshot: Codable, Hashable {
     lastBreak: WidgetSnapshotLastBreak(
       completedAt: (Date().timeIntervalSince1970 - 45 * 60) * 1000,
       title: "Eye Rescue",
-      icon: "👁️",
+      icon: "",
       color: "#00E5FF"
     ),
     nextRecommended: WidgetSnapshotRecommendation(
       breakId: "neck-reset",
       title: "Neck Reset",
-      icon: "🧘",
+      icon: "",
       color: "#FF9F1C",
       durationMin: 3,
       deepLink: "microbreaks://break/neck-reset"

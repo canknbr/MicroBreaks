@@ -30,7 +30,6 @@ describe('settingsSync', () => {
     expect(syncable).toEqual({
       theme: defaultAppSettings.theme,
       accentColor: defaultAppSettings.accentColor,
-      voiceGuidanceEnabled: defaultAppSettings.voiceGuidanceEnabled,
       quietHoursEnabled: defaultAppSettings.quietHoursEnabled,
       quietHoursStart: defaultAppSettings.quietHoursStart,
       quietHoursEnd: defaultAppSettings.quietHoursEnd,

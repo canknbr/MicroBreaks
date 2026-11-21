@@ -44,7 +44,7 @@ import {
   NeckExercise,
   StretchExercise,
   ActiveExercise,
-  GifExercise,
+  MoveDemoExercise,
 } from '@/components/break-session';
 import { AnimationType } from '@/data/exercises';
 import { ScreenErrorBoundary } from '@/components/error';
@@ -379,8 +379,8 @@ function BreakSessionScreen() {
     const stepMedia = state.currentStep.media ?? state.exercise.media;
     if (stepMedia && animation !== 'rest') {
       return (
-        <GifExercise
-          source={stepMedia.gif}
+        <MoveDemoExercise
+          source={stepMedia.animation}
           instruction={instruction}
           color={color}
           isFlowStep={state.currentStep.id.endsWith('-flow')}
@@ -652,8 +652,6 @@ function BreakSessionScreen() {
               timeRemaining={state.timeRemaining}
               isPaused={state.isPaused}
               onClose={handleClose}
-              onToggleVoice={actions.toggleVoice}
-              isVoiceEnabled={state.isVoiceEnabled}
             />
             </View>
           )}

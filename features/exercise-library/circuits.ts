@@ -62,7 +62,6 @@ const CIRCUIT_COPY: Record<
 const POSITION_RANK: Record<LibraryExerciseRecord['position'], number> = {
   desk: 0,
   standing: 1,
-  floor: 2,
 };
 
 const CATEGORY_FOR_ZONE: Record<LibraryZoneId, ExerciseCategory> = {

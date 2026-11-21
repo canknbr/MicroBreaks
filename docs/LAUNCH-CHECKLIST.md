@@ -187,10 +187,8 @@ npx eas-cli submit --profile production --platform android
 - [ ] `metadata/experiments-config.js` içindeki ASO deneylerini sırayla çalıştır
 - [ ] Store yorumlarına 24 saat içinde yanıt ver
 
-## ⚠️ Bilinen ticari not
+## Hareket kütüphanesi medyası
 
-Hareket Kütüphanesi medyası **© Gym visual** (180×180, atıf gösteriliyor — uygulama içi
-3 yerde + Kullanım Koşulları §6). Dataset bu şartlarla yeniden dağıtım izni taşıyor;
-yine de ticari yayın öncesi https://gymvisual.com lisans şartlarını bir kez kendin teyit
-et, gerekirse doğrudan lisans al. (Riski sıfırlamak istersen: alternatif medya seti ile
-`npm run generate:exercises` yeniden çalıştırılabilir — pipeline hazır.)
+Hareket çizimleri ve animasyonları projenin kendi figür çizim sisteminden üretilir
+(`scripts/moves/`, `npm run generate:moves`). Üçüncü taraf medya ya da atıf
+yükümlülüğü yoktur.

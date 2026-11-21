@@ -296,7 +296,7 @@ function ExerciseLibraryScreen() {
           >
             <ZoneChip
               label={t('library.allZones')}
-              icon="🧩"
+              icon=""
               color={theme.accent.primary}
               isSelected={selectedZone === null}
               onPress={() => handleZonePress(null)}

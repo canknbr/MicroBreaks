@@ -104,29 +104,29 @@ function toneForBucket(bucket: TimeBucket): NotificationTone {
 
 const TONE_COPY: Record<NotificationTone, { title: string; body: string }[]> = {
   energetic: [
-    { title: 'Morning reset 🌅', body: 'Roll your shoulders, set the tone for the day.' },
-    { title: 'Wake up your body ☀️', body: '60 seconds of movement and you are ready.' },
-    { title: 'Start strong 💪', body: 'A quick stretch now compounds across the whole day.' },
+    { title: 'Morning reset', body: 'Roll your shoulders, set the tone for the day.' },
+    { title: 'Wake up your body', body: '60 seconds of movement and you are ready.' },
+    { title: 'Start strong', body: 'A quick stretch now compounds across the whole day.' },
   ],
   focused: [
-    { title: 'Quick reset before deep work 🎯', body: 'Clear your head — one minute, then back in.' },
-    { title: 'Focus refill 🧘', body: 'Soften your gaze, drop your shoulders, three breaths.' },
-    { title: 'Tiny break, big return ⏱️', body: 'Pause now to keep the next hour sharp.' },
+    { title: 'Quick reset before deep work', body: 'Clear your head — one minute, then back in.' },
+    { title: 'Focus refill', body: 'Soften your gaze, drop your shoulders, three breaths.' },
+    { title: 'Tiny break, big return', body: 'Pause now to keep the next hour sharp.' },
   ],
   recover: [
-    { title: 'Post-lunch reset 🌿', body: 'Stand up, stretch tall, undo the slump.' },
-    { title: 'Afternoon recovery 🍃', body: 'A short pause to fight the 3pm dip.' },
-    { title: 'Move it out 🤸', body: 'Tension builds quietly — release it now.' },
+    { title: 'Post-lunch reset', body: 'Stand up, stretch tall, undo the slump.' },
+    { title: 'Afternoon recovery', body: 'A short pause to fight the 3pm dip.' },
+    { title: 'Move it out', body: 'Tension builds quietly — release it now.' },
   ],
   calm: [
-    { title: 'Wind down 🪷', body: 'Slow the breath, soften the jaw, let go a little.' },
-    { title: 'Evening reset 🌙', body: 'A gentle pause to transition out of work mode.' },
-    { title: 'Settle in 🌅', body: 'Breathe slowly. The day is ending well.' },
+    { title: 'Wind down', body: 'Slow the breath, soften the jaw, let go a little.' },
+    { title: 'Evening reset', body: 'A gentle pause to transition out of work mode.' },
+    { title: 'Settle in', body: 'Breathe slowly. The day is ending well.' },
   ],
   gentle: [
-    { title: 'Easy does it 🌌', body: 'A soft stretch and a slow breath — that is enough.' },
-    { title: 'One breath 🤍', body: 'No goal, no metric. Just a single full breath.' },
-    { title: 'Rest mode 🌒', body: 'Whenever you are ready. There is no rush.' },
+    { title: 'Easy does it', body: 'A soft stretch and a slow breath — that is enough.' },
+    { title: 'One breath', body: 'No goal, no metric. Just a single full breath.' },
+    { title: 'Rest mode', body: 'Whenever you are ready. There is no rush.' },
   ],
 };
 
@@ -135,12 +135,12 @@ const TONE_COPY: Record<NotificationTone, { title: string; body: string }[]> = {
 // ============================================================
 
 const PAIN_AREA_COPY: Partial<Record<PainTag, { title: string; body: string }>> = {
-  eyes:       { title: '20-20-20 time 👁️',       body: 'Look at something 20 feet away for 20 seconds.' },
-  neck:       { title: 'Neck reset 🧘',           body: 'Slow chin tucks for 30 seconds — instant ease.' },
-  shoulders:  { title: 'Roll your shoulders 🤸',  body: 'Five back, five forward. Feel the release.' },
-  upper_back: { title: 'Stand tall 💪',           body: 'Open your chest, breathe wide, hold for ten.' },
-  lower_back: { title: 'Cat-cow at your chair 🐈', body: 'Arch and round your spine five times.' },
-  wrists:     { title: 'Wrist circles 🤲',        body: 'Ten each direction — typing relief.' },
+  eyes:       { title: '20-20-20 time',       body: 'Look at something 20 feet away for 20 seconds.' },
+  neck:       { title: 'Neck reset',           body: 'Slow chin tucks for 30 seconds — instant ease.' },
+  shoulders:  { title: 'Roll your shoulders',  body: 'Five back, five forward. Feel the release.' },
+  upper_back: { title: 'Stand tall',           body: 'Open your chest, breathe wide, hold for ten.' },
+  lower_back: { title: 'Cat-cow at your chair', body: 'Arch and round your spine five times.' },
+  wrists:     { title: 'Wrist circles',        body: 'Ten each direction — typing relief.' },
 };
 
 // ============================================================
@@ -191,7 +191,7 @@ export function composeAdaptiveCopy(
     return {
       title: tr(
         'notifications.adaptive.streakAtRisk.title',
-        `Protect your ${context.currentStreak}-day streak 🔥`,
+        `Protect your ${context.currentStreak}-day streak`,
         { streak: context.currentStreak },
       ),
       body: tr(
@@ -206,7 +206,7 @@ export function composeAdaptiveCopy(
   // First break of the user's life — go warm, not transactional.
   if (context.currentStreak === 0 && context.todayBreakCount === 0 && context.lastBreakAt == null) {
     return {
-      title: tr('notifications.adaptive.firstBreak.title', 'Your first break 🌱'),
+      title: tr('notifications.adaptive.firstBreak.title', 'Your first break'),
       body: tr(
         'notifications.adaptive.firstBreak.body',
         'No pressure — one minute is plenty. Let me guide you.',
@@ -219,7 +219,7 @@ export function composeAdaptiveCopy(
   // One break short of the daily goal.
   if (context.dailyGoal > 0 && breaksLeft === 1 && context.todayBreakCount > 0) {
     return {
-      title: tr('notifications.adaptive.almostDone.title', 'One more 🎯'),
+      title: tr('notifications.adaptive.almostDone.title', 'One more'),
       body: tr(
         'notifications.adaptive.almostDone.body',
         "You are one break away from today's goal — finish strong.",

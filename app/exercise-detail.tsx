@@ -1,8 +1,7 @@
 /**
  * Exercise Detail Screen
- * Full movement view: looping demo GIF, taxonomy chips, muscles worked,
+ * Full movement view: looping drawn demo, taxonomy chips, muscles worked,
  * localized step-by-step instructions, and the guided-session CTA.
- * Media © Gym visual — attribution rendered below the demo.
  */
 
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -199,7 +198,7 @@ function ExerciseDetailScreen() {
             >
               {media ? (
                 <Image
-                  source={media.thumb}
+                  source={media.still}
                   style={styles.gif}
                   contentFit="contain"
                   accessibilityIgnoresInvertColors
@@ -221,7 +220,7 @@ function ExerciseDetailScreen() {
             <View style={styles.gifCard}>
               {media ? (
                 <Image
-                  source={media.gif}
+                  source={media.animation}
                   style={styles.gif}
                   contentFit="contain"
                   accessibilityIgnoresInvertColors
@@ -233,9 +232,6 @@ function ExerciseDetailScreen() {
               )}
             </View>
           )}
-          <Text style={[styles.attribution, { color: theme.text.muted }]}>
-            {t('library.detail.attribution')}
-          </Text>
 
           {/* Title */}
           <Text style={[styles.title, { color: theme.text.primary }]}>{name}</Text>
@@ -378,7 +374,9 @@ const styles = StyleSheet.create({
     width: 260,
     height: 260,
     borderRadius: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F4EF',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -423,12 +421,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'GeneralSans-Semibold',
     fontSize: 14,
-  },
-  attribution: {
-    alignSelf: 'center',
-    fontFamily: 'GeneralSans-Regular',
-    fontSize: 10,
-    marginTop: 10,
   },
   title: {
     fontFamily: 'GeneralSans-Bold',

@@ -191,7 +191,7 @@ function RoutineBuilderScreen() {
           <View style={styles.pickerThumbWrap}>
             {media ? (
               <Image
-                source={media.thumb}
+                source={media.still}
                 style={styles.pickerThumb}
                 contentFit="cover"
                 accessibilityIgnoresInvertColors
@@ -276,13 +276,15 @@ function RoutineBuilderScreen() {
             <View style={styles.pickerThumbWrap}>
               {media ? (
                 <Image
-                  source={media.thumb}
+                  source={media.still}
                   style={styles.pickerThumb}
                   contentFit="cover"
                   accessibilityIgnoresInvertColors
                 />
               ) : (
-                <Text style={styles.pickerThumbFallback}>{zone.icon}</Text>
+                <Text style={styles.pickerThumbFallback}>
+                  {localizedName(record, locale).charAt(0)}
+                </Text>
               )}
             </View>
             <Text
@@ -536,7 +538,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F4EF',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

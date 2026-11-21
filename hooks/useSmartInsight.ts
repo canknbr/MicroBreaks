@@ -26,7 +26,7 @@ export function useSmartInsight(
     if (streak >= 5 && streak % 5 === 0) {
       return {
         type: 'achievement',
-        title: '🔥 Hot streak!',
+        title: 'Hot streak!',
         message: `${streak} days in a row! You're building a healthy habit.`,
       };
     }
@@ -43,7 +43,7 @@ export function useSmartInsight(
     if (progress >= 100) {
       return {
         type: 'achievement',
-        title: '🎉 Goal Complete!',
+        title: 'Goal Complete!',
         message: "Amazing work! You've reached your daily wellness goal.",
       };
     }

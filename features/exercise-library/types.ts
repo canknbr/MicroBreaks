@@ -1,10 +1,10 @@
 /**
  * Exercise Library Types
  *
- * The movement library is a curated, desk-friendly subset of the open
- * exercises dataset (see scripts/generate-exercise-library.mjs). Records
- * are generated into data/exerciseLibrary.generated.ts and rendered with
- * 180×180 GIF media (© Gym visual — https://gymvisual.com/).
+ * The movement library is a set of desk moves drawn with the project's own
+ * figure rig (see scripts/generate-move-library.mjs). Records are generated
+ * into data/exerciseLibrary.generated.ts; each has an animated WebP demo and
+ * a still key pose. Artwork and text are original to this project.
  */
 
 /** Dataset body-part taxonomy (subset present in the curated library). */
@@ -24,12 +24,12 @@ export type LibraryBodyPart =
 export type LibraryKind = 'stretch' | 'mobility' | 'strength' | 'cardio';
 
 /**
- * Minimum space the movement needs:
- *  - desk: doable in/with your chair or desk
- *  - standing: a small patch of open floor next to the desk
- *  - floor: needs to lie/kneel down (mat territory)
+ * Where the move happens:
+ *  - desk: in your chair or with your desk
+ *  - standing: on your feet next to the desk
+ * Nothing in the library needs the floor.
  */
-export type LibraryPosition = 'desk' | 'standing' | 'floor';
+export type LibraryPosition = 'desk' | 'standing';
 
 /** User-facing body zones the UI groups and filters by. */
 export type LibraryZoneId =
@@ -52,13 +52,13 @@ export interface LocalizedSteps {
 }
 
 export interface LibraryExerciseRecord {
-  /** App-wide unique id, namespaced as `lib-<datasetId>`. */
+  /** App-wide unique id, namespaced as `lib-<mediaKey>`. */
   id: string;
-  /** Four-digit dataset id — keys the generated media map. */
-  datasetId: string;
+  /** Move slug (e.g. `seated-twist`) — keys the generated media map. */
+  mediaKey: string;
   name: LocalizedText;
   bodyPart: LibraryBodyPart;
-  /** Primary target muscle from the dataset (e.g. "levator scapulae"). */
+  /** Primary target muscle (e.g. "levator scapulae"). */
   target: string;
   secondaryMuscles: readonly string[];
   kind: LibraryKind;

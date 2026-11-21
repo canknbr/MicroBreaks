@@ -77,14 +77,6 @@ jest.mock('expo-audio', () => {
   };
 });
 
-// Expo Speech
-jest.mock('expo-speech', () => ({
-  speak: jest.fn(),
-  stop: jest.fn(),
-  isSpeakingAsync: jest.fn(() => Promise.resolve(false)),
-  getAvailableVoicesAsync: jest.fn(() => Promise.resolve([])),
-}));
-
 // Expo Notifications
 jest.mock('expo-notifications', () => ({
   getPermissionsAsync: jest.fn(() =>

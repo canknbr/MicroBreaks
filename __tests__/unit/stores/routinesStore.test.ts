@@ -21,7 +21,7 @@ import { estimateChainedSeconds } from '@/features/exercise-library/chaining';
 import { getExerciseById } from '@/data/exercises';
 import { requiresUpgradeForExercise } from '@/services/subscription/exerciseAccess';
 
-const VALID_MOVES = ['lib-1403', 'lib-1428', 'lib-0659'];
+const VALID_MOVES = ['lib-neck-side-tilt', 'lib-wrist-circles', 'lib-desk-push-up'];
 
 function resetStore() {
   act(() => {
@@ -56,21 +56,21 @@ describe('routines store', () => {
     const { createRoutine } = useRoutinesStore.getState();
     act(() => {
       expect(createRoutine('   ', VALID_MOVES)).toBeNull();
-      expect(createRoutine('Bad move', ['lib-1403', 'lib-9999'])).toBeNull();
+      expect(createRoutine('Bad move', ['lib-neck-side-tilt', 'lib-9999'])).toBeNull();
       expect(createRoutine('Too few', VALID_MOVES.slice(0, ROUTINE_MIN_MOVES - 1))).toBeNull();
       expect(
         createRoutine(
           'Too many',
           [
-            'lib-1403',
-            'lib-1428',
-            'lib-0659',
-            'lib-3533',
-            'lib-1368',
-            'lib-3147',
-            'lib-3672',
-            'lib-1365',
-            'lib-0716',
+            'lib-neck-side-tilt',
+            'lib-wrist-circles',
+            'lib-desk-push-up',
+            'lib-chair-squat',
+            'lib-ankle-circles',
+            'lib-seated-twist',
+            'lib-march-in-place',
+            'lib-upper-back-round',
+            'lib-chin-tuck',
           ].slice(0, ROUTINE_MAX_MOVES + 1)
         )
       ).toBeNull();
@@ -82,11 +82,11 @@ describe('routines store', () => {
     act(() => {
       useRoutinesStore
         .getState()
-        .createRoutine('Deduped', ['lib-1403', 'lib-1403', 'lib-1428']);
+        .createRoutine('Deduped', ['lib-neck-side-tilt', 'lib-neck-side-tilt', 'lib-wrist-circles']);
     });
     expect(useRoutinesStore.getState().routines[0].moveIds).toEqual([
-      'lib-1403',
-      'lib-1428',
+      'lib-neck-side-tilt',
+      'lib-wrist-circles',
     ]);
   });
 

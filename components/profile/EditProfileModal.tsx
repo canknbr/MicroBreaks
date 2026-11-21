@@ -10,35 +10,32 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Spacing } from '@/theme';
 
-const AVATAR_EMOJIS = ['😊', '😎', '🧘', '💪', '🌟', '🔥', '🎯', '🌈', '🦋', '🌸', '🍀', '⭐'];
-
 export function EditProfileModal({
   visible,
   currentName,
-  currentAvatar,
   onSave,
   onClose,
 }: {
   visible: boolean;
   currentName: string;
-  currentAvatar: string | null;
+  /** Kept for call-site compatibility; avatars are now the name initial. */
+  currentAvatar?: string | null;
   onSave: (_name: string, _avatar: string | null) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState(currentName);
-  const [avatar, setAvatar] = useState<string | null>(currentAvatar);
 
   useEffect(() => {
     if (visible) {
       setName(currentName);
-      setAvatar(currentAvatar);
     }
-  }, [visible, currentName, currentAvatar]);
+  }, [visible, currentName]);
 
   const handleSave = () => {
     if (name.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      onSave(name.trim(), avatar);
+      // Avatars are the name initial; saving clears any legacy emoji avatar.
+      onSave(name.trim(), null);
       onClose();
     }
   };
@@ -64,35 +61,6 @@ export function EditProfileModal({
               maxLength={20}
               autoCapitalize="words"
             />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Avatar</Text>
-            <View style={styles.avatarGrid}>
-              <Pressable
-                style={[styles.avatarOption, !avatar && styles.avatarOptionActive]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setAvatar(null);
-                }}
-              >
-                <Text style={styles.avatarInitialOption}>
-                  {name.charAt(0).toUpperCase() || 'U'}
-                </Text>
-              </Pressable>
-              {AVATAR_EMOJIS.map((emoji) => (
-                <Pressable
-                  key={emoji}
-                  style={[styles.avatarOption, avatar === emoji && styles.avatarOptionActive]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setAvatar(emoji);
-                  }}
-                >
-                  <Text style={styles.avatarEmoji}>{emoji}</Text>
-                </Pressable>
-              ))}
-            </View>
           </View>
 
           <View style={styles.modalActions}>
@@ -157,31 +125,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  avatarOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  avatarOptionActive: {
-    borderColor: '#FF2472',
-  },
-  avatarInitialOption: {
-    fontFamily: 'GeneralSans-Bold',
-    fontSize: 20,
-    color: '#FFFFFF',
-  },
-  avatarEmoji: {
-    fontSize: 24,
   },
   modalActions: {
     flexDirection: 'row',

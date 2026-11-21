@@ -28,9 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PhotoBackdrop } from '@/components/ui/PhotoBackdrop';
 import { ZenColors, ZenSpacing, ZenGradients } from '../constants/design';
-import { ONBOARDING_BACKDROPS } from '../constants/backdrops';
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -149,11 +147,6 @@ export default function OnboardingLayout({
           colors={ZenGradients.background.default}
           style={StyleSheet.absoluteFill}
         />
-
-        {/* Per-step photo backdrop (blurred + dimmed behind the editorial UI) */}
-        {ONBOARDING_BACKDROPS[currentStep] && (
-          <PhotoBackdrop source={ONBOARDING_BACKDROPS[currentStep]} />
-        )}
 
         {/* Ambient Glow Effects */}
         {showAmbient && (

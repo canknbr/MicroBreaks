@@ -1,9 +1,9 @@
 export const BREAK_TYPES = [
-  { id: 'neck-roll', icon: '🧘', title: 'Neck', duration: '2m', color: '#6CE9CC' },
-  { id: 'eye-rest', icon: '👁️', title: 'Eyes', duration: '1m', color: '#21A3E6' },
-  { id: 'upper-body', icon: '💪', title: 'Posture', duration: '3m', color: '#BC26F4' },
-  { id: 'walk', icon: '🚶', title: 'Walk', duration: '5m', color: '#FAE34B' },
-  { id: 'deep-breath', icon: '🌬️', title: 'Breathe', duration: '1m', color: '#5BC741' },
+  { id: 'neck-roll', icon: '', title: 'Neck', duration: '2m', color: '#6CE9CC' },
+  { id: 'eye-rest', icon: '', title: 'Eyes', duration: '1m', color: '#21A3E6' },
+  { id: 'upper-body', icon: '', title: 'Posture', duration: '3m', color: '#BC26F4' },
+  { id: 'walk', icon: '', title: 'Walk', duration: '5m', color: '#FAE34B' },
+  { id: 'deep-breath', icon: '', title: 'Breathe', duration: '1m', color: '#5BC741' },
 ] as const;
 
 export type RecoveryStateId =
@@ -34,7 +34,7 @@ export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'eyes',
     label: 'Eyes',
-    icon: '👀',
+    icon: '',
     title: 'Eye Rescue',
     description: 'Dry, tired, or blurry after screen-heavy work',
     breakId: 'eye-rest',
@@ -43,7 +43,7 @@ export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'neck',
     label: 'Neck',
-    icon: '🧍',
+    icon: '',
     title: 'Desk Neck Reset',
     description: 'Tight neck and shoulders after long desk blocks',
     breakId: 'neck-roll',
@@ -52,7 +52,7 @@ export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'posture',
     label: 'Posture',
-    icon: '💺',
+    icon: '',
     title: 'Posture Rescue',
     description: 'Upper body mobility when you feel compressed at the desk',
     breakId: 'upper-body',
@@ -61,7 +61,7 @@ export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'focus',
     label: 'Focus',
-    icon: '🧠',
+    icon: '',
     title: 'Focus Reset',
     description: 'A short guided reset when your attention starts slipping',
     breakId: 'deep-breath',
@@ -70,7 +70,7 @@ export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'energy',
     label: 'Energy',
-    icon: '⚡',
+    icon: '',
     title: 'Energy Lift',
     description: 'A quick movement reset between work blocks',
     breakId: 'walk',
@@ -79,7 +79,7 @@ export const RECOVERY_STATES: RecoveryState[] = [
   {
     id: 'stress',
     label: 'Stress',
-    icon: '🌿',
+    icon: '',
     title: 'Calm Reset',
     description: 'A low-friction breathing reset when the day feels noisy',
     breakId: 'meditation',

@@ -128,29 +128,29 @@ interface BreakReminderMessage {
 
 const BREAK_REMINDER_MESSAGES: BreakReminderMessage[] = [
   // Generic — always candidates
-  { title: 'Time for a reset 🧘', body: "You've been at it a while. Give your body a quick stretch.", tags: [] },
-  { title: 'Quick break time ⏰', body: 'Even 60 seconds resets your focus.', tags: [] },
-  { title: 'Breathe deeply 🌬️', body: 'Three slow breaths — that is all you need right now.', tags: [] },
-  { title: 'Step away for a moment 🌿', body: 'A short pause now keeps you sharp later.', tags: [] },
-  { title: 'Pause and notice 🪷', body: 'Drop your shoulders. Unclench your jaw. Breathe.', tags: [] },
-  { title: 'Hydrate + reset 💧', body: 'Grab some water and stretch your arms overhead.', tags: [] },
+  { title: 'Time for a reset', body: "You've been at it a while. Give your body a quick stretch.", tags: [] },
+  { title: 'Quick break time', body: 'Even 60 seconds resets your focus.', tags: [] },
+  { title: 'Breathe deeply', body: 'Three slow breaths — that is all you need right now.', tags: [] },
+  { title: 'Step away for a moment', body: 'A short pause now keeps you sharp later.', tags: [] },
+  { title: 'Pause and notice', body: 'Drop your shoulders. Unclench your jaw. Breathe.', tags: [] },
+  { title: 'Hydrate + reset', body: 'Grab some water and stretch your arms overhead.', tags: [] },
 
   // Eye strain
-  { title: '20-20-20 time 👁️', body: 'Look at something 20 feet away for 20 seconds.', tags: ['eyes'] },
-  { title: 'Eye reset 👀', body: 'Soften your gaze and blink fully a few times.', tags: ['eyes'] },
-  { title: 'Screen break 📵', body: 'Close your eyes and rest your palms over them for 30 seconds.', tags: ['eyes'] },
+  { title: '20-20-20 time', body: 'Look at something 20 feet away for 20 seconds.', tags: ['eyes'] },
+  { title: 'Eye reset', body: 'Soften your gaze and blink fully a few times.', tags: ['eyes'] },
+  { title: 'Screen break', body: 'Close your eyes and rest your palms over them for 30 seconds.', tags: ['eyes'] },
 
   // Neck and shoulders
-  { title: 'Roll your shoulders 🤸', body: 'Roll back 5 times, then forward 5 — release that tension.', tags: ['neck', 'shoulders'] },
-  { title: 'Neck reset 🧘', body: 'Slow chin tucks for 30 seconds — your neck will thank you.', tags: ['neck'] },
-  { title: 'Stand tall 💪', body: 'Pull your shoulders back, open your chest, breathe.', tags: ['shoulders', 'upper_back'] },
+  { title: 'Roll your shoulders', body: 'Roll back 5 times, then forward 5 — release that tension.', tags: ['neck', 'shoulders'] },
+  { title: 'Neck reset', body: 'Slow chin tucks for 30 seconds — your neck will thank you.', tags: ['neck'] },
+  { title: 'Stand tall', body: 'Pull your shoulders back, open your chest, breathe.', tags: ['shoulders', 'upper_back'] },
 
   // Back
-  { title: 'Posture check 🪑', body: 'Sit up tall — crown of your head reaching for the ceiling.', tags: ['upper_back', 'lower_back'] },
-  { title: 'Cat-cow at your chair 🐈', body: 'Arch and round your spine 5 times — instant relief.', tags: ['upper_back', 'lower_back'] },
+  { title: 'Posture check', body: 'Sit up tall — crown of your head reaching for the ceiling.', tags: ['upper_back', 'lower_back'] },
+  { title: 'Cat-cow at your chair', body: 'Arch and round your spine 5 times — instant relief.', tags: ['upper_back', 'lower_back'] },
 
   // Wrists
-  { title: 'Wrist circles 🤲', body: 'Roll your wrists 10 times each direction — easy reset.', tags: ['wrists'] },
+  { title: 'Wrist circles', body: 'Roll your wrists 10 times each direction — easy reset.', tags: ['wrists'] },
 ];
 
 /**
@@ -814,7 +814,7 @@ export async function scheduleStreakProtection(): Promise<string | null> {
     content: {
       title: i18n.t('notifications.adaptive.streakAtRisk.title', {
         streak: streakData.currentStreak,
-        defaultValue: `Protect your ${streakData.currentStreak}-day streak! 🔥`,
+        defaultValue: `Protect your ${streakData.currentStreak}-day streak!`,
       }) as string,
       body: i18n.t('notifications.adaptive.streakAtRisk.body', {
         defaultValue:
@@ -875,7 +875,7 @@ export async function scheduleDailyGoalReminder(): Promise<string | null> {
     remaining === 1
       ? 'notifications.dailyGoal.titleSingular'
       : 'notifications.dailyGoal.titlePlural';
-  const goalTitleFallback = `${remaining} break${remaining === 1 ? '' : 's'} to go! 🎯`;
+  const goalTitleFallback = `${remaining} break${remaining === 1 ? '' : 's'} to go!`;
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
       title: i18n.t(goalTitleKey, {
@@ -940,7 +940,7 @@ export async function scheduleSnoozedBreakReminder(
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
       title: i18n.t('notifications.adaptive.tone.focused.0.title', {
-        defaultValue: 'Quick reset before deep work 🎯',
+        defaultValue: 'Quick reset before deep work',
       }) as string,
       body: i18n.t('notifications.adaptive.tone.focused.0.body', {
         defaultValue: 'Clear your head — one minute, then back in.',
@@ -987,7 +987,7 @@ export async function scheduleWeeklyStoryReminder(): Promise<string | null> {
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
       title: i18n.t('notifications.weeklyStory.title', {
-        defaultValue: 'Your week in focus 📊',
+        defaultValue: 'Your week in focus',
       }) as string,
       body: i18n.t('notifications.weeklyStory.body', {
         defaultValue:
@@ -1065,7 +1065,7 @@ export async function sendGoalCompletedNotification(): Promise<void> {
   }
 
   await sendImmediateNotification(
-    '🎉 Daily Goal Complete!',
+    'Daily Goal Complete!',
     "Amazing work! You've reached your wellness goal for today.",
     { type: 'goal_complete' }
   );
@@ -1080,7 +1080,7 @@ export async function sendStreakMilestoneNotification(streakDays: number): Promi
   }
 
   await sendImmediateNotification(
-    `🔥 ${streakDays}-Day Streak!`,
+    `${streakDays}-Day Streak!`,
     `Incredible! You've maintained your wellness streak for ${streakDays} days!`,
     { type: 'streak_milestone', streakDays }
   );

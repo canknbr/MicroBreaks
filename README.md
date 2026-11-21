@@ -53,15 +53,15 @@ MicroBreaks is a mobile-first wellness application that monitors work patterns a
   - **Breathing & Mindfulness**: Box breathing, 4-7-8 technique, meditation
 
 - **🏋️ Animated Movement Library**
-  - 118 curated desk-friendly movements with looping demo animations (media © [Gym visual](https://gymvisual.com/))
-  - Body-zone browsing (neck, back, chest, arms, core, legs, cardio) with space filters (at desk / standing / floor)
+  - 41 desk moves (seated or standing at the desk, nothing on the floor), each with a looping animation drawn by the project's own figure rig
+  - Body-zone browsing (neck, back, chest, arms, core, legs, cardio) with space filters (at desk / standing)
   - Localized names and step-by-step instructions (EN + TR), difficulty levels, and muscle maps
   - Every movement converts into a guided, voice-coached micro-session
   - **Today's plan**: three daily moves picked deterministically from your pain areas
   - **Zone circuits**: auto-composed 3-move chained sessions per body zone
   - **Custom routines (Pro)**: chain 2–8 moves into named personal sessions
   - Favorites, post-session "next move" momentum, and pain-reminder deep links into the right zone
-  - Regenerate from the open dataset with `npm run generate:exercises -- <dataset-dir>` (see `scripts/generate-exercise-library.mjs`)
+  - Regenerate drawings and data with `npm run generate:moves`; review poses with `node scripts/moves/preview.mjs <out.png>`
 
 - **🔔 Context-Aware Notifications**
   - Smart scheduling that avoids interruptions

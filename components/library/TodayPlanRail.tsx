@@ -69,7 +69,7 @@ export function TodayPlanRail({
               <View style={styles.thumbWrap}>
                 {media ? (
                   <Image
-                    source={media.thumb}
+                    source={media.still}
                     style={styles.thumb}
                     contentFit="cover"
                     accessibilityIgnoresInvertColors
@@ -125,7 +125,9 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F4EF',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

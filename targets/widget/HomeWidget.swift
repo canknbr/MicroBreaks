@@ -66,7 +66,8 @@ private struct StreakBadge: View {
 
   var body: some View {
     HStack(spacing: 4) {
-      Text("🔥")
+      Image(systemName: "flame.fill")
+        .foregroundStyle(Color(hex: "#FF2472"))
         .font(.system(size: 14))
       Text("\(streak.current)")
         .font(.system(size: 14, weight: .heavy, design: .rounded))
@@ -92,7 +93,7 @@ private struct RecommendationCard: View {
 
   var body: some View {
     HStack(spacing: 10) {
-      Text(recommendation.icon)
+      Image(systemName: "figure.mind.and.body")
         .font(.system(size: compact ? 22 : 28))
       VStack(alignment: .leading, spacing: 2) {
         Text("Next")
@@ -236,7 +237,7 @@ struct LargeHomeWidgetView: View {
 
         if let last = entry.snapshot.lastBreak {
           HStack(spacing: 8) {
-            Text(last.icon)
+            Image(systemName: "checkmark.circle.fill")
               .font(.system(size: 16))
             VStack(alignment: .leading, spacing: 1) {
               Text("Last: \(last.title)")
